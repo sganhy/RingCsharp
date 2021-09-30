@@ -1,0 +1,1 @@
+C:\Temp\Coding\Poms\obj\x64\Debug\.NETFramework,Version=v4.6.1.AssemblyAttribute.cs

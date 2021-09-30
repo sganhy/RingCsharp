@@ -1,0 +1,10 @@
+C:\Temp\Coding\ConnectionPool\ConsoleApplication1\ConsoleApplication1\bin\Debug\ConsoleApplication1.exe.config
+C:\Temp\Coding\ConnectionPool\ConsoleApplication1\ConsoleApplication1\bin\Debug\ConsoleApplication1.exe
+C:\Temp\Coding\ConnectionPool\ConsoleApplication1\ConsoleApplication1\bin\Debug\ConsoleApplication1.pdb
+C:\Temp\Coding\ConnectionPool\ConsoleApplication1\ConsoleApplication1\obj\Debug\ConsoleApplication1.exe
+C:\Temp\Coding\ConnectionPool\ConsoleApplication1\ConsoleApplication1\obj\Debug\ConsoleApplication1.pdb
+C:\Temp\Coding\ConnectionPool\ConsoleApplication1\bin\Debug\ConsoleApplication1.exe.config
+C:\Temp\Coding\ConnectionPool\ConsoleApplication1\obj\Debug\ConsoleApplication1.exe
+C:\Temp\Coding\ConnectionPool\ConsoleApplication1\obj\Debug\ConsoleApplication1.pdb
+C:\Temp\Coding\ConnectionPool\ConsoleApplication1\bin\Debug\ConsoleApplication1.exe
+C:\Temp\Coding\ConnectionPool\ConsoleApplication1\bin\Debug\ConsoleApplication1.pdb

@@ -1,0 +1,20 @@
+C:\Temp\Coding\Ring\obj\x64\Release\netcoreapp2.0\Ring.Core.2017.csproj.CoreCompileInputs.cache
+C:\Temp\Coding\Ring\obj\x64\Release\netcoreapp2.0\Ring.Core.2017.AssemblyInfoInputs.cache
+C:\Temp\Coding\Ring\obj\x64\Release\netcoreapp2.0\Ring.Core.2017.AssemblyInfo.cs
+C:\Temp\Coding\Ring\bin\x64-core\Release\Ring.deps.json
+C:\Temp\Coding\Ring\bin\x64-core\Release\Ring.dll
+C:\Temp\Coding\Ring\bin\x64-core\Release\Ring.pdb
+C:\Temp\Coding\Ring\obj\x64\Release\netcoreapp2.0\Ring.dll
+C:\Temp\Coding\Ring\obj\x64\Release\netcoreapp2.0\Ring.pdb
+E:\Ring\bin\x64-core\Release\Ring.deps.json
+E:\Ring\bin\x64-core\Release\Ring.dll
+E:\Ring\bin\x64-core\Release\Ring.pdb
+E:\Ring\obj\x64\Release\netcoreapp2.0\Ring.Core.2017.csproj.CoreCompileInputs.cache
+E:\Ring\obj\x64\Release\netcoreapp2.0\Ring.Core.2017.AssemblyInfoInputs.cache
+E:\Ring\obj\x64\Release\netcoreapp2.0\Ring.Core.2017.AssemblyInfo.cs
+E:\Ring\obj\x64\Release\netcoreapp2.0\Ring.dll
+E:\Ring\obj\x64\Release\netcoreapp2.0\Ring.pdb
+C:\Temp\Coding\Ring\bin\x64-core\Release -v\Ring.deps.json
+C:\Temp\Coding\Ring\bin\x64-core\Release -v\Ring.dll
+C:\Temp\Coding\Ring\bin\x64-core\Release -v\Ring.pdb
+C:\Temp\Coding\Ring\obj\x64\Release\netcoreapp2.0\Ring.Core.2017.csprojAssemblyReference.cache

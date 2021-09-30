@@ -1,0 +1,5 @@
+C:\Temp\Coding\Ring.Adapters.MySQL\bin\Debug\Ring.Adapters.MySQL.exe.config
+C:\Temp\Coding\Ring.Adapters.MySQL\bin\Debug\Ring.Adapters.MySQL.exe
+C:\Temp\Coding\Ring.Adapters.MySQL\bin\Debug\Ring.Adapters.MySQL.pdb
+C:\Temp\Coding\Ring.Adapters.MySQL\obj\Debug\Ring.Adapters.MySQL.exe
+C:\Temp\Coding\Ring.Adapters.MySQL\obj\Debug\Ring.Adapters.MySQL.pdb

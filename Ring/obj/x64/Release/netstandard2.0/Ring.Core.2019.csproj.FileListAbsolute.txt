@@ -1,0 +1,4 @@
+C:\Temp\Coding\Ring\obj\x64\Release\netstandard2.0\Ring.Core.2019.csprojAssemblyReference.cache
+C:\Temp\Coding\Ring\obj\x64\Release\netstandard2.0\Ring.Core.2019.csproj.CoreCompileInputs.cache
+C:\Temp\Coding\Ring\obj\x64\Release\netstandard2.0\Ring.Core.2019.AssemblyInfoInputs.cache
+C:\Temp\Coding\Ring\obj\x64\Release\netstandard2.0\Ring.Core.2019.AssemblyInfo.cs

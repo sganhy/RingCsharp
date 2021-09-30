@@ -1,0 +1,8 @@
+C:\Temp\Coding\Ring\obj\Debug\netstandard2.0\Ring.Core.2019.csproj.CoreCompileInputs.cache
+C:\Temp\Coding\Ring\obj\Debug\netstandard2.0\Ring.Core.2019.AssemblyInfoInputs.cache
+C:\Temp\Coding\Ring\obj\Debug\netstandard2.0\Ring.Core.2019.AssemblyInfo.cs
+C:\Temp\Coding\Ring\bin\Debug\netstandard2.0\Ring.Core.2019.deps.json
+C:\Temp\Coding\Ring\bin\Debug\netstandard2.0\Ring.Core.2019.dll
+C:\Temp\Coding\Ring\bin\Debug\netstandard2.0\Ring.Core.2019.pdb
+C:\Temp\Coding\Ring\obj\Debug\netstandard2.0\Ring.Core.2019.dll
+C:\Temp\Coding\Ring\obj\Debug\netstandard2.0\Ring.Core.2019.pdb

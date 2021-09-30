@@ -1,0 +1,5 @@
+C:\Temp\Coding\Poms\obj\x64\Release\.NETFramework,Version=v4.6.1.AssemblyAttribute.cs
+C:\Temp\Coding\Poms\obj\x64\Release\Poms.dll
+C:\Temp\Coding\Poms\obj\x64\Release\Poms.pdb
+C:\Temp\Coding\Poms\bin\x64\Release\Poms.pdb
+C:\Temp\Coding\Poms\bin\x64\Release\Poms.dll

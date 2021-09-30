@@ -1,0 +1,426 @@
+<schema version="1.0" name="RpgSheet" default_port="9302" default_language="en-US">
+
+	<!-- ******************************* -->
+	<!-- *** T A B L E   S P A C E S *** -->
+	<!-- ******************************* -->
+
+	<tablespace_list> 
+		<tablespace name="rpg_data" table="true" file="c:\temp\rpg\data"/>
+		<tablespace name="rpg_index" index="true" file="c:\temp\rpg\index"/>
+	</tablespace_list> 
+	
+	<!-- ******************* -->
+	<!-- *** T A B L E S *** -->
+	<!-- ******************* -->
+	
+	
+	<table name="ability" id="1011" baseline="true" readonly="true">
+		<description></description>
+		<field_list>
+			<field name="id" type="short" />
+			<field name="name" type="string" size="80" case_sensitive="false" not_null="true" baseline="true" multilingual="true" />
+			<field name="short_name" type="string" size="5" case_sensitive="false" not_null="true" baseline="true" multilingual="true" />
+		</field_list>
+		<relation_list>
+			<relation name="ability2skill" type="OTM" to="skill" inverse_relation="skill2ability" />
+			<relation name="ability2book" type="MTM" to="book" inverse_relation="book2ability" />
+		</relation_list>
+		<index_list>
+			<index name="name" unique="true" baseline="true">
+				<index_field name="name"/>
+			</index>
+			<index name="short_name" unique="true" baseline="true">
+				<index_field name="short_name"/>
+			</index>
+		</index_list>
+	</table>
+	
+
+	<table name="alignment" id="1012" baseline="true" readonly="true">
+		<description></description>
+		<field_list>
+			<field name="id" type="short" />
+			<field name="name" type="string" size="40" case_sensitive="false" not_null="true" baseline="true" multilingual="true" />
+			<field name="alt_name" type="string" size="40" not_null="true" baseline="true" multilingual="true" />
+			<field name="short_name" type="string" size="5" case_sensitive="false" not_null="true" baseline="true" multilingual="true" />
+			<field name="law" type="boolean" not_null="true"  />
+			<field name="chaos" type="boolean" not_null="true"  />
+			<field name="good" type="boolean" not_null="true"  />
+			<field name="evil" type="boolean" not_null="true"  />
+		</field_list>
+		<relation_list>
+			<relation name="alignment2book" type="MTM" to="book" inverse_relation="book2alignment" />
+			<relation name="align2alignment_descriptor" type="MTM" to="alignment_descriptor" inverse_relation="align_descriptor2alignment" />
+			<relation name="alignment2deity" type="OTM" to="deity" constraint="true" inverse_relation="deity2alignment" />
+		</relation_list>
+		<index_list>
+			<index name="name" unique="true" baseline="true">
+				<index_field name="name"/>
+			</index>
+			<index name="short_name" unique="true" baseline="true">
+				<index_field name="short_name"/>
+			</index>
+		</index_list>
+	</table>
+	
+	
+	<table name="alignment_descriptor" id="1013" baseline="true" readonly="true">
+		<description></description>
+		<field_list>
+			<field name="id" type="short" />
+			<field name="name" type="string" size="40" case_sensitive="false" not_null="true" baseline="true" multilingual="true" />
+		</field_list>
+		<relation_list>
+			<relation name="align_descriptor2alignment" type="MTM" to="alignment" inverse_relation="align2alignment_descriptor" />
+		</relation_list>
+		<index_list>
+			<index name="name" unique="true" baseline="true">
+				<index_field name="name"/>
+			</index>
+		</index_list>
+	</table>
+	
+	
+	<table name="armor" id="1015" baseline="true" readonly="true">
+		<description></description>
+		<field_list>
+			<field name="id" type="short" />
+			<field name="name" type="string" size="80" case_sensitive="false" not_null="true" baseline="true" multilingual="true" />
+			<field name="shield" type="boolean" not_null="true"  />
+			<field name="exotic" type="boolean" not_null="true"  />
+			<field name="light" type="boolean" not_null="true"  />
+			<field name="medium" type="boolean" not_null="true"  />
+			<field name="heavy" type="boolean" not_null="true"  />
+			<field name="extra" type="boolean" not_null="true"  />
+			<field name="ac_bonus" type="byte" />
+			<field name="fortitude_bonus" type="byte" />
+			<field name="check_penality" type="byte" />
+			<field name="arcane_spell_failure" type="byte" />
+			<field name="max_dex_bonus" type="short" />
+			<field name="speed" type="byte" />
+			<field name="weight" type="int" />
+			<field name="cost" type="int" />
+		</field_list>
+		<relation_list>
+			<relation name="armor2book" type="MTO" not_null="true" to="book" inverse_relation="book2armor" />
+		</relation_list>
+		<index_list>
+			<index name="name" unique="true" baseline="true">
+				<index_field name="name"/>
+				<index_field name="armor2book"/>
+			</index>
+		</index_list>
+	</table>
+	
+	
+	<table name="book" id="1021" baseline="true" readonly="true">
+		<description>Role playing description</description>
+		<field_list>
+			<field name="id" type="int" />
+			<field name="title" type="string" size="80" case_sensitive="false" not_null="true" baseline="true" multilingual="true" />
+			<field name="sub_title" type="string" size="80" case_sensitive="false" baseline="true" multilingual="true" />
+			<field name="short_name" type="string" size="80" case_sensitive="false" baseline="true"  />
+			<field name="core_rule" type="boolean" not_null="true"  />
+			<field name="isbn" type="string" size="13" not_null="true" baseline="true" multilingual="true">
+			 	<description>International Standard Book Number (ISBN) - 13 digits long</description>
+			</field>
+			<field name="creation_time" type="shortDatetime" not_null="true"  />
+			<field name="update_stamp" type="shortDatetime" not_null="true"   />
+			<field name="publish_date" type="shortDatetime" not_null="true"   />
+			<field name="language" type="string" size="2" not_null="true" case_sensitive="false" multilingual="true" />	
+			<field name="pages" type="short" multilingual="true" />
+		</field_list>
+		<relation_list>
+			<relation name="book2skill" type="MTM" to="skill" inverse_relation="skill2book" />
+			<relation name="book2ability" type="MTM" to="ability" inverse_relation="ability2book" />
+			<relation name="book2alignment" type="MTM" to="alignment" inverse_relation="alignment2book" />
+			<relation name="book2race" type="OTM" to="race" inverse_relation="race2book" />
+			<relation name="book2weapon" type="OTM" to="weapon" inverse_relation="weapon2book" />
+			<relation name="book2armor" type="OTM" to="armor" inverse_relation="armor2book" />
+			<relation name="book2feat" type="MTM" to="feat" inverse_relation="feat2book" />
+			<relation name="book2rule" type="MTO" to="rule" inverse_relation="rule2book" />
+			<relation name="book2class" type="MTM" to="class" constraint="true" inverse_relation="class2book" />
+			<relation name="book2domain" type="MTM" to="domain" constraint="true" inverse_relation="domain2book" />
+		</relation_list>
+		<index_list>
+			<index name="isbn" unique="true" baseline="true">
+				<index_field name="isbn"/>
+			</index>
+			<index name="title" unique="false" baseline="true">
+				<index_field name="title"/>
+			</index>
+		</index_list>
+	</table>
+	
+	
+	<table name="class" id="1031" baseline="true" readonly="true">
+		<description>Skills connected to a role playing game</description>
+		<field_list>
+			<field name="id" type="short" />
+			<field name="name" type="string" size="80" case_sensitive="false" not_null="true" baseline="true" multilingual="true" />
+			<field name="short_name" type="string" size="10" case_sensitive="false" baseline="true" multilingual="true" />
+			<field name="base" type="boolean" not_null="true" baseline="true" />
+			<field name="prestige" type="boolean" not_null="true" baseline="true" />
+			<field name="base_attack_bonus" type="byte" not_null="true" baseline="true" />
+			<field name="initial_hit_points" type="byte" not_null="true" baseline="true" />
+			<field name="hit_die" type="byte" not_null="true" baseline="true" />
+			<field name="fortitude" type="byte" not_null="true" baseline="true" />
+			<field name="will" type="byte" not_null="true" baseline="true" />
+			<field name="reflex" type="byte" not_null="true" baseline="true" />
+			<field name="max_level" type="byte" not_null="true" baseline="true" />
+			<field name="initial_skill_point" type="byte" not_null="true" baseline="true" />
+			<field name="skill_point" type="byte" not_null="true" baseline="true" />
+		</field_list>
+		<relation_list>
+			<relation name="class2skill" type="MTM" to="skill" constraint="true" inverse_relation="skill2class" />
+			<relation name="class2book" type="MTM" to="book" constraint="true" inverse_relation="book2class" />
+		</relation_list>
+		<index_list>
+			<index name="name" unique="false" baseline="true">
+				<index_field name="name"/>
+			</index>
+			<index name="short_name" unique="false" baseline="true">
+				<index_field name="short_name"/>
+			</index>
+			<index name="base" unique="false" baseline="true">
+				<index_field name="base"/>
+			</index>
+			<index name="prestige" unique="false" baseline="true">
+				<index_field name="prestige"/>
+			</index>
+		</index_list>
+	</table>
+
+
+	<table name="campaign_setting" id="1032" baseline="true" readonly="true">
+		<description>Campaign setting</description>
+		<field_list>
+			<field name="id" type="short" />
+			<field name="name" type="string" size="80" case_sensitive="false" not_null="true" baseline="true" multilingual="true" />
+			<field name="world" type="string" size="10" case_sensitive="false" baseline="true" multilingual="true" />
+			<field name="status" type="short"  not_null="true" />
+		</field_list>
+		<index_list>
+			<index name="name" unique="true" baseline="true">
+				<index_field name="name"/>
+			</index>
+		</index_list>
+	</table>
+
+
+	<table name="domain" id="1034" baseline="true" readonly="true">
+		<description>Domains</description>
+		<field_list>
+			<field name="id" type="short" />
+			<field name="name" type="string" size="40" case_sensitive="false" not_null="true" baseline="true" multilingual="true" />
+			<field name="short_name" type="string" size="80" baseline="true" case_sensitive="false" multilingual="true" />
+			<field name="arcane" type="boolean" not_null="true" baseline="true" /> 
+			<field name="divine" type="boolean" not_null="true" baseline="true" />
+		</field_list>
+		<relation_list>
+			<relation name="domain2book" type="MTM" to="book" constraint="true" inverse_relation="book2domain" />
+			<relation name="domain2deity" type="MTM" to="deity" constraint="true" inverse_relation="deity2domain" />
+		</relation_list>
+		<index_list>
+			<index name="name" unique="false" baseline="true">
+				<index_field name="name"/>
+			</index>
+			<index name="short_name" unique="false" baseline="true">
+				<index_field name="short_name"/>
+			</index>
+			<index name="arcane" unique="false" baseline="true">
+				<index_field name="arcane"/>
+			</index>
+			<index name="divine" unique="false" baseline="true">
+				<index_field name="divine"/>
+			</index>
+		</index_list>
+	</table>
+	
+	
+	<table name="deity" id="1037" baseline="true" readonly="true">
+		<description>Deitie's</description>
+		<field_list>
+			<field name="id" type="short" />
+			<field name="name" type="string" size="40" case_sensitive="false" not_null="true" baseline="true" multilingual="true" />
+			<field name="nickname" type="string" size="80" baseline="true" multilingual="true" />
+			<field name="portfolio" type="string" size="120" baseline="true" multilingual="true" />
+			<field name="symbol" type="string" size="120" baseline="true" multilingual="true" />
+		</field_list>
+		<relation_list>
+			<relation name="deity2alignment" type="MTO" to="alignment" constraint="true" inverse_relation="alignment2deity" />
+			<relation name="deity2gender" type="MTO" to="gender" constraint="true" inverse_relation="gender2deity" />
+			<relation name="deity2domain" type="MTM" to="domain" constraint="true" inverse_relation="domain2deity" />
+		</relation_list>
+		<index_list>
+			<index name="name" unique="false" baseline="true">
+				<index_field name="name"/>
+			</index>
+		</index_list>
+	</table>
+
+	
+	<table name="feat" id="1041" baseline="true" readonly="true">
+		<description>Feats connected to a role playing game</description>
+		<field_list>
+			<field name="id" type="short" />
+			<field name="name" type="string" size="80" case_sensitive="false" not_null="true" baseline="true" multilingual="true" />
+			<field name="fighter" type="boolean" not_null="true" baseline="true" />
+			<field name="multiple_times" type="boolean" not_null="true" baseline="true" />
+			<field name="effects_stack" type="boolean" not_null="true" baseline="true" />
+			<field name="metamagic" type="boolean" not_null="true"  baseline="true" />
+			<field name="epic" type="boolean" not_null="true" baseline="true"  />
+			<field name="target_object" type="string" size="40" baseline="true" />
+			<field name="prerequisites" type="string" size="1000" baseline="true" multilingual="true" />
+			<field name="benefit" type="string" size="1000" baseline="true" multilingual="true" />
+		</field_list>
+		<relation_list>
+			<relation name="feat2book" type="MTM" not_null="true" to="book" inverse_relation="book2feat" />
+			<relation name="feat2feat_type" type="MTO" to="feat_type" inverse_relation="feat_type2feat" />
+			<relation name="feat2parent_feat" type="MTO" to="feat" inverse_relation="feat2child_feat" />
+			<relation name="feat2child_feat" type="OTM" to="feat" inverse_relation="feat2parent_feat" />
+		</relation_list>
+	</table>
+	
+	
+	<table name="feat_type" id="1042" baseline="true" readonly="true">
+		<description>Feat types connected to a role playing game</description>
+		<field_list>
+			<field name="id" type="short" />
+			<field name="name" type="string" size="40" case_sensitive="false" not_null="true" baseline="true" multilingual="true" />
+		</field_list>
+		<relation_list>
+			<relation name="feat_type2feat" type="OTM" to="feat" inverse_relation="feat2feat_type" />
+		</relation_list>
+		<index name="name" unique="true" baseline="true">
+				<index_field name="name"/>
+		</index>
+	</table>
+	
+	
+	<table name="race" id="1051" baseline="true" readonly="true">
+		<description></description>
+		<field_list>
+			<field name="id" type="int" />
+			<field name="name" type="string" size="80" case_sensitive="false" not_null="true" baseline="true" multilingual="true" />
+		</field_list>
+		<relation_list>
+			<relation name="race2book" type="MTO" to="book" inverse_relation="book2race" />
+		</relation_list>
+		<index_list>
+			<index name="name" unique="true" baseline="true">
+				<index_field name="name"/>
+				<index_field name="race2book"/>
+			</index>
+		</index_list>
+	</table>
+	
+	
+	<table name="gender" id="1053" baseline="true" readonly="true">
+		<description></description>
+		<field_list>
+			<field name="id" type="short" />
+			<field name="name" type="string" size="20" not_null="true" case_sensitive="false" baseline="true" multilingual="true" >
+				<description>version of RPG</description>
+			</field>
+			<field name="short_name" type="string" size="4" not_null="true" case_sensitive="false" baseline="true" multilingual="true" />
+			<field name="iso_code" type="short" not_null="true"  />
+			<field name="status" type="short"  not_null="true" />
+		</field_list>
+		<relation_list>
+			<relation name="gender2deity" type="OTM" to="deity" constraint="true" inverse_relation="deity2gender" />
+		</relation_list>
+		<index_list>
+			<index name="short_name" unique="true" baseline="true">
+				<index_field name="short_name"/>
+			</index>
+			<index name="name" unique="true" baseline="true">
+				<index_field name="name"/>
+			</index>
+		</index_list>
+	</table>
+	
+	
+	<table name="rule" id="1054" baseline="true" readonly="true">
+		<description></description>
+		<field_list>
+			<field name="id" type="short" />
+			<field name="game" type="string" size="80" not_null="true" case_sensitive="false" baseline="true" multilingual="true" >
+				<description>version of RPG</description>
+			</field>
+			<field name="version" type="float">
+				<description>version of RPG</description>
+			</field>
+			<field name="short_name" type="string" size="10" />
+		</field_list>
+		<relation_list>
+			<relation name="rule2book" type="OTM" to="book" inverse_relation="book2rule" />
+		</relation_list>
+		<index_list>
+			<index name="game" unique="true" baseline="true">
+				<index_field name="game"/>
+				<index_field name="version"/>
+			</index>
+			<index name="short_name" unique="true" baseline="true">
+				<index_field name="short_name"/>
+			</index>
+		</index_list>
+	</table>
+	
+	
+	<table name="skill" id="1061" baseline="true" readonly="true">
+		<description>Skills connected to a role playing game</description>
+		<field_list>
+			<field name="id" type="short" />
+			<field name="name" type="string" size="80" case_sensitive="false" not_null="true" baseline="true" multilingual="true" />
+			<field name="sub_name" type="string" size="30" multilingual="true" />
+			<field name="is_group" type="boolean" not_null="true" default="true" />
+			<field name="category" type="string" size="8" />
+			<field name="armor_penality" type="byte" not_null="true" />
+			<field name="trained_only" type="boolean" not_null="true" />
+			<field name="try_again" type="boolean" not_null="true" />
+		</field_list>
+		<relation_list>
+			<relation name="skill2book" type="MTM" to="book" inverse_relation="book2skill" />
+			<relation name="skill2ability" type="MTO" to="ability" inverse_relation="ability2skill" />
+			<relation name="skill2synergy" type="MTM" to="skill" inverse_relation="synergy2skill" />
+			<relation name="synergy2skill" type="MTM" to="skill" inverse_relation="skill2synergy" />
+			<relation name="skill2class" type="MTM" to="class" inverse_relation="class2skill" />
+		</relation_list>
+	</table>
+
+	
+	<table name="weapon" id="1071" baseline="true" readonly="true">
+		<description></description>
+		<field_list>
+			<field name="id" type="short" />
+			<field name="name" type="string" size="80" case_sensitive="false" not_null="true" baseline="true" multilingual="true" />
+			<field name="unarmed_attack" type="boolean" not_null="true" />
+			<field name="ammo" type="boolean" not_null="true" />
+			<field name="light_melee" type="boolean" not_null="true" />
+			<field name="one_handed_melee" type="boolean" not_null="true" />
+			<field name="two_handed_melee" type="boolean" not_null="true" />
+			<field name="ranged" type="boolean" not_null="true" />
+			<field name="simple" type="boolean" not_null="true" />
+			<field name="martial" type="boolean" not_null="true" />
+			<field name="exotic" type="boolean" not_null="true" />
+			<field name="double" type="boolean" not_null="true" />
+			<field name="weapon_finesse" type="boolean" not_null="true" />
+			<field name="reload" type="boolean" not_null="true" />
+			<field name="range_increment" type="short" multilingual="true" not_null="true" />
+			<field name="critical_range" type="short" multilingual="true" not_null="true" />
+			<field name="critical_multiplier_1" type="short" multilingual="true" not_null="true" />
+			<field name="critical_multiplier_2" type="short" multilingual="true" not_null="true" />
+		</field_list>
+		<relation_list>
+			<relation name="weapon2book" type="MTO" to="book" not_null="true" inverse_relation="book2weapon" />
+		</relation_list>
+		<index_list>
+			<index name="name" unique="true" baseline="true">
+				<index_field name="name"/>
+				<index_field name="weapon2book"/>
+			</index>
+		</index_list>
+	</table>
+	
+</schema>			

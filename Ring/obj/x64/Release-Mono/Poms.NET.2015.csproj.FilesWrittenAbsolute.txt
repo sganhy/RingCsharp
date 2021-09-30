@@ -1,0 +1,7 @@
+C:\Temp\Coding\Poms\obj\x64\Release-Mono\.NETFramework,Version=v4.6.1.AssemblyAttribute.cs
+C:\Temp\Coding\Poms\bin\x64-mono\Release\Poms.dll
+C:\Temp\Coding\Poms\obj\x64\Release-Mono\Poms.dll
+C:\Temp\Coding\Ring\obj\x64\Release-Mono\.NETFramework,Version=v4.6.1.AssemblyAttribute.cs
+C:\Temp\Coding\Ring\bin\x64-mono\Release\Poms.dll
+C:\Temp\Coding\Ring\obj\x64\Release-Mono\Poms.dll
+C:\Temp\Coding\Ring\obj\x64\Release-Mono\.NETFramework,Version=v4.6.AssemblyAttribute.cs

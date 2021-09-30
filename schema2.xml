@@ -1,0 +1,43 @@
+<schema version="3.5">
+	<object name="country" type_id="124" cacheobjids="true" baseline="true" subject="Customer Manager">
+		<comment><![CDATA[Country object which defines each country]]></comment>
+		<field_list>
+			<field name="objid" common_data_type="long integer" database_data_type="0" baseline="true" generic_field_id="3">
+				<comment><![CDATA[Internal record number]]></comment>
+			</field>
+			<field name="name" common_data_type="char pointer" database_data_type="7" baseline="true" case_insensitive="true" generic_field_id="2" array_size="40" multilingual="true">
+				<comment><![CDATA[Name of the specific country]]></comment>
+			</field>
+			<field name="code" common_data_type="long integer" database_data_type="0" baseline="true">
+				<comment><![CDATA[Country code used in telephone numbers for that country]]></comment>
+			</field>
+			<field name="is_default" common_data_type="long integer" database_data_type="0" baseline="true" generic_field_id="22" default="0">
+				<comment><![CDATA[Indicates that this is the default country; i.e., 0=no, 1=yes]]></comment>
+			</field>
+			<field name="dev" common_data_type="long integer" database_data_type="0" baseline="true" allow_null="true" generic_field_id="151" default="1">
+				<comment><![CDATA[Row version number for mobile distribution purposes]]></comment>
+			</field>
+			<field name="ref_id" common_data_type="char pointer" database_data_type="7" baseline="true" case_insensitive="true" allow_null="true" generic_field_id="4" array_size="255" alternate_key="true">
+				<comment><![CDATA[Non-translatable key value for programmatic reference]]></comment>
+			</field>
+			<field name="x_iso3_code" common_data_type="char pointer" database_data_type="7" case_insensitive="true" array_size="3">
+				<comment><![CDATA[ISO3 code for the country]]></comment>
+			</field>
+			<field name="x_dst" common_data_type="long integer" database_data_type="0" default="0">
+				<comment><![CDATA[Country has daylight saving time (0=no,1=yes)]]></comment>
+			</field>
+		</field_list>
+		<index_list>
+			<index name="name_index" unique="true" baseline="true">
+				<index_field_list>
+					<index_field name="name"/>
+				</index_field_list>
+			</index>
+			<index name="x_iso3_index" unique="true">
+				<index_field_list>
+					<index_field name="x_iso3_code"/>
+				</index_field_list>
+			</index>
+		</index_list>
+	</object>
+</schema>		

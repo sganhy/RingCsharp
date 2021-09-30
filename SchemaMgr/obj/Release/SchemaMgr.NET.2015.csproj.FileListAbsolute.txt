@@ -1,0 +1,11 @@
+C:\Temp\Coding\SchemaMgr\SchemaMgr\bin\Release\SchemaMgr.exe.config
+C:\Temp\Coding\SchemaMgr\SchemaMgr\obj\Release\SchemaMgr.exe
+C:\Temp\Coding\SchemaMgr\SchemaMgr\obj\Release\SchemaMgr.pdb
+C:\Temp\Coding\SchemaMgr\SchemaMgr\bin\Release\SchemaMgr.exe
+C:\Temp\Coding\SchemaMgr\SchemaMgr\bin\Release\SchemaMgr.pdb
+C:\Temp\Coding\SchemaMgr\SchemaMgr\bin\Release\Poms.dll
+C:\Temp\Coding\SchemaMgr\SchemaMgr\bin\Release\Poms.pdb
+C:\Temp\Coding\SchemaMgr\SchemaMgr\obj\Release\SchemaMgr.NET.2015.csprojResolveAssemblyReference.cache
+C:\Temp\Coding\SchemaMgr\SchemaMgr\obj\Release\SchemaMgr.frmMain.resources
+C:\Temp\Coding\SchemaMgr\SchemaMgr\obj\Release\SchemaMgr.Properties.Resources.resources
+C:\Temp\Coding\SchemaMgr\SchemaMgr\obj\Release\SchemaMgr.NET.2015.csproj.GenerateResource.Cache

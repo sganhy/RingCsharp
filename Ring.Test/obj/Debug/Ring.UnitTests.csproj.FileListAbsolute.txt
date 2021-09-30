@@ -1,0 +1,17 @@
+C:\Temp\Coding\Ring.Test\obj\Debug\Ring.UnitTests.csprojResolveAssemblyReference.cache
+C:\Temp\Coding\Ring.Test\bin\Debug\Ring.UnitTests.dll
+C:\Temp\Coding\Ring.Test\bin\Debug\Ring.UnitTests.pdb
+C:\Temp\Coding\Ring.Test\bin\Debug\Ring.dll
+C:\Temp\Coding\Ring.Test\bin\Debug\xunit.abstractions.dll
+C:\Temp\Coding\Ring.Test\bin\Debug\xunit.assert.dll
+C:\Temp\Coding\Ring.Test\bin\Debug\xunit.core.dll
+C:\Temp\Coding\Ring.Test\bin\Debug\xunit.execution.desktop.dll
+C:\Temp\Coding\Ring.Test\bin\Debug\xunit.runner.utility.net452.dll
+C:\Temp\Coding\Ring.Test\bin\Debug\Ring.pdb
+C:\Temp\Coding\Ring.Test\bin\Debug\xunit.abstractions.xml
+C:\Temp\Coding\Ring.Test\bin\Debug\xunit.assert.xml
+C:\Temp\Coding\Ring.Test\bin\Debug\xunit.core.xml
+C:\Temp\Coding\Ring.Test\bin\Debug\xunit.execution.desktop.xml
+C:\Temp\Coding\Ring.Test\bin\Debug\xunit.runner.utility.net452.xml
+C:\Temp\Coding\Ring.Test\obj\Debug\Ring.UnitTests.dll
+C:\Temp\Coding\Ring.Test\obj\Debug\Ring.UnitTests.pdb

@@ -1,0 +1,12 @@
+C:\Temp\Coding\Ring.Adapters.SQLite\bin\Debug\Ring.Adapters.SQLite.dll
+C:\Temp\Coding\Ring.Adapters.SQLite\bin\Debug\Ring.Adapters.SQLite.pdb
+C:\Temp\Coding\Ring.Adapters.SQLite\obj\Debug\Ring.Adapters.SQLite.csprojResolveAssemblyReference.cache
+C:\Temp\Coding\Ring.Adapters.SQLite\obj\Debug\Ring.Adapters.SQLite.dll
+C:\Temp\Coding\Ring.Adapters.SQLite\obj\Debug\Ring.Adapters.SQLite.pdb
+C:\Temp\Coding\Ring.Adapters.SQLite\bin\Debug\Ring.Adapters.SQLite.dll.config
+C:\Temp\Coding\Ring.Adapters.SQLite\bin\Debug\EntityFramework.dll
+C:\Temp\Coding\Ring.Adapters.SQLite\bin\Debug\EntityFramework.SqlServer.dll
+C:\Temp\Coding\Ring.Adapters.SQLite\bin\Debug\System.Data.SQLite.dll
+C:\Temp\Coding\Ring.Adapters.SQLite\bin\Debug\EntityFramework.xml
+C:\Temp\Coding\Ring.Adapters.SQLite\bin\Debug\EntityFramework.SqlServer.xml
+C:\Temp\Coding\Ring.Adapters.SQLite\bin\Debug\System.Data.SQLite.xml

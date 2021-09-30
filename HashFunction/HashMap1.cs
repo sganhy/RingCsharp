@@ -1,0 +1,106 @@
+﻿using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
+
+namespace ConsoleApplication8
+{
+    internal class HashMap1
+    {
+
+		private class Entry
+        {
+            public string Key;
+            public string Value;
+            public Entry Next;
+        }
+
+		private Entry[] _buckets;
+	    private int _count;
+
+        public HashMap1(int capacity)
+        {
+            _count = 0;
+			//_buckets = new Entry[capacity < Constants.MinCapacity ? Constants.MinCapacity : capacity];
+			_buckets = new Entry[capacity];
+		}
+
+	    public int Count => _count;
+
+		[Pure]
+		public int Collisions
+		{
+			get
+			{
+				var emptyCount = 0;  // number of empty 
+				if (_buckets == null) return 0;
+				for (var i = 0; i < _buckets.Length; ++i) if (_buckets[i] == null) ++emptyCount;
+				return emptyCount - _buckets.Length + _count;
+			}
+		}
+
+		public void Add(string key, string value)
+        {
+            //var hashcode = Hash32(key);
+            var hashcode = HashHelper.Djb2X(key);
+            //var hashcode = value.GetHashCode();
+            var targetBucket = (hashcode & int.MaxValue) % _buckets.Length;
+            Entry ent = null;
+
+	        ent = _buckets[targetBucket];
+
+			// Search for existing key
+			for (; ent != null; ent = ent.Next)
+            {
+	            if (string.CompareOrdinal(ent.Key, key) != 0) continue;
+	            // Key already exists
+	            ent.Value = value;
+	            return;
+            }
+            
+            // Create new entry to house key-value pair
+            ent = new Entry()
+            {
+                Key = key,
+                Value = value,
+            };
+
+            // And add to table
+            ent.Next = _buckets[targetBucket];
+            _buckets[targetBucket] = ent;
+            ++_count;
+        }
+		
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public string Get(string key) => Find(key)?.Value;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private Entry Find(string key)
+        {
+            //var hashcode = Hash32(key);
+            var hashcode = HashHelper.Djb2X(key);
+			//var hashcode = key.GetHashCode();
+			var targetBucket = (hashcode & int.MaxValue) % _buckets.Length;
+            // Search for entry
+            for (var ent = _buckets[targetBucket]; ent != null; ent = ent.Next)
+                if (string.CompareOrdinal(ent.Key,key)==0) return ent;
+            return null;
+        }
+
+	    public int GetMaxLevel()
+	    {
+		    var result = 0;
+
+		    foreach (var entry in _buckets)
+		    {
+			    var currentLevcel = 0;
+			    for (var ent = entry; ent != null; ent = ent.Next) ++currentLevcel;
+			    if (currentLevcel > result)
+			    {
+				    result = currentLevcel;
+			    }
+		    }
+			return result;
+	    }
+
+
+	}
+}

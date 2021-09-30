@@ -1,0 +1,9 @@
+C:\Temp\Coding\Poms\bin\x64\Debug\Poms.dll
+C:\Temp\Coding\Poms\bin\x64\Debug\Poms.pdb
+C:\Temp\Coding\Poms\obj\x64\Debug\Poms.dll
+C:\Temp\Coding\Poms\obj\x64\Debug\Poms.pdb
+C:\Temp\Coding\Poms\obj\x64\Debug\Poms.NET.2015.csprojResolveAssemblyReference.cache
+C:\Temp\Coding\Ring\bin\x64\Debug\Ring.dll
+C:\Temp\Coding\Ring\bin\x64\Debug\Ring.pdb
+C:\Temp\Coding\Ring\obj\x64\Debug\Ring.dll
+C:\Temp\Coding\Ring\obj\x64\Debug\Ring.pdb

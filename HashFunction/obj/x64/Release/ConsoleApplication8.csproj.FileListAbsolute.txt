@@ -1,0 +1,11 @@
+c:\users\stéphane\documents\visual studio 2015\Projects\ConsoleApplication8\ConsoleApplication8\bin\x64\Release\ConsoleApplication8.exe.config
+c:\users\stéphane\documents\visual studio 2015\Projects\ConsoleApplication8\ConsoleApplication8\bin\x64\Release\ConsoleApplication8.exe
+c:\users\stéphane\documents\visual studio 2015\Projects\ConsoleApplication8\ConsoleApplication8\bin\x64\Release\ConsoleApplication8.pdb
+c:\users\stéphane\documents\visual studio 2015\Projects\ConsoleApplication8\ConsoleApplication8\obj\x64\Release\ConsoleApplication8.exe
+c:\users\stéphane\documents\visual studio 2015\Projects\ConsoleApplication8\ConsoleApplication8\obj\x64\Release\ConsoleApplication8.pdb
+C:\Temp\TestHash\ConsoleApplication8\bin\x64\Release\Test.exe.config
+C:\Temp\TestHash\ConsoleApplication8\bin\x64\Release\Test.exe
+C:\Temp\TestHash\ConsoleApplication8\bin\x64\Release\Test.pdb
+C:\Temp\TestHash\ConsoleApplication8\obj\x64\Release\Test.exe
+C:\Temp\TestHash\ConsoleApplication8\obj\x64\Release\Test.pdb
+C:\Temp\TestHash\ConsoleApplication8\obj\x64\Release\ConsoleApplication8.csprojResolveAssemblyReference.cache

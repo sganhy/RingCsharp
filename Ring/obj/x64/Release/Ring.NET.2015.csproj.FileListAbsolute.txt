@@ -1,0 +1,6 @@
+C:\Temp\Coding\Ring\bin\x64\Release\Ring.dll
+C:\Temp\Coding\Ring\obj\x64\Release\Ring.dll
+E:\Ring\bin\x64\Release\Ring.dll
+E:\Ring\obj\x64\Release\Ring.NET.2015.csprojResolveAssemblyReference.cache
+E:\Ring\obj\x64\Release\Ring.dll
+C:\Temp\Coding\Ring\obj\x64\Release\Ring.NET.2015.csprojResolveAssemblyReference.cache

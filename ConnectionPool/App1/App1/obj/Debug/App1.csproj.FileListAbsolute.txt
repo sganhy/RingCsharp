@@ -1,0 +1,17 @@
+C:\Temp\Coding\ConnectionPool\App1\App1\bin\Debug\App1.dll
+C:\Temp\Coding\ConnectionPool\App1\App1\bin\Debug\App1.pdb
+C:\Temp\Coding\ConnectionPool\App1\App1\bin\Debug\App1.App1.apk
+C:\Temp\Coding\ConnectionPool\App1\App1\bin\Debug\App1.App1-Signed.apk
+C:\Temp\Coding\ConnectionPool\App1\App1\obj\Debug\App1.csprojResolveAssemblyReference.cache
+C:\Temp\Coding\ConnectionPool\App1\App1\obj\Debug\App1.dll
+C:\Temp\Coding\ConnectionPool\App1\App1\obj\Debug\App1.pdb
+C:\Temp\Coding\ConnectionPool\App1\App1\obj\Debug\android\bin\App1.App1.apk
+C:\Temp\Coding\ConnectionPool\App1\App1\obj\Debug\res\layout\main.xml
+C:\Temp\Coding\ConnectionPool\App1\App1\obj\Debug\res\values\strings.xml
+C:\Temp\Coding\ConnectionPool\App1\App1\obj\Debug\res\mipmap-hdpi\icon.png
+C:\Temp\Coding\ConnectionPool\App1\App1\obj\Debug\res\mipmap-mdpi\icon.png
+C:\Temp\Coding\ConnectionPool\App1\App1\obj\Debug\res\mipmap-xhdpi\icon.png
+C:\Temp\Coding\ConnectionPool\App1\App1\obj\Debug\res\mipmap-xxhdpi\icon.png
+C:\Temp\Coding\ConnectionPool\App1\App1\obj\Debug\res\mipmap-xxxhdpi\icon.png
+C:\Temp\Coding\ConnectionPool\App1\App1\obj\Debug\R.cs.flag
+C:\Temp\Coding\ConnectionPool\App1\App1\obj\Debug\uploadflags.txt

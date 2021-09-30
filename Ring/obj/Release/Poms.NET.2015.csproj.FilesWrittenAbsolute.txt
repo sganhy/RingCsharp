@@ -1,0 +1,3 @@
+C:\Temp\Temp\Coding\Poms\obj\Release\.NETFramework,Version=v4.6.AssemblyAttribute.cs
+C:\Temp\Temp\Coding\Poms\obj\Release\Poms.dll
+C:\Temp\Temp\Coding\Poms\obj\Release\Poms.pdb

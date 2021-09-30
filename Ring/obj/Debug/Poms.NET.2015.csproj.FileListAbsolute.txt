@@ -1,0 +1,10 @@
+C:\Temp\Coding\Poms\bin\Debug\Poms.dll
+C:\Temp\Coding\Poms\bin\Debug\Poms.pdb
+C:\Temp\Coding\Poms\obj\Debug\Poms.dll
+C:\Temp\Coding\Poms\obj\Debug\Poms.pdb
+C:\Temp\Temp\Coding\Poms\bin\Debug\Poms.dll
+C:\Temp\Temp\Coding\Poms\bin\Debug\Poms.pdb
+C:\Temp\Temp\Coding\Poms\obj\Debug\Poms.dll
+C:\Temp\Temp\Coding\Poms\obj\Debug\Poms.pdb
+C:\Temp\Coding\Poms\bin\x86\Debug\Poms.dll
+C:\Temp\Coding\Poms\bin\x86\Debug\Poms.pdb

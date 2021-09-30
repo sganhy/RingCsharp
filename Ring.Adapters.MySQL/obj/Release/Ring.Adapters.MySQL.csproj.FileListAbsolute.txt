@@ -1,0 +1,6 @@
+C:\Temp\Coding\Ring.Adapters.MySQL\bin\Release\Ring.Adapters.MySQL.exe.config
+C:\Temp\Coding\Ring.Adapters.MySQL\bin\Release\Ring.Adapters.MySQL.exe
+C:\Temp\Coding\Ring.Adapters.MySQL\bin\Release\Ring.Adapters.MySQL.pdb
+C:\Temp\Coding\Ring.Adapters.MySQL\obj\Release\Ring.Adapters.MySQL.csprojResolveAssemblyReference.cache
+C:\Temp\Coding\Ring.Adapters.MySQL\obj\Release\Ring.Adapters.MySQL.exe
+C:\Temp\Coding\Ring.Adapters.MySQL\obj\Release\Ring.Adapters.MySQL.pdb

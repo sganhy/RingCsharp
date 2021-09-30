@@ -1,0 +1,78 @@
+<schema version="1.01" name="KickArt" default_port="9302" default_language="nl-BE">
+	<tablespace_list> 
+		<tablespace name="kick_art_data" table="true"/>
+		<tablespace name="kick_art_index" index="true" />
+	</tablespace_list> 
+	<!-- ******************* -->
+	<!-- *** T A B L E S *** -->
+	<!-- ******************* -->
+	<table name="country" id="1030" baseline="true" readonly="true" subject="Installation Country">
+		<description>Country object which defines each country az</description>
+		<field_list>
+			<field name="name" type="string" size="50" case_sensitive="false" not_null="true" baseline="true" multilingual="true">
+				<description>Name of the specific country</description>
+			</field>
+			<field name="code" type="short" baseline="true">
+				<description>International Dialing Prefix (IDD)</description>
+			</field>
+			<field name="iso_2_code" type="string" size="2" case_sensitive="false" not_null="true" baseline="true">
+				<description>ISO 3166-1 alpha-2</description>
+			</field>
+			<field name="iso_3_code" type="string" size="3" case_sensitive="false" not_null="true" baseline="true">
+				<description>ISO 3166-1 alpha-3</description>
+			</field>
+			<field name="numerical_code" type="string" size="6" not_null="true" baseline="true">
+				<description>UN M49 Numerical Code</description>
+			</field>
+			<field name="continent_code" type="string" size="2" case_sensitive="false" not_null="true" baseline="true">
+				<description>UN M49 Numerical Code</description>
+			</field>
+			<field name="active" type="boolean" baseline="true" not_null="true" default="true">
+				<description>Active/inactive</description>
+			</field>
+		</field_list>
+		<relation_list>
+			<relation name="country2continent" type="MTO" to="continent" inverse_Relation="continent2country" />
+		</relation_list>
+		<index_list>
+			<index name="name" unique="false" baseline="false">
+				<index_field name="name"/>
+				<index_field name="code"/>
+				<index_field name="iso_2_code"/>
+			</index>
+			<index name="code" unique="false" baseline="true">
+				<index_field name="code"/>
+			</index>
+			<index name="iso_2_code" unique="true" baseline="true">
+				<index_field name="iso_2_code"/>
+			</index>
+			<index name="iso_3_code" unique="true" baseline="true">
+				<index_field name="iso_3_code"/>
+			</index>
+			<index name="numerical_code" unique="false" baseline="true">
+				<index_field name="numerical_code"/>
+			</index>
+		</index_list>
+	</table>
+	<table name="continent" id="1031" baseline="true" subject="Installation Continent">
+		<description>Continent object which defines each continent</description>
+		<field_list>
+			<field name="name" type="string" size="50" case_sensitive="false" not_null="true" baseline="true" multilingual="true">
+				<description>Name of the specific continent</description>
+			</field>
+			<field name="code" type="string" size="2" case_sensitive="false" not_null="true" baseline="true">
+				<description>continent code</description>
+			</field>
+			
+		</field_list>
+		<relation_list>
+			<relation name="continent2country" type="OTM" to="country" inverse_Relation="country2continent" />
+		</relation_list>
+		<index_list>
+			<index name="name" unique="true" baseline="true">
+				<index_field name="name"/>
+			</index>
+		</index_list>
+	</table>
+	
+</schema>		

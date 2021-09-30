@@ -1,0 +1,5 @@
+C:\Temp\Coding\Poms\bin\Debug\Poms.dll
+C:\Temp\Coding\Poms\bin\Debug\Poms.pdb
+C:\Temp\Coding\Poms\obj\Debug\Poms.dll
+C:\Temp\Coding\Poms\obj\Debug\Poms.pdb
+C:\Temp\Coding\Poms\obj\Debug\Poms.csprojResolveAssemblyReference.cache

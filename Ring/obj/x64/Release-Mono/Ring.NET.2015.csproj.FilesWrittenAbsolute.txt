@@ -1,0 +1,3 @@
+C:\Temp\Coding\Ring\obj\x64\Release-Mono\.NETFramework,Version=v4.6.AssemblyAttribute.cs
+C:\Temp\Coding\Ring\bin\x64-mono\Release\Ring.dll
+C:\Temp\Coding\Ring\obj\x64\Release-Mono\Ring.dll

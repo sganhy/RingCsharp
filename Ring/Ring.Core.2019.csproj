@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="build.14.x64.Mono.cmd" />
+    <None Remove="build.2015.x64.cmd" />
+    <None Remove="build.Core.2.0.x64.cmd" />
+    <None Remove="x64.Core.Obfuscar.config" />
+    <None Remove="x64.Obfuscar.config" />
+  </ItemGroup>
+
+</Project>

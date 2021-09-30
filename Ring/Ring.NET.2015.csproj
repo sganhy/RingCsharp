@@ -1,0 +1,220 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <ProjectGuid>{8920BA3E-FD9E-47AF-ACC3-55F4797C9660}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Ring</RootNamespace>
+    <AssemblyName>Ring</AssemblyName>
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\x64\Release\</OutputPath>
+    <DefineConstants>
+    </DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <LangVersion>6</LangVersion>
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release-Mono|x64' ">
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\x64-mono\Release\</OutputPath>
+    <DefineConstants>
+    </DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <LangVersion>6</LangVersion>
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x64' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\x64\Debug\</OutputPath>
+    <DefineConstants>DEBUG</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <LangVersion>6</LangVersion>
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Data\Core\Constants.cs" />
+    <Compile Include="Data\Core\Extensions\BulkRetrieveQueryExtension.cs" />
+    <Compile Include="Data\Core\Extensions\BulkSaveQueryExtension.cs" />
+    <Compile Include="Data\Core\Extensions\Constants.cs" />
+    <Compile Include="Data\Core\Extensions\LoggerExtension.cs" />
+    <Compile Include="Data\Core\Extensions\PathEvaluatorQueryExtension.cs" />
+    <Compile Include="Data\Core\Global.cs" />
+    <Compile Include="Data\DbType.cs" />
+    <Compile Include="Data\Enums\ItemType.cs" />
+    <Compile Include="Data\Enums\JobType.cs" />
+    <Compile Include="Data\Helpers\Constants.cs" />
+    <Compile Include="Data\Helpers\SqlHelper.cs" />
+    <Compile Include="Data\IDbDataReader.cs" />
+    <Compile Include="Data\IDbDataTable.cs" />
+    <Compile Include="Data\IDbDataSet.cs" />
+    <Compile Include="Data\IDbAdapter.cs" />
+    <Compile Include="Data\IDbParameter.cs" />
+    <Compile Include="Data\IDbTransaction.cs" />
+    <Compile Include="Data\IImportParameters.cs" />
+    <Compile Include="Data\Import.cs" />
+    <Compile Include="Data\List.cs" />
+    <Compile Include="Data\Models\ImportParameters.cs" />
+    <Compile Include="Data\Models\Logger.cs" />
+    <Compile Include="Data\Mappers\Constants.cs" />
+    <Compile Include="Data\Mappers\ListMapper.cs" />
+    <Compile Include="Data\Mappers\RecordMapper.cs" />
+    <Compile Include="Data\Models\PathEvaluatorFilter.cs" />
+    <Compile Include="Data\Models\PathEvaluatorQuery.cs" />
+    <Compile Include="Data\Models\PathEvaluatorResult.cs" />
+    <Compile Include="Data\PathEvaluator.cs" />
+    <Compile Include="GlobalContext.cs" />
+    <Compile Include="Data\BulkRetrieve.cs" />
+    <Compile Include="Data\Models\BulkRetrieveFilter.cs" />
+    <Compile Include="Data\Models\BulkRetrieveQuery.cs" />
+    <Compile Include="Data\BulkSave.cs" />
+    <Compile Include="Data\Models\BulkSaveQuery.cs" />
+    <Compile Include="Data\Models\BulkSort.cs" />
+    <Compile Include="Data\Core\ConnectionPool.cs" />
+    <Compile Include="Data\ConnectionState.cs" />
+    <Compile Include="Data\Constants.cs" />
+    <Compile Include="Data\Enums\BulkQueryType.cs" />
+    <Compile Include="Data\Enums\BulkSaveType.cs" />
+    <Compile Include="Data\OperationType.cs" />
+    <Compile Include="Data\Enums\SortOrderType.cs" />
+    <Compile Include="Data\IConfiguration.cs" />
+    <Compile Include="Data\IDbConnection.cs" />
+    <Compile Include="Data\IDbCommand.cs" />
+    <Compile Include="Data\Record.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="PropertiesContext.cs" />
+    <Compile Include="PropertyType.cs" />
+    <Compile Include="Schema\Builders\LanguageBuilder.cs" />
+    <Compile Include="Schema\Builders\LexiconBuilder.cs" />
+    <Compile Include="Schema\Builders\SequenceBuilder.cs" />
+    <Compile Include="Schema\Builders\TableSpaceBuilder.cs" />
+    <Compile Include="Schema\Constants.cs" />
+    <Compile Include="Schema\Core\Extensions\Constants.cs" />
+    <Compile Include="Schema\Core\Extensions\EntityTypeExtension.cs" />
+    <Compile Include="Schema\Core\Extensions\FieldExtension.cs" />
+    <Compile Include="Schema\Core\Extensions\FieldTypeExtension.cs" />
+    <Compile Include="Schema\Core\Extensions\IndexExtension.cs" />
+    <Compile Include="Schema\Core\Extensions\LexiconExtension.cs" />
+    <Compile Include="Schema\Core\Extensions\MetaDataExtension.cs" />
+    <Compile Include="Schema\Core\Extensions\models\EntityTypeEnumsId.cs" />
+    <Compile Include="Schema\Core\Extensions\models\FieldTypeEnumsId.cs" />
+    <Compile Include="Schema\Core\Extensions\models\RelationTypeEnumsId.cs" />
+    <Compile Include="Schema\Core\Extensions\models\RelationTypeEnumsName.cs" />
+    <Compile Include="Schema\Core\Extensions\RelationExtension.cs" />
+    <Compile Include="Schema\Core\Extensions\SchemaExtension.cs" />
+    <Compile Include="Schema\Core\Extensions\SequenceExtension.cs" />
+    <Compile Include="Schema\Core\Extensions\TableExtension.cs" />
+    <Compile Include="Schema\Core\Extensions\TableSpaceExtension.cs" />
+    <Compile Include="Schema\Core\Rules\Constants.cs" />
+    <Compile Include="Schema\Core\Rules\Impl\Constants.cs" />
+    <Compile Include="Schema\Core\Rules\Impl\ValidationMetaDataType.cs" />
+    <Compile Include="Schema\Core\Rules\Impl\ValidationMetaId.cs" />
+    <Compile Include="Schema\Core\Rules\Impl\ValidationMetaIndex.cs" />
+    <Compile Include="Schema\Core\Rules\Impl\ValidationMetaName.cs" />
+    <Compile Include="Schema\Core\Rules\Impl\ValidationMetaRelation.cs" />
+    <Compile Include="Schema\Core\Rules\Impl\ValidationTableMetaKey.cs" />
+    <Compile Include="Schema\Core\Rules\IValidationRule.cs" />
+    <Compile Include="Schema\Enums\ConstraintType.cs" />
+    <Compile Include="Schema\Enums\DatabaseCollectionStatus.cs" />
+    <Compile Include="Schema\Enums\DatabaseOperation.cs" />
+    <Compile Include="Data\DatabaseProvider.cs" />
+    <Compile Include="Schema\Enums\EntityType.cs" />
+    <Compile Include="Schema\Enums\FieldKey.cs" />
+    <Compile Include="Schema\Enums\LogLevel.cs" />
+    <Compile Include="Schema\Enums\PhysicalType.cs" />
+    <Compile Include="Schema\Enums\TableType.cs" />
+    <Compile Include="Schema\Helpers\Constants.cs" />
+    <Compile Include="Schema\Helpers\PostgreSqlHelper.cs" />
+    <Compile Include="Schema\Helpers\SqlHelper.cs" />
+    <Compile Include="Schema\Helpers\SqliteHelper.cs" />
+    <Compile Include="Schema\Mappers\Constants.cs" />
+    <Compile Include="Schema\Mappers\MetaDataMapper.cs" />
+    <Compile Include="Schema\Models\Language.cs" />
+    <Compile Include="Schema\Models\Lexicon.cs" />
+    <Compile Include="Schema\Models\LexiconIndex.cs" />
+    <Compile Include="Schema\Models\Node.cs" />
+    <Compile Include="Schema\Models\PreparedStatement.cs" />
+    <Compile Include="Schema\Models\Sequence.cs" />
+    <Compile Include="Schema\Models\TableSpace.cs" />
+    <Compile Include="Util\Builders\Constants.cs" />
+    <Compile Include="Util\Builders\ExcelFieldBuilder.cs" />
+    <Compile Include="Util\Builders\ExcelSheetBuilder.cs" />
+    <Compile Include="Util\Builders\RecordBuilder.cs" />
+    <Compile Include="Util\Core\Extensions\StringBuilderExtension.cs" />
+    <Compile Include="Util\Enums\ExcelCellType.cs" />
+    <Compile Include="Util\HashMap.cs" />
+    <Compile Include="Util\Helpers\HashHelper.cs" />
+    <Compile Include="Util\Helpers\XmlHelper.cs" />
+    <Compile Include="Schema\Models\CacheId.cs" />
+    <Compile Include="Schema\Builders\IndexBuilder.cs" />
+    <Compile Include="Schema\Builders\MetaDataBuilder.cs" />
+    <Compile Include="Schema\Builders\RoleBuilder.cs" />
+    <Compile Include="Schema\Builders\SchemaBuilder.cs" />
+    <Compile Include="Schema\Builders\TableBuilder.cs" />
+    <Compile Include="Schema\Models\BaseEntity.cs" />
+    <Compile Include="Schema\Builders\Constants.cs" />
+    <Compile Include="Schema\Builders\EntityBuilder.cs" />
+    <Compile Include="Schema\Builders\FieldBuilder.cs" />
+    <Compile Include="Schema\Builders\RelationBuilder.cs" />
+    <Compile Include="Schema\Models\MetaData.cs" />
+    <Compile Include="Schema\Models\Role.cs" />
+    <Compile Include="Schema\Models\Schema.cs" />
+    <Compile Include="Schema\Enums\SchemaLoadType.cs" />
+    <Compile Include="Schema\Enums\SchemaSourceType.cs" />
+    <Compile Include="Schema\Models\Field.cs" />
+    <Compile Include="Schema\Enums\FieldType.cs" />
+    <Compile Include="Schema\Models\Index.cs" />
+    <Compile Include="Schema\Models\Relation.cs" />
+    <Compile Include="Schema\Enums\RelationType.cs" />
+    <Compile Include="Data\Core\DatabaseCollection.cs" />
+    <Compile Include="Schema\Models\Table.cs" />
+    <Compile Include="Schema\Models\ValidationItem.cs" />
+    <Compile Include="Schema\Core\Rules\Impl\ValidationResult.cs" />
+    <Compile Include="Schema\SchemaMgr.cs" />
+    <Compile Include="Util\Constants.cs" />
+    <Compile Include="Util\Core\Extensions\DictionaryExtension.cs" />
+    <Compile Include="Util\Core\Extensions\SortedDictionaryExtension.cs" />
+    <Compile Include="Util\ExcelWorkbook.cs" />
+    <Compile Include="Util\Models\ExcelColumn.cs" />
+    <Compile Include="Util\Models\ExcelField.cs" />
+    <Compile Include="Util\Models\ExcelSheet.cs" />
+    <Compile Include="Util\Models\HashMapEntry.cs" />
+    <Compile Include="Util\NamingConvention.cs" />
+    <Compile Include="Util\Obfuscator.cs" />
+    <Compile Include="Util\ObjectPool.cs" />
+    <Compile Include="Web\Constants.cs" />
+    <Compile Include="Web\Core\Extensions\Constants.cs" />
+    <Compile Include="Web\Core\Extensions\HttpListenerContextExtension.cs" />
+    <Compile Include="Web\Core\Extensions\HttpListenerRequestExtension.cs" />
+    <Compile Include="Web\Enums\HtmlTag.cs" />
+    <Compile Include="Web\Enums\HtmlAttribute.cs" />
+    <Compile Include="Web\Enums\HttpVerb.cs" />
+    <Compile Include="Web\Helpers\Constants.cs" />
+    <Compile Include="Web\Helpers\HtmlHelper.cs" />
+    <Compile Include="Web\Helpers\JsonHelper.cs" />
+    <Compile Include="Web\WebServer.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Schema\Scripts\" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
