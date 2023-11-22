@@ -1,1 +1,0 @@
-C:\Temp\Coding\SchemaMgr\Ring.Adapters.PostgreSQL\obj\Release\Ring.Adapters.PostgreSQL.csprojResolveAssemblyReference.cache

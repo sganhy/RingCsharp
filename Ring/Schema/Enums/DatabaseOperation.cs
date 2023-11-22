@@ -1,9 +1,8 @@
-﻿namespace Ring.Schema.Enums
+﻿namespace Ring.Schema.Enums;
+
+internal enum DatabaseOperation : byte
 {
-    internal enum DatabaseOperation : byte
-    {
-        Create = 2,
-        Delete = 3,
-		None = 10
-    }
+    Create = 2,
+    Delete = 3,
+    None = 10
 }

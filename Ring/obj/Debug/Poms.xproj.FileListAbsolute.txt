@@ -1,2 +1,0 @@
-C:\Temp\Coding\Poms\obj\Debug\Poms.dll
-C:\Temp\Coding\Poms\obj\Debug\Poms.pdb

@@ -1,19 +1,20 @@
-﻿namespace Ring.Schema.Enums
+﻿namespace Ring.Schema.Enums;
+
+internal enum FieldType : byte
 {
-    internal enum FieldType : byte
-    {
-        Long = 0,
-        Int = 1,
-        Short = 2,
-        Byte = 3,
-        Float = 4,
-        Double = 5,
-        String = 6,
-        ShortDateTime = 7,
-        DateTime = 8,
-        LongDateTime = 9,
-        Array = 11,
-        Boolean = 13,
-        NotDefined = 127
-    }
+    Long           = 0,
+    Int            = 1,
+    Short          = 2,
+    Byte           = 3,
+    Float          = 14,
+    Double         = 15,
+    String         = 16,
+    ShortDateTime  = 17,
+    DateTime       = 18,
+    LongDateTime   = 19,
+    ByteArray      = 21,
+    Boolean        = 23,
+    LongString     = 27,
+    // 125 & 126 reserved for unit tests
+    Undefined = 127
 }

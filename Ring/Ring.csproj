@@ -1,8 +1,35 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+	<LangVersion>10.0</LangVersion>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Util\Resources\LogMessage.txt" />
+    <None Remove="Util\Resources\MySQLReservedKeyWord.gz" />
+    <None Remove="Util\Resources\PostgreSQLReservedKeyWord.gz" />
+    <None Remove="Util\Resources\SQLiteReservedKeyWord.gz" />
+    <None Remove="Util\Resources\SQLServerReservedKeyWord.gz" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Util\Resources\LogMessage.txt" />
+    <EmbeddedResource Include="Util\Resources\MySQLReservedKeyWord.gz" />
+    <EmbeddedResource Include="Util\Resources\PostgreSQLReservedKeyWord.gz" />
+    <EmbeddedResource Include="Util\Resources\SQLiteReservedKeyWord.gz" />
+    <EmbeddedResource Include="Util\Resources\SQLServerReservedKeyWord.gz" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Data\" />
+    <Folder Include="Providers\Extensions\" />
+    <Folder Include="Providers\SQLServer\" />
+    <Folder Include="Providers\Oracle\" />
+    <InternalsVisibleTo Include="Ring.Tests" />
+	<InternalsVisibleTo Include="Ring.Console" />
+  </ItemGroup>
 
 </Project>

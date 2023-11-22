@@ -1,5 +1,0 @@
-C:\Temp\Coding\ConnectionPool\ConsoleApplication1\bin\Release\ConsoleApplication1.exe.config
-C:\Temp\Coding\ConnectionPool\ConsoleApplication1\bin\Release\ConsoleApplication1.exe
-C:\Temp\Coding\ConnectionPool\ConsoleApplication1\bin\Release\ConsoleApplication1.pdb
-C:\Temp\Coding\ConnectionPool\ConsoleApplication1\obj\Release\ConsoleApplication1.exe
-C:\Temp\Coding\ConnectionPool\ConsoleApplication1\obj\Release\ConsoleApplication1.pdb

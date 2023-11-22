@@ -1,10 +1,9 @@
-﻿namespace Ring.Schema.Enums
+﻿namespace Ring.Schema.Enums;
+
+internal enum DatabaseCollectionStatus : byte
 {
-    internal enum DatabaseCollectionStatus : byte
-    {
-        NotReady = 0,
-        Ready = 1,
-        Loading = 2,
-        Upgrading = 6
-    }
+    NotReady = 0,
+    Ready = 1,
+    Loading = 2,
+    Upgrading = 6
 }

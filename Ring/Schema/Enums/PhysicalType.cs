@@ -1,11 +1,12 @@
-﻿namespace Ring.Schema.Enums
+﻿namespace Ring.Schema.Enums;
+
+internal enum PhysicalType : byte
 {
-    internal enum PhysicalType : byte
-    {
-        /// <summary>
-        ///     Business table
-        /// </summary>
-        Table = 1,
-        View = 3,
-    }
+    /// <summary>
+    ///     Business table
+    /// </summary>
+    Table = 1,
+    View = 3,
+    Measurement = 5,
+    Logical = 11
 }

@@ -1,8 +1,7 @@
-namespace Ring.Schema.Enums
+namespace Ring.Schema.Enums;
+
+public enum SchemaLoadType : long
 {
-    public enum SchemaLoadType : long
-    {
-        Full = 1L,
-        QueryOnly = 2L // only field, relation & unique index !;;;
-    }
+    Full = 1L,
+    QueryOnly = 2L // only fields, relations & unique indexes !
 }

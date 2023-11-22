@@ -1,6 +1,0 @@
-C:\Temp\Coding\HashFunction\bin\x64\Release\Test.exe.config
-C:\Temp\Coding\HashFunction\bin\x64\Release\Test.exe
-C:\Temp\Coding\HashFunction\bin\x64\Release\Test.pdb
-C:\Temp\Coding\HashFunction\obj\x64\Release\Test.exe
-C:\Temp\Coding\HashFunction\obj\x64\Release\Test.pdb
-C:\Temp\Coding\HashFunction\obj\x64\Release\HashFunctionsTest.csprojResolveAssemblyReference.cache

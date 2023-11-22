@@ -1,5 +1,0 @@
-C:\Temp\Coding\Ring.Adapters.SQLite\bin\x64\Release\Ring.Adapters.SQLite.dll
-C:\Temp\Coding\Ring.Adapters.SQLite\bin\x64\Release\Ring.dll
-C:\Temp\Coding\Ring.Adapters.SQLite\bin\x64\Release\System.Data.SQLite.dll
-C:\Temp\Coding\Ring.Adapters.SQLite\obj\x64\Release\Ring.Adapters.SQLite.csprojResolveAssemblyReference.cache
-C:\Temp\Coding\Ring.Adapters.SQLite\obj\x64\Release\Ring.Adapters.SQLite.dll

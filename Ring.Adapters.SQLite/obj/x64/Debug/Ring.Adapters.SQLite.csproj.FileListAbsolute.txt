@@ -1,8 +1,0 @@
-C:\Temp\Coding\Ring.Adapters.SQLite\obj\x64\Debug\Ring.Adapters.SQLite.csprojResolveAssemblyReference.cache
-C:\Temp\Coding\Ring.Adapters.SQLite\bin\x64\Debug\Ring.Adapters.SQLite.dll
-C:\Temp\Coding\Ring.Adapters.SQLite\bin\x64\Debug\Ring.Adapters.SQLite.pdb
-C:\Temp\Coding\Ring.Adapters.SQLite\bin\x64\Debug\Ring.dll
-C:\Temp\Coding\Ring.Adapters.SQLite\bin\x64\Debug\System.Data.SQLite.dll
-C:\Temp\Coding\Ring.Adapters.SQLite\bin\x64\Debug\Ring.pdb
-C:\Temp\Coding\Ring.Adapters.SQLite\obj\x64\Debug\Ring.Adapters.SQLite.dll
-C:\Temp\Coding\Ring.Adapters.SQLite\obj\x64\Debug\Ring.Adapters.SQLite.pdb

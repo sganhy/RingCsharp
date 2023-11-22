@@ -1,4 +1,0 @@
-C:\Temp\Coding\Poms\bin\Release\Poms.dll
-C:\Temp\Coding\Poms\bin\Release\Poms.pdb
-C:\Temp\Coding\Poms\obj\Release\Poms.dll
-C:\Temp\Coding\Poms\obj\Release\Poms.pdb

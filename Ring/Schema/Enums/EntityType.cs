@@ -1,22 +1,19 @@
-﻿namespace Ring.Schema.Enums
+﻿namespace Ring.Schema.Enums;
+
+//more than 127 reserved for unitesting
+//value should be defined as [0,126[ 
+internal enum EntityType : byte
 {
-    internal enum EntityType : sbyte
-    {
-        Null = -1, // reserve for null entity
-        Table = 0,
-        Field = 1,
-        Relation = 2,
-        Index = 3,
-        Schema = 7,
-        Service = 8,
-        Role = 9,
-        Lexicon = 11,
-        Language = 12,
-        Sequence = 15,
-        Assembly = 16,
-        Event = 17,
-        TableSpace = 18,
-        NotDefined = 99,
-        Comment = 100
-    }
+    Table       = 0,
+    Field       = 1,
+    Relation    = 2,
+    Index       = 3,
+    Schema      = 7,
+    Sequence    = 15,
+    Language    = 17,
+    Tablespace  = 18,
+    Parameter   = 23,
+    Alias       = 25,
+    Constraint  = 101, // not stored in @meta table
+    Undefined = 127
 }

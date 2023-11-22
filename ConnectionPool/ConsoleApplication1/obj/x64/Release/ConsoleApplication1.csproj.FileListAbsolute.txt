@@ -1,6 +1,0 @@
-C:\Temp\Coding\ConnectionPool\ConsoleApplication1\bin\x64\Release\ConsoleApplication1.exe.config
-C:\Temp\Coding\ConnectionPool\ConsoleApplication1\bin\x64\Release\ConsoleApplication1.exe
-C:\Temp\Coding\ConnectionPool\ConsoleApplication1\bin\x64\Release\ConsoleApplication1.pdb
-C:\Temp\Coding\ConnectionPool\ConsoleApplication1\obj\x64\Release\ConsoleApplication1.exe
-C:\Temp\Coding\ConnectionPool\ConsoleApplication1\obj\x64\Release\ConsoleApplication1.pdb
-C:\Temp\Coding\ConnectionPool\ConsoleApplication1\obj\x64\Release\ConsoleApplication1.csprojResolveAssemblyReference.cache

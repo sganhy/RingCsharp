@@ -1,9 +1,0 @@
-C:\Temp\Coding\SchemaMgr\Ring.Adapters.PostgreSQL\obj\Debug\Ring.Adapters.PostgreSQL.csprojResolveAssemblyReference.cache
-C:\Temp\Coding\SchemaMgr\Ring.Adapters.PostgreSQL\bin\Debug\Ring.Adapters.PostgreSQL.dll
-C:\Temp\Coding\SchemaMgr\Ring.Adapters.PostgreSQL\bin\Debug\Ring.Adapters.PostgreSQL.pdb
-C:\Temp\Coding\SchemaMgr\Ring.Adapters.PostgreSQL\bin\Debug\Npgsql.dll
-C:\Temp\Coding\SchemaMgr\Ring.Adapters.PostgreSQL\bin\Debug\Poms.dll
-C:\Temp\Coding\SchemaMgr\Ring.Adapters.PostgreSQL\bin\Debug\Poms.pdb
-C:\Temp\Coding\SchemaMgr\Ring.Adapters.PostgreSQL\bin\Debug\Npgsql.xml
-C:\Temp\Coding\SchemaMgr\Ring.Adapters.PostgreSQL\obj\Debug\Ring.Adapters.PostgreSQL.dll
-C:\Temp\Coding\SchemaMgr\Ring.Adapters.PostgreSQL\obj\Debug\Ring.Adapters.PostgreSQL.pdb

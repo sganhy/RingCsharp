@@ -1,0 +1,11 @@
+C:\Coding\Ring\New\Ring\bin\Debug\net6.0\Ring.deps.json
+C:\Coding\Ring\New\Ring\bin\Debug\net6.0\Ring.dll
+C:\Coding\Ring\New\Ring\bin\Debug\net6.0\Ring.pdb
+C:\Coding\Ring\New\Ring\obj\Debug\net6.0\Ring.GeneratedMSBuildEditorConfig.editorconfig
+C:\Coding\Ring\New\Ring\obj\Debug\net6.0\Ring.AssemblyInfoInputs.cache
+C:\Coding\Ring\New\Ring\obj\Debug\net6.0\Ring.AssemblyInfo.cs
+C:\Coding\Ring\New\Ring\obj\Debug\net6.0\Ring.csproj.CoreCompileInputs.cache
+C:\Coding\Ring\New\Ring\obj\Debug\net6.0\Ring.dll
+C:\Coding\Ring\New\Ring\obj\Debug\net6.0\refint\Ring.dll
+C:\Coding\Ring\New\Ring\obj\Debug\net6.0\Ring.pdb
+C:\Coding\Ring\New\Ring\obj\Debug\net6.0\ref\Ring.dll
