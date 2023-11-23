@@ -1,6 +1,6 @@
 ﻿using Ring.Schema.Models;
 
-namespace Ring.Sql;  
+namespace Ring.Util.Builders;
 
 internal interface ISqlBuilder
 {

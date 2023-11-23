@@ -1,7 +1,7 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Models;
 
-namespace Ring.Sql.SQLServer; 
+namespace Ring.Util.Builders.SQLServer;
 
 internal sealed class DdlBuilder : BaseDdlBuilder
 {
@@ -18,7 +18,7 @@ internal sealed class DdlBuilder : BaseDdlBuilder
         { FieldType.Int,           "int"       },
         { FieldType.Short,         "smallint"  },
         { FieldType.Byte,          "tinyint"   },   // [0, 255]
-        { FieldType.Boolean,       "bit"       }, 
+        { FieldType.Boolean,       "bit"       },
         { FieldType.ShortDateTime, "date"      },
         { FieldType.ByteArray,     "varbinary(MAX)" },
         { FieldType.DateTime,      "datetime2"      },

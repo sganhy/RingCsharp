@@ -18,20 +18,8 @@
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'"/>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'"/>
-
-  <ItemGroup>
-    <Compile Remove="Data\**" />
-    <Compile Remove="Sql\Extensions\**" />
-    <Compile Remove="Sql\Oracle\**" />
-    <EmbeddedResource Remove="Data\**" />
-    <EmbeddedResource Remove="Sql\Extensions\**" />
-    <EmbeddedResource Remove="Sql\Oracle\**" />
-    <None Remove="Data\**" />
-    <None Remove="Sql\Extensions\**" />
-    <None Remove="Sql\Oracle\**" />
-  </ItemGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />
 
   <ItemGroup>
     <None Remove="Util\Resources\LogMessage.txt" />
@@ -52,6 +40,10 @@
   <ItemGroup>
     <InternalsVisibleTo Include="Ring.Tests" />
 	<InternalsVisibleTo Include="Ring.Console" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Data\" />
   </ItemGroup>
 
 </Project>

@@ -1,7 +1,7 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Models;
 
-namespace Ring.Sql.MySQL;
+namespace Ring.Util.Builders.MySQL;
 
 internal class DdlBuilder : BaseDdlBuilder
 {
@@ -31,9 +31,9 @@ internal class DdlBuilder : BaseDdlBuilder
 
     public override DatabaseProvider Provider => DatabaseProvider.MySql;
 
-    protected override string GetDataType(Field field) => 
-        GetDataType(_dataType[field.Type], field.Type, field.Size, VarcharMaxSize, 
-            field.Type == FieldType.String || field.Type == FieldType.LongString ? 
+    protected override string GetDataType(Field field) =>
+        GetDataType(_dataType[field.Type], field.Type, field.Size, VarcharMaxSize,
+            field.Type == FieldType.String || field.Type == FieldType.LongString ?
             StringCollageInformation : null);
 
     protected override string GetDataType(Relation relation)

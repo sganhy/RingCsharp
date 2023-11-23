@@ -1,8 +1,8 @@
-﻿using Ring.Sql;
-using Ring.Schema.Enums;
+﻿using Ring.Schema.Enums;
 using Ring.Util.Extensions;
 using Ring.Util.Helpers;
 using System.Globalization;
+using Ring.Util.Builders;
 
 namespace Ring.Schema.Extensions;
 
@@ -22,10 +22,10 @@ internal static class DatabaseProviderExtensions
     {
         switch (provider)
         {
-            case DatabaseProvider.MySql: return new Sql.MySQL.DdlBuilder();
-            case DatabaseProvider.PostgreSql: return new Sql.PostgreSQL.DdlBuilder();
-            case DatabaseProvider.SqlServer: return new Sql.SQLServer.DdlBuilder();
-            case DatabaseProvider.SqlLite: return new Sql.SQLite.DdlBuilder();
+            case DatabaseProvider.MySql: return new Util.Builders.MySQL.DdlBuilder();
+            case DatabaseProvider.PostgreSql: return new Util.Builders.PostgreSQL.DdlBuilder();
+            case DatabaseProvider.SqlServer: return new Util.Builders.SQLServer.DdlBuilder();
+            case DatabaseProvider.SqlLite: return new Util.Builders.SQLite.DdlBuilder();
         }
         throw new NotImplementedException();
     }

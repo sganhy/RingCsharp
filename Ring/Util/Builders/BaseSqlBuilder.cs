@@ -1,4 +1,4 @@
-﻿namespace Ring.Sql;
+﻿namespace Ring.Util.Builders;
 
 /// <summary>
 /// base class for non-specific RDBMS supporting SQL99-Standard

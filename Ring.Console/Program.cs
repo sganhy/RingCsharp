@@ -17,7 +17,6 @@ var con = new NpgsqlConnection(connectionString: "Server=localhost;Port=5432;Use
 TableBuilder builder = new TableBuilder();
 
 var t = builder.GetMeta("test", Ring.Schema.Enums.DatabaseProvider.PostgreSql);
-var databaseProvider = DatabaseProvider.SqlLite;
 
 Initialize.Start(typeof(NpgsqlConnection), POSTGRE_CONN_STRING1);
 

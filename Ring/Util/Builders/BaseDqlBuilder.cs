@@ -1,4 +1,4 @@
-﻿namespace Ring.Sql;
+﻿namespace Ring.Util.Builders;
 
 internal class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
 {

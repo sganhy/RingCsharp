@@ -1,9 +1,9 @@
 ﻿using AutoFixture;
-using Ring.Sql;
-using Ring.Sql.PostgreSQL;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
+using Ring.Util.Builders;
+using Ring.Util.Builders.PostgreSQL;
 
 namespace Ring.Tests.Providers.PostgreSQL;
 

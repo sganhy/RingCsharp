@@ -3,7 +3,7 @@ using Ring.Schema.Models;
 using System.Runtime.CompilerServices;
 using Index = Ring.Schema.Models.Index;
 using DbSchema = Ring.Schema.Models.Schema;
-using Ring.Sql;
+using Ring.Util.Builders;
 
 namespace Ring.Schema.Extensions;
 

@@ -5,7 +5,7 @@ using System.Text;
 using Index = Ring.Schema.Models.Index;
 using DbSchema = Ring.Schema.Models.Schema;
 
-namespace Ring.Sql;
+namespace Ring.Util.Builders;
 
 internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 {
@@ -114,7 +114,8 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
         return result.ToString();
     }
 
-    protected virtual string GetDataType(string dataType, FieldType fieldType, int size, int maxSize, string? collateInformation = null) {
+    protected virtual string GetDataType(string dataType, FieldType fieldType, int size, int maxSize, string? collateInformation = null)
+    {
         var result = new StringBuilder(dataType);
         if (fieldType == FieldType.String && size > 0 && size <= maxSize)
             result.Append(GetSizeInfo(size));
@@ -138,7 +139,8 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
         for (i = 0; i < table.Relations.Length; ++i) Create(result, table, table.Relations[i]);
         if (i > 0) result.Length = result.Length - 2;
         result.Append(')');
-        if (tablespace != null) {
+        if (tablespace != null)
+        {
             result.Append(SqlSpace);
             result.Append(DdlTableSpace);
             result.Append(GetPhysicalName(tablespace));
@@ -157,12 +159,14 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
     public abstract string Create(TableSpace tablespace);
 
     private static string GetSizeInfo(int size) => $"({size})";
-    private void Create(StringBuilder stringBuilder, Table table, Field field) {
+    private void Create(StringBuilder stringBuilder, Table table, Field field)
+    {
         stringBuilder.Append(Indent);
         stringBuilder.Append(GetPhysicalName(field));
         stringBuilder.Append(SqlSpace);
         stringBuilder.Append(GetDataType(field));
-        if (field.IsPrimaryKey() || (table.Type != TableType.Business && field.NotNull)) {
+        if (field.IsPrimaryKey() || table.Type != TableType.Business && field.NotNull)
+        {
             stringBuilder.Append(SqlSpace);
             stringBuilder.Append(DdlnotNull);
         }

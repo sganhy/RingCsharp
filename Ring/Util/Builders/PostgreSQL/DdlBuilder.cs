@@ -3,10 +3,8 @@ using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using System.Text;
 using DbSchema = Ring.Schema.Models.Schema;
-using Ring.Util;
-using System.Globalization;
 
-namespace Ring.Sql.PostgreSQL;
+namespace Ring.Util.Builders.PostgreSQL;
 
 internal sealed class DdlBuilder : BaseDdlBuilder
 {
@@ -51,21 +49,21 @@ internal sealed class DdlBuilder : BaseDdlBuilder
     protected override string GetDataType(Field field) =>
         GetDataType(_dataType[field.Type], field.Type, field.Size, VarcharMaxSize,
             field.Type == FieldType.String || field.Type == FieldType.LongString ?
-            StringCollageInformation : null); 
+            StringCollageInformation : null);
 
     protected override string GetDataType(Relation relation)
     {
         var pk = relation.ToTable.GetPrimaryKey();
-        if (pk!=null)  return GetDataType(_dataType[pk.Type], FieldType.Long, 0, 0);
+        if (pk != null) return GetDataType(_dataType[pk.Type], FieldType.Long, 0, 0);
         return string.Empty;
     }
 
     public override string GetPhysicalName(Field field) =>
-        _currentProvider.IsReservedWord(field.Name) ^ field.Name.StartsWith(SpecialEntityPrefix) ? 
+        _currentProvider.IsReservedWord(field.Name) ^ field.Name.StartsWith(SpecialEntityPrefix) ?
         string.Join(null, PhysicalNameSeparator, field.Name, PhysicalNameSeparator) : field.Name;
 
     public override string GetPhysicalName(Relation relation) =>
-        _currentProvider.IsReservedWord(relation.Name) ? 
+        _currentProvider.IsReservedWord(relation.Name) ?
         string.Join(null, PhysicalNameSeparator, relation.Name, PhysicalNameSeparator) : relation.Name;
 
     protected override string GetPhysicalName(TableSpace tablespace) => tablespace.Name;
@@ -75,8 +73,8 @@ internal sealed class DdlBuilder : BaseDdlBuilder
 #pragma warning disable CA1308 // Normalize strings to uppercase
         var physicalName = NamingConvention.ToSnakeCase(schema.Name).ToLowerInvariant();
 #pragma warning restore CA1308 // Normalize strings to uppercase
-        return _currentProvider.IsReservedWord(physicalName) ? 
-            string.Join(null, PhysicalNameSeparator, physicalName, PhysicalNameSeparator) : 
+        return _currentProvider.IsReservedWord(physicalName) ?
+            string.Join(null, PhysicalNameSeparator, physicalName, PhysicalNameSeparator) :
             physicalName;
     }
 
@@ -85,7 +83,7 @@ internal sealed class DdlBuilder : BaseDdlBuilder
         var result = new StringBuilder(63); // schema name max length(30)  + table name max length(30) + 1 '.' + 2 '"'
         result.Append(GetPhysicalName(schema));
         result.Append(SchemaSeparator);
-        
+
         switch (table.Type)
         {
             case TableType.Mtm:
@@ -93,7 +91,7 @@ internal sealed class DdlBuilder : BaseDdlBuilder
                 result.Append(MtmPrefix);
                 result.Append(table.Name);
                 result.Append(PhysicalNameSeparator);
-                break; 
+                break;
             default:
                 if (table.Name.StartsWith(SpecialEntityPrefix))
                 {
@@ -101,7 +99,8 @@ internal sealed class DdlBuilder : BaseDdlBuilder
                     result.Append(table.Name);
                     result.Append(PhysicalNameSeparator);
                 }
-                else {
+                else
+                {
 #pragma warning disable CA1308 // Normalize strings to uppercase
                     result.Append(DefaultTablePrefix.ToLowerInvariant());
 #pragma warning restore CA1308 // Normalize strings to uppercase
