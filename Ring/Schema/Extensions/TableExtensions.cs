@@ -38,7 +38,6 @@ internal static class TableExtensions
     /// <returns>Field object</returns>
     internal static Field? GetField(this Table table, string name, StringComparison comparisonType)
     {
-        if (comparisonType == StringComparison.Ordinal) return GetField(table, name);
         for (var i = table.Fields.Length - 1; i >= 0; --i)
             if (table.Fields[i] != null && string.Equals(name, table.Fields[i].Name, comparisonType))
                 return table.Fields[i];
@@ -117,7 +116,6 @@ internal static class TableExtensions
     /// <returns>Relation object</returns>
     internal static Relation? GetRelation(this Table table, string name, StringComparison comparisonType)
     {
-        if (comparisonType == StringComparison.Ordinal) return GetRelation(table, name);
         for (var i = table.Relations.Length - 1; i >= 0; --i)
             if (string.Equals(name, table.Relations[i].Name, comparisonType)) return table.Relations[i];
         return null;

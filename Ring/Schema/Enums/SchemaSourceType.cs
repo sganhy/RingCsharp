@@ -1,10 +1,12 @@
 namespace Ring.Schema.Enums;
 
-public enum SchemaSourceType : long
+#pragma warning disable CA1027 // Mark enums with FlagsAttribute
+public enum SchemaSourceType
+#pragma warning restore CA1027 // Mark enums with FlagsAttribute
 {
-    NativeXml = 1L,
-    ClfyXml = 2L,
-    NativeDataBase = 4L,
-    ClfyDataBase = 5L,
-    UnDefined = -999L
+    UnDefined = 0,
+    NativeXml = 1,
+    ClfyXml = 2,
+    NativeDataBase = 4,
+    ClfyDataBase = 5,
 }

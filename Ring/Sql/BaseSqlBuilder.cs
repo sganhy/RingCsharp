@@ -7,6 +7,6 @@
 internal abstract class BaseSqlBuilder : ISqlBuilder
 {
     // miscelanous
-    protected static readonly char SqlSpace = ' ';
-    protected static readonly char SqlLineFeed = '\n';
+    protected const char SqlSpace = ' ';
+    protected const char SqlLineFeed = '\n';
 }

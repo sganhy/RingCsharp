@@ -7,8 +7,8 @@ namespace Ring.Schema.Extensions;
 
 internal static class RelationExtensions
 {
-    private static readonly char MtmSeparator = '_';
-    private static readonly char PaddingChar = '0';
+    private const char MtmSeparator = '_';
+    private const char PaddingChar = '0';
 
     internal static Meta ToMeta(this Relation relation, int fromTableId)
     {

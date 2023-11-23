@@ -3,16 +3,15 @@
 namespace Ring.Schema.Attributes;
 
 [AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
-internal class ParameterTypeAttribute :  Attribute
+internal sealed class ParameterTypeAttribute :  Attribute
 {
-    public string Name { get; private set; }
-    public string Description { get; private set; }
-    public FieldType ParameterDataType { get; private set; }
-    public EntityType TargetEntity { get; private set; }
-    public string? DefaultValue { get; private set; }
+    internal string Name { get; private set; }
+    internal string Description { get; private set; }
+    internal FieldType ParameterDataType { get; private set; }
+    internal EntityType TargetEntity { get; private set; }
+    internal string? DefaultValue { get; private set; }
 
-
-    public ParameterTypeAttribute(string name, string description, FieldType dataType, EntityType targetEntity, string? defaultValue=null)
+    internal ParameterTypeAttribute(string name, string description, FieldType dataType, EntityType targetEntity, string? defaultValue=null)
     {
         Name = name;
         Description = description;
@@ -21,7 +20,7 @@ internal class ParameterTypeAttribute :  Attribute
         DefaultValue = defaultValue;
     }
 
-    public ParameterTypeAttribute(FieldType dataType, EntityType targetEntity)
+    internal ParameterTypeAttribute(FieldType dataType, EntityType targetEntity)
     {
         Name = string.Empty;
         Description = string.Empty;

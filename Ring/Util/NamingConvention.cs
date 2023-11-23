@@ -11,10 +11,12 @@ internal static class NamingConvention
     public static string ToSnakeCase(string name)
     {
         if (string.IsNullOrEmpty(name)) return name;
+#pragma warning disable CA1308 // Normalize strings to uppercase
         var result = new StringBuilder(char.IsLower(name[0]) ? 
-            name[0].ToString() : name[0].ToString().ToLower(CultureInfo.InvariantCulture));
-        if (name.Contains(Space))
-            name = name.Replace(Space, SnakeCaseSeparator).ToLower(CultureInfo.InvariantCulture);
+            name[0].ToString() : name[0].ToString().ToLowerInvariant());
+        if (name.Contains(Space, StringComparison.Ordinal))
+            name = name.Replace(Space, SnakeCaseSeparator).ToLowerInvariant();
+#pragma warning restore CA1308 // Normalize strings to uppercase
         for (var i = 1; i < name.Length; ++i)
             if (char.IsUpper(name[i]))
             {

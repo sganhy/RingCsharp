@@ -14,7 +14,7 @@ internal sealed class DdlBuilder : BaseDdlBuilder
     private readonly static string StringCollageInformation = @"COLLATE ""C""";
     private readonly static string PhysicalNameSeparator = "\"";
     private readonly static string MtmPrefix = "@mtm_";
-    private readonly static string SchemaSeparator = ".";
+    private const char SchemaSeparator = '.';
     private readonly static char SpecialEntityPrefix = '@';
     private const int VarcharMaxSize = 65535;
 
@@ -71,8 +71,10 @@ internal sealed class DdlBuilder : BaseDdlBuilder
     protected override string GetPhysicalName(TableSpace tablespace) => tablespace.Name;
 
     protected override string GetPhysicalName(DbSchema schema)
-    {   
-        var physicalName = NamingConvention.ToSnakeCase(schema.Name).ToLower(CultureInfo.InvariantCulture);
+    {
+#pragma warning disable CA1308 // Normalize strings to uppercase
+        var physicalName = NamingConvention.ToSnakeCase(schema.Name).ToLowerInvariant();
+#pragma warning restore CA1308 // Normalize strings to uppercase
         return _currentProvider.IsReservedWord(physicalName) ? 
             string.Join(null, PhysicalNameSeparator, physicalName, PhysicalNameSeparator) : 
             physicalName;
@@ -80,7 +82,7 @@ internal sealed class DdlBuilder : BaseDdlBuilder
 
     public override string GetPhysicalName(Table table, DbSchema schema)
     {
-        var result = new StringBuilder(63);
+        var result = new StringBuilder(63); // schema name max length(30)  + table name max length(30) + 1 '.' + 2 '"'
         result.Append(GetPhysicalName(schema));
         result.Append(SchemaSeparator);
         
@@ -100,7 +102,9 @@ internal sealed class DdlBuilder : BaseDdlBuilder
                     result.Append(PhysicalNameSeparator);
                 }
                 else {
-                    result.Append(DefaultTablePrefix.ToLower(CultureInfo.InvariantCulture));
+#pragma warning disable CA1308 // Normalize strings to uppercase
+                    result.Append(DefaultTablePrefix.ToLowerInvariant());
+#pragma warning restore CA1308 // Normalize strings to uppercase
                     result.Append(table.Name);
                 }
                 break;
