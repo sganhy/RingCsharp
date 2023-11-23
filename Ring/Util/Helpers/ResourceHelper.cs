@@ -13,7 +13,7 @@ internal sealed class ResourceHelper
     private static readonly string RessourceNameSpace = @"Ring.Util.Resources.";
     private static readonly char RessourceEndOfLine = '\n';
     private static readonly char MessageDescSplitChar = '#';
-    private static bool _ressourcesLoaded = false;
+    private static bool _ressourcesLoaded;
     private static string?[] _logMessages = Array.Empty<string?>();
     private static string?[] _logDescriptions = Array.Empty<string?>();
 
@@ -45,7 +45,6 @@ internal sealed class ResourceHelper
     }
 
 #pragma warning restore CA1822
-
 
 
     private static void LoadRessources()

@@ -47,7 +47,7 @@ internal static class FieldExtensions
             // CharUnicodeInfo.GetUnicodeCategory(c) <> UnicodeCategory.NonSpacingMark
             var c = normalizedString[i];
             if (char.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
-                result.Append(char.ToUpper(c));
+                result.Append(char.ToUpper(c, CultureInfo.InvariantCulture));
         }
         return result.ToString();
     }

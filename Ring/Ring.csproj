@@ -4,13 +4,27 @@
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-	<LangVersion>10.0</LangVersion>
+	  <LangVersion>10.0</LangVersion>
+	  <Platforms>AnyCPU;x64</Platforms>
+    <AnalysisLevel>6.0-recommended</AnalysisLevel>
+    <AssemblyVersion>1.0.1.0</AssemblyVersion>
+    <FileVersion>1.0.1.0</FileVersion>
+    <RepositoryType>https://github.com/sganhy/RingCsharp.git</RepositoryType>
+    <RepositoryUrl>https://github.com/sganhy/RingCsharp</RepositoryUrl>
+    <Description>Ring</Description>
+    <Title>Ring</Title>
   </PropertyGroup>
 
   <ItemGroup>
     <Compile Remove="Data\**" />
+    <Compile Remove="Sql\Extensions\**" />
+    <Compile Remove="Sql\Oracle\**" />
     <EmbeddedResource Remove="Data\**" />
+    <EmbeddedResource Remove="Sql\Extensions\**" />
+    <EmbeddedResource Remove="Sql\Oracle\**" />
     <None Remove="Data\**" />
+    <None Remove="Sql\Extensions\**" />
+    <None Remove="Sql\Oracle\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -30,9 +44,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Providers\Extensions\" />
-    <Folder Include="Providers\SQLServer\" />
-    <Folder Include="Providers\Oracle\" />
     <InternalsVisibleTo Include="Ring.Tests" />
 	<InternalsVisibleTo Include="Ring.Console" />
   </ItemGroup>

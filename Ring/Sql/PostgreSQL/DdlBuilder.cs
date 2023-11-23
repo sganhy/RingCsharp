@@ -4,6 +4,7 @@ using Ring.Schema.Models;
 using System.Text;
 using DbSchema = Ring.Schema.Models.Schema;
 using Ring.Util;
+using System.Globalization;
 
 namespace Ring.Sql.PostgreSQL;
 
@@ -71,7 +72,7 @@ internal sealed class DdlBuilder : BaseDdlBuilder
 
     protected override string GetPhysicalName(DbSchema schema)
     {   
-        var physicalName = NamingConvention.ToSnakeCase(schema.Name).ToLower();
+        var physicalName = NamingConvention.ToSnakeCase(schema.Name).ToLower(CultureInfo.InvariantCulture);
         return _currentProvider.IsReservedWord(physicalName) ? 
             string.Join(null, PhysicalNameSeparator, physicalName, PhysicalNameSeparator) : 
             physicalName;
@@ -99,7 +100,7 @@ internal sealed class DdlBuilder : BaseDdlBuilder
                     result.Append(PhysicalNameSeparator);
                 }
                 else {
-                    result.Append(DefaultTablePrefix.ToLower());
+                    result.Append(DefaultTablePrefix.ToLower(CultureInfo.InvariantCulture));
                     result.Append(table.Name);
                 }
                 break;

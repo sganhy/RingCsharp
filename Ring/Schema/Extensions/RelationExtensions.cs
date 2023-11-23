@@ -1,5 +1,6 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Models;
+using System.Globalization;
 using System.Text;
 
 namespace Ring.Schema.Extensions;
@@ -35,8 +36,8 @@ internal static class RelationExtensions
         var toTableId = relation.ToTable.Type == TableType.Mtm? 
             (relation.ToTable.GetRelation(relation.Name) ?? relation).ToTable.Id :  relation.ToTable.Id;
         var fromTableId = relation.InverseRelation.ToTable.Id;
-        var sfromTableId = fromTableId.ToString()?.PadLeft(5, PaddingChar);
-        var sToTableId = toTableId.ToString()?.PadLeft(5, PaddingChar);
+        var sfromTableId = fromTableId.ToString(CultureInfo.InvariantCulture)?.PadLeft(5, PaddingChar);
+        var sToTableId = toTableId.ToString(CultureInfo.InvariantCulture)?.PadLeft(5, PaddingChar);
         var result = new StringBuilder();
         int relId;
 
@@ -56,8 +57,9 @@ internal static class RelationExtensions
         }
         _ = result.Append(MtmSeparator);
 
-        if (fromTableId != toTableId) _ = result.Append(relId.ToString().PadLeft(3, PaddingChar));
-        else _ = result.Append(Math.Min(relation.Id, relation.InverseRelation.Id).ToString().PadLeft(3, PaddingChar));
+        if (fromTableId != toTableId) _ = result.Append(relId.ToString(CultureInfo.InvariantCulture).PadLeft(3, PaddingChar));
+        else _ = result.Append(Math.Min(relation.Id, relation.InverseRelation.Id).ToString(CultureInfo.InvariantCulture)
+            .PadLeft(3, PaddingChar));
 
         return result.ToString();
     }

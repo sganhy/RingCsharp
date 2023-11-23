@@ -128,7 +128,6 @@ internal static class SchemaExtensions
         var count = schema.TablesById.Length;
         var ddlBuilder = schema.Provider.GetDdlBuilder();
         var i = 0;
-        var tableBuilder = new TableBuilder();
         Table table;
         Table mtmTable;
         
@@ -148,7 +147,7 @@ internal static class SchemaExtensions
 
                     if (!mtm.ContainsKey(physicalName))
                     {
-                        mtmTable = tableBuilder.GetMtmTable(emptyTable, physicalName);
+                        mtmTable = TableBuilder.GetMtmTable(emptyTable, physicalName);
                         //  step 2 - load relations - sort relation
                         if (string.CompareOrdinal(relation.Name, inverseRelation.Name) < 0)
                         {

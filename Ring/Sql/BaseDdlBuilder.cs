@@ -156,7 +156,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
     public abstract string GetPhysicalName(Field field);
     public abstract string Create(TableSpace tablespace);
 
-    private string GetSizeInfo(int size) => $"({size})";
+    private static string GetSizeInfo(int size) => $"({size})";
     private void Create(StringBuilder stringBuilder, Table table, Field field) {
         stringBuilder.Append(Indent);
         stringBuilder.Append(GetPhysicalName(field));

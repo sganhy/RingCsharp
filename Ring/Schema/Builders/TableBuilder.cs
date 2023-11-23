@@ -78,7 +78,8 @@ internal sealed class TableBuilder
         var metaTable = GetTable((int)TableType.Log, TableLogName);
         return GetTable(schemaName, provider, metaList.ToArray(), metaTable, TableType.Log);
     }
-    internal Table GetMtmTable(Table partialTable, string physicalName)
+
+    internal static Table GetMtmTable(Table partialTable, string physicalName)
     {
         var metaTable = new Meta(partialTable.Name);
         metaTable.ObjectType = (byte)EntityType.Table;

@@ -3,6 +3,7 @@ using Ring.Util.Extensions;
 using Ring.Util.Helpers;
 using Ring.Util.Models;
 using System.Diagnostics;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 
 namespace Ring.Util.Builders;
@@ -10,7 +11,7 @@ namespace Ring.Util.Builders;
 internal sealed class LogBuilder
 {
     private readonly ResourceHelper _resourceHelper = new ();
-    internal long? JobId { set; get; } = default;
+    internal long? JobId { set; get; }
     internal int SchemaId { set; get; }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
@@ -46,8 +47,10 @@ internal sealed class LogBuilder
     }
     private string? GetMessage(LogType logType) => _resourceHelper.GetMessage(logType);
     private string? GetDescription(LogType logType, params object?[] args)
-        => args.Length > 0 ? string.Format(_resourceHelper.GetDescription(logType) ?? string.Empty, args) :
+        => args.Length > 0 ? string.Format(CultureInfo.InvariantCulture, 
+                _resourceHelper.GetDescription(logType) ?? string.Empty, args) :
                 _resourceHelper.GetDescription(logType);
+
     #endregion 
 
 }

@@ -1,5 +1,6 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Models;
+using System.Globalization;
 
 namespace Ring.Schema.Extensions;
 
@@ -35,8 +36,9 @@ internal static class ParameterExtensions
     internal static int GetMinPoolSize(this Parameter[] parameters, int schemaId) 
     { 
         var param = GetParameter(parameters, ParameterType.MinPoolSize, schemaId);
-        return param != null ? int.Parse(param.Value) : 
-            int.Parse(ParameterTypeExtensions.GetDefaultValue(ParameterType.MinPoolSize)?? DefaultConnPoolSize);
+        return param != null ? int.Parse(param.Value, CultureInfo.InvariantCulture) : 
+            int.Parse(ParameterTypeExtensions.GetDefaultValue(ParameterType.MinPoolSize) ?? DefaultConnPoolSize, 
+                CultureInfo.InvariantCulture);
     }
     internal static string GetDbConnectionString(this Parameter[] parameters, int schemaId)
     {
@@ -51,8 +53,9 @@ internal static class ParameterExtensions
     internal static int GetMaxPoolSize(this Parameter[] parameters, int schemaId)
     {
         var param = GetParameter(parameters, ParameterType.MaxPoolSize, schemaId); 
-        return param != null ? int.Parse(param.Value) :
-            int.Parse(ParameterTypeExtensions.GetDefaultValue(ParameterType.MinPoolSize) ?? DefaultConnPoolSize);
+        return param != null ? int.Parse(param.Value, CultureInfo.InvariantCulture) :
+            int.Parse(ParameterTypeExtensions.GetDefaultValue(ParameterType.MinPoolSize) ?? 
+            DefaultConnPoolSize, CultureInfo.InvariantCulture);
     }
 
 }
