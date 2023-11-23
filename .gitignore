@@ -1,0 +1,5 @@
+release/*
+.pkg/*
+bin/*
+static/*
+keys/*
