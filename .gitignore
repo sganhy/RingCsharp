@@ -1,5 +1,7 @@
-release/*
+**/Release/
+**/Debug/
 .pkg/*
-bin/*
-static/*
-keys/*
+**/bin/
+**/obj/
+**/.vs/*
+**/static/

@@ -8,6 +8,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Data\**" />
+    <EmbeddedResource Remove="Data\**" />
+    <None Remove="Data\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Remove="Util\Resources\LogMessage.txt" />
     <None Remove="Util\Resources\MySQLReservedKeyWord.gz" />
     <None Remove="Util\Resources\PostgreSQLReservedKeyWord.gz" />
@@ -24,7 +30,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Data\" />
     <Folder Include="Providers\Extensions\" />
     <Folder Include="Providers\SQLServer\" />
     <Folder Include="Providers\Oracle\" />
