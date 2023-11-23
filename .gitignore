@@ -3,5 +3,5 @@
 .pkg/*
 **/bin/
 **/obj/
-**/.vs/*
+./Ring.Console/.vs/*
 **/static/
