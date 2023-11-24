@@ -68,4 +68,11 @@ internal static class RelationExtensions
         => !ReferenceEquals(relation.InverseRelation, relation) && 
            (relation.Type != RelationType.Mtm || relation.ToTable.Type == TableType.Mtm);
 
+    internal static Relation GetRelation(this Relation relation, RelationType relationType)
+    {
+        var meta = relation.ToMeta(-1);
+        meta.SetRelationType(relationType);
+        return meta.ToRelation(relation.ToTable) ?? relation;
+    }
+
 }

@@ -231,8 +231,8 @@ public class DdlBuilderTest : BaseBuilderTest
     public void GetPhysicalName_MtmTable1_TableName()
     {
         // arrange 
-        var emptyTable = MetaExtensions.GetEmptyTable(new Meta("test"), TableType.Mtm);
-        var emptySchema = MetaExtensions.GetEmptySchema(new Meta("where"));
+        var emptyTable = MetaExtensions.GetEmptyTable(new Meta("Test"), TableType.Mtm);
+        var emptySchema = MetaExtensions.GetEmptySchema(new Meta("Where"));
         var ddlBuilder = DatabaseProvider.PostgreSql.GetDdlBuilder();
         var expectedValue = "\"where\".\"@mtm_test\"";
 

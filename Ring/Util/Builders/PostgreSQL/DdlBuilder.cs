@@ -72,7 +72,7 @@ internal sealed class DdlBuilder : BaseDdlBuilder
     {
 #pragma warning disable CA1308 // Normalize strings to uppercase
         var physicalName = NamingConvention.ToSnakeCase(schema.Name).ToLowerInvariant();
-#pragma warning restore CA1308 // Normalize strings to uppercase
+#pragma warning restore CA1308 
         return _currentProvider.IsReservedWord(physicalName) ?
             string.Join(null, PhysicalNameSeparator, physicalName, PhysicalNameSeparator) :
             physicalName;
@@ -81,6 +81,9 @@ internal sealed class DdlBuilder : BaseDdlBuilder
     public override string GetPhysicalName(Table table, DbSchema schema)
     {
         var result = new StringBuilder(63); // schema name max length(30)  + table name max length(30) + 1 '.' + 2 '"'
+#pragma warning disable CA1308 // Normalize strings to uppercase
+        var tableName = NamingConvention.ToSnakeCase(table.Name).ToLowerInvariant();
+#pragma warning restore CA1308 
         result.Append(GetPhysicalName(schema));
         result.Append(SchemaSeparator);
 
@@ -89,22 +92,20 @@ internal sealed class DdlBuilder : BaseDdlBuilder
             case TableType.Mtm:
                 result.Append(PhysicalNameSeparator);
                 result.Append(MtmPrefix);
-                result.Append(table.Name);
+                result.Append(tableName);
                 result.Append(PhysicalNameSeparator);
                 break;
             default:
                 if (table.Name.StartsWith(SpecialEntityPrefix))
                 {
                     result.Append(PhysicalNameSeparator);
-                    result.Append(table.Name);
+                    result.Append(tableName);
                     result.Append(PhysicalNameSeparator);
                 }
                 else
                 {
-#pragma warning disable CA1308 // Normalize strings to uppercase
-                    result.Append(DefaultTablePrefix.ToLowerInvariant());
-#pragma warning restore CA1308 // Normalize strings to uppercase
-                    result.Append(table.Name);
+                    result.Append(DefaultTablePrefix);
+                    result.Append(tableName);
                 }
                 break;
         }

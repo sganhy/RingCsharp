@@ -7,10 +7,10 @@ namespace Ring.Schema.Builders;
 internal sealed class TableBuilder
 {
     private int _ItemId = 1;
-
-    internal static readonly string TableMetaIdName = "@meta_id";
-    internal static readonly string TableMetaName = "@meta";
-    internal static readonly string TableLogName = "@log";
+    internal static readonly string SystemTablePrefix = "@";
+    internal static readonly string TableMetaIdName = SystemTablePrefix + "meta_id";
+    internal static readonly string TableMetaName = SystemTablePrefix + "meta";
+    internal static readonly string TableLogName = SystemTablePrefix + "log";
     internal static readonly string FieldId = "id";
     internal static readonly string FieldSchemaId = "schema_id";
     internal static readonly string FieldObjectType = "object_type";
@@ -81,10 +81,11 @@ internal sealed class TableBuilder
 
     internal static Table GetMtmTable(Table partialTable, string physicalName)
     {
-        var metaTable = new Meta(partialTable.Name);
-        metaTable.ObjectType = (byte)EntityType.Table;
+        // add @ prefix to logical name
+        var metaTable = new Meta(SystemTablePrefix + partialTable.Name);
+        metaTable.SetEntityType(EntityType.Table);
         var metaRelation = new Meta(partialTable.Name);
-        metaRelation.ObjectType = (byte)EntityType.Relation;
+        metaRelation.SetEntityType(EntityType.Relation);
         var metaArr = new Meta[] { metaRelation, metaRelation };
         var segMent = new ArraySegment<Meta>(metaArr, 0, 2);
         return MetaExtensions.ToTable(metaTable, segMent, TableType.Mtm, physicalName) ?? partialTable;

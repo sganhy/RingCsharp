@@ -160,13 +160,13 @@ internal static class SchemaExtensions
                         //  step 2 - load relations - sort relation
                         if (string.CompareOrdinal(relation.Name, inverseRelation.Name) < 0)
                         {
-                            mtmTable.Relations[0] = relation;
-                            mtmTable.Relations[1] = inverseRelation;
+                            mtmTable.Relations[0] = relation.GetRelation(RelationType.Mto);
+                            mtmTable.Relations[1] = inverseRelation.GetRelation(RelationType.Mto);
                         }
                         else
                         {
-                            mtmTable.Relations[1] = relation;
-                            mtmTable.Relations[0] = inverseRelation;
+                            mtmTable.Relations[1] = relation.GetRelation(RelationType.Mto);
+                            mtmTable.Relations[0] = inverseRelation.GetRelation(RelationType.Mto);
                         }
                         mtm.Add(physicalName, mtmTable);
                     }
