@@ -39,6 +39,9 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
     // prefixes 
     protected static readonly string DefaultTablePrefix = @"t_";
 
+    // conventions
+    protected static readonly string DefaultPhysicalNameSeparator = "\"";
+
     public string AlterAddColumn(Table table, Field field)
     {
         var result = new StringBuilder();

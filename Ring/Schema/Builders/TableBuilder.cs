@@ -97,7 +97,7 @@ internal sealed class TableBuilder
     {
         var ddlBuilder = provider.GetDdlBuilder();
         var emptyTable = MetaExtensions.GetEmptyTable(metaTable, TableType.Meta);
-        var emptySchema = MetaExtensions.GetEmptySchema(GetSchema(0, schemaName));
+        var emptySchema = MetaExtensions.GetEmptySchema(GetSchema(0, schemaName), provider);
         metaTable.SetEntityBaseline(true);
         return metaTable.ToTable(new ArraySegment<Meta>(metaArray, 0, metaArray.Length),
                 tableType, ddlBuilder.GetPhysicalName(emptyTable, emptySchema)) ?? emptyTable;

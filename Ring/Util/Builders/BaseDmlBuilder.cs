@@ -2,6 +2,7 @@
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using Ring.Util.Extensions;
+using System.Globalization;
 using System.Text;
 using DbSchema = Ring.Schema.Models.Schema;
 
@@ -27,7 +28,7 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
     }
 
     public abstract DatabaseProvider Provider { get; }
-    public abstract string VariableNamePrefix { get; }
+    public abstract string VariableNameTemplate { get; }
 
     public void Init(DbSchema schema)
     {
@@ -98,8 +99,7 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
         result.Append(DmlValues);
         for (var i=1; i<=columnCount; ++i)
         {
-            result.Append(VariableNamePrefix);
-            result.Append(i);
+            result.Append(string.Format(CultureInfo.InvariantCulture,VariableNameTemplate,i));
             result.Append(ColumnDelimiter);
         }
         if (columnCount>0) --result.Length;

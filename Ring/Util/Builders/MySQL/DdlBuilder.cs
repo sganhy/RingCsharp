@@ -1,11 +1,18 @@
 ﻿using Ring.Schema.Enums;
+using Ring.Schema.Extensions;
 using Ring.Schema.Models;
+using PostGreDdl = Ring.Util.Builders.PostgreSQL.DdlBuilder;
+using DbSchema = Ring.Schema.Models.Schema;
 
 namespace Ring.Util.Builders.MySQL;
 
 internal class DdlBuilder : BaseDdlBuilder
 {
     private const int VarcharMaxSize = 65535;
+    private readonly static DatabaseProvider _currentProvider = DatabaseProvider.MySql;
+    private readonly static PostGreDdl _postGreDdl = new();
+    private readonly static string PhysicalNameSeparator = "`";
+    private readonly static char SpecialEntityPrefix = '@';
     private readonly static string StringCollageInformation = @"COLLATE ""C""";
     private readonly static Dictionary<FieldType, string> _dataType = new()
     {
@@ -24,42 +31,38 @@ internal class DdlBuilder : BaseDdlBuilder
         { FieldType.LongDateTime,  "TIMESTAMP" }
     };
 
-    public override string Create(TableSpace tablespace)
-    {
-        throw new NotImplementedException();
-    }
+    public override string Create(TableSpace tablespace) => tablespace.Name;
 
-    public override DatabaseProvider Provider => DatabaseProvider.MySql;
+    public override DatabaseProvider Provider => _currentProvider;
 
     protected override string GetDataType(Field field) =>
         GetDataType(_dataType[field.Type], field.Type, field.Size, VarcharMaxSize,
             field.Type == FieldType.String || field.Type == FieldType.LongString ?
             StringCollageInformation : null);
 
-    protected override string GetDataType(Relation relation)
+    protected override string GetDataType(Relation relation) => 
+        _currentProvider.IsReservedWord(relation.Name)  ? 
+        string.Join(null, PhysicalNameSeparator, relation.Name, PhysicalNameSeparator) : relation.Name;
+
+    public override string GetPhysicalName(Field field) =>
+        _currentProvider.IsReservedWord(field.Name) ^ field.Name.StartsWith(SpecialEntityPrefix)?
+        string.Join(null, PhysicalNameSeparator, field.Name, PhysicalNameSeparator) : field.Name;
+
+    public override string GetPhysicalName(Relation relation) =>
+        _currentProvider.IsReservedWord(relation.Name)?
+        string.Join(null, PhysicalNameSeparator, relation.Name, PhysicalNameSeparator) : relation.Name;
+
+    protected override string GetPhysicalName(TableSpace tablespace) => tablespace.Name;
+    protected override string GetPhysicalName(DbSchema schema)
     {
-        throw new NotImplementedException();
+#pragma warning disable CA1308 // Normalize strings to uppercase
+        var mySqlPhysicalName = NamingConvention.ToSnakeCase(schema.Name).ToLowerInvariant();
+#pragma warning restore CA1308 
+        return _currentProvider.IsReservedWord(mySqlPhysicalName) ?
+            string.Join(null, PhysicalNameSeparator, mySqlPhysicalName, PhysicalNameSeparator) : mySqlPhysicalName;
     }
 
-    public override string GetPhysicalName(Field field) => field.Name;
+    public override string GetPhysicalName(Table table, DbSchema schema) => 
+        _postGreDdl.GetPhysicalName(table, schema).Replace(DefaultPhysicalNameSeparator, PhysicalNameSeparator);
 
-    public override string GetPhysicalName(Relation relation)
-    {
-        throw new NotImplementedException();
-    }
-
-    protected override string GetPhysicalName(TableSpace tablespace)
-    {
-        throw new NotImplementedException();
-    }
-
-    protected override string GetPhysicalName(Schema.Models.Schema schema)
-    {
-        throw new NotImplementedException();
-    }
-
-    public override string GetPhysicalName(Table table, Schema.Models.Schema schema)
-    {
-        throw new NotImplementedException();
-    }
 }

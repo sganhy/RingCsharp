@@ -30,6 +30,19 @@ internal static class DatabaseProviderExtensions
         throw new NotImplementedException();
     }
 
+
+    internal static IDmlBuilder GetDmlBuilder(this DatabaseProvider provider)
+    {
+        switch (provider)
+        {
+            case DatabaseProvider.MySql: return new Util.Builders.MySQL.DmlBuilder();
+            case DatabaseProvider.PostgreSql: return new Util.Builders.PostgreSQL.DmlBuilder();
+            case DatabaseProvider.SqlServer: return new Util.Builders.SQLServer.DmlBuilder();
+            case DatabaseProvider.SqlLite: return new Util.Builders.SQLite.DmlBuilder();
+        }
+        throw new NotImplementedException();
+    }
+
     internal static bool IsReservedWord(this DatabaseProvider provider, string word)
     {
         if (provider == DatabaseProvider.PostgreSql)

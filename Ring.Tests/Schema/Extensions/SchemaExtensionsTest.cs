@@ -14,9 +14,8 @@ public class SchemaExtensionsTest : BaseExtensionsTest
         var metaList = GetSchema1();
         var meta = new Meta("Test");
         _schema = MetaExtensions.ToSchema(metaList, DatabaseProvider.PostgreSql) ?? 
-            MetaExtensions.GetEmptySchema(meta);
+            MetaExtensions.GetEmptySchema(meta, DatabaseProvider.PostgreSql);
     }
-        
 
     [Fact]
     internal void GetTable_Schema_Null()
@@ -45,7 +44,6 @@ public class SchemaExtensionsTest : BaseExtensionsTest
         Assert.Equal("armor", table1.Name);
         Assert.Equal("armor", table2.Name);
     }
-
 
     [Fact]
     internal void GetMtmTableCount_Schema1_10()

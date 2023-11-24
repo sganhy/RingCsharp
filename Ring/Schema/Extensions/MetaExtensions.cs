@@ -239,8 +239,7 @@ internal static class MetaExtensions
     #region schema methods
 
     internal static DbSchema? ToSchema(this Meta[] schema, DatabaseProvider provider, 
-        SchemaSourceType source = SchemaSourceType.NativeDataBase, 
-        SchemaLoadType loadType = SchemaLoadType.Full)
+        SchemaSourceType source = SchemaSourceType.NativeDataBase, SchemaLoadType loadType = SchemaLoadType.Full)
     {
         // sort ASC by reference_id, name
         Array.Sort(schema, (x, y) => MetaSchemaComparer(x,y)); 
@@ -251,7 +250,7 @@ internal static class MetaExtensions
             var parameters = schema.GetParameterArray();
             var lexicons = new List<Lexicon>();
             var sequences = new List<Sequence>();
-            var tableByName = schema.GetTableArray(ddlBuilder, meta);
+            var tableByName = schema.GetTableArray(ddlBuilder, meta, provider);
             var tableById = (Table[])tableByName.Clone(); 
             var tableSpaces = schema.GetTableSpaceArray();
 
@@ -317,10 +316,10 @@ internal static class MetaExtensions
         }
     }
 
-    internal static DbSchema GetEmptySchema(Meta meta) =>
+    internal static DbSchema GetEmptySchema(Meta meta, DatabaseProvider provider) =>
         new(meta.GetEntityId(), meta.GetEntityName(), meta.GetEntityDescription(), Array.Empty<Parameter>(),
              Array.Empty<Lexicon>(), SchemaLoadType.Full, SchemaSourceType.UnDefined, Array.Empty<Sequence>(), Array.Empty<Table>(),
-             Array.Empty<Table>(), Array.Empty<TableSpace>(), DatabaseProvider.Undefined, meta.IsEntityActive(), meta.IsEntityBaseline());
+             Array.Empty<Table>(), Array.Empty<TableSpace>(), provider, meta.IsEntityActive(), meta.IsEntityBaseline());
 
     internal static Table GetEmptyTable(Meta meta, TableType tableType) =>
         new(meta.GetEntityId(), meta.GetEntityName(), meta.GetEntityDescription(), meta.Value, string.Empty,
@@ -423,14 +422,15 @@ internal static class MetaExtensions
         return null;
     }
 
-    private static Table[] GetTableArray(this Meta[] schema, IDdlBuilder ddlBuilder, Meta metaSchema)
+    private static Table[] GetTableArray(this Meta[] schema, IDdlBuilder ddlBuilder, Meta metaSchema, 
+        DatabaseProvider provider)
     {
         int startIndex, count;
         var i=0;
         var metaCount = schema.Length;
         var tableCount = metaCount > 250 ? metaCount / 10 : 30;
         var dico = new Dictionary<int, (int, int)>(tableCount); // table_id, start index , count
-        var emptySchema = GetEmptySchema(metaSchema);
+        var emptySchema = GetEmptySchema(metaSchema, provider);
         // build dico
         while (i<metaCount)
         {

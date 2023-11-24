@@ -10,7 +10,6 @@ internal sealed class DdlBuilder : BaseDdlBuilder
 {
     private readonly static DatabaseProvider _currentProvider = DatabaseProvider.PostgreSql;
     private readonly static string StringCollageInformation = @"COLLATE ""C""";
-    private readonly static string PhysicalNameSeparator = "\"";
     private readonly static string MtmPrefix = "@mtm_";
     private const char SchemaSeparator = '.';
     private readonly static char SpecialEntityPrefix = '@';
@@ -60,11 +59,11 @@ internal sealed class DdlBuilder : BaseDdlBuilder
 
     public override string GetPhysicalName(Field field) =>
         _currentProvider.IsReservedWord(field.Name) ^ field.Name.StartsWith(SpecialEntityPrefix) ?
-        string.Join(null, PhysicalNameSeparator, field.Name, PhysicalNameSeparator) : field.Name;
+        string.Join(null, DefaultPhysicalNameSeparator, field.Name, DefaultPhysicalNameSeparator) : field.Name;
 
     public override string GetPhysicalName(Relation relation) =>
         _currentProvider.IsReservedWord(relation.Name) ?
-        string.Join(null, PhysicalNameSeparator, relation.Name, PhysicalNameSeparator) : relation.Name;
+        string.Join(null, DefaultPhysicalNameSeparator, relation.Name, DefaultPhysicalNameSeparator) : relation.Name;
 
     protected override string GetPhysicalName(TableSpace tablespace) => tablespace.Name;
 
@@ -74,7 +73,7 @@ internal sealed class DdlBuilder : BaseDdlBuilder
         var physicalName = NamingConvention.ToSnakeCase(schema.Name).ToLowerInvariant();
 #pragma warning restore CA1308 
         return _currentProvider.IsReservedWord(physicalName) ?
-            string.Join(null, PhysicalNameSeparator, physicalName, PhysicalNameSeparator) :
+            string.Join(null, DefaultPhysicalNameSeparator, physicalName, DefaultPhysicalNameSeparator) :
             physicalName;
     }
 
@@ -90,17 +89,17 @@ internal sealed class DdlBuilder : BaseDdlBuilder
         switch (table.Type)
         {
             case TableType.Mtm:
-                result.Append(PhysicalNameSeparator);
+                result.Append(DefaultPhysicalNameSeparator);
                 result.Append(MtmPrefix);
                 result.Append(tableName);
-                result.Append(PhysicalNameSeparator);
+                result.Append(DefaultPhysicalNameSeparator);
                 break;
             default:
                 if (table.Name.StartsWith(SpecialEntityPrefix))
                 {
-                    result.Append(PhysicalNameSeparator);
+                    result.Append(DefaultPhysicalNameSeparator);
                     result.Append(tableName);
-                    result.Append(PhysicalNameSeparator);
+                    result.Append(DefaultPhysicalNameSeparator);
                 }
                 else
                 {

@@ -1,5 +1,6 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
+using Ring.Util.Builders;
 
 namespace Ring.Schema.Models;
 
@@ -15,6 +16,8 @@ internal sealed class Schema : BaseEntity
     internal readonly TableSpace[] TableSpaces;
     internal readonly Parameter[] Parameters;
     internal readonly DatabaseProvider Provider;
+    internal readonly IDmlBuilder DmlBuiler;
+    internal readonly IDdlBuilder DdlBuiler;
 
     internal Schema(int id, string name, string? description, Parameter[] parameters, Lexicon[] lexicons, SchemaLoadType loadType,
         SchemaSourceType source, Sequence[] sequences, Table[] tablesById, Table[] tablesByName, TableSpace[] tableSpaces, DatabaseProvider provider,
@@ -31,5 +34,7 @@ internal sealed class Schema : BaseEntity
         TableSpaces = tableSpaces;
         Parameters = parameters;
         Provider = provider;
+        DmlBuiler = provider.GetDmlBuilder();
+        DdlBuiler = provider.GetDdlBuilder();
     }
 }

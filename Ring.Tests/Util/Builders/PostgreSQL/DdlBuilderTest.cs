@@ -232,7 +232,7 @@ public class DdlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var emptyTable = MetaExtensions.GetEmptyTable(new Meta("Test"), TableType.Mtm);
-        var emptySchema = MetaExtensions.GetEmptySchema(new Meta("Where"));
+        var emptySchema = MetaExtensions.GetEmptySchema(new Meta("Where"), DatabaseProvider.MySql);
         var ddlBuilder = DatabaseProvider.PostgreSql.GetDdlBuilder();
         var expectedValue = "\"where\".\"@mtm_test\"";
 
