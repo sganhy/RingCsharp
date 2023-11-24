@@ -5,18 +5,18 @@ namespace Ring.Schema.Models;
 
 internal sealed class Schema : BaseEntity
 {
-    public readonly ConnectionPool Connections;
-    public readonly Lexicon[] Lexicons;   // sorted table by name (case sensitif)
-    public readonly SchemaLoadType LoadType;
-    public readonly SchemaSourceType Source;
-    public readonly Sequence[] Sequences; // sorted sequence by name (case sensitif)
-    public readonly Table[] TablesById;   // sorted table by id
-    public readonly Table[] TablesByName; // sorted table by name (case sensitif)
-    public readonly TableSpace[] TableSpaces;
-    public readonly Parameter[] Parameters;
-    public readonly DatabaseProvider Provider;
+    internal readonly ConnectionPool Connections;
+    internal readonly Lexicon[] Lexicons;   // sorted table by name (case sensitif)
+    internal readonly SchemaLoadType LoadType;
+    internal readonly SchemaSourceType Source;
+    internal readonly Sequence[] Sequences; // sorted sequence by name (case sensitif)
+    internal readonly Table[] TablesById;   // sorted table by id
+    internal readonly Table[] TablesByName; // sorted table by name (case sensitif)
+    internal readonly TableSpace[] TableSpaces;
+    internal readonly Parameter[] Parameters;
+    internal readonly DatabaseProvider Provider;
 
-    public Schema(int id, string name, string? description, Parameter[] parameters, Lexicon[] lexicons, SchemaLoadType loadType,
+    internal Schema(int id, string name, string? description, Parameter[] parameters, Lexicon[] lexicons, SchemaLoadType loadType,
         SchemaSourceType source, Sequence[] sequences, Table[] tablesById, Table[] tablesByName, TableSpace[] tableSpaces, DatabaseProvider provider,
         bool active, bool baseline) : base(id, name, description, active, baseline)
     {

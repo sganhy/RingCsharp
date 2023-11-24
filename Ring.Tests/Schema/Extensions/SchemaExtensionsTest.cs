@@ -1,16 +1,20 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
+using Ring.Schema.Models;
 using DbSchema = Ring.Schema.Models.Schema;
 
 namespace Ring.Tests.Schema.Extensions;
 
 public class SchemaExtensionsTest : BaseExtensionsTest
 {
-    private readonly DbSchema? _schema ; 
+    private readonly DbSchema _schema ;
+
     public SchemaExtensionsTest()
     {
         var metaList = GetSchema1();
-        _schema = MetaExtensions.ToSchema(metaList, DatabaseProvider.PostgreSql);
+        var meta = new Meta("Test");
+        _schema = MetaExtensions.ToSchema(metaList, DatabaseProvider.PostgreSql) ?? 
+            MetaExtensions.GetEmptySchema(meta);
     }
         
 
@@ -40,6 +44,17 @@ public class SchemaExtensionsTest : BaseExtensionsTest
         Assert.NotNull(table2);
         Assert.Equal("armor", table1.Name);
         Assert.Equal("armor", table2.Name);
+    }
+
+
+    [Fact]
+    internal void GetMtmTableCount_Schema1_10()
+    {
+        // arrange 
+        // act 
+        var mtmCount = SchemaExtensions.GetMtmTableCount(_schema);
+        // assert
+        Assert.Equal(10, mtmCount);
     }
 
 }

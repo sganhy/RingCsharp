@@ -20,7 +20,7 @@ internal sealed class Document
     internal readonly string SchemaName;
     internal readonly List<Log> Logs;
 
-    public Document(int schemaId, string filePath, string? creator, DateTime? creationTime, DateTime? updateTime, Meta[] result, DocumentType type, 
+    internal Document(int schemaId, string filePath, string? creator, DateTime? creationTime, DateTime? updateTime, Meta[] result, DocumentType type, 
         long jobId, DatabaseProvider provider, string schemaName)
     {
         SchemaId = schemaId;

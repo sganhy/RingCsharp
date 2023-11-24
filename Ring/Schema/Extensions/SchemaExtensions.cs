@@ -103,6 +103,15 @@ internal static class SchemaExtensions
         schema.LoadMtm();
     }
 
+    internal static int GetMtmTableCount(this DbSchema schema)
+    {
+        var count = 0;
+        for (var i = 0; i < schema.TablesById.Length; ++i)
+            for (var j = schema.TablesById[i].Relations.Length - 1; j >= 0; --j)
+                if (schema.TablesById[i].Relations[j].Type == RelationType.Mtm) ++count;
+        return count >> 1;
+    }
+
     #region private methods 
     private static void LoadInverseRelations(this DbSchema schema, Meta[] schemaItems)
     {
@@ -169,16 +178,7 @@ internal static class SchemaExtensions
             }
         }
     }
-
-    private static int GetMtmTableCount(this DbSchema schema)
-    {
-        var count = 0;
-        for (var i = 0; i < schema.TablesById.Length; ++i)
-            for (var j = schema.TablesById[i].Relations.Length - 1; j >= 0; --j)
-                if (schema.TablesById[i].Relations[j].Type == RelationType.Mtm) ++count;
-        return count/2;
-    }
-
+       
     private static Relation CreateMtmRelation(Relation relation, Table mtmTable)
     {
         var meta = relation.ToMeta(0);

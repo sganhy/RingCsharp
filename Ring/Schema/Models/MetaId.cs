@@ -9,7 +9,7 @@ internal sealed class MetaId
     internal EntityType ObjectType;
     internal readonly long Value;
 
-    public MetaId(int id, EntityType objectType, long value)
+    internal MetaId(int id, EntityType objectType, long value)
     {
         Id = id;
         ObjectType = objectType;

@@ -21,7 +21,7 @@ internal sealed class ConnectionPool
     /// <summary>
     ///     Ctor
     /// </summary>
-    public ConnectionPool(int id, int minPoolSize, int maxPoolSize, string connectionString, Type connectionType)
+    internal ConnectionPool(int id, int minPoolSize, int maxPoolSize, string connectionString, Type connectionType)
     {
         Id = id;
         CreationCount = 0L;

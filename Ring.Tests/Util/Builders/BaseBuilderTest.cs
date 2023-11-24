@@ -5,7 +5,7 @@ using Ring.Schema.Models;
 using System.Reflection;
 using Index = Ring.Schema.Models.Index;
 
-namespace Ring.Tests.Providers;
+namespace Ring.Tests.Util.Builders;
 
 public class BaseBuilderTest
 {
@@ -15,8 +15,8 @@ public class BaseBuilderTest
     internal Table GetAnonymousTable(int numberOfField = 0, int numberOfRelation = 0)
     {
         var fields = new List<Field>();
-        for (var i = 0; i < numberOfField-1; i++) 
-            fields.Add(GetAnonymousField(GetAnonymousFieldType(), _fixture.Create<int>(),i+10));
+        for (var i = 0; i < numberOfField - 1; i++)
+            fields.Add(GetAnonymousField(GetAnonymousFieldType(), _fixture.Create<int>(), i + 10));
 
         // add pk
         Field pk = FieldExtensions.GetDefaultPrimaryKey(null, FieldType.Short) ?? default!;
@@ -38,7 +38,6 @@ public class BaseBuilderTest
         return result;
     }
 
-
     internal TableSpace GetAnonymousTableSpace(string name)
     {
         var result = new TableSpace(_fixture.Create<int>(), name, _fixture.Create<string>(), _fixture.Create<bool>(), _fixture.Create<bool>(),
@@ -46,7 +45,7 @@ public class BaseBuilderTest
         return result;
     }
 
-    internal Field GetAnonymousField(FieldType fieldType, int size, int? id = null, string? name=null)
+    internal Field GetAnonymousField(FieldType fieldType, int size, int? id = null, string? name = null)
     {
         var result = new Field(id ?? _fixture.Create<int>(), name ?? _fixture.Create<string>(), _fixture.Create<string>(), fieldType, size,
             _fixture.Create<string?>(), _fixture.Create<bool>(), _fixture.Create<bool>(), _fixture.Create<bool>(),
@@ -54,10 +53,10 @@ public class BaseBuilderTest
         return result;
     }
 
-    internal Relation GetAnonymousRelation(RelationType relationType, string? name=null, bool notNull=true)
+    internal Relation GetAnonymousRelation(RelationType relationType, string? name = null, bool notNull = true)
     {
         // generate primary key 
-        Field primaryKey = FieldExtensions.GetDefaultPrimaryKey(null,FieldType.Long) ?? default!;
+        Field primaryKey = FieldExtensions.GetDefaultPrimaryKey(null, FieldType.Long) ?? default!;
 
         var fieldList = new List<Field>() { primaryKey };
         var relationName = name == null ? _fixture.Create<string>() : name;

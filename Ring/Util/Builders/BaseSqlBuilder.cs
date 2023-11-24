@@ -8,5 +8,8 @@ internal abstract class BaseSqlBuilder : ISqlBuilder
 {
     // miscelanous
     protected const char SqlSpace = ' ';
+    protected const char StartParenthesis = '(';
+    protected const char EndParenthesis = ')';
+    protected const char ColumnDelimiter = ',';
     protected const char SqlLineFeed = '\n';
 }

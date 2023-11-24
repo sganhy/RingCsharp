@@ -1,6 +1,10 @@
-﻿namespace Ring.Util.Builders;
+﻿using Ring.Schema.Enums;
+using DbSchema = Ring.Schema.Models.Schema;
 
-internal interface IDqlBuilder
+namespace Ring.Util.Builders;
+
+internal interface IDqlBuilder : ISqlBuilder
 {
-
+    DatabaseProvider Provider { get; }
+    void Init(DbSchema schema);
 }

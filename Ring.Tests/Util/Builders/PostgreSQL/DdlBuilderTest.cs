@@ -5,7 +5,7 @@ using Ring.Schema.Models;
 using Ring.Util.Builders;
 using Ring.Util.Builders.PostgreSQL;
 
-namespace Ring.Tests.Providers.PostgreSQL;
+namespace Ring.Tests.Util.Builders.PostgreSQL;
 
 public class DdlBuilderTest : BaseBuilderTest
 {
@@ -53,7 +53,7 @@ public class DdlBuilderTest : BaseBuilderTest
         var metaItems = GetMeta2TableItems();
         var physicalName = _fixture.Create<string>();
         var segment = new ArraySegment<Meta>(metaItems, 0, metaItems.Length);
-        var table2 = MetaExtensions.ToTable(metaTable, segment, TableType.Business, physicalName);
+        var table2 = metaTable.ToTable(segment, TableType.Business, physicalName);
 #pragma warning disable CS8602
         table2.Relations[0] = GetAnonymousRelation(RelationType.Mto, @"skill2book");
         var expectedSql = $"CREATE TABLE {physicalName} (\n" + "    id int2 NOT NULL,\n" +
@@ -77,7 +77,7 @@ public class DdlBuilderTest : BaseBuilderTest
         var metaItems = GetMeta2TableItems();
         var physicalName = _fixture.Create<string>();
         var segment = new ArraySegment<Meta>(metaItems, 0, metaItems.Length);
-        var table2 = MetaExtensions.ToTable(metaTable, segment, TableType.Meta, physicalName);
+        var table2 = metaTable.ToTable(segment, TableType.Meta, physicalName);
 #pragma warning disable CS8602
         table2.Relations[0] = GetAnonymousRelation(RelationType.Mto, @"skill2book", true);
         var expectedSql = $"CREATE TABLE {physicalName} (\n" + "    id int2 NOT NULL,\n" +
@@ -103,7 +103,7 @@ public class DdlBuilderTest : BaseBuilderTest
         var metaItems = GetMeta2TableItems();
         var physicalName = _fixture.Create<string>();
         var segment = new ArraySegment<Meta>(metaItems, 0, metaItems.Length);
-        var table2 = MetaExtensions.ToTable(metaTable, segment, TableType.Fake, physicalName);
+        var table2 = metaTable.ToTable(segment, TableType.Fake, physicalName);
 
 #pragma warning disable CS8602
         table2.Relations[0] = GetAnonymousRelation(RelationType.Mto, @"skill2book", false);
@@ -214,7 +214,7 @@ public class DdlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var metaList = GetSchema1();
-        var schema = MetaExtensions.ToSchema(metaList, DatabaseProvider.PostgreSql);
+        var schema = metaList.ToSchema(DatabaseProvider.PostgreSql);
         var table = schema?.GetTable("campaign_setting");
         var expectedResult = "rpg_sheet.t_campaign_setting";
 

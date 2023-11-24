@@ -2,14 +2,15 @@
 using Ring.Util.Builders;
 using Ring.Util.Builders.PostgreSQL;
 
-namespace Ring.Tests.Providers;
+namespace Ring.Tests.Util.Builders;
 
 public sealed class BaseDdlBuilderTest : BaseBuilderTest
 {
 
     private readonly BaseDdlBuilder _sut;
 
-    public BaseDdlBuilderTest() {
+    public BaseDdlBuilderTest()
+    {
         _sut = new DdlBuilder();
     }
 
@@ -79,7 +80,7 @@ public sealed class BaseDdlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var table = GetAnonymousTable(12, 2);
-        var field = GetAnonymousField(FieldType.Byte, 0); 
+        var field = GetAnonymousField(FieldType.Byte, 0);
         var expectedSql = $"ALTER TABLE {table.PhysicalName} DROP COLUMN {field.Name}";
 
         // act 

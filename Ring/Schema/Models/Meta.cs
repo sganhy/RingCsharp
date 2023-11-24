@@ -13,9 +13,9 @@ internal sealed class Meta
     internal string? Description;        // late loading 
     internal string? Value;
     internal bool Active = true;
-    
-    public Meta() => Name = string.Empty;
-    public Meta(string name) => Name = name;
+
+    public Meta() => Name = string.Empty; // this constructor should be public !!!
+    internal Meta(string name) => Name = name;
 
 #if DEBUG
     public override string ToString() => Name ?? string.Empty;

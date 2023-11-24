@@ -5,7 +5,7 @@ using Ring.Schema.Enums;
 
 namespace Ring.Util.Builders;
 
-internal interface IDdlBuilder
+internal interface IDdlBuilder : ISqlBuilder
 {
     DatabaseProvider Provider { get; }
     string Create(DbSchema schema);
