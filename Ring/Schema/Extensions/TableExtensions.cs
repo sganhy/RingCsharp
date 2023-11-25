@@ -176,4 +176,34 @@ internal static class TableExtensions
         (table.FieldsById.Length > 0 && (table.Type == TableType.Business || table.Type == TableType.Lexicon)) ?
         table.FieldsById[0] : null;
 
+    /// <summary>
+    /// Get first unique index
+    /// </summary>
+    internal static Index? GetFirstKey(this Table table)
+    {
+        if (table.Indexes != null && table.Indexes.Length > 0)
+            for (var i = 0; i < table.Indexes.Length; ++i)
+                if (table.Indexes[i].Unique) return table.Indexes[i];
+        return null;
+    }
+
+    internal static Meta[] ToMeta(this Table table, int schemaId) {
+        var result = new List<Meta>(table.Fields.Length+table.Relations.Length+table.Indexes.Length+1);
+        int i;
+        for (i=0; i < table.Fields.Length; ++i) result.Add(table.Fields[i].ToMeta(table.Id));
+        for (i=0; i < table.Relations.Length; ++i) result.Add(table.Relations[i].ToMeta(table.Id));
+        for (i=0; i < table.Indexes.Length; ++i) result.Add(table.Indexes[i].ToMeta(table.Id));
+        var meta = new Meta();
+        // first - define Object type
+        meta.SetEntityType(EntityType.Table);
+        meta.SetEntityId(table.Id);
+        meta.SetEntityName(table.Name);
+        meta.SetEntityDescription(table.Description);
+        meta.SetEntityRefId(schemaId);
+        meta.SetTableCached(table.Cached);
+        meta.SetTableReadonly(table.Readonly);
+        result.Add(meta);
+        return result.ToArray(); 
+    }
+
 }

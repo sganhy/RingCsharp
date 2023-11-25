@@ -41,6 +41,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 
     // conventions
     protected static readonly string DefaultPhysicalNameSeparator = "\"";
+    protected readonly static char SpecialEntityPrefix = '@';
 
     public string AlterAddColumn(Table table, Field field)
     {
@@ -155,7 +156,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
     protected abstract string GetDataType(Field field);
     protected abstract string GetDataType(Relation relation);
     protected abstract string GetPhysicalName(TableSpace tablespace);
-    protected abstract string GetPhysicalName(DbSchema schema);
+    public abstract string GetPhysicalName(DbSchema schema);
     public abstract string GetPhysicalName(Table table, DbSchema schema);
     public abstract string GetPhysicalName(Relation relation);
     public abstract string GetPhysicalName(Field field);

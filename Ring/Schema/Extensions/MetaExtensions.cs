@@ -330,6 +330,10 @@ internal static class MetaExtensions
         new(meta.GetEntityId(), meta.GetEntityName(), meta.GetEntityDescription(), relationType, 
             GetEmptyTable(new Meta(meta.GetEntityName()), tableType), false, false, true, true);
 
+    internal static Field GetEmptyField(Meta meta, FieldType fieldType) =>
+        new(meta.GetEntityId(), meta.GetEntityName(), meta.GetEntityDescription(), fieldType, 0, null,true,false,
+            false,false,true);
+
     #region private methods 
 
     private static ParameterType ToParameterType(int value)

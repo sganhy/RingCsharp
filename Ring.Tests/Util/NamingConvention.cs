@@ -9,6 +9,8 @@ public class NamingConvention
     [InlineData("hello_world", "hello_world")]
     [InlineData("HellOWorld", "hell_o_world")]
     [InlineData("Hello World", "hello_world")]
+    [InlineData("@Meta", "@meta")]
+    [InlineData("@", "@")]
     public void SnakeCaseTest(string name, string expectedResult)
     {
         var result = Ring.Util.NamingConvention.ToSnakeCase(name);

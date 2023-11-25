@@ -2,7 +2,7 @@
 
 internal enum ConstraintType : byte
 {
-	PrimaryKey=1,
+    PrimaryKey=1,
     UniqueKey=2,
     Check=3,
     NotNull=8,

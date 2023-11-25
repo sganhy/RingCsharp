@@ -43,13 +43,12 @@ internal sealed class DdlBuilder : BaseDdlBuilder
     {
         throw new NotImplementedException();
     }
-
-    protected override string GetPhysicalName(TableSpace tablespace)
+    public override string GetPhysicalName(Schema.Models.Schema schema)
     {
         throw new NotImplementedException();
     }
 
-    protected override string GetPhysicalName(Schema.Models.Schema schema)
+    protected override string GetPhysicalName(TableSpace tablespace)
     {
         throw new NotImplementedException();
     }

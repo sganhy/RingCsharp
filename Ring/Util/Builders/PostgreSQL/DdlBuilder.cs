@@ -12,7 +12,6 @@ internal sealed class DdlBuilder : BaseDdlBuilder
     private readonly static string StringCollageInformation = @"COLLATE ""C""";
     private readonly static string MtmPrefix = "@mtm_";
     private const char SchemaSeparator = '.';
-    private readonly static char SpecialEntityPrefix = '@';
     private const int VarcharMaxSize = 65535;
 
     private readonly static Dictionary<FieldType, string> _dataType = new()
@@ -65,18 +64,20 @@ internal sealed class DdlBuilder : BaseDdlBuilder
         _currentProvider.IsReservedWord(relation.Name) ?
         string.Join(null, DefaultPhysicalNameSeparator, relation.Name, DefaultPhysicalNameSeparator) : relation.Name;
 
-    protected override string GetPhysicalName(TableSpace tablespace) => tablespace.Name;
-
-    protected override string GetPhysicalName(DbSchema schema)
+    //TODO move to base class
+    public override string GetPhysicalName(DbSchema schema)
     {
 #pragma warning disable CA1308 // Normalize strings to uppercase
         var physicalName = NamingConvention.ToSnakeCase(schema.Name).ToLowerInvariant();
-#pragma warning restore CA1308 
-        return _currentProvider.IsReservedWord(physicalName) ?
+#pragma warning restore CA1308
+        return schema.Name.StartsWith(SpecialEntityPrefix) || _currentProvider.IsReservedWord(physicalName)?
             string.Join(null, DefaultPhysicalNameSeparator, physicalName, DefaultPhysicalNameSeparator) :
             physicalName;
     }
 
+    protected override string GetPhysicalName(TableSpace tablespace) => tablespace.Name;
+
+    
     public override string GetPhysicalName(Table table, DbSchema schema)
     {
         var result = new StringBuilder(63); // schema name max length(30)  + table name max length(30) + 1 '.' + 2 '"'

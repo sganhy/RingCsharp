@@ -86,8 +86,13 @@ internal sealed class TableBuilder
         metaTable.SetEntityType(EntityType.Table);
         var metaRelation = new Meta(partialTable.Name);
         metaRelation.SetEntityType(EntityType.Relation);
-        var metaArr = new Meta[] { metaRelation, metaRelation };
-        var segMent = new ArraySegment<Meta>(metaArr, 0, 2);
+        // add index 
+        var metaIndex = new Meta(partialTable.Name);
+        metaIndex.SetEntityType(EntityType.Index);
+        metaIndex.SetIndexUnique(true);
+        metaIndex.SetIndexedColumns(new string[] { partialTable.Name, partialTable.Name });
+        var metaArr = new Meta[] { metaRelation, metaRelation, metaIndex };
+        var segMent = new ArraySegment<Meta>(metaArr, 0, 3);
         return MetaExtensions.ToTable(metaTable, segMent, TableType.Mtm, physicalName) ?? partialTable;
     }
 

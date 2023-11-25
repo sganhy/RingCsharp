@@ -12,7 +12,6 @@ internal class DdlBuilder : BaseDdlBuilder
     private readonly static DatabaseProvider _currentProvider = DatabaseProvider.MySql;
     private readonly static PostGreDdl _postGreDdl = new();
     private readonly static string PhysicalNameSeparator = "`";
-    private readonly static char SpecialEntityPrefix = '@';
     private readonly static string StringCollageInformation = @"COLLATE ""C""";
     private readonly static Dictionary<FieldType, string> _dataType = new()
     {
@@ -53,14 +52,10 @@ internal class DdlBuilder : BaseDdlBuilder
         string.Join(null, PhysicalNameSeparator, relation.Name, PhysicalNameSeparator) : relation.Name;
 
     protected override string GetPhysicalName(TableSpace tablespace) => tablespace.Name;
-    protected override string GetPhysicalName(DbSchema schema)
-    {
-#pragma warning disable CA1308 // Normalize strings to uppercase
-        var mySqlPhysicalName = NamingConvention.ToSnakeCase(schema.Name).ToLowerInvariant();
-#pragma warning restore CA1308 
-        return _currentProvider.IsReservedWord(mySqlPhysicalName) ?
-            string.Join(null, PhysicalNameSeparator, mySqlPhysicalName, PhysicalNameSeparator) : mySqlPhysicalName;
-    }
+
+
+    public override string GetPhysicalName(DbSchema schema) =>
+        _postGreDdl.GetPhysicalName(schema).Replace(DefaultPhysicalNameSeparator, PhysicalNameSeparator);
 
     public override string GetPhysicalName(Table table, DbSchema schema) => 
         _postGreDdl.GetPhysicalName(table, schema).Replace(DefaultPhysicalNameSeparator, PhysicalNameSeparator);

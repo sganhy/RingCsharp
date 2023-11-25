@@ -228,6 +228,36 @@ public class DdlBuilderTest : BaseBuilderTest
     }
 
     [Fact]
+    public void GetPhysicalName_Schema1_SchemaName()
+    {
+        // arrange 
+        var meta = new Meta("rpg_sheet");
+        var schema = MetaExtensions.GetEmptySchema(meta, DatabaseProvider.PostgreSql);
+        var expectedResult = "rpg_sheet";
+
+        // act 
+        var result = _sut.GetPhysicalName(schema);
+
+        // assert
+        Assert.Equal(expectedResult, result);
+    }
+
+    [Fact]
+    public void GetPhysicalName_Schema2_SchemaName()
+    {
+        // arrange 
+        var meta = new Meta("@Test");
+        var schema = MetaExtensions.GetEmptySchema(meta, DatabaseProvider.PostgreSql);
+        var expectedResult = "\"@test\"";
+
+        // act 
+        var result = _sut.GetPhysicalName(schema);
+
+        // assert
+        Assert.Equal(expectedResult, result);
+    }
+
+    [Fact]
     public void GetPhysicalName_MtmTable1_TableName()
     {
         // arrange 

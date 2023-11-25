@@ -9,4 +9,5 @@ internal interface IDmlBuilder
     DatabaseProvider Provider { get; }
     void Init(DbSchema schema);
     string Insert(Table table, bool includeRelations);
+    string Delete(Table table);
 }
