@@ -10,7 +10,6 @@ internal sealed class DdlBuilder : BaseDdlBuilder
 {
     private readonly static DatabaseProvider _currentProvider = DatabaseProvider.PostgreSql;
     private readonly static string StringCollageInformation = @"COLLATE ""C""";
-    private readonly static string MtmPrefix = "@mtm_";
     private const char SchemaSeparator = '.';
     private const int VarcharMaxSize = 65535;
 
@@ -77,7 +76,6 @@ internal sealed class DdlBuilder : BaseDdlBuilder
 
     protected override string GetPhysicalName(TableSpace tablespace) => tablespace.Name;
 
-    
     public override string GetPhysicalName(Table table, DbSchema schema)
     {
         var result = new StringBuilder(63); // schema name max length(30)  + table name max length(30) + 1 '.' + 2 '"'
@@ -112,6 +110,8 @@ internal sealed class DdlBuilder : BaseDdlBuilder
         return result.ToString();
     }
 
+
     public override DatabaseProvider Provider => _currentProvider;
+    protected override string MtmPrefix => "@mtm_";
 
 }

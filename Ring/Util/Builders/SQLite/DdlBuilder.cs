@@ -57,4 +57,7 @@ internal sealed class DdlBuilder : BaseDdlBuilder
 
     public override DatabaseProvider Provider => DatabaseProvider.SqlLite;
 
+    protected override string MtmPrefix => "@mtm_";
+
+
 }

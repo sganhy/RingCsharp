@@ -11,7 +11,6 @@ static internal class ArrayExtensions
     internal static bool Exists(this string[] elements, string value)
     {
         int indexerLeft = 0, indexerRigth = elements.Length - 1;
-        var iteration = 0;
         while (indexerLeft <= indexerRigth)
         {
             var indexerMiddle = indexerLeft + indexerRigth;
@@ -20,7 +19,6 @@ static internal class ArrayExtensions
             if (indexerCompare == 0) return true;
             if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
             else indexerRigth = indexerMiddle - 1;
-            ++iteration;
         }
         return false;
     }
@@ -35,7 +33,6 @@ static internal class ArrayExtensions
     internal static int GetIndex(this string[] elements, string value)
     {
         int indexerLeft = 0, indexerRigth = elements.Length - 1;
-        var iteration = 0;
         while (indexerLeft <= indexerRigth)
         {
             var indexerMiddle = indexerLeft + indexerRigth;
@@ -44,7 +41,6 @@ static internal class ArrayExtensions
             if (indexerCompare == 0) return indexerMiddle;
             if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
             else indexerRigth = indexerMiddle - 1;
-            ++iteration;
         }
         return -1;
     }

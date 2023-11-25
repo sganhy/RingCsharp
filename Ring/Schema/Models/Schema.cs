@@ -16,8 +16,9 @@ internal sealed class Schema : BaseEntity
     internal readonly TableSpace[] TableSpaces;
     internal readonly Parameter[] Parameters;
     internal readonly DatabaseProvider Provider;
-    internal readonly IDmlBuilder DmlBuiler;
     internal readonly IDdlBuilder DdlBuiler;
+    internal readonly IDmlBuilder DmlBuiler;
+    internal readonly IDqlBuilder DqlBuiler;
 
     internal Schema(int id, string name, string? description, Parameter[] parameters, Lexicon[] lexicons, SchemaLoadType loadType,
         SchemaSourceType source, Sequence[] sequences, Table[] tablesById, Table[] tablesByName, TableSpace[] tableSpaces, DatabaseProvider provider,
@@ -36,5 +37,6 @@ internal sealed class Schema : BaseEntity
         Provider = provider;
         DmlBuiler = provider.GetDmlBuilder();
         DdlBuiler = provider.GetDdlBuilder();
+        DqlBuiler = provider.GetDqlBuilder();
     }
 }

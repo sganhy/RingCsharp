@@ -1,20 +1,88 @@
 ﻿using Ring.Schema.Enums;
+using Ring.Schema.Extensions;
+using Ring.Schema.Models;
+using Ring.Util.Extensions;
+using System.Text;
 using DbSchema = Ring.Schema.Models.Schema;
 
 namespace Ring.Util.Builders;
 
 internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
 {
-    public abstract DatabaseProvider Provider { get; }
+    private string[] _tableIndex;
+    private string?[] _tableSelect;
+    private readonly IDdlBuilder _ddlBuilder;
 
     // clauses
-    protected static readonly string DqlSelect = @"SELECT ";
-    protected static readonly string DqlFrom = @" FROM ";
-    protected static readonly string DqlWhere = @" WHERE ";
+    private static readonly string DqlSelect = @"SELECT ";
+    private static readonly string DqlFrom = @" FROM ";
+
+    internal BaseDqlBuilder() : base()
+    {
+        _tableSelect = Array.Empty<string>();
+        _tableIndex = Array.Empty<string>();
+        _ddlBuilder = Provider.GetDdlBuilder();
+    }
+
+    public abstract DatabaseProvider Provider { get; }
 
     public void Init(DbSchema schema)
     {
-        throw new NotImplementedException();
+        var mtmCount = schema.GetMtmTableCount();
+        var tableCount = schema.TablesById.Length;
+        _tableSelect = new string?[mtmCount + tableCount];
+        _tableIndex = GetTableIndex(schema);
     }
+
+    public string Select(Table table, bool includeRelations)
+    {
+        var index = _tableIndex.GetIndex(table.Name);
+        var result = _tableSelect[index];
+        if (result==null)
+        {
+            result = BuildSelect(table, includeRelations);
+            _tableSelect[index] = result;
+        }
+        return result;
+    }
+
+    #region private methods 
+
+    private string BuildSelect(Table table, bool includeRelations)
+    {
+        var result = new StringBuilder();
+        var columnCount = 0; 
+        result.Append(DqlSelect);
+        for (var i = 0; i<table.FieldsById.Length; ++i)
+        {
+            result.Append(_ddlBuilder.GetPhysicalName(table.FieldsById[i]));
+            result.Append(ColumnDelimiter);
+            ++columnCount;
+        }
+        if (table.FieldsById.Length > 0) --result.Length;
+        if (includeRelations)
+        {
+            var hasRelation = false;
+            for (var i=0; i < table.Relations.Length; ++i)
+            {
+                var relation = table.Relations[i];
+                if (relation.Type == RelationType.Mto || relation.Type == RelationType.Otop)
+                {
+                    if (columnCount > 0 && !Equals(ColumnDelimiter, result[^1])) result.Append(ColumnDelimiter);
+                    result.Append(_ddlBuilder.GetPhysicalName(relation));
+                    result.Append(ColumnDelimiter);
+                    ++columnCount;
+                    hasRelation = true;
+                }
+            }
+            if (hasRelation) --result.Length;
+        }
+        if (columnCount==0) --result.Length;
+        result.Append(DqlFrom);
+        result.Append(table.PhysicalName);
+        return result.ToString();
+    }
+
+    #endregion 
 
 }

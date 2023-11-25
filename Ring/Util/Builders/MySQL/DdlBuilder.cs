@@ -6,7 +6,7 @@ using DbSchema = Ring.Schema.Models.Schema;
 
 namespace Ring.Util.Builders.MySQL;
 
-internal class DdlBuilder : BaseDdlBuilder
+internal sealed class DdlBuilder : BaseDdlBuilder
 {
     private const int VarcharMaxSize = 65535;
     private readonly static DatabaseProvider _currentProvider = DatabaseProvider.MySql;
@@ -33,6 +33,7 @@ internal class DdlBuilder : BaseDdlBuilder
     public override string Create(TableSpace tablespace) => tablespace.Name;
 
     public override DatabaseProvider Provider => _currentProvider;
+    protected override string MtmPrefix => "@mtm_";
 
     protected override string GetDataType(Field field) =>
         GetDataType(_dataType[field.Type], field.Type, field.Size, VarcharMaxSize,

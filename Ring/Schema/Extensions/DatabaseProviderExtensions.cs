@@ -43,6 +43,18 @@ internal static class DatabaseProviderExtensions
         throw new NotImplementedException();
     }
 
+    internal static IDqlBuilder GetDqlBuilder(this DatabaseProvider provider)
+    {
+        switch (provider)
+        {
+            case DatabaseProvider.MySql: return new Util.Builders.MySQL.DqlBuilder();
+            case DatabaseProvider.PostgreSql: return new Util.Builders.PostgreSQL.DqlBuilder();
+            case DatabaseProvider.SqlServer: return new Util.Builders.SQLServer.DqlBuilder();
+            case DatabaseProvider.SqlLite: return new Util.Builders.SQLite.DqlBuilder();
+        }
+        throw new NotImplementedException();
+    }
+
     internal static bool IsReservedWord(this DatabaseProvider provider, string word)
     {
         if (provider == DatabaseProvider.PostgreSql)

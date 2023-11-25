@@ -152,6 +152,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
         return result.ToString();
     }
 
+    protected abstract string MtmPrefix { get; }
     public abstract DatabaseProvider Provider { get; }
     protected abstract string GetDataType(Field field);
     protected abstract string GetDataType(Relation relation);

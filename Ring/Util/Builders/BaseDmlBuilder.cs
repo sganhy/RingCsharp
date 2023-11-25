@@ -11,23 +11,23 @@ namespace Ring.Util.Builders;
 internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 {
     // commands
-    protected static readonly string DmlInsert = @"INSERT INTO ";
-    protected static readonly string DmlValues = @") VALUES (";
-    protected static readonly string DmlUpdate = @"UPDATE ";
-    protected static readonly string DmlSet = @" SET ";
-    protected static readonly string DmlDelete = @"DELETE FROM ";
-    protected static readonly string DmlWhere = @" WHERE ";
-    protected static readonly string DmlAnd = " AND ";
-    protected static readonly char DmlEqual = '=';
+    private static readonly string DmlInsert = @"INSERT INTO ";
+    private static readonly string DmlValues = @") VALUES (";
+    private static readonly string DmlUpdate = @"UPDATE ";
+    private static readonly string DmlSet = @" SET ";
+    private static readonly string DmlDelete = @"DELETE FROM ";
+    private static readonly string DmlWhere = @" WHERE ";
+    private static readonly string DmlAnd = " AND ";
+    private static readonly char DmlEqual = '=';
 
-    protected string[] _tableIndex;
-    protected string?[] _tableDelete;
-    protected string?[] _tableInsert;
-    protected string?[] _tableInsertWithRel;
-    protected readonly IDdlBuilder _ddlBuilder;
-    protected readonly Field _defaultField;
+    private string[] _tableIndex;
+    private string?[] _tableDelete;
+    private string?[] _tableInsert;
+    private string?[] _tableInsertWithRel;
+    private readonly IDdlBuilder _ddlBuilder;
+    private readonly Field _defaultField;
 
-    internal BaseDmlBuilder()
+    internal BaseDmlBuilder() : base()
     {
         _tableIndex = Array.Empty<string>();
         _tableDelete = Array.Empty<string?>();
@@ -44,25 +44,10 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
     {
         var mtmCount = schema.GetMtmTableCount();
         var tableCount = schema.TablesById.Length;
-        var mtmTaleDico = new HashSet<string>();
-        var mtmIndex = 0;
-        _tableIndex = new string[mtmCount + tableCount];
+        _tableIndex = GetTableIndex(schema);
         _tableDelete = new string?[mtmCount + tableCount];
         _tableInsert = new string?[mtmCount + tableCount];
         _tableInsertWithRel = new string?[mtmCount + tableCount];
-        for (var i = 0; i < tableCount; ++i) _tableIndex[i] = schema.TablesById[i].Name;
-        for (var i = 0; i < schema.TablesById.Length; ++i)
-            for (var j = schema.TablesById[i].Relations.Length - 1; j >= 0; --j)
-            {
-                var relation = schema.TablesById[i].Relations[j];
-                if (relation.Type == RelationType.Mtm && !mtmTaleDico.Contains(relation.ToTable.Name))
-                {
-                    _tableIndex[mtmIndex + tableCount] = relation.ToTable.Name;
-                    mtmTaleDico.Add(relation.ToTable.Name);
-                    ++mtmIndex;
-                }
-            }
-        Array.Sort(_tableIndex);
     }
 
     public string Insert(Table table, bool includeRelations) {
@@ -109,7 +94,8 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
         if (table.FieldsById.Length > 0) --result.Length;
         if (includeRelations)
         {
-            for (var i = 0; i < table.Relations.Length; ++i)
+            var hasRelation = false;
+            for (var i=0; i<table.Relations.Length; ++i)
             {
                 var relation = table.Relations[i];
                 if (relation.Type == RelationType.Mto || relation.Type == RelationType.Otop)
@@ -118,9 +104,10 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
                     result.Append(_ddlBuilder.GetPhysicalName(relation));
                     result.Append(ColumnDelimiter);
                     ++columnCount;
+                    hasRelation = true;
                 }
             }
-            if (table.Relations.Length > 0) --result.Length;
+            if (hasRelation) --result.Length;
         }
         result.Append(DmlValues);
         for (var i = 1; i <= columnCount; ++i)
@@ -167,9 +154,7 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
                 }
                 break;
             default:
-                // throw exception
-                break;
-
+                throw new NotImplementedException();
         }
         return result.ToString();
     }
