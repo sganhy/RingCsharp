@@ -1,13 +1,11 @@
 ﻿using Ring.Schema.Models;
 using Index = Ring.Schema.Models.Index;
 using DbSchema = Ring.Schema.Models.Schema;
-using Ring.Schema.Enums;
 
 namespace Ring.Util.Builders;
 
 internal interface IDdlBuilder : ISqlBuilder
 {
-    DatabaseProvider Provider { get; }
     string Create(DbSchema schema);
     string Create(TableSpace tablespace);
     string Create(Table table, TableSpace? tablespace = null);
