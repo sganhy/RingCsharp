@@ -131,6 +131,34 @@ public class DmlBuilderTest : BaseBuilderTest
     }
 
     [Fact]
+    internal void Insert_TableMetaId_InsertSql()
+    {
+        // arrange 
+        var sut = new DmlBuilder();
+        var tblBuilder = new TableBuilder();
+        var schemaName = "@Test";
+        var table = tblBuilder.GetMetaId(schemaName, DatabaseProvider.PostgreSql);
+        var metaTbl = table.ToMeta(0);
+        var metaSch = new Meta(schemaName);
+        metaSch.SetEntityType(EntityType.Schema);
+        var metaList = new List<Meta>() { metaSch };
+        metaList.AddRange(metaTbl);
+        var schema = MetaExtensions.ToSchema(metaList.ToArray(), DatabaseProvider.PostgreSql);
+        var expectedResult = "INSERT INTO \"@test\".\"@meta_id\" (id,schema_id,object_type,value) VALUES ($1,$2,$3,$4)";
+
+        // act 
+        Assert.NotNull(schema);
+        Assert.NotNull(table);
+        sut.Init(schema);
+        var result1 = sut.Insert(table, true);
+        var result2 = sut.Insert(table, true); // using cache 
+
+        // assert
+        Assert.Equal(expectedResult, result1);
+        Assert.Equal(expectedResult, result2);
+    }
+
+    [Fact]
     internal void Delete_Table1_DeleteSql()
     {
         // arrange 
@@ -165,4 +193,61 @@ public class DmlBuilderTest : BaseBuilderTest
         Assert.Equal(expectedResult, result1);
         Assert.Equal(expectedResult, result2);
     }
+
+    [Fact]
+    internal void Delete_TableMeta_DeleteSql()
+    {
+        // arrange 
+        var sut = new DmlBuilder();
+        var tblBuilder = new TableBuilder();
+        var schemaName = "@Test";
+        var table = tblBuilder.GetMeta(schemaName, DatabaseProvider.PostgreSql);
+        var metaTbl = table.ToMeta(0);
+        var metaSch = new Meta(schemaName);
+        metaSch.SetEntityType(EntityType.Schema);
+        var metaList = new List<Meta>() { metaSch };
+        metaList.AddRange(metaTbl);
+        var schema = MetaExtensions.ToSchema(metaList.ToArray(), DatabaseProvider.PostgreSql);
+        var expectedResult = "DELETE FROM \"@test\".\"@meta\" WHERE id=$1 AND schema_id=$2 AND object_type=$3 AND reference_id=$4";
+
+        // act 
+        Assert.NotNull(schema);
+        Assert.NotNull(table);
+        sut.Init(schema);
+        var result1 = sut.Delete(table);
+        var result2 = sut.Delete(table); // using cache 
+
+        // assert
+        Assert.Equal(expectedResult, result1);
+        Assert.Equal(expectedResult, result2);
+    }
+
+    [Fact]
+    internal void Delete_TableMetaId_DeleteSql()
+    {
+        // arrange 
+        var sut = new DmlBuilder();
+        var tblBuilder = new TableBuilder();
+        var schemaName = "@Test";
+        var table = tblBuilder.GetMetaId(schemaName, DatabaseProvider.PostgreSql);
+        var metaTbl = table.ToMeta(0);
+        var metaSch = new Meta(schemaName);
+        metaSch.SetEntityType(EntityType.Schema);
+        var metaList = new List<Meta>() { metaSch };
+        metaList.AddRange(metaTbl);
+        var schema = MetaExtensions.ToSchema(metaList.ToArray(), DatabaseProvider.PostgreSql);
+        var expectedResult = "DELETE FROM \"@test\".\"@meta_id\" WHERE id=$1 AND schema_id=$2 AND object_type=$3";
+
+        // act 
+        Assert.NotNull(schema);
+        Assert.NotNull(table);
+        sut.Init(schema);
+        var result1 = sut.Delete(table);
+        var result2 = sut.Delete(table); // using cache 
+
+        // assert
+        Assert.Equal(expectedResult, result1);
+        Assert.Equal(expectedResult, result2);
+    }
+
 }
