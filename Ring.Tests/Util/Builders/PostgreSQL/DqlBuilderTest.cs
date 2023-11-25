@@ -158,5 +158,34 @@ public sealed class DqlBuilderTest : BaseBuilderTest
         Assert.Equal(expectedResult, result2);
     }
 
+    [Fact]
+    internal void Select_TableWithSpecFields_SqlQuery()
+    {
+        // field with reserved word in PostGreSQl eg. CURRENT_TIMESTAMP, ANALYZE, and @User
+        // arrange 
+        var sut = new DqlBuilder();
+        var meta = new Meta("Lateral");
+        meta.SetEntityType(EntityType.Table);
+        var metaSch = new Meta("Test");
+        metaSch.SetEntityType(EntityType.Schema);
+        var metaField1 = new Meta("CURRENT_TIMESTAMP");
+        metaField1.SetEntityType(EntityType.Field);
+        var metaField2 = new Meta("ANALYZE");
+        metaField2.SetEntityType(EntityType.Field);
+        var metaField3 = new Meta("@User");
+        metaField3.SetEntityType(EntityType.Field);
+        var schema = MetaExtensions.ToSchema(new Meta[] { meta, metaSch, metaField1, metaField2, metaField3 }, DatabaseProvider.PostgreSql);
+        var expectedResult = "SELECT \"@User\",\"ANALYZE\",\"CURRENT_TIMESTAMP\" FROM test.t_lateral";
+        var tableTest = schema?.GetTable("Lateral");
+
+        // act 
+        Assert.NotNull(schema);
+        Assert.NotNull(tableTest);
+        sut.Init(schema);
+        var result = sut.Select(tableTest, true);
+
+        // assert
+        Assert.Equal(expectedResult, result);
+    }
 
 }
