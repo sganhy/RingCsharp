@@ -6,4 +6,5 @@ internal sealed class DmlBuilder : BaseDmlBuilder
 {
     public override DatabaseProvider Provider => DatabaseProvider.SqlLite;
     public override string VariableNameTemplate => "$";
+    public DmlBuilder() : base() { }
 }

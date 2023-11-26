@@ -1,6 +1,6 @@
 ﻿using Ring.Schema.Attributes;
 using Ring.Schema.Enums;
-using Ring.Schema.Extensions;
+using Ring.Util.Extensions;
 
 namespace Ring.Tests.Schema.Extensions;
 
@@ -44,7 +44,5 @@ public class EnumExtensionsTest
         Assert.Equal(EntityType.Schema, attribute.TargetEntity);
         Assert.Equal(FieldType.Int, attribute.ParameterDataType);
     }
-
-
 
 }

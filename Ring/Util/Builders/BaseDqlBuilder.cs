@@ -24,8 +24,6 @@ internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
         _ddlBuilder = Provider.GetDdlBuilder();
     }
 
-    public abstract DatabaseProvider Provider { get; }
-
     public void Init(DbSchema schema)
     {
         var mtmCount = schema.GetMtmTableCount();

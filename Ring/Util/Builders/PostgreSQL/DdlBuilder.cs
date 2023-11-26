@@ -8,11 +8,7 @@ namespace Ring.Util.Builders.PostgreSQL;
 
 internal sealed class DdlBuilder : BaseDdlBuilder
 {
-    private readonly static DatabaseProvider _currentProvider = DatabaseProvider.PostgreSql;
-    private readonly static string StringCollageInformation = @"COLLATE ""C""";
     private const char SchemaSeparator = '.';
-    private const int VarcharMaxSize = 65535;
-
     private readonly static Dictionary<FieldType, string> _dataType = new()
     {
         { FieldType.String,        "varchar" },
@@ -30,6 +26,11 @@ internal sealed class DdlBuilder : BaseDdlBuilder
         { FieldType.LongDateTime,  "timestamp with time zone" }
     };
 
+    public override DatabaseProvider Provider => DatabaseProvider.PostgreSql;
+    protected override string StringCollateInformation => @"COLLATE ""C""";
+    protected override string MtmPrefix => "@mtm_";
+    protected override int VarcharMaxSize => 65535;
+
     public override string Create(TableSpace tablespace)
     {
         var result = new StringBuilder();
@@ -42,34 +43,14 @@ internal sealed class DdlBuilder : BaseDdlBuilder
             .Append('\'');
         return result.ToString();
     }
-
-    protected override string GetDataType(Field field) =>
-        GetDataType(_dataType[field.Type], field.Type, field.Size, VarcharMaxSize,
-            field.Type == FieldType.String || field.Type == FieldType.LongString ?
-            StringCollageInformation : null);
-
-    protected override string GetDataType(Relation relation)
-    {
-        var pk = relation.ToTable.GetPrimaryKey();
-        if (pk != null) return GetDataType(_dataType[pk.Type], FieldType.Long, 0, 0);
-        return string.Empty;
-    }
-
-    public override string GetPhysicalName(Field field) =>
-        _currentProvider.IsReservedWord(field.Name) ^ field.Name.StartsWith(SpecialEntityPrefix) ?
-        string.Join(null, DefaultPhysicalNameSeparator, field.Name, DefaultPhysicalNameSeparator) : field.Name;
-
-    public override string GetPhysicalName(Relation relation) =>
-        _currentProvider.IsReservedWord(relation.Name) ?
-        string.Join(null, DefaultPhysicalNameSeparator, relation.Name, DefaultPhysicalNameSeparator) : relation.Name;
-
+    protected override Dictionary<FieldType, string> DataType => _dataType;
     //TODO move to base class
     public override string GetPhysicalName(DbSchema schema)
     {
 #pragma warning disable CA1308 // Normalize strings to uppercase
         var physicalName = NamingConvention.ToSnakeCase(schema.Name).ToLowerInvariant();
 #pragma warning restore CA1308
-        return schema.Name.StartsWith(SpecialEntityPrefix) || _currentProvider.IsReservedWord(physicalName)?
+        return schema.Name.StartsWith(SpecialEntityPrefix) || Provider.IsReservedWord(physicalName)?
             string.Join(null, DefaultPhysicalNameSeparator, physicalName, DefaultPhysicalNameSeparator) :
             physicalName;
     }
@@ -109,9 +90,5 @@ internal sealed class DdlBuilder : BaseDdlBuilder
         }
         return result.ToString();
     }
-
-
-    public override DatabaseProvider Provider => _currentProvider;
-    protected override string MtmPrefix => "@mtm_";
-
+    
 }

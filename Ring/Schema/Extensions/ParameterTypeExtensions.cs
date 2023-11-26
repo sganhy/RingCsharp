@@ -1,5 +1,6 @@
 ﻿using Ring.Schema.Attributes;
 using Ring.Schema.Enums;
+using Ring.Util.Extensions;
 
 namespace Ring.Schema.Extensions;
 

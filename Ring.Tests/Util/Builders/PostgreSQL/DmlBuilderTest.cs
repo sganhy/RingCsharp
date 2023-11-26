@@ -250,4 +250,77 @@ public class DmlBuilderTest : BaseBuilderTest
         Assert.Equal(expectedResult, result2);
     }
 
+    [Fact]
+    internal void Update_Table1_UpdateSql()
+    {
+        // arrange 
+        var table = _schema.GetTable("armor");
+        var expectedResult = "UPDATE rpg_sheet.t_armor SET {0} WHERE id=$1";
+
+        // act 
+        Assert.NotNull(table);
+        var result1 = _sut.Update(table);
+        var result2 = _sut.Update(table); // using cache 
+
+        // assert
+        Assert.Equal(expectedResult, result1);
+        Assert.Equal(expectedResult, result2);
+    }
+
+    [Fact]
+    internal void Update_TableMeta_UpdateSql()
+    {
+        // arrange 
+        var sut = new DmlBuilder();
+        var tblBuilder = new TableBuilder();
+        var schemaName = "@Test";
+        var table = tblBuilder.GetMeta(schemaName, DatabaseProvider.PostgreSql);
+        var metaTbl = table.ToMeta(0);
+        var metaSch = new Meta(schemaName);
+        metaSch.SetEntityType(EntityType.Schema);
+        var metaList = new List<Meta>() { metaSch };
+        metaList.AddRange(metaTbl);
+        var schema = MetaExtensions.ToSchema(metaList.ToArray(), DatabaseProvider.PostgreSql);
+        var expectedResult = "UPDATE \"@test\".\"@meta\" SET {0} WHERE id=$1 AND schema_id=$2 AND object_type=$3 AND reference_id=$4";
+
+        // act 
+        Assert.NotNull(schema);
+        Assert.NotNull(table);
+        sut.Init(schema);
+        var result1 = sut.Update(table);
+        var result2 = sut.Update(table); // using cache 
+
+        // assert
+        Assert.Equal(expectedResult, result1);
+        Assert.Equal(expectedResult, result2);
+    }
+
+    [Fact]
+    internal void Update_TableMetaId_UpdateSql()
+    {
+        // arrange 
+        var sut = new DmlBuilder();
+        var tblBuilder = new TableBuilder();
+        var schemaName = "@Test";
+        var table = tblBuilder.GetMetaId(schemaName, DatabaseProvider.PostgreSql);
+        var metaTbl = table.ToMeta(0);
+        var metaSch = new Meta(schemaName);
+        metaSch.SetEntityType(EntityType.Schema);
+        var metaList = new List<Meta>() { metaSch };
+        metaList.AddRange(metaTbl);
+        var schema = MetaExtensions.ToSchema(metaList.ToArray(), DatabaseProvider.PostgreSql);
+        var expectedResult = "UPDATE \"@test\".\"@meta_id\" SET {0} WHERE id=$1 AND schema_id=$2 AND object_type=$3";
+
+        // act 
+        Assert.NotNull(schema);
+        Assert.NotNull(table);
+        sut.Init(schema);
+        var result1 = sut.Update(table);
+        var result2 = sut.Update(table); // using cache 
+
+        // assert
+        Assert.Equal(expectedResult, result1);
+        Assert.Equal(expectedResult, result2);
+    }
+
 }

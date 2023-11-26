@@ -1,6 +1,5 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
-using System.Reflection.Metadata.Ecma335;
 using DbSchema = Ring.Schema.Models.Schema;
 
 namespace Ring.Util.Builders;
@@ -17,6 +16,8 @@ internal abstract class BaseSqlBuilder : ISqlBuilder
     protected const char EndParenthesis = ')';
     protected const char ColumnDelimiter = ',';
     protected const char SqlLineFeed = '\n';
+
+    public abstract DatabaseProvider Provider { get; }
 
     /// <summary>
     /// Get sorted list of logical table name

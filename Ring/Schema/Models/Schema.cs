@@ -7,14 +7,14 @@ namespace Ring.Schema.Models;
 internal sealed class Schema : BaseEntity
 {
     internal readonly ConnectionPool Connections;
-    internal readonly Lexicon[] Lexicons;   // sorted table by name (case sensitif)
+    internal readonly Lexicon[] Lexicons;         // sorted table by name (case sensitif)
     internal readonly SchemaLoadType LoadType;
     internal readonly SchemaSourceType Source;
-    internal readonly Sequence[] Sequences; // sorted sequence by name (case sensitif)
-    internal readonly Table[] TablesById;   // sorted table by id
-    internal readonly Table[] TablesByName; // sorted table by name (case sensitif)
-    internal readonly TableSpace[] TableSpaces;
+    internal readonly Sequence[] Sequences;       // sorted sequence by name (case sensitif)
     internal readonly Parameter[] Parameters;
+    internal readonly Table[] TablesById;         // sorted table by id
+    internal readonly Table[] TablesByName;       // sorted table by name (case sensitif)
+    internal readonly TableSpace[] TableSpaces;
     internal readonly DatabaseProvider Provider;
     internal readonly IDdlBuilder DdlBuiler;
     internal readonly IDmlBuilder DmlBuiler;

@@ -117,16 +117,13 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
             .Append(table.PhysicalName);
         return result.ToString();
     }
-
-    protected virtual string GetDataType(string dataType, FieldType fieldType, int size, int maxSize, string? collateInformation = null)
-    {
-        var result = new StringBuilder(dataType);
-        if (fieldType == FieldType.String && size > 0 && size <= maxSize)
-            result.Append(GetSizeInfo(size));
-        if ((fieldType == FieldType.String || fieldType == FieldType.LongString) && collateInformation != null)
-            result.Append(SqlSpace).Append(collateInformation);
-        return result.ToString();
-    }
+        
+    public string GetPhysicalName(Field field) =>
+        Provider.IsReservedWord(field.Name) ^ field.Name.StartsWith(SpecialEntityPrefix) ?
+        string.Join(null, DefaultPhysicalNameSeparator, field.Name, DefaultPhysicalNameSeparator) : field.Name;
+    public string GetPhysicalName(Relation relation) =>
+        Provider.IsReservedWord(relation.Name) ?
+        string.Join(null, DefaultPhysicalNameSeparator, relation.Name, DefaultPhysicalNameSeparator) : relation.Name;
 
     public string Create(Table table, TableSpace? tablespace = null)
     {
@@ -153,16 +150,43 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
     }
 
     protected abstract string MtmPrefix { get; }
-    public abstract DatabaseProvider Provider { get; }
-    protected abstract string GetDataType(Field field);
-    protected abstract string GetDataType(Relation relation);
+    protected string GetDataType(Field field) =>
+            GetDataType(DataType[field.Type], field.Type, field.Size, VarcharMaxSize,
+                field.Type == FieldType.String || field.Type == FieldType.LongString ?
+                StringCollateInformation : null);
+    protected string GetDataType(Relation relation)
+    {
+        var pk = relation.ToTable.GetPrimaryKey();
+        if (pk != null) return GetDataType(DataType[pk.Type], FieldType.Long, 0, 0);
+        return string.Empty;
+    }
     protected abstract string GetPhysicalName(TableSpace tablespace);
     public abstract string GetPhysicalName(DbSchema schema);
     public abstract string GetPhysicalName(Table table, DbSchema schema);
-    public abstract string GetPhysicalName(Relation relation);
-    public abstract string GetPhysicalName(Field field);
     public abstract string Create(TableSpace tablespace);
+    protected abstract Dictionary<FieldType, string> DataType { get; }
+    protected abstract int VarcharMaxSize { get; }
+    protected abstract string StringCollateInformation { get; }
+    public string Create(Index index, Table table, TableSpace? tablespace = null)
+    {
+        throw new NotImplementedException();
+    }
 
+    public string Create(Constraint constraint, TableSpace? tablespace = null)
+    {
+        throw new NotImplementedException();
+    }
+
+    public string Create(DbSchema schema)
+    {
+        var result = new StringBuilder();
+        result.Append(DdlCreate)
+            .Append(DdlSchema)
+            .Append(GetPhysicalName(schema));
+        return result.ToString();
+    }
+
+    #region private methods 
     private static string GetSizeInfo(int size) => $"({size})";
     private void Create(StringBuilder stringBuilder, Table table, Field field)
     {
@@ -193,25 +217,17 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
             .Append(SqlLineFeed);
     }
 
-    public string Create(Index index, Table table, TableSpace? tablespace = null)
+    private static string GetDataType(string dataType, FieldType fieldType, int size, int maxSize, string? collateInformation = null)
     {
-        throw new NotImplementedException();
-    }
-
-    public string Create(Constraint constraint, TableSpace? tablespace = null)
-    {
-        throw new NotImplementedException();
-    }
-
-    public string Create(DbSchema schema)
-    {
-        var result = new StringBuilder();
-        result.Append(DdlCreate)
-            .Append(DdlSchema)
-            .Append(GetPhysicalName(schema));
+        var result = new StringBuilder(dataType);
+        if (fieldType == FieldType.String && size > 0 && size <= maxSize)
+            result.Append(GetSizeInfo(size));
+        if ((fieldType == FieldType.String || fieldType == FieldType.LongString) && collateInformation != null)
+            result.Append(SqlSpace).Append(collateInformation);
         return result.ToString();
     }
 
+    #endregion 
 
 }
 

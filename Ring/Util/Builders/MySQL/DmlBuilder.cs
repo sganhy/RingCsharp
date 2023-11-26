@@ -6,4 +6,6 @@ internal sealed class DmlBuilder : BaseDmlBuilder
 {
     public override DatabaseProvider Provider => DatabaseProvider.MySql;
     public override string VariableNameTemplate => "?";
+    public DmlBuilder() : base() { }
+
 }

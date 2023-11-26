@@ -1,7 +1,7 @@
 ﻿using System.Globalization;
 using System.Reflection;
 
-namespace Ring.Schema.Extensions;
+namespace Ring.Util.Extensions;
 
 internal static class EnumExtensions
 {

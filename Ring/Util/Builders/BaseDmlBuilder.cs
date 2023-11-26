@@ -14,7 +14,7 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
     private static readonly string DmlInsert = @"INSERT INTO ";
     private static readonly string DmlValues = @") VALUES (";
     private static readonly string DmlUpdate = @"UPDATE ";
-    private static readonly string DmlSet = @" SET ";
+    private static readonly string DmlSet = @" SET {0}";
     private static readonly string DmlDelete = @"DELETE FROM ";
     private static readonly string DmlWhere = @" WHERE ";
     private static readonly string DmlAnd = " AND ";
@@ -24,6 +24,7 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
     private string?[] _tableDelete;
     private string?[] _tableInsert;
     private string?[] _tableInsertWithRel;
+    private string?[] _tableUpdate;
     private readonly IDdlBuilder _ddlBuilder;
     private readonly Field _defaultField;
 
@@ -33,11 +34,11 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
         _tableDelete = Array.Empty<string?>();
         _tableInsert = Array.Empty<string?>();
         _tableInsertWithRel = Array.Empty<string?>();
+        _tableUpdate = Array.Empty<string?>();
         _ddlBuilder = Provider.GetDdlBuilder();
         _defaultField = MetaExtensions.GetEmptyField(new Meta(string.Empty), FieldType.Int);
     }
 
-    public abstract DatabaseProvider Provider { get; }
     public abstract string VariableNameTemplate { get; }
 
     public void Init(DbSchema schema)
@@ -48,6 +49,7 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
         _tableDelete = new string?[mtmCount + tableCount];
         _tableInsert = new string?[mtmCount + tableCount];
         _tableInsertWithRel = new string?[mtmCount + tableCount];
+        _tableUpdate = new string?[mtmCount + tableCount];
     }
 
     public string Insert(Table table, bool includeRelations) {
@@ -59,6 +61,17 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
             result = BuildInsert(table, includeRelations);
             if (includeRelations) _tableInsertWithRel[index] = result;
             else _tableInsert[index] = result;
+        }
+        return result;
+    }
+
+    public string Update(Table table) {
+        var index = _tableIndex.GetIndex(table.Name);
+        var result = _tableUpdate[index];
+        if (result==null)
+        {
+            result = BuildUpdate(table);
+            _tableUpdate[index] = result;
         }
         return result;
     }
@@ -154,6 +167,45 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
                 }
                 break;
             default:
+                throw new NotImplementedException();
+        }
+        return result.ToString();
+    }
+
+    private string BuildUpdate(Table table)
+    {
+        var result = new StringBuilder();
+        result.Append(DmlUpdate);
+        result.Append(table.PhysicalName);
+        result.Append(DmlSet);
+        result.Append(DmlWhere);
+        switch (table.Type)
+        {
+            case TableType.Business:
+            case TableType.Lexicon:
+                result.Append(_ddlBuilder.GetPhysicalName(table.GetPrimaryKey() ?? _defaultField));
+                result.Append(DmlEqual);
+                result.Append(string.Format(CultureInfo.InvariantCulture, VariableNameTemplate, 1));
+                break;
+            case TableType.Meta:
+            case TableType.MetaId:
+                {
+                    var variableIndex = 1;
+                    var firstUniqueIndex = table.GetFirstKey(); // cannot be null here 
+                    var keyCount = firstUniqueIndex?.Columns.Length ?? 0;
+                    for (var i = 0; i < keyCount; ++i, ++variableIndex)
+                    {
+                        var field = MetaExtensions.GetEmptyField(new Meta(firstUniqueIndex?.Columns[i]
+                                        ?? string.Empty), FieldType.Int);
+                        result.Append(_ddlBuilder.GetPhysicalName(field));
+                        result.Append(DmlEqual);
+                        result.Append(string.Format(CultureInfo.InvariantCulture, VariableNameTemplate, variableIndex));
+                        // last element?
+                        if (i < keyCount - 1) result.Append(DmlAnd);
+                    }
+                }
+                break;
+            default: // mtm not supported !!!
                 throw new NotImplementedException();
         }
         return result.ToString();

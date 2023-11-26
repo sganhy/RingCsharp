@@ -5,9 +5,7 @@ namespace Ring.Util.Builders.SQLite;
 
 internal sealed class DdlBuilder : BaseDdlBuilder
 {
-
-    private const int VarcharMaxSize = -1; // no text size delimiter
-
+    private readonly static DatabaseProvider _currentProvider = DatabaseProvider.SqlLite;
     private readonly static Dictionary<FieldType, string> _dataType = new()
     {
         { FieldType.String,        "TEXT"    },
@@ -26,19 +24,9 @@ internal sealed class DdlBuilder : BaseDdlBuilder
     };
 
     public override string Create(TableSpace tablespace) => string.Empty; // no tablespace on SQLite
-    protected override string GetDataType(Field field) => GetDataType(_dataType[field.Type], field.Type, field.Size, VarcharMaxSize);
 
-    protected override string GetDataType(Relation relation)
-    {
-        throw new NotImplementedException();
-    }
+    protected override Dictionary<FieldType, string> DataType => _dataType;
 
-    public override string GetPhysicalName(Field field) => field.Name;
-
-    public override string GetPhysicalName(Relation relation)
-    {
-        throw new NotImplementedException();
-    }
 
     protected override string GetPhysicalName(TableSpace tablespace)
     {
@@ -55,9 +43,10 @@ internal sealed class DdlBuilder : BaseDdlBuilder
         throw new NotImplementedException();
     }
 
-    public override DatabaseProvider Provider => DatabaseProvider.SqlLite;
+    public override DatabaseProvider Provider => _currentProvider;
 
     protected override string MtmPrefix => "@mtm_";
 
-
+    protected override int VarcharMaxSize => -1;
+    protected override string StringCollateInformation => string.Empty;
 }
