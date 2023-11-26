@@ -31,7 +31,7 @@ public class DmlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var table = _schema.GetTable("skill");
-        var expectedResult = "INSERT INTO rpg_sheet.t_skill (id,name,sub_name,is_group,category,armor_penality,trained_only,try_again) VALUES (?,?,?,?,?,?,?,?)";
+        var expectedResult = "INSERT INTO rpg_sheet.t_skill (id,name,sub_name,is_group,category,armor_penality,trained_only,try_again) VALUES (:a1,:a2,:a3,:a4,:a5,:a6,:a7,:a8)";
 
         // act 
         Assert.NotNull(table);
@@ -50,7 +50,7 @@ public class DmlBuilderTest : BaseBuilderTest
         var table = _schema.GetTable(1021); // get book
         var relation = table?.GetRelation("book2class");
         var mtmTable = relation?.ToTable;
-        var expectedResult = "INSERT INTO rpg_sheet.`@mtm_01021_01031_009` (book2class,class2book) VALUES (?,?)";
+        var expectedResult = "INSERT INTO rpg_sheet.`@mtm_01021_01031_009` (book2class,class2book) VALUES (:a1,:a2)";
 
         // act 
         Assert.NotNull(mtmTable);
@@ -90,7 +90,7 @@ public class DmlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var table = _schema.GetTable("deity");
-        var expectedResult = "INSERT INTO rpg_sheet.t_deity (id,name,nickname,portfolio,symbol,deity2alignment,deity2gender) VALUES (?,?,?,?,?,?,?)";
+        var expectedResult = "INSERT INTO rpg_sheet.t_deity (id,name,nickname,portfolio,symbol,deity2alignment,deity2gender) VALUES (:a1,:a2,:a3,:a4,:a5,:a6,:a7)";
 
         // act 
         Assert.NotNull(table);
@@ -107,7 +107,7 @@ public class DmlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var table = _schema.GetTable("skill");
-        var expectedResult = "DELETE FROM rpg_sheet.t_skill WHERE id=?";
+        var expectedResult = "DELETE FROM rpg_sheet.t_skill WHERE id=:a1";
 
         // act 
         Assert.NotNull(table);
@@ -126,7 +126,7 @@ public class DmlBuilderTest : BaseBuilderTest
         var table = _schema.GetTable(1021); // get book
         var relation = table?.GetRelation("book2class");
         var mtmTable = relation?.ToTable;
-        var expectedResult = "DELETE FROM rpg_sheet.`@mtm_01021_01031_009` WHERE book2class=? AND class2book=?";
+        var expectedResult = "DELETE FROM rpg_sheet.`@mtm_01021_01031_009` WHERE book2class=:a1 AND class2book=:a2";
 
         // act 
         Assert.NotNull(mtmTable);
@@ -152,7 +152,7 @@ public class DmlBuilderTest : BaseBuilderTest
         var metaList = new List<Meta>() { metaSch };
         metaList.AddRange(metaTbl);
         var schema = MetaExtensions.ToSchema(metaList.ToArray(), DatabaseProvider.MySql);
-        var expectedResult = "DELETE FROM `@test`.`@meta` WHERE id=? AND schema_id=? AND object_type=? AND reference_id=?";
+        var expectedResult = "DELETE FROM `@test`.`@meta` WHERE id=:a1 AND schema_id=:a2 AND object_type=:a3 AND reference_id=:a4";
 
         // act 
         Assert.NotNull(schema);
@@ -180,7 +180,7 @@ public class DmlBuilderTest : BaseBuilderTest
         var metaList = new List<Meta>() { metaSch };
         metaList.AddRange(metaTbl);
         var schema = MetaExtensions.ToSchema(metaList.ToArray(), DatabaseProvider.MySql);
-        var expectedResult = "DELETE FROM `@test`.`@meta_id` WHERE id=? AND schema_id=? AND object_type=?";
+        var expectedResult = "DELETE FROM `@test`.`@meta_id` WHERE id=:a1 AND schema_id=:a2 AND object_type=:a3";
 
         // act 
         Assert.NotNull(schema);
@@ -199,7 +199,7 @@ public class DmlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var table = _schema.GetTable("armor");
-        var expectedResult = "UPDATE rpg_sheet.t_armor SET {0} WHERE id=?";
+        var expectedResult = "UPDATE rpg_sheet.t_armor SET {0} WHERE id=:a1";
 
         // act 
         Assert.NotNull(table);
@@ -225,7 +225,7 @@ public class DmlBuilderTest : BaseBuilderTest
         var metaList = new List<Meta>() { metaSch };
         metaList.AddRange(metaTbl);
         var schema = MetaExtensions.ToSchema(metaList.ToArray(), DatabaseProvider.PostgreSql);
-        var expectedResult = "UPDATE `@test`.`@meta` SET {0} WHERE id=? AND schema_id=? AND object_type=? AND reference_id=?";
+        var expectedResult = "UPDATE `@test`.`@meta` SET {0} WHERE id=:a1 AND schema_id=:a2 AND object_type=:a3 AND reference_id=:a4";
 
         // act 
         Assert.NotNull(schema);
@@ -253,7 +253,7 @@ public class DmlBuilderTest : BaseBuilderTest
         var metaList = new List<Meta>() { metaSch };
         metaList.AddRange(metaTbl);
         var schema = MetaExtensions.ToSchema(metaList.ToArray(), DatabaseProvider.PostgreSql);
-        var expectedResult = "UPDATE `@test`.`@meta_id` SET {0} WHERE id=? AND schema_id=? AND object_type=?";
+        var expectedResult = "UPDATE `@test`.`@meta_id` SET {0} WHERE id=:a1 AND schema_id=:a2 AND object_type=:a3";
 
         // act 
         Assert.NotNull(schema);

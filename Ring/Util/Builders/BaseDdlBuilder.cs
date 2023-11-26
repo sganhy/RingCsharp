@@ -40,8 +40,10 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
     protected static readonly string DefaultTablePrefix = @"t_";
 
     // conventions
-    protected static readonly string DefaultPhysicalNameSeparator = "\"";
     protected readonly static char SpecialEntityPrefix = '@';
+
+
+    public BaseDdlBuilder() : base() { }
 
     public string AlterAddColumn(Table table, Field field)
     {
@@ -117,14 +119,55 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
             .Append(table.PhysicalName);
         return result.ToString();
     }
-        
+
+    public string GetPhysicalName(DbSchema schema)
+    {
+#pragma warning disable CA1308 // Normalize strings to uppercase
+        var physicalName = NamingConvention.ToSnakeCase(schema.Name).ToLowerInvariant();
+#pragma warning restore CA1308
+        return schema.Name.StartsWith(SpecialEntityPrefix) || Provider.IsReservedWord(physicalName) ?
+            string.Join(null, StartPhysicalNameDelimiter, physicalName, EndPhysicalNameDelimiter) :
+            physicalName;
+    }
     public string GetPhysicalName(Field field) =>
         Provider.IsReservedWord(field.Name) ^ field.Name.StartsWith(SpecialEntityPrefix) ?
-        string.Join(null, DefaultPhysicalNameSeparator, field.Name, DefaultPhysicalNameSeparator) : field.Name;
+        string.Join(null, StartPhysicalNameDelimiter, field.Name, EndPhysicalNameDelimiter) : field.Name;
     public string GetPhysicalName(Relation relation) =>
         Provider.IsReservedWord(relation.Name) ?
-        string.Join(null, DefaultPhysicalNameSeparator, relation.Name, DefaultPhysicalNameSeparator) : relation.Name;
+        string.Join(null, StartPhysicalNameDelimiter, relation.Name, EndPhysicalNameDelimiter) : relation.Name;
+    public string GetPhysicalName(Table table, DbSchema schema)
+    {
+        var result = new StringBuilder(63); // schema name max length(30)  + table name max length(30) + 1 '.' + 2 '"'
+#pragma warning disable CA1308 // Normalize strings to uppercase
+        var tableName = NamingConvention.ToSnakeCase(table.Name).ToLowerInvariant();
+#pragma warning restore CA1308 
+        result.Append(GetPhysicalName(schema));
+        result.Append(SchemaSeparator);
 
+        switch (table.Type)
+        {
+            case TableType.Mtm:
+                result.Append(StartPhysicalNameDelimiter);
+                result.Append(MtmPrefix);
+                result.Append(tableName);
+                result.Append(EndPhysicalNameDelimiter);
+                break;
+            default:
+                if (table.Name.StartsWith(SpecialEntityPrefix))
+                {
+                    result.Append(StartPhysicalNameDelimiter);
+                    result.Append(tableName);
+                    result.Append(EndPhysicalNameDelimiter);
+                }
+                else
+                {
+                    result.Append(TablePrefix);
+                    result.Append(tableName);
+                }
+                break;
+        }
+        return result.ToString();
+    }
     public string Create(Table table, TableSpace? tablespace = null)
     {
         int i;
@@ -148,7 +191,6 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
         }
         return result.ToString();
     }
-
     protected abstract string MtmPrefix { get; }
     protected string GetDataType(Field field) =>
             GetDataType(DataType[field.Type], field.Type, field.Size, VarcharMaxSize,
@@ -161,22 +203,22 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
         return string.Empty;
     }
     protected abstract string GetPhysicalName(TableSpace tablespace);
-    public abstract string GetPhysicalName(DbSchema schema);
-    public abstract string GetPhysicalName(Table table, DbSchema schema);
     public abstract string Create(TableSpace tablespace);
     protected abstract Dictionary<FieldType, string> DataType { get; }
     protected abstract int VarcharMaxSize { get; }
     protected abstract string StringCollateInformation { get; }
+    protected abstract char SchemaSeparator { get; }
+    protected abstract string TablePrefix { get; }
+    protected abstract char StartPhysicalNameDelimiter { get; }
+    protected abstract char EndPhysicalNameDelimiter { get; }
     public string Create(Index index, Table table, TableSpace? tablespace = null)
     {
         throw new NotImplementedException();
     }
-
     public string Create(Constraint constraint, TableSpace? tablespace = null)
     {
         throw new NotImplementedException();
     }
-
     public string Create(DbSchema schema)
     {
         var result = new StringBuilder();

@@ -23,6 +23,8 @@ internal sealed class DdlBuilder : BaseDdlBuilder
         { FieldType.LongDateTime,  "TEXT"    }
     };
 
+    public DdlBuilder() : base() {}
+
     public override string Create(TableSpace tablespace) => string.Empty; // no tablespace on SQLite
 
     protected override Dictionary<FieldType, string> DataType => _dataType;
@@ -32,21 +34,13 @@ internal sealed class DdlBuilder : BaseDdlBuilder
     {
         throw new NotImplementedException();
     }
-
-    public override string GetPhysicalName(Schema.Models.Schema schema)
-    {
-        throw new NotImplementedException();
-    }
-
-    public override string GetPhysicalName(Table table, Schema.Models.Schema schema)
-    {
-        throw new NotImplementedException();
-    }
-
     public override DatabaseProvider Provider => _currentProvider;
-
     protected override string MtmPrefix => "@mtm_";
-
     protected override int VarcharMaxSize => -1;
+    protected override char SchemaSeparator => '.';
     protected override string StringCollateInformation => string.Empty;
+    protected override char StartPhysicalNameDelimiter => '\"';
+    protected override char EndPhysicalNameDelimiter => StartPhysicalNameDelimiter;
+    protected override string TablePrefix => DefaultTablePrefix;
+
 }

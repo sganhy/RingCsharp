@@ -1,14 +1,11 @@
 ﻿using Ring.Schema.Enums;
-using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using System.Text;
-using DbSchema = Ring.Schema.Models.Schema;
 
 namespace Ring.Util.Builders.PostgreSQL;
 
 internal sealed class DdlBuilder : BaseDdlBuilder
 {
-    private const char SchemaSeparator = '.';
     private readonly static Dictionary<FieldType, string> _dataType = new()
     {
         { FieldType.String,        "varchar" },
@@ -25,6 +22,8 @@ internal sealed class DdlBuilder : BaseDdlBuilder
         { FieldType.DateTime,      "timestamp without time zone" },
         { FieldType.LongDateTime,  "timestamp with time zone" }
     };
+
+    public DdlBuilder() : base() {}
 
     public override DatabaseProvider Provider => DatabaseProvider.PostgreSql;
     protected override string StringCollateInformation => @"COLLATE ""C""";
@@ -44,51 +43,12 @@ internal sealed class DdlBuilder : BaseDdlBuilder
         return result.ToString();
     }
     protected override Dictionary<FieldType, string> DataType => _dataType;
+    protected override char SchemaSeparator => '.';
     //TODO move to base class
-    public override string GetPhysicalName(DbSchema schema)
-    {
-#pragma warning disable CA1308 // Normalize strings to uppercase
-        var physicalName = NamingConvention.ToSnakeCase(schema.Name).ToLowerInvariant();
-#pragma warning restore CA1308
-        return schema.Name.StartsWith(SpecialEntityPrefix) || Provider.IsReservedWord(physicalName)?
-            string.Join(null, DefaultPhysicalNameSeparator, physicalName, DefaultPhysicalNameSeparator) :
-            physicalName;
-    }
-
     protected override string GetPhysicalName(TableSpace tablespace) => tablespace.Name;
+    protected override char StartPhysicalNameDelimiter => '\"';
+    protected override char EndPhysicalNameDelimiter => StartPhysicalNameDelimiter;
+    protected override string TablePrefix => DefaultTablePrefix;
 
-    public override string GetPhysicalName(Table table, DbSchema schema)
-    {
-        var result = new StringBuilder(63); // schema name max length(30)  + table name max length(30) + 1 '.' + 2 '"'
-#pragma warning disable CA1308 // Normalize strings to uppercase
-        var tableName = NamingConvention.ToSnakeCase(table.Name).ToLowerInvariant();
-#pragma warning restore CA1308 
-        result.Append(GetPhysicalName(schema));
-        result.Append(SchemaSeparator);
 
-        switch (table.Type)
-        {
-            case TableType.Mtm:
-                result.Append(DefaultPhysicalNameSeparator);
-                result.Append(MtmPrefix);
-                result.Append(tableName);
-                result.Append(DefaultPhysicalNameSeparator);
-                break;
-            default:
-                if (table.Name.StartsWith(SpecialEntityPrefix))
-                {
-                    result.Append(DefaultPhysicalNameSeparator);
-                    result.Append(tableName);
-                    result.Append(DefaultPhysicalNameSeparator);
-                }
-                else
-                {
-                    result.Append(DefaultTablePrefix);
-                    result.Append(tableName);
-                }
-                break;
-        }
-        return result.ToString();
-    }
-    
 }

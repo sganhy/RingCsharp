@@ -22,11 +22,9 @@ internal sealed class DdlBuilder : BaseDdlBuilder
         { FieldType.LongDateTime,  "datetimeoffset" }
     };
 
+    public DdlBuilder() : base() { }
+
     public override string Create(TableSpace tablespace)
-    {
-        throw new NotImplementedException();
-    }
-    public override string GetPhysicalName(Schema.Models.Schema schema)
     {
         throw new NotImplementedException();
     }
@@ -34,15 +32,14 @@ internal sealed class DdlBuilder : BaseDdlBuilder
     {
         throw new NotImplementedException();
     }
-
-    public override string GetPhysicalName(Table table, Schema.Models.Schema schema)
-    {
-        throw new NotImplementedException();
-    }
-
     public override DatabaseProvider Provider => DatabaseProvider.SqlServer;
     protected override string MtmPrefix => "@mtm_";
     protected override Dictionary<FieldType, string> DataType => _dataType;
     protected override int VarcharMaxSize => -1;
     protected override string StringCollateInformation => throw new NotImplementedException();
+    protected override char SchemaSeparator => '.';
+    protected override char StartPhysicalNameDelimiter => '[';
+    protected override char EndPhysicalNameDelimiter => ']';
+    protected override string TablePrefix => DefaultTablePrefix;
+
 }

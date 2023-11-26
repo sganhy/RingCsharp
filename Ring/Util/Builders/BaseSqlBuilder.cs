@@ -19,6 +19,8 @@ internal abstract class BaseSqlBuilder : ISqlBuilder
 
     public abstract DatabaseProvider Provider { get; }
 
+    public BaseSqlBuilder() {}
+
     /// <summary>
     /// Get sorted list of logical table name
     /// </summary>
