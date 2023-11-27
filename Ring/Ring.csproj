@@ -42,8 +42,4 @@
 	<InternalsVisibleTo Include="Ring.Console" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Data\" />
-  </ItemGroup>
-
 </Project>
