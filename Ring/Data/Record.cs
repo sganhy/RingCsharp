@@ -1,4 +1,5 @@
-﻿using Ring.Schema.Models;
+﻿using Microsoft.VisualBasic;
+using Ring.Schema.Models;
 
 namespace Ring.Data;
 
@@ -20,6 +21,37 @@ public struct Record : IEquatable<Record>
         _type = type;
         _data = null;
     }
+
+    /// <summary>
+    ///     SetField methods
+    /// </summary>
+    public void SetField(string name, string value)
+    {
+        if (_type == null) throw new ArgumentException(Constants.ErrUnknowRecordType);
+        var fieldId = _type.GetFieldIndex(name);
+        if (fieldId == Constants.FieldNameNotFound)
+            throw new ArgumentException(string.Format(Constants.ErrUnknowFieldName, name, Table.Name));
+
+        switch (Table.Fields[fieldId].Type)
+        {
+            case FieldType.String: SetStringField(fieldId, value); return;
+            case FieldType.Byte:
+            case FieldType.Short:
+            case FieldType.Int:
+            case FieldType.Long: SetIntegerField(fieldId, value); return;
+            case FieldType.Float:
+            case FieldType.Double: SetFloatField(fieldId, value); return;
+            case FieldType.ShortDateTime:
+            case FieldType.DateTime:
+            case FieldType.LongDateTime: SetDateTimeField(name, value); return;
+            case FieldType.Boolean: SetBooleanField(name, value); return;
+            case FieldType.NotDefined:
+                break;
+            case FieldType.Array:
+                break;
+        }
+    }
+
 
     public static bool operator==(Record left, Record right) => left.Equals(right);
     public static bool operator!=(Record left, Record right) => !(left==right);
