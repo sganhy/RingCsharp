@@ -9,7 +9,7 @@ internal static class StringExtensions
         if (value == null) return false;
         var index = position >> 4; // divide by 16 (16 bits by char)
         if (index > value.Length) return false;
-        return ((value[index] >> ((position&0xFFFF)-1))&1)>0;
+        return ((value[index] >> ((position&0xF)-1))&1)>0; // modulo 16
     }
 
     /// <summary>

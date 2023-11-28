@@ -49,6 +49,10 @@ public class StringExtensionsTest
     [Theory]
     [InlineData(16,0, 5, true)]
     [InlineData(39,0, 5, false)]
+    [InlineData(1, 1, 17, true)]
+    [InlineData(2, 1, 18, true)]
+    [InlineData(1, 2, 33, true)]
+    [InlineData(1, 2, 500, false)]
     internal void GetBitValue_BitPosition_Result(char charInput, int elementPosition,int bitPosition, bool expectedResult)
     {
         // arrange 
