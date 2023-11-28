@@ -7,5 +7,10 @@ internal enum ResourceType : short
     PostgreSQLReservedKeyWord = 19,
     MySQLReservedKeyWord = 21,
     SQLServerReservedKeyWord = 36,
-    SQLiteReservedKeyWord = 49
+    SQLiteReservedKeyWord = 49,
+    /// <summary>
+    /// Record ressources
+    /// </summary>
+    RecordUnkownFieldName = 101,
+    RecordUnkownRecordType = 102,
 }

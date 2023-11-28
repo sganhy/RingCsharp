@@ -46,4 +46,22 @@ public class StringExtensionsTest
         Assert.Equal("Tes", result);
     }
 
+    [Theory]
+    [InlineData(16,0, 5, true)]
+    [InlineData(39,0, 5, false)]
+    internal void GetBitValue_BitPosition_Result(char charInput, int elementPosition,int bitPosition, bool expectedResult)
+    {
+        // arrange 
+        var chars = new char[10];
+        chars[elementPosition] = charInput;
+        var input = new string(chars);
+
+        // act 
+        var result = StringExtensions.GetBitValue(input, bitPosition);
+
+        // assert
+        Assert.Equal(expectedResult, result);
+    }
+
+
 }

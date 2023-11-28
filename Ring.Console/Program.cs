@@ -2,6 +2,7 @@
 
 using Npgsql;
 using Ring;
+using Ring.Data;
 using Ring.Schema.Builders;
 using Ring.Schema.Enums;
 
@@ -19,6 +20,7 @@ TableBuilder builder = new TableBuilder();
 var t = builder.GetMeta("test", Ring.Schema.Enums.DatabaseProvider.PostgreSql);
 
 Initialize.Start(typeof(NpgsqlConnection), POSTGRE_CONN_STRING1);
+
 
 
 

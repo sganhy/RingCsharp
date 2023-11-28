@@ -14,6 +14,7 @@
     <Description>Ring</Description>
     <Title>Ring</Title>
     <NoWarn>CA1307;CA1802</NoWarn>
+    <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'" />

@@ -8,10 +8,11 @@ namespace Ring.Util.Helpers;
 internal sealed class ResourceHelper
 {
     private static readonly object _syncRoot = new();
-    private static readonly string RessourceSuffix = @".txt";
+    private static readonly string ResourceSuffix = @".txt";
     private static readonly string CompressedRessourceSuffix = @".gz";
-    private static readonly string RessourceNameSpace = @"Ring.Util.Resources.";
-    private static readonly char RessourceEndOfLine = '\n';
+    private static readonly string ResourceCrLf = @"|||";
+    private static readonly string ResourceNameSpace = @"Ring.Util.Resources.";
+    private static readonly char ResourceEndOfLine = '\n';
     private static readonly char MessageDescSplitChar = '#';
     private static bool _ressourcesLoaded;
     private static string?[] _logMessages = Array.Empty<string?>();
@@ -20,6 +21,13 @@ internal sealed class ResourceHelper
     internal ResourceHelper()
     {
         if (!_ressourcesLoaded) LoadRessources();
+    }
+
+    internal static string GetErrorMessage(ResourceType resourceType) {
+        if (!_ressourcesLoaded) LoadRessources();
+        string message = string.Empty;
+        if ((int)resourceType <= _logMessages.Length) message= _logMessages[(int)resourceType - 1] ?? string.Empty;
+        return message.Replace(ResourceCrLf, ResourceEndOfLine.ToString());
     }
 
 #pragma warning disable CA1822
@@ -53,7 +61,7 @@ internal sealed class ResourceHelper
         {
             if (!_ressourcesLoaded)
             {
-                var ressourceFile = ResourceType.LogMessage.ToString() + RessourceSuffix;
+                var ressourceFile = ResourceType.LogMessage.ToString() + ResourceSuffix;
                 (_logMessages, _logDescriptions) = GetLogResource(ressourceFile);
             }
             _ressourcesLoaded = true;
@@ -64,13 +72,13 @@ internal sealed class ResourceHelper
     {
         var resultMessage = Array.Empty<string?>();
         var resultDesc = Array.Empty<string?>();
-        var resource = RessourceNameSpace + fileName;
+        var resource = ResourceNameSpace + fileName;
         var assembly = Assembly.GetExecutingAssembly();
         using (var stream = assembly.GetManifestResourceStream(resource))
         {
             if (stream == null) return (resultMessage, resultDesc);
             using var reader = new StreamReader(stream);
-            resultMessage = reader.ReadToEnd().Split(RessourceEndOfLine);
+            resultMessage = reader.ReadToEnd().Split(ResourceEndOfLine);
         }
         // build description array
         if (resultMessage.Length > 0)
@@ -105,7 +113,7 @@ internal sealed class ResourceHelper
 
     private static string[] GetCompressedResource(string fileName)
     {
-        var resource = RessourceNameSpace + fileName;
+        var resource = ResourceNameSpace + fileName;
         var assembly = Assembly.GetExecutingAssembly();
         var result = Array.Empty<string>();
         using (var stream = assembly.GetManifestResourceStream(resource))
@@ -113,7 +121,7 @@ internal sealed class ResourceHelper
             if (stream == null) return result;
             using var decompressionStream = new GZipStream(stream, CompressionMode.Decompress);
             using var reader = new StreamReader(decompressionStream);
-            result = reader.ReadToEnd().Split(RessourceEndOfLine);
+            result = reader.ReadToEnd().Split(ResourceEndOfLine);
         }
         // sort result 
         Array.Sort(result);
