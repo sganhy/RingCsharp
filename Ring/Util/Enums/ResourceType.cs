@@ -13,4 +13,6 @@ internal enum ResourceType : short
     /// </summary>
     RecordUnkownFieldName = 101,
     RecordUnkownRecordType = 102,
+    RecordWrongStringFormat = 103,
+    RecordValueTooLarge = 104
 }

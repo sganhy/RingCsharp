@@ -29,6 +29,9 @@ public struct Record : IEquatable<Record>
         _type = type;
         _data = new string? [type.Fields.Length+1];
     }
+    /// <summary>
+    /// data lenght should be type.Length+1
+    /// </summary>
     internal Record(Table type, string?[] data)
     {
         _type = type;
@@ -40,13 +43,15 @@ public struct Record : IEquatable<Record>
     /// </summary>
     public readonly string? GetField(string name)
     {
-        if (_type==null) throw new ArgumentException(ResourceHelper.GetErrorMessage(ResourceType.RecordUnkownRecordType));
+        if (_type==null) ThrowRecordUnkownRecordType();
+#pragma warning disable CS8604 // Dereference of a possibly null reference. _type cannot be null here 
         var fieldId = _type.GetFieldIndex(name);
+#pragma warning restore CS8604
 #pragma warning disable CS8602 // Dereference of a possibly null reference. _data cannot be null here 
         if (fieldId>-1) return _data[fieldId] ?? _type.Fields[fieldId].DefaultValue;
 #pragma warning restore CS8602
-        throw new ArgumentException(string.Format(CultureInfo.InvariantCulture,
-                ResourceHelper.GetErrorMessage(ResourceType.RecordUnkownFieldName), name, _type.Name));
+        ThrowRecordUnkownFieldName(name);
+        return null;
     }
 
     /// <summary>
@@ -56,10 +61,11 @@ public struct Record : IEquatable<Record>
     /// <param name="value">field value</param>
     public readonly void SetField(string name, string? value)
     {
-        if (_type==null) throw new ArgumentException(ResourceHelper.GetErrorMessage(ResourceType.RecordUnkownRecordType));
+        if (_type==null) ThrowRecordUnkownRecordType();
+#pragma warning disable CS8604 // Dereference of a possibly null reference. _type cannot be null here 
         var fieldId = _type.GetFieldIndex(name);
-        if (fieldId==-1) throw new ArgumentException(string.Format(CultureInfo.InvariantCulture, 
-            ResourceHelper.GetErrorMessage(ResourceType.RecordUnkownFieldName), name, _type.Name));
+#pragma warning restore CS8604
+        if (fieldId==-1) ThrowRecordUnkownFieldName(name);
         switch (_type.Fields[fieldId].Type)
         {
             case FieldType.String: SetStringField(fieldId, value); return;
@@ -81,6 +87,43 @@ public struct Record : IEquatable<Record>
                 return;
         }
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly void SetField(string name, long value)
+    {
+        if (_type == null) ThrowRecordUnkownRecordType();
+#pragma warning disable CS8604 // Dereference of a possibly null reference. _type cannot be null here 
+        var fieldId = _type.GetFieldIndex(name);
+#pragma warning restore CS8604
+        if (fieldId == -1) ThrowRecordUnkownFieldName(name);
+        switch (_type.Fields[fieldId].Type)
+        {
+            case FieldType.String: 
+                SetStringField(fieldId, value.ToString(CultureInfo.InvariantCulture)); 
+                return;
+            case FieldType.Long: 
+                SetData(fieldId, value.ToString(CultureInfo.InvariantCulture));  
+                return;
+            case FieldType.Int:
+                if (value<=int.MaxValue && value>=int.MinValue) SetData(fieldId, value.ToString(CultureInfo.InvariantCulture));
+                else ThrowValueTooLarge(_type.Fields[fieldId].Type);
+                return;
+            case FieldType.Short:
+                if (value <= short.MaxValue && value >= short.MinValue) SetData(fieldId, value.ToString(CultureInfo.InvariantCulture));
+                else ThrowValueTooLarge(_type.Fields[fieldId].Type);
+                return;
+            case FieldType.Byte:
+                if (value <= sbyte.MaxValue && value >= sbyte.MinValue) SetData(fieldId, value.ToString(CultureInfo.InvariantCulture));
+                else ThrowValueTooLarge(_type.Fields[fieldId].Type);
+                return;
+            default:
+                // throw exception !!
+                break; 
+        }
+    }
+
+    public readonly void SetField(string name, int value) => SetField(name, (long)value);
+    public readonly void SetField(string name, short value) => SetField(name, (long)value);
 
     public static bool operator==(Record left, Record right) => left.Equals(right);
     public static bool operator!=(Record left, Record right) => !(left==right);
@@ -110,6 +153,19 @@ public struct Record : IEquatable<Record>
         return HashHelper.Djb2X(result.ToString());
     }
 
+    internal readonly bool IsFieldChanged(string name)
+    {
+        if (_type == null) ThrowRecordUnkownRecordType();
+#pragma warning disable CS8604 // Dereference of a possibly null reference. _type cannot be null here 
+        var index = _type.GetFieldIndex(name);
+#pragma warning restore CS8604 // Dereference of a possibly null reference.
+#pragma warning disable CS8602 // Dereference of a possibly null reference. - _type cannot be null here !!!
+        if (index != -1) return _data[^1]!=null && FieldChange(index);
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
+        ThrowRecordUnkownFieldName(name);
+        return false;
+    }
+
     #region private methods 
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -122,39 +178,65 @@ public struct Record : IEquatable<Record>
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
     }
 
-    // no need agressive inlining here
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private readonly void SetIntegerField(FieldType fieldType, int fieldId, string? value) {
-        if (long.TryParse(value, out long lng))
+        if (value==null) SetData(fieldId, null);
+        else if (long.TryParse(value, out long lng))
         {
-            SetData(fieldId, lng.ToString(CultureInfo.InvariantCulture));
-            return;
-        } 
-        // else throw an exception, invalid integer
+            if (fieldType == FieldType.Long ||
+               (fieldType == FieldType.Int && lng <= int.MaxValue && lng >= int.MinValue) ||
+               (fieldType == FieldType.Short && lng <= short.MaxValue && lng >= short.MinValue))
+            {
+                SetData(fieldId, lng.ToString(CultureInfo.InvariantCulture));
+                return;
+            }
+            ThrowValueTooLarge(fieldType);
+        }
+        ThrowWrongStringFormat();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private readonly void SetData(int fieldId, string? value)
     {
-        if (_data==null || _data[fieldId] == value) return; // detect no change
-        //if (_data[^1] == null) _data[^1] = new string(new byte[], StandardCharsets.UT);
-            /*
-            if (Table.PrimaryKeyIdIndex >= 0 && _data[Table.PrimaryKeyIdIndex] != null)
-            {
-                var key = fieldId;
-                // long = 64
-                key >>= Constants.RcdDefaultShiftLeft;
-                key = -key; // --> set to negatif
-                --key;
-                if (_extraInfo == null) _extraInfo = new SortedDictionary<int, long>();
-                if (!_extraInfo.ContainsKey(key)) _extraInfo.Add(key, 0L);
-                // bit number =>  fieldId & MASK_64BITS
-                _extraInfo[key] |= 1L << (fieldId & Constants.Mask64Bits);
-            }
-            // is there a change ?
-            */
-            _data[fieldId] = value;
+#pragma warning disable CS8602 // Dereference of a possibly null reference. - _data cannot be null here !!!
+        if (string.CompareOrdinal(_data[fieldId],value)==0) return; // detect no change
+#pragma warning restore CS8602
+        if (_data[^1]==null)
+        {
+#pragma warning disable CS8602 // Dereference of a possibly null reference. - _type cannot be null here !!!
+            var index=_type.Fields.Length>>4;
+#pragma warning restore CS8602
+            _data[^1]=new string(new char[index+1]);
+        }
+#pragma warning disable CS8604 // Possible null reference argument. - _data cannot be null here !!!
+        _data[^1].SetBitValue(fieldId);
+#pragma warning restore CS8604 // Possible null reference argument.
+        _data[fieldId] = value;
     }
 
-    #endregion 
+#pragma warning disable CS8602 // Dereference of a possibly null reference. - _data cannot be null here !!!
+#pragma warning disable CS8604 // Possible null reference argument. - _data[^1] cannot be null here !!!
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private readonly bool FieldChange(int fieldId) => _data[^1].GetBitValue(fieldId);
+#pragma warning restore CS8602 // Possible null reference argument.
+#pragma warning restore CS8604 // Possible null reference argument.
+
+
+    // exceptions 
+    private readonly void ThrowRecordUnkownFieldName(string name) => 
+        throw new ArgumentException(string.Format(CultureInfo.InvariantCulture,
+                  ResourceHelper.GetErrorMessage(ResourceType.RecordUnkownFieldName), name, _type?.Name));
+
+    private static void ThrowRecordUnkownRecordType() =>
+        throw new ArgumentException(ResourceHelper.GetErrorMessage(ResourceType.RecordUnkownRecordType));
+
+    private static void ThrowWrongStringFormat() =>
+        throw new FormatException(ResourceHelper.GetErrorMessage(ResourceType.RecordWrongStringFormat));
+
+    private static void ThrowValueTooLarge(FieldType fieldType) =>
+        throw new OverflowException(string.Format(CultureInfo.InvariantCulture, 
+            ResourceHelper.GetErrorMessage(ResourceType.RecordValueTooLarge), fieldType.RecordTypeDisplay()));
+
+    #endregion
 
 }

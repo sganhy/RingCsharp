@@ -231,6 +231,86 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
+    internal void SetField_AnonymousShort_ReturnShortValue()
+    {
+        // arrange 
+        var table = _schema.GetTable("alignment");
+        Assert.NotNull(table);
+        var rcd = new Record(table, new string?[table.Fields.Length + 1]);
+        var expectedValue = _fixture.Create<short>().ToString();
+
+        // act 
+        rcd.SetField("id", expectedValue);
+
+        // assert
+        Assert.Equal(expectedValue, rcd.GetField("id"));
+    }
+
+    [Fact]
+    internal void SetField_AnonymousInt_ReturnIntegerValue()
+    {
+        // arrange 
+        var table = _schema.GetTable("book");
+        Assert.NotNull(table);
+        var rcd = new Record(table, new string?[table.Fields.Length + 1]);
+        var expectedValue = _fixture.Create<int>().ToString();
+
+        // act 
+        rcd.SetField("id", expectedValue);
+
+        // assert
+        Assert.Equal(expectedValue, rcd.GetField("id"));
+    }
+
+    [Fact]
+    internal void SetField_AnonymousInt_ThrowValueTooLarge()
+    {
+        // arrange 
+        var genderTable = _schema.GetTable("gender");
+        Assert.NotNull(genderTable);
+        var rcd = new Record(genderTable);
+
+        // act 
+        var ex = Assert.Throws<OverflowException>(() => rcd.SetField("id", "1000000"));
+
+        // assert
+        Assert.Equal("Value was either too large or too small for an Int16.", ex.Message);
+    }
+
+
+    [Fact]
+    internal void SetField_AnonymousInt_ThrowWrongStringFormat()
+    {
+        // arrange 
+        var featType = _schema.GetTable("feat_type");
+        Assert.NotNull(featType);
+        var rcd = new Record(featType);
+
+        // act 
+        var ex = Assert.Throws<FormatException>(() => rcd.SetField("id", "&&&qqd"));
+
+        // assert
+        Assert.Equal("Input string was not in a correct format.", ex.Message);
+    }
+
+    [Fact]
+    internal void SetField_AnonymousInt_ReturnInt()
+    {
+        // arrange 
+        var campaignSettingTable = _schema.GetTable("campaign_setting");
+        Assert.NotNull(campaignSettingTable);
+        var rcd = new Record(campaignSettingTable);
+        var expectedValue = _fixture.Create<short>();
+
+        // act 
+        rcd.SetField("status", expectedValue);
+
+        // assert
+        Assert.Equal(expectedValue.ToString(), rcd.GetField("status"));
+    }
+
+
+    [Fact]
     internal void GetField_AnonymousField_ThrowArgumentException()
     {
         // arrange 
@@ -243,6 +323,103 @@ public sealed class RecordTest : BaseExtensionsTest
 
         // assert
         Assert.Equal("Field name 'zorro' does not exist for object type 'campaign_setting'.", ex.Message);
+    }
+
+    [Fact]
+    internal void GetField_FieldWithDefaultValue_DefaultValue()
+    {
+        // arrange 
+        var table = _schema.GetTable("skill");
+        Assert.NotNull(table);
+        var rcd = new Record(table, new string?[table.Fields.Length + 1]);
+
+        // act 
+        var result = rcd.GetField("is_group");
+
+        // assert
+        Assert.Equal("True", result, true);
+    }
+
+    [Fact]
+    internal void GetField_PkDefaultValue_0()
+    {
+        // arrange 
+        var table = _schema.GetTable("weapon");
+        Assert.NotNull(table);
+        var rcd = new Record(table, new string?[table.Fields.Length + 1]);
+
+        // act 
+        var result = rcd.GetField("id");
+
+        // assert
+        Assert.Equal("0", result);
+    }
+
+
+    [Fact]
+    internal void IsFieldChange_SetNameField_True()
+    {
+        // arrange 
+        var table = _schema.GetTable("armor");
+        Assert.NotNull(table);
+        var rcd = new Record(table, new string?[table.Fields.Length + 1]);
+        rcd.SetField("name", _fixture.Create<string>());
+
+        // act 
+        var result = rcd.IsFieldChanged("name");
+
+        // assert
+        Assert.True(result);
+    }
+
+
+    [Fact]
+    internal void IsFieldChange_SetNameField_False()
+    {
+        // arrange 
+        var table = _schema.GetTable("armor");
+        Assert.NotNull(table);
+        var rcd1 = new Record(table, new string?[table.Fields.Length + 1]);
+        rcd1.SetField("name", _fixture.Create<string>());
+        var rcd2 = new Record(table, new string?[table.Fields.Length + 1]);
+
+        // act 
+        var result1 = rcd1.IsFieldChanged("id");
+        var result2 = rcd1.IsFieldChanged("heavy");
+        var result3 = rcd2.IsFieldChanged("heavy");
+
+        // assert
+        Assert.False(result1);
+        Assert.False(result2);
+        Assert.False(result3);
+    }
+
+    [Fact]
+    internal void IsFieldChange_AnonymousField_ThrowArgumentException()
+    {
+        // arrange 
+        var table = _schema.GetTable("armor");
+        Assert.NotNull(table);
+        var rcd = new Record(table, new string?[table.Fields.Length + 1]);
+
+        // act 
+        var ex = Assert.Throws<ArgumentException>(() => rcd.IsFieldChanged("zorro"));
+
+        // assert
+        Assert.Equal("Field name 'zorro' does not exist for object type 'armor'.", ex.Message);
+    }
+
+    [Fact]
+    internal void IsFieldChange_AnonymousField_ThrowUnknownRecordType()
+    {
+        // arrange 
+        var rcd = new Record();
+
+        // act 
+        var ex = Assert.Throws<ArgumentException>(() => rcd.IsFieldChanged("zorro"));
+
+        // assert
+        Assert.Equal("This Record object has an unknown RecordType.  The RecordType \nproperty must be set before performing this operation.", ex.Message);
     }
 
 }

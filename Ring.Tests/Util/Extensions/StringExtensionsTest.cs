@@ -47,12 +47,12 @@ public class StringExtensionsTest
     }
 
     [Theory]
-    [InlineData(16,0, 5, true)]
-    [InlineData(39,0, 5, false)]
-    [InlineData(1, 1, 17, true)]
-    [InlineData(2, 1, 18, true)]
-    [InlineData(1, 2, 33, true)]
-    [InlineData(1, 2, 500, false)]
+    [InlineData(16,0, 4, true)]
+    [InlineData(39,0, 4, false)]
+    [InlineData(1, 1, 16, true)]
+    [InlineData(2, 1, 17, true)]
+    [InlineData(1, 2, 32, true)]
+    [InlineData(1, 2, 499, false)]
     internal void GetBitValue_BitPosition_Result(char charInput, int elementPosition,int bitPosition, bool expectedResult)
     {
         // arrange 
@@ -67,5 +67,29 @@ public class StringExtensionsTest
         Assert.Equal(expectedResult, result);
     }
 
+    [Theory]
+    [InlineData(8, 9, 1)]
+    [InlineData(27, 31, 19)]
+    [InlineData(27, 31, 1)]
+    [InlineData(0, 31, 1)]
+    [InlineData(97, 101, 55)]
+    internal void SetBitValue_BitPosition_Result(int firstBitPosition, int secondBitPosition, int falseBitPosition)
+    {
+        // arrange 
+        var chars = new char[10];
+        var input = new string(chars);
+
+        // act 
+        StringExtensions.SetBitValue(input, firstBitPosition);
+        StringExtensions.SetBitValue(input, secondBitPosition);
+        var result1 = StringExtensions.GetBitValue(input, firstBitPosition);
+        var result2 = StringExtensions.GetBitValue(input, secondBitPosition);
+        var result3 = StringExtensions.GetBitValue(input, falseBitPosition);
+
+        // assert
+        Assert.True(result1);
+        Assert.True(result2);
+        Assert.False(result3);
+    }
 
 }

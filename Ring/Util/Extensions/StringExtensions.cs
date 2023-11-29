@@ -5,33 +5,32 @@ internal static class StringExtensions
     internal static string? Truncate(this string? source, int length) =>
         source?.Length >= length ? source[..length] : source;
 
-    internal static bool GetBitValue(this string? value, int position) {
-        if (value == null) return false;
+    /// <summary>
+    /// Read a bit from a string
+    /// </summary>
+    /// <param name="value"></param>
+    /// <param name="position">First bit equal to 0 position</param>
+    internal static bool GetBitValue(this string value, int position) {
         var index = position >> 4; // divide by 16 (16 bits by char)
         if (index > value.Length) return false;
-        return ((value[index] >> ((position&0xF)-1))&1)>0; // modulo 16
+        return ((value[index] >> (position&0xF))&1)>0; // index + (position modulo 16)
     }
 
     /// <summary>
     /// Set to true a bit value
     /// </summary>
-    internal static string SetBitValue(this string? value, int position)
+    internal static void SetBitValue(this string value, int position)
     {
         var index = position >> 4; // divide by 16 (16 bits by char)
-        char[] result;
-        if (value == null)
+        // avoid to get troubles with pointer in unsafe mode
+        if (index>=value.Length) throw new ArgumentOutOfRangeException(string.Empty);
+        var mask = (char)1;
+        mask <<= position & 0xF;
+        unsafe                // allows writing to memory; methods on System.String don't allow this
         {
-            result = new char[index + 1];
+            fixed (char* c = value) // get pointer to string originally stored in read only memory
+                c[index] |= mask;
         }
-        else if (value.Length > index + 1) { 
-
-        }
-        else 
-        {
-
-        }
-
-        return string.Empty;   
     }
 
 }
