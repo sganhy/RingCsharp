@@ -294,7 +294,7 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
-    internal void SetField_AnonymousInt_ReturnInt()
+    internal void SetField_AnonymousShort_ReturnShort()
     {
         // arrange 
         var campaignSettingTable = _schema.GetTable("campaign_setting");
@@ -309,6 +309,53 @@ public sealed class RecordTest : BaseExtensionsTest
         Assert.Equal(expectedValue.ToString(), rcd.GetField("status"));
     }
 
+    [Fact]
+    internal void SetField_AnonymousInt_ReturnInt()
+    {
+        // arrange 
+        var armorTable = _schema.GetTable("armor");
+        Assert.NotNull(armorTable);
+        var rcd = new Record(armorTable);
+        var expectedValue = _fixture.Create<int>();
+
+        // act 
+        rcd.SetField("cost", expectedValue);
+
+        // assert
+        Assert.Equal(expectedValue.ToString(), rcd.GetField("cost"));
+    }
+
+    [Fact]
+    internal void SetField_MaxLong_ThrowValueTooLarge()
+    {
+        // arrange 
+        var armorTable = _schema.GetTable("armor");
+        Assert.NotNull(armorTable);
+        var rcd = new Record(armorTable);
+        var expectedValue = long.MaxValue;
+
+        // act 
+        var ex = Assert.Throws<OverflowException>(() => rcd.SetField("cost", expectedValue));
+
+        // assert
+        Assert.Equal("Value was either too large or too small for an Int32.", ex.Message);
+    }
+
+    [Fact]
+    internal void SetField_MaxInt_ThrowValueTooLarge()
+    {
+        // arrange 
+        var armorTable = _schema.GetTable("armor");
+        Assert.NotNull(armorTable);
+        var rcd = new Record(armorTable);
+        var expectedValue = int.MaxValue;
+
+        // act 
+        var ex = Assert.Throws<OverflowException>(() => rcd.SetField("max_dex_bonus", expectedValue));
+
+        // assert
+        Assert.Equal("Value was either too large or too small for an Int16.", ex.Message);
+    }
 
     [Fact]
     internal void GetField_AnonymousField_ThrowArgumentException()

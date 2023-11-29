@@ -121,7 +121,6 @@ public struct Record : IEquatable<Record>
                 break; 
         }
     }
-
     public readonly void SetField(string name, int value) => SetField(name, (long)value);
     public readonly void SetField(string name, short value) => SetField(name, (long)value);
 
