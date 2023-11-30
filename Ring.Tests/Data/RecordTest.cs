@@ -7,6 +7,7 @@ using Ring.Schema.Models;
 using AutoFixture;
 using Xunit;
 using System.Runtime.InteropServices;
+using Ring.Schema.Builders;
 
 namespace Ring.Tests.Data;
 
@@ -324,6 +325,22 @@ public sealed class RecordTest : BaseExtensionsTest
 
         // assert
         Assert.Equal(expectedValue.ToString(), rcd.GetField("cost"));
+    }
+
+    [Fact]
+    internal void SetField_AnonymousLong_ReturnLong()
+    {
+        // arrange 
+        var tableBuilder = new TableBuilder();
+        var metaIdTable = tableBuilder.GetMetaId("Test",DatabaseProvider.SqlLite);
+        var rcd = new Record(metaIdTable);
+        var expectedValue = long.MinValue;
+
+        // act 
+        rcd.SetField("value", expectedValue);
+
+        // assert
+        Assert.Equal(expectedValue.ToString(), rcd.GetField("value"));
     }
 
     [Fact]

@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using Index = Ring.Schema.Models.Index;
 using DbSchema = Ring.Schema.Models.Schema;
 using Ring.Util.Builders;
+using System.Globalization;
 
 namespace Ring.Schema.Extensions;
 
@@ -63,7 +64,7 @@ internal static class MetaExtensions
     private const byte BitPositionTablespaceIndex = 11;
     private const byte BitPositionTablespaceTable = 12;
     private static readonly string DefaultNumberValue = "0";
-    private static readonly string DefaultBoolValue = false.ToString();
+    private static readonly string DefaultBoolValue = false.ToString(CultureInfo.InvariantCulture);
 
     #endregion 
 

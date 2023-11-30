@@ -1,4 +1,5 @@
-﻿using Ring.Schema.Enums;
+﻿using Microsoft.VisualBasic;
+using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using Ring.Util.Enums;
@@ -7,14 +8,19 @@ using Ring.Util.Helpers;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Xml.Linq;
 
 namespace Ring.Data;
 
 public struct Record : IEquatable<Record>
 {
     private readonly static string NullField = @"^^";
-    private readonly static string BooleanTrue = true.ToString(CultureInfo.InvariantCulture);
-    private readonly static string BooleanFalse = false.ToString(CultureInfo.InvariantCulture);
+    private readonly static CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
+    private readonly static string BooleanTrue = true.ToString(DefaultCulture);
+    private readonly static string BooleanFalse = false.ToString(DefaultCulture);
+    private readonly static char DateDelimiter = '-';
+    private readonly static char TimeDelimiter = 'T';
+    private readonly static char HourDelimiter = ':';
     private string?[]? _data; // should be instanciate when record type is defined
     private Table? _type;
 
@@ -80,9 +86,7 @@ public struct Record : IEquatable<Record>
             case FieldType.Double: SetFloatField(_type.Fields[fieldId].Type, fieldId, value); return;
             case FieldType.ShortDateTime:
             case FieldType.DateTime:
-            case FieldType.LongDateTime: 
-                //SetDateTimeField(name, value);
-                return;
+            case FieldType.LongDateTime: SetDateTimeField(fieldId, _type.Fields[fieldId].Type,value); return;
             case FieldType.Boolean: SetBooleanField(fieldId, value); return;
         }
     }
@@ -97,21 +101,21 @@ public struct Record : IEquatable<Record>
         switch (_type.Fields[fieldId].Type)
         {
             case FieldType.String: 
-                SetStringField(fieldId, value.ToString(CultureInfo.InvariantCulture)); 
+                SetStringField(fieldId, value.ToString(DefaultCulture)); 
                 return;
             case FieldType.Long: 
-                SetData(fieldId, value.ToString(CultureInfo.InvariantCulture));  
+                SetData(fieldId, value.ToString(DefaultCulture));  
                 return;
             case FieldType.Int:
-                if (value<=int.MaxValue && value>=int.MinValue) SetData(fieldId, value.ToString(CultureInfo.InvariantCulture));
+                if (value<=int.MaxValue && value>=int.MinValue) SetData(fieldId, value.ToString(DefaultCulture));
                 else ThrowValueTooLarge(_type.Fields[fieldId].Type);
                 return;
             case FieldType.Short:
-                if (value <= short.MaxValue && value >= short.MinValue) SetData(fieldId, value.ToString(CultureInfo.InvariantCulture));
+                if (value <= short.MaxValue && value >= short.MinValue) SetData(fieldId, value.ToString(DefaultCulture));
                 else ThrowValueTooLarge(_type.Fields[fieldId].Type);
                 return;
             case FieldType.Byte:
-                if (value <= sbyte.MaxValue && value >= sbyte.MinValue) SetData(fieldId, value.ToString(CultureInfo.InvariantCulture));
+                if (value <= sbyte.MaxValue && value >= sbyte.MinValue) SetData(fieldId, value.ToString(DefaultCulture));
                 else ThrowValueTooLarge(_type.Fields[fieldId].Type);
                 return;
             default:
@@ -136,13 +140,23 @@ public struct Record : IEquatable<Record>
         switch (_type.Fields[fieldId].Type)
         {
             case FieldType.String:
-                SetStringField(fieldId, value.ToString(CultureInfo.InvariantCulture));
+                SetStringField(fieldId, value.ToString(DefaultCulture));
                 break;
             case FieldType.Boolean:
                 SetData(fieldId, value ? BooleanTrue : BooleanFalse);
                 break;
         }
     }
+    public readonly void SetField(string name, DateTime value)
+    {
+        if (_type == null) ThrowRecordUnkownRecordType();
+#pragma warning disable CS8604 // Dereference of a possibly null reference. _type cannot be null here 
+        var fieldId = _type.GetFieldIndex(name);
+#pragma warning restore CS8604
+        if (fieldId == -1) ThrowRecordUnkownFieldName(name);
+        SetDateTimeField(fieldId, _type.Fields[fieldId].Type, value);
+    }
+
 
     public static bool operator==(Record left, Record right) => left.Equals(right);
     public static bool operator!=(Record left, Record right) => !(left==right);
@@ -207,7 +221,7 @@ public struct Record : IEquatable<Record>
                (fieldType == FieldType.Int && lng <= int.MaxValue && lng >= int.MinValue) ||
                (fieldType == FieldType.Short && lng <= short.MaxValue && lng >= short.MinValue))
             {
-                SetData(fieldId, lng.ToString(CultureInfo.InvariantCulture));
+                SetData(fieldId, lng.ToString(DefaultCulture));
                 return;
             }
             ThrowValueTooLarge(fieldType);
@@ -225,7 +239,7 @@ public struct Record : IEquatable<Record>
                (fieldType == FieldType.Int && lng <= int.MaxValue && lng >= int.MinValue) ||
                (fieldType == FieldType.Short && lng <= short.MaxValue && lng >= short.MinValue))
             {
-                SetData(fieldId, lng.ToString(CultureInfo.InvariantCulture));
+                SetData(fieldId, lng.ToString(DefaultCulture));
                 return;
             }
             ThrowValueTooLarge(fieldType);
@@ -243,6 +257,38 @@ public struct Record : IEquatable<Record>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private readonly void SetDateTimeField(int fieldId, FieldType fieldType, string? value)
+    {
+        if (DateTime.TryParse(value,out var dt)) SetDateTimeField(fieldId, fieldType, dt);
+        // throw exception 
+    }
+
+    private readonly void SetDateTimeField(int fieldId, FieldType fieldType, DateTime value)
+    {
+        if (fieldType == FieldType.DateTime || fieldType == FieldType.LongDateTime || fieldType == FieldType.ShortDateTime)
+        {
+            // IS0-8601 ==> "YYYY-MM-DDTHH:MM:SSZ"
+            var sb = new StringBuilder();
+            var utcDt = value.ToUniversalTime();
+            sb.Append(utcDt.Year.ToString(DefaultCulture).PadLeft(4, '0'));
+            sb.Append(DateDelimiter);
+            sb.Append(utcDt.Month.ToString(DefaultCulture).PadLeft(2, '0'));
+            sb.Append(DateDelimiter);
+            sb.Append(utcDt.Day.ToString(DefaultCulture).PadLeft(2, '0'));
+            if (fieldType != FieldType.ShortDateTime)
+            {
+                sb.Append(TimeDelimiter);
+                sb.Append(utcDt.Hour.ToString(DefaultCulture).PadLeft(2, '0'));
+                sb.Append(HourDelimiter);
+                sb.Append(utcDt.Minute.ToString(DefaultCulture).PadLeft(2, '0'));
+                sb.Append(HourDelimiter);
+                sb.Append(utcDt.Second.ToString(DefaultCulture).PadLeft(2, '0'));
+            }
+            SetData(fieldId, sb.ToString());
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private readonly void SetData(int fieldId, string? value)
     {
 #pragma warning disable CS8602 // Dereference of a possibly null reference. - _data cannot be null here !!!
@@ -251,7 +297,7 @@ public struct Record : IEquatable<Record>
         if (_data[^1]==null)
         {
 #pragma warning disable CS8602 // Dereference of a possibly null reference. - _type cannot be null here !!!
-            var index=(_type.Fields.Length+ _type.Relations.Length) >>4; 
+            var index=(_type.Fields.Length+_type.Relations.Length) >>4; 
 #pragma warning restore CS8602
             _data[^1]=new string(new char[index+1]); 
         }
@@ -271,7 +317,7 @@ public struct Record : IEquatable<Record>
 
     // exceptions 
     private readonly void ThrowRecordUnkownFieldName(string name) => 
-        throw new ArgumentException(string.Format(CultureInfo.InvariantCulture,
+        throw new ArgumentException(string.Format(DefaultCulture,
                   ResourceHelper.GetErrorMessage(ResourceType.RecordUnkownFieldName), name, _type?.Name));
 
     private static void ThrowRecordUnkownRecordType() =>
@@ -281,7 +327,7 @@ public struct Record : IEquatable<Record>
         throw new FormatException(ResourceHelper.GetErrorMessage(ResourceType.RecordWrongStringFormat));
 
     private static void ThrowValueTooLarge(FieldType fieldType) =>
-        throw new OverflowException(string.Format(CultureInfo.InvariantCulture, 
+        throw new OverflowException(string.Format(DefaultCulture, 
             ResourceHelper.GetErrorMessage(ResourceType.RecordValueTooLarge), fieldType.RecordTypeDisplay()));
 
     #endregion
