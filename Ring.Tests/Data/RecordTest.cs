@@ -6,6 +6,7 @@ using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using AutoFixture;
 using Xunit;
+using System.Runtime.InteropServices;
 
 namespace Ring.Tests.Data;
 
@@ -358,6 +359,21 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
+    internal void SetField_Bool_True()
+    {
+        // arrange 
+        var armorTable = _schema.GetTable("armor");
+        Assert.NotNull(armorTable);
+        var rcd = new Record(armorTable);
+
+        // act 
+        rcd.SetField("heavy",true);
+
+        // assert
+        Assert.Equal("True",rcd.GetField("heavy"), true);
+    }
+
+    [Fact]
     internal void GetField_AnonymousField_ThrowArgumentException()
     {
         // arrange 
@@ -402,6 +418,26 @@ public sealed class RecordTest : BaseExtensionsTest
         Assert.Equal("0", result);
     }
 
+
+    [Fact]
+    internal void GetField_NumberFields_DefaultValue()
+    {
+        // arrange 
+        var table = _schema.GetTable(1071);
+        Assert.NotNull(table);
+        var rcd = new Record(table, new string?[table.Fields.Length + 1]);
+
+        // act 
+        var result1 = rcd.GetField("id");
+        var result2 = rcd.GetField("critical_multiplier_1");
+        var result3 = rcd.GetField("martial");
+        
+
+        // assert
+        Assert.Equal("0", result1);
+        Assert.Equal("0", result2);
+        Assert.Equal(false.ToString(), result3);
+    }
 
     [Fact]
     internal void IsFieldChange_SetNameField_True()

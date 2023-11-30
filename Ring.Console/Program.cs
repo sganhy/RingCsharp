@@ -7,6 +7,7 @@ using Ring.Util.Extensions;
 
 var POSTGRE_CONN_STRING1 = "User ID=postgres; Password=sa;" +
                 "Host=localhost;Port=5432;Database=postgres; Pooling=false;";
+var val = true;
 
 Console.WriteLine("Hello, World!");
 var yp = short.Parse("5456456465");

@@ -62,6 +62,8 @@ internal static class MetaExtensions
     private const byte BitPositionTableReadonly = 10;
     private const byte BitPositionTablespaceIndex = 11;
     private const byte BitPositionTablespaceTable = 12;
+    private static readonly string DefaultNumberValue = "0";
+    private static readonly string DefaultBoolValue = false.ToString();
 
     #endregion 
 
@@ -86,6 +88,26 @@ internal static class MetaExtensions
     internal static bool IsParameter(this Meta meta) => meta.ObjectType == ParameterId;
 
     #region field methods  
+    internal static string? GetFieldDefaultValue(this Meta meta) {
+        if (!string.IsNullOrEmpty(meta.Value)) return meta.Value;
+        if (meta.IsFieldNotNull()) 
+        {
+            var fieldType = meta.GetFieldType();
+            switch (fieldType)
+            {
+                case FieldType.Int:
+                case FieldType.Long:
+                case FieldType.Byte:
+                case FieldType.Short:
+                case FieldType.Float:
+                case FieldType.Double:
+                    return DefaultNumberValue;
+                case FieldType.Boolean:
+                    return DefaultBoolValue;
+            }
+        } 
+        return null;
+    }
     internal static int GetFieldSize(this Meta meta) => (int)((meta.Flags >> BitPositionFirstPositionSize) & (int.MaxValue));
     internal static void SetFieldSize(this Meta meta, int size) {
         var temp = (long)size;
@@ -97,6 +119,8 @@ internal static class MetaExtensions
         meta.DataType &= 0x7FFFFF80; // clear 7 first bits
         meta.DataType += (int)fieldType;
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static bool IsFieldNotNull(this Meta meta) => meta.ReadFlag(BitPositionFieldNotNull);
     internal static void SetFieldNotNull(this Meta meta, bool value) => meta.WriteFlag(BitPositionFieldNotNull, value);
     internal static bool IsFieldCaseSensitive(this Meta meta) => meta.ReadFlag(BitPositionFieldCaseSensitive);
@@ -104,10 +128,9 @@ internal static class MetaExtensions
     internal static bool IsFieldMultilingual(this Meta meta) => meta.ReadFlag(BitPositionFieldMultilingual);
     internal static void SetFieldMultilingual(this Meta meta, bool value) => meta.WriteFlag(BitPositionFieldMultilingual, value);
     internal static Field? ToField(this Meta meta)
-        => meta.IsField() ?
-           new Field(meta.GetEntityId(), meta.GetEntityName(), meta.GetEntityDescription(), meta.GetFieldType(), meta.GetFieldSize(),
-                meta.Value, meta.IsEntityBaseline(), meta.IsFieldNotNull(), meta.IsFieldCaseSensitive(),
-                meta.IsFieldMultilingual(), meta.IsEntityActive()) : null;
+        => meta.IsField() ? new Field(meta.GetEntityId(), meta.GetEntityName(), meta.GetEntityDescription(), 
+           meta.GetFieldType(), meta.GetFieldSize(), meta.GetFieldDefaultValue(), meta.IsEntityBaseline(), 
+           meta.IsFieldNotNull(), meta.IsFieldCaseSensitive(), meta.IsFieldMultilingual(), meta.IsEntityActive()) : null;
 
     #endregion
 

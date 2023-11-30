@@ -13,6 +13,8 @@ namespace Ring.Data;
 public struct Record : IEquatable<Record>
 {
     private readonly static string NullField = @"^^";
+    private readonly static string BooleanTrue = true.ToString(CultureInfo.InvariantCulture);
+    private readonly static string BooleanFalse = false.ToString(CultureInfo.InvariantCulture);
     private string?[]? _data; // should be instanciate when record type is defined
     private Table? _type;
 
@@ -38,6 +40,7 @@ public struct Record : IEquatable<Record>
         _data = data;
     }
 
+    
     /// <summary>
     ///     GetField methods
     /// </summary>
@@ -74,21 +77,16 @@ public struct Record : IEquatable<Record>
             case FieldType.Int:
             case FieldType.Long: SetIntegerField(_type.Fields[fieldId].Type, fieldId, value); return;
             case FieldType.Float:
-            case FieldType.Double: 
-                //SetFloatField(fieldId, value); 
-                return;
+            case FieldType.Double: SetFloatField(_type.Fields[fieldId].Type, fieldId, value); return;
             case FieldType.ShortDateTime:
             case FieldType.DateTime:
             case FieldType.LongDateTime: 
                 //SetDateTimeField(name, value);
                 return;
-            case FieldType.Boolean: 
-                //SetBooleanField(name, value); 
-                return;
+            case FieldType.Boolean: SetBooleanField(fieldId, value); return;
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly void SetField(string name, long value)
     {
         if (_type == null) ThrowRecordUnkownRecordType();
@@ -121,8 +119,30 @@ public struct Record : IEquatable<Record>
                 break; 
         }
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly void SetField(string name, int value) => SetField(name, (long)value);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly void SetField(string name, short value) => SetField(name, (long)value);
+    public readonly void SetField(string name, sbyte value) => SetField(name, (long)value);
+    public readonly void SetField(string name, bool value)
+    {
+        if (_type == null) ThrowRecordUnkownRecordType();
+#pragma warning disable CS8604 // Dereference of a possibly null reference. _type cannot be null here 
+        var fieldId = _type.GetFieldIndex(name);
+#pragma warning restore CS8604
+        if (fieldId == -1) ThrowRecordUnkownFieldName(name);
+        switch (_type.Fields[fieldId].Type)
+        {
+            case FieldType.String:
+                SetStringField(fieldId, value.ToString(CultureInfo.InvariantCulture));
+                break;
+            case FieldType.Boolean:
+                SetData(fieldId, value ? BooleanTrue : BooleanFalse);
+                break;
+        }
+    }
 
     public static bool operator==(Record left, Record right) => left.Equals(right);
     public static bool operator!=(Record left, Record right) => !(left==right);
@@ -164,6 +184,7 @@ public struct Record : IEquatable<Record>
         ThrowRecordUnkownFieldName(name);
         return false;
     }
+    internal readonly bool IsFieldExist(string name) => _type != null && _type.GetFieldIndex(name)!=-1;
 
     #region private methods 
 
@@ -194,6 +215,33 @@ public struct Record : IEquatable<Record>
         ThrowWrongStringFormat();
     }
 
+    private readonly void SetFloatField(FieldType fieldType, int fieldId, string? value)
+    {
+        if (value == null) SetData(fieldId, null);
+        else if (double.TryParse(value, out double lng))
+        {
+            //TODO
+            if (fieldType == FieldType.Long ||
+               (fieldType == FieldType.Int && lng <= int.MaxValue && lng >= int.MinValue) ||
+               (fieldType == FieldType.Short && lng <= short.MaxValue && lng >= short.MinValue))
+            {
+                SetData(fieldId, lng.ToString(CultureInfo.InvariantCulture));
+                return;
+            }
+            ThrowValueTooLarge(fieldType);
+        }
+        ThrowWrongStringFormat();
+    }
+
+    private readonly void SetBooleanField(int fieldId, string? value)
+    {
+        if (value == null) SetData(fieldId, null);
+        if (bool.TryParse(value, out bool result))
+        {
+            SetData(fieldId, result? BooleanTrue: BooleanFalse);
+        }
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private readonly void SetData(int fieldId, string? value)
     {
@@ -203,9 +251,9 @@ public struct Record : IEquatable<Record>
         if (_data[^1]==null)
         {
 #pragma warning disable CS8602 // Dereference of a possibly null reference. - _type cannot be null here !!!
-            var index=_type.Fields.Length>>4;
+            var index=(_type.Fields.Length+ _type.Relations.Length) >>4; 
 #pragma warning restore CS8602
-            _data[^1]=new string(new char[index+1]);
+            _data[^1]=new string(new char[index+1]); 
         }
 #pragma warning disable CS8604 // Possible null reference argument. - _data cannot be null here !!!
         _data[^1].SetBitValue(fieldId);
