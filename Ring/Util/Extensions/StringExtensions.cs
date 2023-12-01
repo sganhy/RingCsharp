@@ -2,8 +2,7 @@
 
 internal static class StringExtensions
 {
-    internal static string? Truncate(this string? source, int length) =>
-        source?.Length >= length ? source[..length] : source;
+    internal static string? Truncate(this string? source, int length) => source?.Length >= length ? source[..length] : source;
 
     /// <summary>
     /// Read a bit from a string
@@ -32,5 +31,19 @@ internal static class StringExtensions
                 c[index] |= mask;
         }
     }
+
+    /// <summary>
+    /// Is string contains only digits. string cannot be null
+    /// </summary>
+    internal static bool IsNumber(this string value)
+    {
+        var count=value.Length;
+        var i=count>0 && value[0]=='-' ?1:0;
+        if (i==count) return false;
+        while (i<count) if ((value[i++]^'0')>9) return false;
+        return true;
+    }
+
+
 
 }

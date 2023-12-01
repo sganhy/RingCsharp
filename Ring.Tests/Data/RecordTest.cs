@@ -5,8 +5,6 @@ using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using AutoFixture;
-using Xunit;
-using System.Runtime.InteropServices;
 using Ring.Schema.Builders;
 
 namespace Ring.Tests.Data;
@@ -26,7 +24,7 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
-    internal void Equal_EmptyRecord_True()
+    public void Equal_EmptyRecord_True()
     {
         // arrange 
         var rcd = new Record();
@@ -40,7 +38,7 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
-    internal void Equal_Null_False()
+    public void Equal_Null_False()
     {
         // arrange 
         var rcd = new Record();
@@ -53,7 +51,7 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
-    internal void Equal_FeatRecord_True()
+    public void Equal_FeatRecord_True()
     {
         // arrange 
         var featTable = _schema.GetTable("feat");
@@ -73,7 +71,7 @@ public sealed class RecordTest : BaseExtensionsTest
 
 
     [Fact]
-    internal void Equal_RaceRecord_False()
+    public void Equal_RaceRecord_False()
     {
         // arrange 
         var raceTable = _schema.GetTable("race");
@@ -94,7 +92,7 @@ public sealed class RecordTest : BaseExtensionsTest
 
 
     [Fact]
-    internal void Equal_DifferentRecordType_False()
+    public void Equal_DifferentRecordType_False()
     {
         // arrange 
         var genderTable = _schema.GetTable("gender");
@@ -112,7 +110,7 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
-    internal void Equal_DifferentRecordType_True()
+    public void Equal_DifferentRecordType_True()
     {
         // arrange 
         var genderTable = _schema.GetTable("gender");
@@ -133,7 +131,7 @@ public sealed class RecordTest : BaseExtensionsTest
 
 
     [Fact]
-    internal void Equal_DifferentRecordTypeWithNull_False()
+    public void Equal_DifferentRecordTypeWithNull_False()
     {
         // arrange 
         var genderTable = _schema.GetTable("gender");
@@ -151,7 +149,7 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
-    internal void GetHashCode_DifferentRecordTypeWithNull_NotEquals()
+    public void GetHashCode_DifferentRecordTypeWithNull_NotEquals()
     {
         // arrange 
         var genderTable = _schema.GetTable("gender");
@@ -169,15 +167,15 @@ public sealed class RecordTest : BaseExtensionsTest
 
 
     [Fact]
-    internal void GetHashCode_DifferentRecordTypeWithNull_Equals()
+    public void GetHashCode_DifferentRecordTypeWithNull_Equals()
     {
         // arrange 
-        var genderTable = _schema.GetTable("gender");
-        Assert.NotNull(genderTable);
-        var data = new string?[genderTable.Fields.Length];
+        var table = _schema.GetTable("gender");
+        Assert.NotNull(table);
+        var data = new string?[table.Fields.Length];
         data[1] = _fixture.Create<string>();
-        var rcd1 = new Record(genderTable, data);
-        var rcd2 = new Record(genderTable, data);
+        var rcd1 = new Record(table, data);
+        var rcd2 = new Record(table, data);
 
         // act 
         var result1 = rcd1.GetHashCode();
@@ -188,7 +186,7 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
-    internal void SetField_AnonymousValue_RecordUnkownRecordType()
+    public void SetField_AnonymousValue_RecordUnkownRecordType()
     {
         // arrange 
         var rcd = new Record();
@@ -201,7 +199,7 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
-    internal void SetField_AnonymousValue_ThrowArgumentException()
+    public void SetField_AnonymousValue_ThrowArgumentException()
     {
         // arrange 
         var genderTable = _schema.GetTable("gender");
@@ -216,7 +214,7 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
-    internal void SetField_AnonymousString_ReturnSameString()
+    public void SetField_AnonymousString_ReturnSameString()
     {
         // arrange 
         var table = _schema.GetTable("campaign_setting");
@@ -233,7 +231,7 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
-    internal void SetField_AnonymousShort_ReturnShortValue()
+    public void SetField_AnonymousShort_ReturnShortValue()
     {
         // arrange 
         var table = _schema.GetTable("alignment");
@@ -249,7 +247,7 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
-    internal void SetField_AnonymousInt_ReturnIntegerValue()
+    public void SetField_AnonymousInt_ReturnIntegerValue()
     {
         // arrange 
         var table = _schema.GetTable("book");
@@ -265,7 +263,23 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
-    internal void SetField_AnonymousInt_ThrowValueTooLarge()
+    public void SetField_AnonymousByte_ReturnByteValue()
+    {
+        // arrange 
+        var table = _schema.GetTable("class");
+        Assert.NotNull(table);
+        var rcd = new Record(table, new string?[table.Fields.Length + 1]);
+        var expectedValue = _fixture.Create<sbyte>().ToString();
+
+        // act 
+        rcd.SetField("fortitude", expectedValue);
+
+        // assert
+        Assert.Equal(expectedValue, rcd.GetField("fortitude"));
+    }
+
+    [Fact]
+    public void SetField_AnonymousInt_ThrowValueTooLarge()
     {
         // arrange 
         var genderTable = _schema.GetTable("gender");
@@ -274,14 +288,14 @@ public sealed class RecordTest : BaseExtensionsTest
 
         // act 
         var ex = Assert.Throws<OverflowException>(() => rcd.SetField("id", "1000000"));
-
+        
         // assert
         Assert.Equal("Value was either too large or too small for an Int16.", ex.Message);
     }
 
 
     [Fact]
-    internal void SetField_AnonymousInt_ThrowWrongStringFormat()
+    public void SetField_AnonymousInt_ThrowWrongStringFormat()
     {
         // arrange 
         var featType = _schema.GetTable("feat_type");
@@ -296,7 +310,7 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
-    internal void SetField_AnonymousShort_ReturnShort()
+    public void SetField_AnonymousShort_ReturnShort()
     {
         // arrange 
         var campaignSettingTable = _schema.GetTable("campaign_setting");
@@ -312,7 +326,7 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
-    internal void SetField_AnonymousInt_ReturnInt()
+    public void SetField_AnonymousInt_ReturnInt()
     {
         // arrange 
         var armorTable = _schema.GetTable("armor");
@@ -328,7 +342,7 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
-    internal void SetField_AnonymousLong_ReturnLong()
+    public void SetField_AnonymousLong_ReturnLong()
     {
         // arrange 
         var tableBuilder = new TableBuilder();
@@ -344,7 +358,7 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
-    internal void SetField_MaxLong_ThrowValueTooLarge()
+    public void SetField_MaxLong_ThrowValueTooLarge()
     {
         // arrange 
         var armorTable = _schema.GetTable("armor");
@@ -360,7 +374,7 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
-    internal void SetField_MaxInt_ThrowValueTooLarge()
+    public void SetField_MaxInt_ThrowValueTooLarge()
     {
         // arrange 
         var armorTable = _schema.GetTable("armor");
@@ -376,7 +390,7 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
-    internal void SetField_Bool_True()
+    public void SetField_Bool_True()
     {
         // arrange 
         var armorTable = _schema.GetTable("armor");
@@ -391,7 +405,52 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
-    internal void GetField_AnonymousField_ThrowArgumentException()
+    public void SetField_Bool_False()
+    {
+        // arrange 
+        var featTable = _schema.GetTable("feat");
+        Assert.NotNull(featTable);
+        var rcd = new Record(featTable);
+
+        // act 
+        rcd.SetField("metamagic", false);
+
+        // assert
+        Assert.Equal("False", rcd.GetField("metamagic"), true);
+    }
+
+    [Fact]
+    public void SetField_BoolString_True()
+    {
+        // arrange 
+        var featTable = _schema.GetTable("feat");
+        Assert.NotNull(featTable);
+        var rcd = new Record(featTable);
+
+        // act 
+        rcd.SetField("metamagic", "true");
+
+        // assert
+        Assert.Equal("True", rcd.GetField("metamagic"), true);
+    }
+
+    [Fact]
+    public void SetField_NullBoolString_False()
+    {
+        // arrange 
+        var featTable = _schema.GetTable("feat");
+        Assert.NotNull(featTable);
+        var rcd = new Record(featTable);
+
+        // act 
+        rcd.SetField("epic", null);
+
+        // assert
+        Assert.Equal("false", rcd.GetField("epic"), true);
+    }
+
+    [Fact]
+    public void GetField_AnonymousField_ThrowArgumentException()
     {
         // arrange 
         var table = _schema.GetTable("campaign_setting");
@@ -406,7 +465,7 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
-    internal void GetField_FieldWithDefaultValue_DefaultValue()
+    public void GetField_FieldWithDefaultValue_DefaultValue()
     {
         // arrange 
         var table = _schema.GetTable("skill");
@@ -421,7 +480,7 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
-    internal void GetField_PkDefaultValue_0()
+    public void GetField_PkDefaultValue_0()
     {
         // arrange 
         var table = _schema.GetTable("weapon");
@@ -437,7 +496,7 @@ public sealed class RecordTest : BaseExtensionsTest
 
 
     [Fact]
-    internal void GetField_NumberFields_DefaultValue()
+    public void GetField_NumberFields_DefaultValue()
     {
         // arrange 
         var table = _schema.GetTable(1071);
@@ -457,7 +516,7 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
-    internal void IsFieldChange_SetNameField_True()
+    public void IsFieldChange_SetNameField_True()
     {
         // arrange 
         var table = _schema.GetTable("armor");
@@ -474,7 +533,7 @@ public sealed class RecordTest : BaseExtensionsTest
 
 
     [Fact]
-    internal void IsFieldChange_SetNameField_False()
+    public void IsFieldChange_SetNameField_False()
     {
         // arrange 
         var table = _schema.GetTable("armor");
@@ -495,7 +554,7 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
-    internal void IsFieldChange_AnonymousField_ThrowArgumentException()
+    public void IsFieldChange_AnonymousField_ThrowArgumentException()
     {
         // arrange 
         var table = _schema.GetTable("armor");
@@ -510,7 +569,7 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
-    internal void IsFieldChange_AnonymousField_ThrowUnknownRecordType()
+    public void IsFieldChange_AnonymousField_ThrowUnknownRecordType()
     {
         // arrange 
         var rcd = new Record();
@@ -520,6 +579,38 @@ public sealed class RecordTest : BaseExtensionsTest
 
         // assert
         Assert.Equal("This Record object has an unknown RecordType.  The RecordType \nproperty must be set before performing this operation.", ex.Message);
+    }
+
+    [Theory]
+    [InlineData("weapon", "name", true)]
+    [InlineData("rule", "try_again", false)]
+    [InlineData("rule", "short_name", true)]
+    [InlineData("gender", "iso_code", true)]
+    public void IsFieldExist_AnonymousField_Result(string tableName, string field, bool expectedResult)
+    {
+        // arrange 
+        var table = _schema.GetTable(tableName);
+        Assert.NotNull(table);
+        var rcd = new Record(table);
+
+        // act 
+        var result = rcd.IsFieldExist(field);
+
+        // assert
+        Assert.Equal(expectedResult, result);
+    }
+
+    [Fact]
+    public void IsFieldExist_NullField_False()
+    {
+        // arrange 
+        var rcd = new Record();
+
+        // act 
+        var result = rcd.IsFieldExist("testy");
+
+        // assert
+        Assert.False(result);
     }
 
 }

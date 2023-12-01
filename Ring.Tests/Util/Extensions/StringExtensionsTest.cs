@@ -92,4 +92,28 @@ public class StringExtensionsTest
         Assert.False(result3);
     }
 
+
+    [Theory]
+    [InlineData("555154", true)]
+    [InlineData("84354354531531351354", true)]
+    [InlineData("556165154^^^^$$^l5554", false)]
+    [InlineData("", false)]
+    [InlineData(" ", false)]
+    [InlineData("0", true)]
+    [InlineData("0000000000000000000000000", true)]
+    [InlineData("じゅういち", false)]
+    [InlineData("-112", true)]
+    [InlineData("-", false)]
+    internal void IsDigits_InputString_BoolResult(string input, bool expectedResult)
+    {
+        // arrange 
+        // act 
+        var result=StringExtensions.IsNumber(input);
+
+        // assert
+        Assert.Equal(expectedResult,result);
+    }
+
+    
+
 }
