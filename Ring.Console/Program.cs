@@ -9,9 +9,6 @@ var POSTGRE_CONN_STRING1 = "User ID=postgres; Password=sa;" +
                 "Host=localhost;Port=5432;Database=postgres; Pooling=false;";
 var val = true;
 
-Console.WriteLine("Hello, World!");
-var yp = string.Empty;
-var lll = long.Parse("44444444444444444444444444444444444444444444444444444444");
 
 var con = new NpgsqlConnection(connectionString: "Server=localhost;Port=5432;User Id=postgres;Password=passw0rd;Database=testdb;");
 

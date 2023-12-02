@@ -1,5 +1,4 @@
-﻿using Microsoft.VisualBasic;
-using Ring.Schema.Enums;
+﻿using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using Ring.Util.Enums;
@@ -53,7 +52,15 @@ public struct Record : IEquatable<Record>
         _type = type;
         _data = data;
     }
-    
+
+
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+    internal readonly string this[int i] => _data[i];
+#pragma warning restore CS8602
+    public readonly bool IsDirty => _data != null && _data[^1] != null;
+    internal readonly Table? Table => _type;
+    internal readonly void ClearData() => Array.Fill(_data??Array.Empty<string?>(), null);
+
     /// <summary>
     ///     GetField methods
     /// </summary>
@@ -69,6 +76,7 @@ public struct Record : IEquatable<Record>
         ThrowRecordUnkownFieldName(name);
         return null;
     }
+    
 
     /// <summary>
     ///     Set field value 
@@ -201,6 +209,7 @@ public struct Record : IEquatable<Record>
         ThrowRecordUnkownFieldName(name);
         return false;
     }
+
     internal readonly bool IsFieldExist(string name) => _type != null && _type.GetFieldIndex(name)!=-1;
 
     #region private methods 
@@ -219,7 +228,7 @@ public struct Record : IEquatable<Record>
     private readonly void SetIntegerField(FieldType fieldType, int fieldId, string? value) {
         if (value==null) SetData(fieldId, null);
         else if (!value.IsNumber()) ThrowWrongStringFormat();
-        else if (value.Length>21) ThrowValueTooLarge(fieldType);
+        else if (value.Length>20) ThrowValueTooLarge(fieldType);
         else if (decimal.TryParse(value, out decimal dcm))
         {
             if ((fieldType == FieldType.Long && dcm <= MaxLongValue && dcm >= MinLongValue) ||
@@ -230,9 +239,8 @@ public struct Record : IEquatable<Record>
                 SetData(fieldId, dcm.ToString(DefaultCulture));
                 return;
             }
-            ThrowValueTooLarge(fieldType);
-        } 
-        ThrowWrongStringFormat();
+        }
+        ThrowValueTooLarge(fieldType);
     }
 
     private readonly void SetFloatField(FieldType fieldType, int fieldId, string? value)

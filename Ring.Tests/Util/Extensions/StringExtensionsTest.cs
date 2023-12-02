@@ -114,6 +114,4 @@ public class StringExtensionsTest
         Assert.Equal(expectedResult,result);
     }
 
-    
-
 }

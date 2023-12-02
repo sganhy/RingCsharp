@@ -263,7 +263,7 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
-    public void SetField_AnonymousByte_ReturnByteValue()
+    public void SetField_AnonymousStringByte_ReturnByteValue()
     {
         // arrange 
         var table = _schema.GetTable("class");
@@ -279,6 +279,22 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
+    public void SetField_AnonymousByte_ReturnByteValue()
+    {
+        // arrange 
+        var table = _schema.GetTable("class");
+        Assert.NotNull(table);
+        var rcd = new Record(table, new string?[table.Fields.Length + 1]);
+        var expectedValue = _fixture.Create<sbyte>();
+
+        // act 
+        rcd.SetField("hit_die", expectedValue);
+
+        // assert
+        Assert.Equal(expectedValue.ToString(), rcd.GetField("hit_die"));
+    }
+
+    [Fact]
     public void SetField_AnonymousInt_ThrowValueTooLarge()
     {
         // arrange 
@@ -291,6 +307,21 @@ public sealed class RecordTest : BaseExtensionsTest
         
         // assert
         Assert.Equal("Value was either too large or too small for an Int16.", ex.Message);
+    }
+
+    [Fact]
+    public void SetField_AnonymousLong_ThrowValueTooLarge()
+    {
+        // arrange 
+        var tableBuilder = new TableBuilder();
+        var metaIdTable = tableBuilder.GetMetaId("Test", DatabaseProvider.SqlLite);
+        var rcd = new Record(metaIdTable);
+
+        // act 
+        var ex = Assert.Throws<OverflowException>(() => rcd.SetField("value", "1000000000000000000000000000000000000"));
+
+        // assert
+        Assert.Equal("Value was either too large or too small for an Int64.", ex.Message);
     }
 
 
@@ -420,12 +451,27 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
+    public void SetField_Bool_ThrowWrongBooleanValue()
+    {
+        // arrange 
+        var table = _schema.GetTable("feat");
+        Assert.NotNull(table);
+        var rcd = new Record(table);
+
+        // act 
+        var ex = Assert.Throws<FormatException>(() => rcd.SetField("effects_stack", "yes man"));
+
+        // assert
+        Assert.Equal("'yes man' was not recognized as a valid Boolean.", ex.Message);
+    }
+
+    [Fact]
     public void SetField_BoolString_True()
     {
         // arrange 
-        var featTable = _schema.GetTable("feat");
-        Assert.NotNull(featTable);
-        var rcd = new Record(featTable);
+        var table = _schema.GetTable("feat");
+        Assert.NotNull(table);
+        var rcd = new Record(table);
 
         // act 
         rcd.SetField("metamagic", "true");
@@ -438,9 +484,9 @@ public sealed class RecordTest : BaseExtensionsTest
     public void SetField_NullBoolString_False()
     {
         // arrange 
-        var featTable = _schema.GetTable("feat");
-        Assert.NotNull(featTable);
-        var rcd = new Record(featTable);
+        var table = _schema.GetTable("feat");
+        Assert.NotNull(table);
+        var rcd = new Record(table);
 
         // act 
         rcd.SetField("epic", null);
@@ -612,6 +658,40 @@ public sealed class RecordTest : BaseExtensionsTest
         // assert
         Assert.False(result);
     }
+
+
+    [Fact]
+    public void ClearData_AnonymousRecord_DataResetToNull()
+    {
+        // arrange 
+        var table = _schema.GetTable(1071); // weapon
+        Assert.NotNull(table);
+        var rcd1 = new Record(table); // filled record 
+        rcd1.SetField("name", _fixture.Create<string>());
+        rcd1.SetField("unarmed_attack", _fixture.Create<bool>());
+        rcd1.SetField("ammo", _fixture.Create<bool>());
+        rcd1.SetField("light_melee", null);
+        rcd1.SetField("one_handed_melee", _fixture.Create<bool>());
+        rcd1.SetField("two_handed_melee", _fixture.Create<bool>());
+        rcd1.SetField("ranged", _fixture.Create<bool>());
+        rcd1.SetField("range_increment", _fixture.Create<short>());
+        rcd1.SetField("critical_range", _fixture.Create<short>());
+        rcd1.SetField("critical_multiplier_1", _fixture.Create<short>());
+        rcd1.SetField("critical_multiplier_2", _fixture.Create<short>());
+        var rcd2 = new Record(); // empty record 
+        
+        // act 
+        rcd1.ClearData();
+        rcd2.ClearData();
+
+        // assert
+        for (var i = 0; i <= rcd1.Table?.Fields.Length; ++i)
+        {
+            Assert.Null(rcd1[i]);
+        }
+    }
+
+    
 
 }
 
