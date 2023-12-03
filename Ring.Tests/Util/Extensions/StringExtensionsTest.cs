@@ -114,4 +114,27 @@ public class StringExtensionsTest
         Assert.Equal(expectedResult,result);
     }
 
+    [Theory]
+    [InlineData("-11.2", true)]
+    [InlineData("555.154", true)]
+    [InlineData("84354354.531531351354", true)]
+    [InlineData("556165154^^^^$$^l5554", false)]
+    [InlineData("", false)]
+    [InlineData(" ", false)]
+    [InlineData("0", true)]
+    [InlineData("0000000000000000000000000", true)]
+    [InlineData("78,888787", false)]
+    [InlineData("45.45.45", false)]
+    internal void IsFloat_InputString_BoolResult(string input, bool expectedResult)
+    {
+        // arrange 
+        // act 
+        var result = StringExtensions.IsFloat(input);
+
+        // assert
+        Assert.Equal(expectedResult, result);
+    }
+
+    
+
 }

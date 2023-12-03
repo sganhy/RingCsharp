@@ -6,6 +6,7 @@ using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using AutoFixture;
 using Ring.Schema.Builders;
+using System.Globalization;
 
 namespace Ring.Tests.Data;
 
@@ -372,6 +373,7 @@ public sealed class RecordTest : BaseExtensionsTest
         Assert.Equal(expectedValue.ToString(), rcd.GetField("cost"));
     }
 
+
     [Fact]
     public void SetField_AnonymousLong_ReturnLong()
     {
@@ -493,6 +495,150 @@ public sealed class RecordTest : BaseExtensionsTest
 
         // assert
         Assert.Equal("false", rcd.GetField("epic"), true);
+    }
+
+    [Fact]
+    public void SetField_ShortDateTime1_ReturnIso8601Format()
+    {
+        // arrange 
+        var table = _schema.GetTable("book");
+        Assert.NotNull(table);
+        var rcd = new Record(table);
+
+        // act 
+        rcd.SetField("publish_date", new DateTime(2001,1,1,18,18,18));
+
+        // assert
+        Assert.Equal("2001-01-01", rcd.GetField("publish_date"));
+    }
+
+    [Fact]
+    public void SetField_ShortDateTime2_ReturnIso8601Format()
+    {
+        // arrange 
+        var table = _schema.GetTable("book");
+        Assert.NotNull(table);
+        var rcd = new Record(table);
+
+        // act 
+        rcd.SetField("publish_date", new DateTime(1, 10, 27, 18, 18, 18));
+
+        // assert
+        Assert.Equal("0001-10-27", rcd.GetField("publish_date"));
+    }
+
+    [Fact]
+    public void SetField_DateTime_ReturnIso8601Format()
+    {
+        // arrange 
+        var tableBuilder = new TableBuilder();
+        var logTable = tableBuilder.GetLog("Test", DatabaseProvider.SqlLite);
+        var rcd = new Record(logTable);
+        var dt = DateTime.ParseExact("2005-12-12T18:17:16.015+04:00", "yyyy-MM-ddTHH:mm:ss.fffzzz", CultureInfo.InvariantCulture);
+
+        // act - 2001, 1, 1, 18, 18, 18, 458
+        rcd.SetField("entry_time", dt);
+
+        // assert
+        Assert.Equal("2005-12-12T14:17:16.015Z", rcd.GetField("entry_time"));
+    }
+
+    [Fact]
+    public void SetField_MaxDateTime_ReturnIso8601Format()
+    {
+        // arrange 
+        var tableBuilder = new TableBuilder();
+        var logTable = tableBuilder.GetLog("Test", DatabaseProvider.SqlLite);
+        var rcd = new Record(logTable);
+        var dt = DateTime.MaxValue;
+
+        // act - 2001, 1, 1, 18, 18, 18, 458
+        rcd.SetField("entry_time", dt);
+
+        // assert
+        Assert.Equal("9999-12-31T22:59:59.999Z", rcd.GetField("entry_time"));
+    }
+
+    [Fact]
+    public void SetField_MinDateTime_ReturnIso8601Format()
+    {
+        // arrange 
+        var tableBuilder = new TableBuilder();
+        var logTable = tableBuilder.GetLog("Test", DatabaseProvider.SqlLite);
+        var rcd = new Record(logTable);
+        var dt = DateTime.MinValue;
+
+        // act - 2001, 1, 1, 18, 18, 18, 458
+        rcd.SetField("entry_time", dt);
+
+        // assert
+        Assert.Equal("0001-01-01T00:00:00.000Z", rcd.GetField("entry_time"));
+    }
+
+    [Fact]
+    public void SetField_LongDateTime_ReturnIso8601Format()
+    {
+        // arrange 
+        var tableBuilder = new TableBuilder();
+        var logTable = tableBuilder.GetLog("Test", DatabaseProvider.MySql);
+        var field = logTable.GetField("entry_time");
+        var index = logTable.GetFieldIndex("entry_time");
+        var meta = field?.ToMeta(99);
+        meta?.SetFieldType(FieldType.LongDateTime);
+        var newField = meta?.ToField();
+        logTable.Fields[index] = newField;
+        var rcd = new Record(logTable);
+        
+        //var dt = DateTime.ParseExact("2005-12-12T18:17:16.015116+04:00", "yyyy-MM-ddTHH:mm:ss.ffffffzzz", CultureInfo.InvariantCulture);
+
+        // act - 2001, 1, 1, 18, 18, 18, 458
+        //rcd.SetField("entry_time", dt);
+        //var test = rcd.GetField("entry_time");
+        // assert
+        //Assert.Equal("2005-12-12T14:17:16.015Z", rcd.GetField("entry_time"));
+    }
+
+    [Fact]
+    public void SetField_Double1_ReturnDoubleValue()
+    {
+        // arrange 
+        var tableBuilder = new TableBuilder();
+        var logTable = tableBuilder.GetLog("Test", DatabaseProvider.MySql);
+        var field = logTable.GetField("entry_time");
+        var index = logTable.GetFieldIndex("entry_time");
+        var meta = field?.ToMeta(99);
+        meta?.SetFieldType(FieldType.Double);
+        var newField = meta?.ToField();
+        logTable.Fields[index] = newField ?? GetAnonymousField();
+        var rcd = new Record(logTable);
+        
+        // act 
+        rcd.SetField("entry_time", "-789456123,0123");
+        
+        // assert
+        Assert.Equal("-789456123.0123", rcd.GetField("entry_time"));
+    }
+
+    [Fact]
+    public void SetField_Double2_ReturnDoubleValue()
+    {
+        // arrange 
+        var tableBuilder = new TableBuilder();
+        var logTable = tableBuilder.GetLog("Test", DatabaseProvider.MySql);
+        var field = logTable.GetField("entry_time");
+        var index = logTable.GetFieldIndex("entry_time");
+        var meta = field?.ToMeta(99);
+        meta?.SetFieldType(FieldType.Double);
+        var newField = meta?.ToField();
+        logTable.Fields[index] = newField ?? GetAnonymousField();
+        var rcd = new Record(logTable);
+        var dbl = 0.456D;
+
+        // act 
+        rcd.SetField("entry_time", dbl);
+
+        // assert
+        Assert.Equal("0.456", rcd.GetField("entry_time"));
     }
 
     [Fact]

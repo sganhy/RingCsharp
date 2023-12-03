@@ -17,9 +17,6 @@ public struct Record : IEquatable<Record>
     private readonly static CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
     private readonly static string BooleanTrue = true.ToString(DefaultCulture);
     private readonly static string BooleanFalse = false.ToString(DefaultCulture);
-    private readonly static char DateDelimiter = '-';
-    private readonly static char TimeDelimiter = 'T';
-    private readonly static char HourDelimiter = ':';
     private readonly static decimal MaxLongValue = long.MaxValue;
     private readonly static decimal MinLongValue = long.MinValue;
     private readonly static decimal MaxIntValue = int.MaxValue;
@@ -28,6 +25,14 @@ public struct Record : IEquatable<Record>
     private readonly static decimal MinShortValue = short.MinValue;
     private readonly static decimal MaxByteValue = sbyte.MaxValue;
     private readonly static decimal MinByteValue = sbyte.MinValue;
+    private readonly static Dictionary<byte, char[]> DateTimeTemplates = new()
+    {
+      { (byte)FieldType.ShortDateTime, new char[] {'0','0','0','0','-','0','0','-','0','0' } },
+      { (byte)FieldType.DateTime, new char[] {'0','0','0','0','-','0','0','-','0','0','T','0','0',':','0','0',':','0','0','.','0','0','0','Z' } },
+      { (byte)FieldType.LongDateTime, new char[] {'0','0','0','0','-','0','0','-','0','0','T','0','0',':',
+          '0','0',':','0','0','.','0','0','0','0','0','0','+','0','0',':','0','0' } }
+    };
+
     private string?[]? _data; // should be instanciate when record type is defined
     private Table? _type;
 
@@ -53,7 +58,6 @@ public struct Record : IEquatable<Record>
         _data = data;
     }
 
-
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
     internal readonly string this[int i] => _data[i];
 #pragma warning restore CS8602
@@ -76,7 +80,6 @@ public struct Record : IEquatable<Record>
         ThrowRecordUnkownFieldName(name);
         return null;
     }
-    
 
     /// <summary>
     ///     Set field value 
@@ -125,11 +128,11 @@ public struct Record : IEquatable<Record>
                 else ThrowValueTooLarge(type);
                 break;
             case FieldType.Short:
-                if (value <= short.MaxValue && value >= short.MinValue) SetData(fieldId, value.ToString(DefaultCulture));
+                if (value<=short.MaxValue && value>=short.MinValue) SetData(fieldId, value.ToString(DefaultCulture));
                 else ThrowValueTooLarge(type);
                 break;
             case FieldType.Byte:
-                if (value <= sbyte.MaxValue && value >= sbyte.MinValue) SetData(fieldId, value.ToString(DefaultCulture));
+                if (value<=sbyte.MaxValue && value>=sbyte.MinValue) SetData(fieldId, value.ToString(DefaultCulture));
                 else ThrowValueTooLarge(type);
                 break;
             case FieldType.Float:
@@ -168,6 +171,16 @@ public struct Record : IEquatable<Record>
         if (fieldId == -1) ThrowRecordUnkownFieldName(name);
         SetDateTimeField(fieldId, _type.Fields[fieldId].Type, value);
     }
+    public readonly void SetField(string name, double value)
+    {
+        if (_type == null) ThrowRecordUnkownRecordType();
+#pragma warning disable CS8604 // Dereference of a possibly null reference. _type cannot be null here 
+        var fieldId = _type.GetFieldIndex(name);
+#pragma warning restore CS8604
+        if (fieldId == -1) ThrowRecordUnkownFieldName(name);
+        SetData(fieldId, value.ToString(DefaultCulture));
+    }
+    public readonly void SetField(string name, float value) => SetField(name,(double)value);
 
     public static bool operator==(Record left, Record right) => left.Equals(right);
     public static bool operator!=(Record left, Record right) => !(left==right);
@@ -209,7 +222,6 @@ public struct Record : IEquatable<Record>
         ThrowRecordUnkownFieldName(name);
         return false;
     }
-
     internal readonly bool IsFieldExist(string name) => _type != null && _type.GetFieldIndex(name)!=-1;
 
     #region private methods 
@@ -245,12 +257,19 @@ public struct Record : IEquatable<Record>
 
     private readonly void SetFloatField(FieldType fieldType, int fieldId, string? value)
     {
-        if (value == null) SetData(fieldId, null);
+        if (value==null) SetData(fieldId, null);
         else 
-        {
-            if (double.TryParse(value, out double dbl))
-                if (fieldType == FieldType.Double) SetData(fieldId, dbl.ToString(DefaultCulture));
-            ThrowValueTooLarge(fieldType);
+        { 
+            value = value.Replace(',', '.');
+            if (value.IsFloat())
+            {
+                if (fieldType==FieldType.Double &&  double.TryParse(value, out double dbl)) 
+                    SetData(fieldId, dbl.ToString(DefaultCulture));
+                else if (fieldType == FieldType.Float && float.TryParse(value, out float flt))
+                    SetData(fieldId, flt.ToString(DefaultCulture));
+                else ThrowValueTooLarge(fieldType);
+                return;
+            }
         }
         ThrowWrongStringFormat();
     }
@@ -273,26 +292,41 @@ public struct Record : IEquatable<Record>
     {
         if (fieldType == FieldType.DateTime || fieldType == FieldType.LongDateTime || fieldType == FieldType.ShortDateTime)
         {
-            // IS0-8601 ==> "YYYY-MM-DDTHH:MM:SSZ"
-            var sb = new StringBuilder();
-            var utcDt = value.ToUniversalTime();
-            sb.Append(utcDt.Year.ToString(DefaultCulture).PadLeft(4, '0'));
-            sb.Append(DateDelimiter);
-            sb.Append(utcDt.Month.ToString(DefaultCulture).PadLeft(2, '0'));
-            sb.Append(DateDelimiter);
-            sb.Append(utcDt.Day.ToString(DefaultCulture).PadLeft(2, '0'));
+            // IS0-8601 ==> "YYYY-MM-DDTHH:MM:SS.mmmZ" eg. 2005-12-12T18:17:16.015+04:00; lenght max ==> 30
+            var template=DateTimeTemplates[(byte)fieldType];
+            var count=template.Length;
+            var result=new char[count];
+            var dateToConv = fieldType==FieldType.DateTime?value.ToUniversalTime():value;
+            Array.Copy(template,result,count);
+            SetDateTime(result,4,dateToConv.Year,3);
+            SetDateTime(result,2,dateToConv.Month,6);
+            SetDateTime(result,2,dateToConv.Day,9);
             if (fieldType!=FieldType.ShortDateTime)
             {
-                sb.Append(TimeDelimiter);
-                sb.Append(utcDt.Hour.ToString(DefaultCulture).PadLeft(2, '0'));
-                sb.Append(HourDelimiter);
-                sb.Append(utcDt.Minute.ToString(DefaultCulture).PadLeft(2, '0'));
-                sb.Append(HourDelimiter);
-                sb.Append(utcDt.Second.ToString(DefaultCulture).PadLeft(2, '0'));
+                SetDateTime(result,2,dateToConv.Hour,12);
+                SetDateTime(result,2,dateToConv.Minute,15);
+                SetDateTime(result,2,dateToConv.Second,18);
+                SetDateTime(result,3,dateToConv.Millisecond,22);
+                if (fieldType==FieldType.LongDateTime)
+                {
+                    throw new NotImplementedException();
+                }
             }
-            SetData(fieldId, sb.ToString());
+            SetData(fieldId, new string(result));
+            return;
         }
-        // throw exception
+        //throw exception
+    }
+
+    private static void SetDateTime(char[] input, int size, int value, int lastPosition)
+    {
+        var decimalSys=10;
+        input[lastPosition--] += (char)(value%decimalSys); value/=decimalSys;
+        input[lastPosition--] += (char)(value%decimalSys); value/=decimalSys;
+        if (size<3) return;
+        input[lastPosition--] += (char)(value%decimalSys); value/=decimalSys;
+        if (size<4) return;
+        input[lastPosition--] += (char)(value%decimalSys);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -47,4 +47,15 @@ internal static class StringExtensions
         return true;
     }
 
+    /// <summary>
+    /// Is string defined a float or double value
+    /// </summary>
+    internal static bool IsFloat(this string value)
+    {
+        // replace occurence of '.' or ',' by null
+        var pos = value.IndexOf('.');
+        if (pos < 0) return value.IsNumber();
+        return string.Join(null,value[..pos], value[(pos+1)..]).IsNumber();
+    }
+
 }

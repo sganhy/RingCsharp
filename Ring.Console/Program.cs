@@ -3,20 +3,21 @@
 using Npgsql;
 using Ring.Data;
 using Ring.Schema.Builders;
-using Ring.Util.Extensions;
+using System;
+using System.Globalization;
 
 var POSTGRE_CONN_STRING1 = "User ID=postgres; Password=sa;" +
                 "Host=localhost;Port=5432;Database=postgres; Pooling=false;";
 var val = true;
-
-
+int ok = 19;
+ok /= 10;
 var con = new NpgsqlConnection(connectionString: "Server=localhost;Port=5432;User Id=postgres;Password=passw0rd;Database=testdb;");
 
 TableBuilder builder = new TableBuilder();
 
 var t = builder.GetMeta("test", Ring.Schema.Enums.DatabaseProvider.PostgreSql);
-
-//Initialize.Start(typeof(NpgsqlConnection), POSTGRE_CONN_STRING1);
+var dtTest  = DateTime.ParseExact("2005-12-12T18:17:16.015+06:00", "yyyy-MM-ddTHH:mm:ss.fffzzz", CultureInfo.InvariantCulture);
+//Initialize.Start(typeof(NpgsqlConnection), POSTGRE_CONN_STRING1); +06:00
 
 //char[] chars = new char[5];
 //var testu = new string(chars);
