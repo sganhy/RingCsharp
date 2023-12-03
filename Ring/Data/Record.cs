@@ -14,6 +14,7 @@ public struct Record : IEquatable<Record>
 {
     private readonly static string NullField = @"^^";
     private readonly static string NullString = @"Null";
+    private readonly static char HashFieldDelimiter = (char)3; // end of text character
     private readonly static CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
     private readonly static string BooleanTrue = true.ToString(DefaultCulture);
     private readonly static string BooleanFalse = false.ToString(DefaultCulture);
@@ -33,7 +34,9 @@ public struct Record : IEquatable<Record>
           '0','0',':','0','0','.','0','0','0','0','0','0','+','0','0',':','0','0' } }
     };
 
-    private string?[]? _data; // should be instanciate when record type is defined
+    // should be instanciate when record type is defined
+    // _data.Lenght should be > _type.Fields.Length
+    private string?[]? _data; 
     private Table? _type;
 
     /// <summary>
@@ -49,17 +52,9 @@ public struct Record : IEquatable<Record>
         _type = type;
         _data = new string? [type.Fields.Length+1];
     }
-    /// <summary>
-    /// data lenght should be type.Length+1
-    /// </summary>
-    internal Record(Table type, string?[] data)
-    {
-        _type = type;
-        _data = data;
-    }
 
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
-    internal readonly string this[int i] => _data[i];
+    internal readonly string? this[int i]  { get { return _data[i];} set { _data[i]=value; }}
 #pragma warning restore CS8602
     public readonly bool IsDirty => _data != null && _data[^1] != null;
     internal readonly Table? Table => _type;
@@ -205,8 +200,16 @@ public struct Record : IEquatable<Record>
     public override readonly int GetHashCode()
     {
         var result = new StringBuilder();
+        var fieldCount = _type?.Fields.Length ?? 0;
         if (_type != null) result.Append(_type.PhysicalName);
-        if (_data != null) for (var i = 0; i < _data.Length; ++i) result.Append(_data[i] ?? NullField);
+        if (_data != null)
+        {
+            for (var i = 0; i < fieldCount; ++i)
+            {
+                result.Append(_data[i] ?? NullField);
+                result.Append(HashFieldDelimiter);
+            }
+        } 
         return HashHelper.Djb2X(result.ToString());
     }
 

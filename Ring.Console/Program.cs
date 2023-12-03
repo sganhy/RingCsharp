@@ -13,7 +13,7 @@ int ok = 19;
 ok /= 10;
 var con = new NpgsqlConnection(connectionString: "Server=localhost;Port=5432;User Id=postgres;Password=passw0rd;Database=testdb;");
 
-TableBuilder builder = new TableBuilder();
+TableBuilder builder = new ();
 
 var t = builder.GetMeta("test", Ring.Schema.Enums.DatabaseProvider.PostgreSql);
 var dtTest  = DateTime.ParseExact("2005-12-12T18:17:16.015+06:00", "yyyy-MM-ddTHH:mm:ss.fffzzz", CultureInfo.InvariantCulture);

@@ -55,13 +55,12 @@ public sealed class RecordTest : BaseExtensionsTest
     public void Equal_FeatRecord_True()
     {
         // arrange 
-        var featTable = _schema.GetTable("feat");
-        Assert.NotNull(featTable);
-        var data = new string?[featTable.Fields.Length];
-        data[0] = null;
-        for (var i= 1;i<featTable.Fields.Length; ++i) data[i] = _fixture.Create<string?>();
-        var rcd1 = new Record(featTable, data);
-        var rcd2 = new Record(featTable, data);
+        var table = _schema.GetTable("feat");
+        Assert.NotNull(table);
+        var rcd1 = new Record(table);
+        for (var i = 1; i < table.Fields.Length; ++i) rcd1[i] = _fixture.Create<string?>();
+        var rcd2 = new Record(table);
+        for (var i = 1; i < table.Fields.Length; ++i) rcd2[i] = rcd1[i];
 
         // act 
         var result = rcd1.Equals(rcd2);
@@ -70,19 +69,15 @@ public sealed class RecordTest : BaseExtensionsTest
         Assert.True(result);
     }
 
-
     [Fact]
     public void Equal_RaceRecord_False()
     {
         // arrange 
-        var raceTable = _schema.GetTable("race");
-        Assert.NotNull(raceTable);
-        var data1 = new string?[raceTable.Fields.Length];
-        var data2 = new string?[raceTable.Fields.Length];
-        data1[0] = null;
-        for (var i = 1; i < raceTable.Fields.Length; ++i) data1[i] = _fixture.Create<string?>();
-        var rcd1 = new Record(raceTable, data1);
-        var rcd2 = new Record(raceTable, data2);
+        var table = _schema.GetTable("race");
+        Assert.NotNull(table);
+        var rcd1 = new Record(table);
+        for (var i = 1; i < table.Fields.Length; ++i) rcd1[i] = _fixture.Create<string?>();
+        var rcd2 = new Record(table);
 
         // act 
         var result = rcd1 == rcd2;
@@ -90,7 +85,6 @@ public sealed class RecordTest : BaseExtensionsTest
         // assert
         Assert.False(result);
     }
-
 
     [Fact]
     public void Equal_DifferentRecordType_False()
@@ -135,30 +129,33 @@ public sealed class RecordTest : BaseExtensionsTest
     public void Equal_DifferentRecordTypeWithNull_False()
     {
         // arrange 
-        var genderTable = _schema.GetTable("gender");
-        Assert.NotNull(genderTable);
-        var rcd1 = new Record(genderTable,new string?[genderTable.Fields.Length+1]); //!!! important +1 to lenght
-        var rcd2 = new Record(genderTable);
+        var tableGender = _schema.GetTable("gender");
+        var tableRace = _schema.GetTable("race");
+        Assert.NotNull(tableGender);
+        Assert.NotNull(tableRace);
+        var rcd1 = new Record(tableGender);
+        var rcd2 = new Record(tableRace);
 
         // act 
         var result1 = rcd2.Equals((object)rcd1);
         var result2 = rcd1 != rcd2;
 
         // assert
-        Assert.True(result1);
-        Assert.False(result2);
+        Assert.False(result1);
+        Assert.True(result2);
     }
 
     [Fact]
     public void GetHashCode_DifferentRecordTypeWithNull_NotEquals()
     {
         // arrange 
-        var genderTable = _schema.GetTable("gender");
-        Assert.NotNull(genderTable);
-        var rcd1 = new Record(genderTable, new string?[genderTable.Fields.Length]);
-        var rcd2 = new Record(genderTable);
+        var table = _schema.GetTable("gender");
+        Assert.NotNull(table);
+        var rcd1 = new Record(table);
+        var rcd2 = new Record(table);
 
         // act 
+        rcd1.SetField("iso_code", 45);
         var result1 = rcd1.GetHashCode();
         var result2 = rcd2.GetHashCode();
 
@@ -166,17 +163,16 @@ public sealed class RecordTest : BaseExtensionsTest
         Assert.NotEqual(result1, result2);
     }
 
-
     [Fact]
-    public void GetHashCode_DifferentRecordTypeWithNull_Equals()
+    public void GetHashCode_DifferentWayToUpdateData_Equals()
     {
         // arrange 
-        var table = _schema.GetTable("gender");
-        Assert.NotNull(table);
-        var data = new string?[table.Fields.Length];
-        data[1] = _fixture.Create<string>();
-        var rcd1 = new Record(table, data);
-        var rcd2 = new Record(table, data);
+        var tableGender = _schema.GetTable("gender");
+        Assert.NotNull(tableGender);
+        var rcd1 = new Record(tableGender); ;
+        rcd1[1] = "45";
+        var rcd2 = new Record(tableGender);
+        rcd2.SetField("iso_code", 45);
 
         // act 
         var result1 = rcd1.GetHashCode();
@@ -220,7 +216,7 @@ public sealed class RecordTest : BaseExtensionsTest
         // arrange 
         var table = _schema.GetTable("campaign_setting");
         Assert.NotNull(table);
-        var rcd = new Record(table, new string?[table.Fields.Length+1]);
+        var rcd = new Record(table);
 
         // act 
         rcd.SetField("name", "test1");
@@ -237,7 +233,7 @@ public sealed class RecordTest : BaseExtensionsTest
         // arrange 
         var table = _schema.GetTable("alignment");
         Assert.NotNull(table);
-        var rcd = new Record(table, new string?[table.Fields.Length + 1]);
+        var rcd = new Record(table);
         var expectedValue = _fixture.Create<short>().ToString();
 
         // act 
@@ -253,7 +249,7 @@ public sealed class RecordTest : BaseExtensionsTest
         // arrange 
         var table = _schema.GetTable("book");
         Assert.NotNull(table);
-        var rcd = new Record(table, new string?[table.Fields.Length + 1]);
+        var rcd = new Record(table);
         var expectedValue = _fixture.Create<int>().ToString();
 
         // act 
@@ -269,7 +265,7 @@ public sealed class RecordTest : BaseExtensionsTest
         // arrange 
         var table = _schema.GetTable("class");
         Assert.NotNull(table);
-        var rcd = new Record(table, new string?[table.Fields.Length + 1]);
+        var rcd = new Record(table);
         var expectedValue = _fixture.Create<sbyte>().ToString();
 
         // act 
@@ -285,7 +281,7 @@ public sealed class RecordTest : BaseExtensionsTest
         // arrange 
         var table = _schema.GetTable("class");
         Assert.NotNull(table);
-        var rcd = new Record(table, new string?[table.Fields.Length + 1]);
+        var rcd = new Record(table);
         var expectedValue = _fixture.Create<sbyte>();
 
         // act 
@@ -599,6 +595,28 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
+    public void SetField_Float1_ReturnFloatValue()
+    {
+        // arrange 
+        var tableBuilder = new TableBuilder();
+        var logTable = tableBuilder.GetLog("Test", DatabaseProvider.MySql);
+        var field = logTable.GetField("entry_time");
+        var index = logTable.GetFieldIndex("entry_time");
+        var meta = field?.ToMeta(99);
+        meta?.SetFieldType(FieldType.Float);
+        var newField = meta?.ToField();
+        logTable.Fields[index] = newField ?? GetAnonymousField();
+        var rcd = new Record(logTable);
+
+        // act 
+        rcd.SetField("entry_time", "3,01416");
+
+        // assert
+        Assert.Equal("3.01416", rcd.GetField("entry_time"));
+    }
+
+
+    [Fact]
     public void SetField_Double1_ReturnDoubleValue()
     {
         // arrange 
@@ -647,7 +665,7 @@ public sealed class RecordTest : BaseExtensionsTest
         // arrange 
         var table = _schema.GetTable("campaign_setting");
         Assert.NotNull(table);
-        var rcd = new Record(table, new string?[table.Fields.Length + 1]);
+        var rcd = new Record(table);
 
         // act 
         var ex = Assert.Throws<ArgumentException>(() => rcd.GetField("zorro"));
@@ -662,7 +680,7 @@ public sealed class RecordTest : BaseExtensionsTest
         // arrange 
         var table = _schema.GetTable("skill");
         Assert.NotNull(table);
-        var rcd = new Record(table, new string?[table.Fields.Length + 1]);
+        var rcd = new Record(table);
 
         // act 
         var result = rcd.GetField("is_group");
@@ -677,7 +695,7 @@ public sealed class RecordTest : BaseExtensionsTest
         // arrange 
         var table = _schema.GetTable("weapon");
         Assert.NotNull(table);
-        var rcd = new Record(table, new string?[table.Fields.Length + 1]);
+        var rcd = new Record(table);
 
         // act 
         var result = rcd.GetField("id");
@@ -693,7 +711,7 @@ public sealed class RecordTest : BaseExtensionsTest
         // arrange 
         var table = _schema.GetTable(1071);
         Assert.NotNull(table);
-        var rcd = new Record(table, new string?[table.Fields.Length + 1]);
+        var rcd = new Record(table);
 
         // act 
         var result1 = rcd.GetField("id");
@@ -713,7 +731,7 @@ public sealed class RecordTest : BaseExtensionsTest
         // arrange 
         var table = _schema.GetTable("armor");
         Assert.NotNull(table);
-        var rcd = new Record(table, new string?[table.Fields.Length + 1]);
+        var rcd = new Record(table);
         rcd.SetField("name", _fixture.Create<string>());
 
         // act 
@@ -730,9 +748,9 @@ public sealed class RecordTest : BaseExtensionsTest
         // arrange 
         var table = _schema.GetTable("armor");
         Assert.NotNull(table);
-        var rcd1 = new Record(table, new string?[table.Fields.Length + 1]);
+        var rcd1 = new Record(table);
         rcd1.SetField("name", _fixture.Create<string>());
-        var rcd2 = new Record(table, new string?[table.Fields.Length + 1]);
+        var rcd2 = new Record(table);
 
         // act 
         var result1 = rcd1.IsFieldChanged("id");
@@ -751,7 +769,7 @@ public sealed class RecordTest : BaseExtensionsTest
         // arrange 
         var table = _schema.GetTable("armor");
         Assert.NotNull(table);
-        var rcd = new Record(table, new string?[table.Fields.Length + 1]);
+        var rcd = new Record(table);
 
         // act 
         var ex = Assert.Throws<ArgumentException>(() => rcd.IsFieldChanged("zorro"));
