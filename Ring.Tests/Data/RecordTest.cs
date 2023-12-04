@@ -146,6 +146,21 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
+    public void GetHashCode_DifferentRecordEmpty_Equals()
+    {
+        // arrange 
+        var rcd1 = new Record();
+        var rcd2 = new Record();
+
+        // act 
+        var result1 = rcd1.GetHashCode();
+        var result2 = rcd2.GetHashCode();
+
+        // assert
+        Assert.Equal(result1, result2);
+    }
+
+    [Fact]
     public void GetHashCode_DifferentRecordTypeWithNull_NotEquals()
     {
         // arrange 
@@ -615,7 +630,22 @@ public sealed class RecordTest : BaseExtensionsTest
         Assert.Equal("3.01416", rcd.GetField("entry_time"));
     }
 
+    [Fact]
+    public void SetField_Float2_ThrowWrongStringFormat()
+    {
+        // arrange 
+        var table = _schema.GetTable("book");
+        Assert.NotNull(table);
+        var rcd = new Record(table);
+        var ff = 1.54f;
 
+        // act 
+        var ex = Assert.Throws<ArgumentException>(() => rcd.SetField("id", ff));
+
+        // assert
+        Assert.Equal("Cannot implicitly convert type 'Float' to 'Int32'.", ex.Message);
+    }
+    
     [Fact]
     public void SetField_Double1_ReturnDoubleValue()
     {
@@ -658,7 +688,7 @@ public sealed class RecordTest : BaseExtensionsTest
         // assert
         Assert.Equal("0.456", rcd.GetField("entry_time"));
     }
-
+       
     [Fact]
     public void GetField_AnonymousField_ThrowArgumentException()
     {

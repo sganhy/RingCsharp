@@ -173,10 +173,21 @@ public struct Record : IEquatable<Record>
         var fieldId = _type.GetFieldIndex(name);
 #pragma warning restore CS8604
         if (fieldId == -1) ThrowRecordUnkownFieldName(name);
+        var fieldType=_type.Fields[fieldId].Type;
+        if (fieldType!=FieldType.Float && fieldType!=FieldType.Double) ThrowImpossibleConversion(FieldType.Double, fieldType);
         SetData(fieldId, value.ToString(DefaultCulture));
     }
-    public readonly void SetField(string name, float value) => SetField(name,(double)value);
-
+    public readonly void SetField(string name, float value)
+    {
+        if (_type == null) ThrowRecordUnkownRecordType();
+#pragma warning disable CS8604 // Dereference of a possibly null reference. _type cannot be null here 
+        var fieldId = _type.GetFieldIndex(name);
+#pragma warning restore CS8604
+        if (fieldId == -1) ThrowRecordUnkownFieldName(name);
+        var fieldType = _type.Fields[fieldId].Type;
+        if (fieldType != FieldType.Float && fieldType != FieldType.Double) ThrowImpossibleConversion(FieldType.Float, fieldType);
+        SetData(fieldId, value.ToString(DefaultCulture));
+    }
     public static bool operator==(Record left, Record right) => left.Equals(right);
     public static bool operator!=(Record left, Record right) => !(left==right);
     public readonly bool Equals(Record other)
@@ -318,7 +329,7 @@ public struct Record : IEquatable<Record>
             SetData(fieldId, new string(result));
             return;
         }
-        //throw exception
+        ThrowImpossibleConversion(FieldType.DateTime, fieldType);
     }
 
     private static void SetDateTime(char[] input, int size, int value, int lastPosition)
@@ -376,6 +387,12 @@ public struct Record : IEquatable<Record>
     private static void ThrowWrongBooleanValue(string? value) =>
         throw new FormatException(string.Format(DefaultCulture,
             ResourceHelper.GetErrorMessage(ResourceType.RecordWrongBooleanValue), value?? NullString));
+
+    private static void ThrowImpossibleConversion(FieldType fieldTypeSource, FieldType fieldTypeDestination) =>
+        throw new ArgumentException(string.Format(DefaultCulture,
+            ResourceHelper.GetErrorMessage(ResourceType.RecordCannotConvert), 
+            fieldTypeSource.RecordTypeDisplay() ?? NullString,
+            fieldTypeDestination.RecordTypeDisplay() ?? NullString));
 
     #endregion
 

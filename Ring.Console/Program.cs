@@ -10,7 +10,7 @@ var POSTGRE_CONN_STRING1 = "User ID=postgres; Password=sa;" +
                 "Host=localhost;Port=5432;Database=postgres; Pooling=false;";
 var val = true;
 int ok = 19;
-ok /= 10;
+float opop = 0.4f;
 var con = new NpgsqlConnection(connectionString: "Server=localhost;Port=5432;User Id=postgres;Password=passw0rd;Database=testdb;");
 
 TableBuilder builder = new ();

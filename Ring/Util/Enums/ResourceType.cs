@@ -16,4 +16,5 @@ internal enum ResourceType : short
     RecordWrongStringFormat = 103,
     RecordValueTooLarge = 104,
     RecordWrongBooleanValue = 105,
+    RecordCannotConvert = 106
 }

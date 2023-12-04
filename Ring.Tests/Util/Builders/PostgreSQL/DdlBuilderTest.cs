@@ -171,7 +171,7 @@ public class DdlBuilderTest : BaseBuilderTest
     public void GetPhysicalName_Field2_FieldName()
     {
         // arrange 
-        var field = GetAnonymousField(FieldType.Float, 12, 1, "Zorba_Le_Grec");
+        var field = GetAnonymousField(FieldType.String, 12, 1, "Zorba_Le_Grec");
         var expectedSql = field.Name;
 
         // act 
