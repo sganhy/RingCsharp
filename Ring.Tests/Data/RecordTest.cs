@@ -418,6 +418,22 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
+    public void SetField_MaxLong_ThrowImpossibleConversion()
+    {
+        // arrange 
+        var builder = new TableBuilder();
+        var logTable = builder.GetLog("Test", DatabaseProvider.MySql);
+        var rcd = new Record(logTable);
+        var longValue = long.MaxValue;
+
+        // act 
+        var ex = Assert.Throws<ArgumentException>(() => rcd.SetField("entry_time", longValue));
+
+        // assert
+        Assert.Equal("Cannot implicitly convert type 'Int64' to 'DateTime'.", ex.Message);
+    }
+
+    [Fact]
     public void SetField_MaxInt_ThrowValueTooLarge()
     {
         // arrange 
@@ -431,6 +447,22 @@ public sealed class RecordTest : BaseExtensionsTest
 
         // assert
         Assert.Equal("Value was either too large or too small for an Int16.", ex.Message);
+    }
+
+    [Fact]
+    public void SetField_MaxShort_ThrowValueTooLarge()
+    {
+        // arrange 
+        var armorTable = _schema.GetTable("armor");
+        Assert.NotNull(armorTable);
+        var rcd = new Record(armorTable);
+        var expectedValue = short.MaxValue;
+
+        // act 
+        var ex = Assert.Throws<OverflowException>(() => rcd.SetField("arcane_spell_failure", expectedValue));
+
+        // assert
+        Assert.Equal("Value was either too large or too small for an Int8.", ex.Message);
     }
 
     [Fact]
@@ -885,7 +917,67 @@ public sealed class RecordTest : BaseExtensionsTest
         }
     }
 
-    
+    [Fact]
+    public void IsDirty_NoChanges_False()
+    {
+        // arrange 
+        var table = _schema.GetTable(1071); // weapon
+        Assert.NotNull(table);
+        var rcd = new Record(table);
+        for (var i = 0; i < table.Fields.Length; i++) rcd[i] = _fixture.Create<string>();
 
+        // act 
+        var result = rcd.IsDirty;
+
+        // assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void IsDirty_ChangeAmmo_True()
+    {
+        // arrange 
+        var table = _schema.GetTable(1071); // weapon
+        Assert.NotNull(table);
+        var rcd = new Record(table);
+        for (var i = 0; i < table.Fields.Length; i++) rcd[i] = _fixture.Create<string>();
+
+        // act 
+        rcd.SetField("ammo", true);
+        var result = rcd.IsDirty;
+
+        // assert
+        Assert.True(result);
+    }
+
+    [Fact]
+    public void IsDirty_EmptyRecord_False()
+    {
+        // arrange 
+        var rcd = new Record();
+        // act 
+        var result = rcd.IsDirty;
+
+        // assert
+        Assert.False(result);
+    }
+
+
+    [Fact]
+    public void IsDirty_ChangeWithSameValue_False()
+    {
+        // arrange 
+        var table = _schema.GetTable(1071); // weapon
+        Assert.NotNull(table);
+        var rcd = new Record(table);
+        for (var i = 0; i < table.Fields.Length; i++) rcd[i] = _fixture.Create<string>();
+
+        // act 
+        rcd.SetField("name", rcd.GetField("name"));
+        var result = rcd.IsDirty;
+
+        // assert
+        Assert.False(result);
+    }
 }
 

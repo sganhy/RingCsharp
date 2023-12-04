@@ -88,24 +88,25 @@ public struct Record : IEquatable<Record>
         var fieldId = _type.GetFieldIndex(name);
 #pragma warning restore CS8604
         if (fieldId==-1) ThrowRecordUnkownFieldName(name);
-        switch (_type.Fields[fieldId].Type)
+        var type = _type.Fields[fieldId].Type;
+        switch (type)
         {
             case FieldType.String: SetStringField(fieldId, value); break;
             case FieldType.Byte:
             case FieldType.Short:
             case FieldType.Int:
-            case FieldType.Long: SetIntegerField(_type.Fields[fieldId].Type, fieldId, value); break;
+            case FieldType.Long: SetIntegerField(type, fieldId, value); break;
             case FieldType.Float:
-            case FieldType.Double: SetFloatField(_type.Fields[fieldId].Type, fieldId, value); break;
+            case FieldType.Double: SetFloatField(type, fieldId, value); break;
             case FieldType.ShortDateTime:
             case FieldType.DateTime:
-            case FieldType.LongDateTime: SetDateTimeField(fieldId, _type.Fields[fieldId].Type,value); break;
+            case FieldType.LongDateTime: SetDateTimeField(fieldId, type, value); break;
             case FieldType.Boolean: SetBooleanField(fieldId, value); break;
             case FieldType.ByteArray: throw new NotImplementedException();
         }
     }
 
-    public readonly void SetField(string name, long value)
+    internal readonly void SetField(string name, long value, FieldType fieldType)
     {
         if (_type == null) ThrowRecordUnkownRecordType();
 #pragma warning disable CS8604 // Dereference of a possibly null reference. _type cannot be null here 
@@ -115,37 +116,40 @@ public struct Record : IEquatable<Record>
         var type = _type.Fields[fieldId].Type;
         switch (type)
         {
-            case FieldType.Long: 
+            case FieldType.Long:
                 SetData(fieldId, value.ToString(DefaultCulture));
                 break;
             case FieldType.Int:
-                if (value<=int.MaxValue && value>=int.MinValue) SetData(fieldId, value.ToString(DefaultCulture));
+                if (value <= int.MaxValue && value >= int.MinValue) SetData(fieldId, value.ToString(DefaultCulture));
                 else ThrowValueTooLarge(type);
                 break;
             case FieldType.Short:
-                if (value<=short.MaxValue && value>=short.MinValue) SetData(fieldId, value.ToString(DefaultCulture));
+                if (value <= short.MaxValue && value >= short.MinValue) SetData(fieldId, value.ToString(DefaultCulture));
                 else ThrowValueTooLarge(type);
                 break;
             case FieldType.Byte:
-                if (value<=sbyte.MaxValue && value>=sbyte.MinValue) SetData(fieldId, value.ToString(DefaultCulture));
+                if (value <= sbyte.MaxValue && value >= sbyte.MinValue) SetData(fieldId, value.ToString(DefaultCulture));
                 else ThrowValueTooLarge(type);
                 break;
             case FieldType.Float:
             case FieldType.Double:
-                SetFloatField(type, fieldId, value.ToString(DefaultCulture)); 
+                SetFloatField(type, fieldId, value.ToString(DefaultCulture));
                 break;
             default:
-                // throw exception !!
-                break; 
+                ThrowImpossibleConversion(fieldType, type);
+                break;
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public readonly void SetField(string name, int value) => SetField(name, (long)value);
+    public readonly void SetField(string name, long value) => SetField(name, value, FieldType.Long);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public readonly void SetField(string name, short value) => SetField(name, (long)value);
-    public readonly void SetField(string name, sbyte value) => SetField(name, (long)value);
+    public readonly void SetField(string name, int value) => SetField(name, value, FieldType.Int);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly void SetField(string name, short value) => SetField(name, value, FieldType.Short);
+    public readonly void SetField(string name, sbyte value) => SetField(name, value, FieldType.Byte);
     public readonly void SetField(string name, bool value)
     {
         if (_type == null) ThrowRecordUnkownRecordType();
