@@ -51,13 +51,13 @@ internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
         var result = new StringBuilder();
         var columnCount = 0; 
         result.Append(DqlSelect);
-        for (var i = 0; i<table.FieldsById.Length; ++i)
+        for (var i = 0; i<table.Fields.Length; ++i)
         {
-            result.Append(_ddlBuilder.GetPhysicalName(table.FieldsById[i]));
+            result.Append(_ddlBuilder.GetPhysicalName(table.Fields[table.Mapper[i]]));
             result.Append(ColumnDelimiter);
             ++columnCount;
         }
-        if (table.FieldsById.Length > 0) --result.Length;
+        if (table.Fields.Length > 0) --result.Length;
         if (includeRelations)
         {
             var hasRelation = false;

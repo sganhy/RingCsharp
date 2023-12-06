@@ -16,10 +16,10 @@ internal static class TableExtensions
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static Field? GetField(this Table table, string name)
     {
-        int indexerLeft = 0, indexerRigth = table.Fields.Length - 1;
+        int indexerLeft = 0, indexerRigth = table.Fields.Length - 1, indexerMiddle;
         while (indexerLeft <= indexerRigth)
         {
-            var indexerMiddle = indexerLeft + indexerRigth;
+            indexerMiddle = indexerLeft + indexerRigth;
             indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
             var indexerCompare = string.CompareOrdinal(name, table.Fields[indexerMiddle].Name);
             if (indexerCompare == 0) return table.Fields[indexerMiddle];
@@ -50,13 +50,13 @@ internal static class TableExtensions
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static Field? GetField(this Table table, int id)
     {
-        int indexerLeft = 0, indexerRigth = table.FieldsById.Length - 1;
+        int indexerLeft = 0, indexerRigth = table.Fields.Length - 1;
         while (indexerLeft <= indexerRigth)
         {
             var indexerMiddle = indexerLeft + indexerRigth;
             indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
-            var indexerCompare = id - table.FieldsById[indexerMiddle].Id;
-            if (indexerCompare == 0) return table.FieldsById[indexerMiddle];
+            var indexerCompare = id - table.Fields[table.Mapper[indexerMiddle]].Id;
+            if (indexerCompare == 0) return table.Fields[table.Mapper[indexerMiddle]];
             if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
             else indexerRigth = indexerMiddle - 1;
         }
@@ -173,8 +173,8 @@ internal static class TableExtensions
     }
 
     internal static Field? GetPrimaryKey(this Table table) =>
-        (table.FieldsById.Length > 0 && (table.Type == TableType.Business || table.Type == TableType.Lexicon)) ?
-        table.FieldsById[0] : null;
+        (table.Fields.Length > 0 && (table.Type == TableType.Business || table.Type == TableType.Lexicon)) ?
+        table.Fields[table.Mapper[0]] : null;
 
     /// <summary>
     /// Get first unique index

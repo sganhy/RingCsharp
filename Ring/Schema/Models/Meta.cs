@@ -11,16 +11,16 @@ internal sealed class Meta
 	internal int ReferenceId;
 	internal int DataType;
 	internal long Flags;
-	internal string Name; // name of entity
-	internal string? Description;        // late loading 
+	internal string Name;			// name of entity
+	internal string? Description;	// late loading 
 	internal string? Value;
 	internal bool Active = true;
 
-	internal Meta() => Name = string.Empty; // this constructor should be public !!!
+	public Meta() => Name = string.Empty; // this constructor should be public due to Xunit lib usage
 	internal Meta(string name) => Name = name;
 
 #if DEBUG
-    public override string ToString() => Name ?? string.Empty;
+	public override string ToString() => Name ?? string.Empty;
 #endif
 
 }

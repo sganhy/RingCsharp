@@ -1,6 +1,7 @@
 ﻿using AutoFixture;
 using Ring.Schema.Enums;
 using Ring.Schema.Models;
+using Ring.Util.Extensions;
 using System.Reflection;
 using Index = Ring.Schema.Models.Index;
 
@@ -22,10 +23,9 @@ public abstract class BaseExtensionsTest
         fields = fields.OrderBy(o => o.Name).ToList();
         fieldsById = fieldsById.OrderBy(o => o.Id).ToList();
         relations = relations.OrderBy(o => o.Name).ToList();
-
         var result = new Table(_fixture.Create<int>(), _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<string>(),
-            _fixture.Create<string>(), TableType.Business, relations.ToArray(), fields.ToArray(), fieldsById.ToArray(), Array.Empty<Index>(), 12,
-            PhysicalType.Table, true, true, true, true);
+            _fixture.Create<string>(), TableType.Business, relations.ToArray(), fields.ToArray(), 
+            GetMapper(fields.ToArray(), fieldsById.ToArray()), Array.Empty<Index>(), 12, PhysicalType.Table, true, true, true, true);
         return result;
     }
 
@@ -48,9 +48,8 @@ public abstract class BaseExtensionsTest
     internal Relation GetAnonymousRelation(string? name=null)
     {
         var toTable = new Table(_fixture.Create<int>(), _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<string>(),
-            _fixture.Create<string>(), TableType.Business, Array.Empty<Relation>(), Array.Empty<Field>(), Array.Empty<Field>(), 
-            Array.Empty<Index>(), 12,
-            PhysicalType.Table, true, true, true, true);
+            _fixture.Create<string>(), TableType.Business, Array.Empty<Relation>(), Array.Empty<Field>(), Array.Empty<int>(), 
+            Array.Empty<Index>(), 12, PhysicalType.Table, true, true, true, true);
         var result = new Relation(_fixture.Create<int>(), name??_fixture.Create<string>(), _fixture.Create<string>(),
             _fixture.Create<RelationType>(), toTable, _fixture.Create<bool>(), _fixture.Create<bool>(),
             _fixture.Create<bool>(), _fixture.Create<bool>()) ;
@@ -148,6 +147,21 @@ public abstract class BaseExtensionsTest
 #pragma warning restore CS8604 
 #pragma warning restore CS8600 
         return result.ToArray();
+    }
+
+    /// <summary>
+    /// ==> copy of MetaExtensions.GetMapper method
+    /// </summary>
+    private static int[] GetMapper(Field[] fieldByName, Field[] fieldById)
+    {
+        if (fieldByName.Length > 0)
+        {
+            var result = new int[fieldByName.Length];
+            for (var i = 0; i < fieldById.Length; ++i)
+                result[i] = fieldByName.GetIndex(fieldById[i].Name);
+            return result;
+        }
+        return Array.Empty<int>();
     }
 
 }

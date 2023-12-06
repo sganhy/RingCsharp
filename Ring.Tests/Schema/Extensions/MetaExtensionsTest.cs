@@ -640,7 +640,7 @@ public sealed class MetaExtensionsTest : BaseExtensionsTest
         Assert.True(table.Readonly);
         Assert.Single(table.Relations);
         Assert.Equal(8, table.Fields.Length);
-        Assert.Equal(8, table.FieldsById.Length);
+        Assert.Equal(8, table.Mapper.Length);
         Assert.Equal(FieldType.String,field.Type);
         Assert.Equal(80, field.Size);
         Assert.Equal("name", field.Name);

@@ -2,6 +2,7 @@
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
+using Ring.Util.Extensions;
 using System.Reflection;
 using Index = Ring.Schema.Models.Index;
 
@@ -32,8 +33,8 @@ public class BaseBuilderTest
         relations = relations.OrderBy(o => o.Name).ToList();
 
         var result = new Table(_fixture.Create<int>(), _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<string>(),
-            _fixture.Create<string>(), TableType.Business, relations.ToArray(), fields.ToArray(), fieldsById.ToArray(), Array.Empty<Index>(), 12,
-            PhysicalType.Table, true, true, true, true);
+            _fixture.Create<string>(), TableType.Business, relations.ToArray(), fields.ToArray(), 
+            GetMapper(fields.ToArray(), fieldsById.ToArray()), Array.Empty<Index>(), 12, PhysicalType.Table, true, true, true, true);
 
         return result;
     }
@@ -61,9 +62,8 @@ public class BaseBuilderTest
         var fieldList = new List<Field>() { primaryKey };
         var relationName = name == null ? _fixture.Create<string>() : name;
         var toTable = new Table(_fixture.Create<int>(), _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<string>(),
-            _fixture.Create<string>(), TableType.Business, Array.Empty<Relation>(), fieldList.ToArray(), fieldList.ToArray(),
-            Array.Empty<Index>(), 12,
-            PhysicalType.Table, true, true, true, true);
+            _fixture.Create<string>(), TableType.Business, Array.Empty<Relation>(), fieldList.ToArray(), 
+            GetMapper(fieldList.ToArray(), fieldList.ToArray()), Array.Empty<Index>(), 12, PhysicalType.Table, true, true, true, true);
         // generate primary key 
         var result = new Relation(_fixture.Create<int>(), relationName, _fixture.Create<string>(),
             relationType, toTable, notNull, _fixture.Create<bool>(),
@@ -157,6 +157,21 @@ public class BaseBuilderTest
 #pragma warning restore CS8604 
 #pragma warning restore CS8600 
         return result.ToArray();
+    }
+
+    /// <summary>
+    /// ==> copy of MetaExtensions.GetMapper method
+    /// </summary>
+    private static int[] GetMapper(Field[] fieldByName, Field[] fieldById)
+    {
+        if (fieldByName.Length > 0)
+        {
+            var result = new int[fieldByName.Length];
+            for (var i = 0; i < fieldById.Length; ++i)
+                result[i] = fieldByName.GetIndex(fieldById[i].Name);
+            return result;
+        }
+        return Array.Empty<int>();
     }
 
 

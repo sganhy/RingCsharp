@@ -6,11 +6,11 @@ internal sealed class Index : BaseEntity
 	internal readonly string[] Columns;
 	internal readonly bool Unique;
 
-    /// <summary>
-    ///     Ctor
-    /// </summary>
+	/// <summary>
+	///     Ctor
+	/// </summary>
 	internal Index(int id, string name, string? description, string[] columns, bool unique, bool bitmap, bool active, bool baseline)
-        : base(id, name, description, active, baseline)
+		: base(id, name, description, active, baseline)
 	{
 		Unique = unique;
 		Columns = columns;

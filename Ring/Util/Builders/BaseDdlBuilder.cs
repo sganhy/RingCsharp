@@ -178,7 +178,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
         result.Append(SqlSpace);
         result.Append('(');
         result.Append(SqlLineFeed);
-        for (i = 0; i < table.FieldsById.Length; ++i) Create(result, table, table.FieldsById[i]);
+        for (i = 0; i < table.Fields.Length; ++i) Create(result, table, table.Fields[table.Mapper[i]]);
         if (i > 0 && table.Relations.Length == 0) result.Length = result.Length - 2;
         for (i = 0; i < table.Relations.Length; ++i) Create(result, table, table.Relations[i]);
         if (i > 0) result.Length = result.Length - 2;

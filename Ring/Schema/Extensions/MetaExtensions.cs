@@ -5,6 +5,7 @@ using Index = Ring.Schema.Models.Index;
 using DbSchema = Ring.Schema.Models.Schema;
 using Ring.Util.Builders;
 using System.Globalization;
+using Ring.Util.Extensions;
 
 namespace Ring.Schema.Extensions;
 
@@ -252,8 +253,8 @@ internal static class MetaExtensions
             Array.Sort(indexes, (x, y) => string.CompareOrdinal(x.Name, y.Name));
 
             return new (meta.GetEntityId(), meta.GetEntityName(), meta.GetEntityDescription(), meta.Value, physicalName,
-                tableType, relations, fields, fieldsById, indexes, meta.ReferenceId, PhysicalType.Table, meta.IsEntityBaseline(),
-                meta.IsEntityActive(), meta.IsTableCached(), meta.IsTableReadonly());
+                tableType, relations, fields, GetMapper(fields, fieldsById), indexes, meta.ReferenceId, 
+                PhysicalType.Table, meta.IsEntityBaseline(), meta.IsEntityActive(), meta.IsTableCached(), meta.IsTableReadonly());
         }
         return null;
     }
@@ -347,8 +348,9 @@ internal static class MetaExtensions
 
     internal static Table GetEmptyTable(Meta meta, TableType tableType) =>
         new(meta.GetEntityId(), meta.GetEntityName(), meta.GetEntityDescription(), meta.Value, string.Empty,
-             tableType, Array.Empty<Relation>(), Array.Empty<Field>(), Array.Empty<Field>(), Array.Empty<Index>(), meta.ReferenceId,
-             PhysicalType.Table, meta.IsEntityBaseline(), meta.IsEntityActive(), meta.IsTableCached(), meta.IsTableReadonly());
+             tableType, Array.Empty<Relation>(), Array.Empty<Field>(), Array.Empty<int>(), 
+             Array.Empty<Index>(), meta.ReferenceId, PhysicalType.Table, meta.IsEntityBaseline(), meta.IsEntityActive(), 
+             meta.IsTableCached(), meta.IsTableReadonly());
 
     internal static Relation GetEmptyRelation(Meta meta, RelationType relationType, TableType tableType=TableType.Fake) =>
         new(meta.GetEntityId(), meta.GetEntityName(), meta.GetEntityDescription(), relationType, 
@@ -359,6 +361,18 @@ internal static class MetaExtensions
             false,false,true);
 
     #region private methods 
+
+    private static int[] GetMapper(Field[] fieldByName, Field[] fieldById)
+    {
+        if (fieldByName.Length > 0)
+        {
+            var result = new int[fieldByName.Length];
+            for (var i = 0; i < fieldById.Length; ++i)
+                result[i] = fieldByName.GetIndex(fieldById[i].Name);
+            return result;
+        }
+        return Array.Empty<int>();
+    }
 
     private static ParameterType ToParameterType(int value)
         => Enum.IsDefined(typeof(ParameterType), value) ? (ParameterType)value : ParameterType.Undefined;
