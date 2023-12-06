@@ -22,7 +22,7 @@ internal sealed class Relation : BaseEntity
 		HasConstraint = constraint;
 		NotNull = notnull;
 		InverseRelation = this;
-    }
+	}
 
 	// assign only once the property
 	internal void SetInverseRelation(Relation relation) => 
