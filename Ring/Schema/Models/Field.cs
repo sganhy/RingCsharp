@@ -14,18 +14,18 @@ internal sealed class Field : BaseEntity
 	internal readonly int Size;
 	internal readonly FieldType Type;
 
-    /// <summary>
-    ///     Ctor
-    /// </summary>
+	/// <summary>
+	///     Ctor
+	/// </summary>
 	internal Field(int id, string name, string? description, FieldType type, int size, string? defaultValue,
-        bool baseline, bool notNull, bool caseSensitif, bool multilingual, bool active)
-        : base(id, name, description, active, baseline)
-    {
+		bool baseline, bool notNull, bool caseSensitif, bool multilingual, bool active)
+		: base(id, name, description, active, baseline)
+	{
 		Type = type;
 		Size = size;
 		DefaultValue = defaultValue;
 		NotNull = notNull;
 		CaseSensitive = caseSensitif;
 		Multilingual = multilingual;
-    }
+	}
 }
