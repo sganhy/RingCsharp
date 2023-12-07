@@ -16,12 +16,12 @@ internal static class TableExtensions
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static Field? GetField(this Table table, string name)
     {
-        int indexerLeft = 0, indexerRigth = table.Fields.Length - 1, indexerMiddle;
+        int indexerLeft = 0, indexerRigth = table.Fields.Length - 1, indexerMiddle, indexerCompare;
         while (indexerLeft <= indexerRigth)
         {
             indexerMiddle = indexerLeft + indexerRigth;
             indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
-            var indexerCompare = string.CompareOrdinal(name, table.Fields[indexerMiddle].Name);
+            indexerCompare = string.CompareOrdinal(name, table.Fields[indexerMiddle].Name);
             if (indexerCompare == 0) return table.Fields[indexerMiddle];
             if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
             else indexerRigth = indexerMiddle - 1;
@@ -50,12 +50,12 @@ internal static class TableExtensions
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static Field? GetField(this Table table, int id)
     {
-        int indexerLeft = 0, indexerRigth = table.Fields.Length - 1;
+        int indexerLeft = 0, indexerRigth = table.Fields.Length - 1, indexerMiddle, indexerCompare;
         while (indexerLeft <= indexerRigth)
         {
-            var indexerMiddle = indexerLeft + indexerRigth;
+            indexerMiddle = indexerLeft + indexerRigth;
             indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
-            var indexerCompare = id - table.Fields[table.Mapper[indexerMiddle]].Id;
+            indexerCompare = id - table.Fields[table.Mapper[indexerMiddle]].Id;
             if (indexerCompare == 0) return table.Fields[table.Mapper[indexerMiddle]];
             if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
             else indexerRigth = indexerMiddle - 1;
@@ -72,12 +72,12 @@ internal static class TableExtensions
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int GetFieldIndex(this Table table, string name)
     {
-        int indexerLeft = 0, indexerRigth = table.Fields.Length - 1;
+        int indexerLeft = 0, indexerRigth = table.Fields.Length - 1, indexerMiddle, indexerCompare;
         while (indexerLeft <= indexerRigth)
         {
-            var indexerMiddle = indexerLeft + indexerRigth;
+            indexerMiddle = indexerLeft + indexerRigth;
             indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
-            var indexerCompare = string.CompareOrdinal(name, table.Fields[indexerMiddle].Name);
+            indexerCompare = string.CompareOrdinal(name, table.Fields[indexerMiddle].Name);
             if (indexerCompare == 0) return indexerMiddle;
             if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
             else indexerRigth = indexerMiddle - 1;
@@ -94,14 +94,14 @@ internal static class TableExtensions
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static Relation? GetRelation(this Table table, string name)
     {
-        int indexerLeft = 0, indexerRigth = table.Relations.Length - 1;
+        int indexerLeft = 0, indexerRigth = table.Relations.Length - 1, indexerMiddle, indexerCompare;
         while (indexerLeft <= indexerRigth)
         {
-            var indexerMiddle = indexerLeft + indexerRigth;
+            indexerMiddle = indexerLeft + indexerRigth;
             indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
-            var indexerCompare = string.CompareOrdinal(name, table.Relations[indexerMiddle].Name);
-            if (indexerCompare == 0) return table.Relations[indexerMiddle];
-            if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
+            indexerCompare = string.CompareOrdinal(name, table.Relations[indexerMiddle].Name);
+            if (indexerCompare==0) return table.Relations[indexerMiddle];
+            if (indexerCompare>0) indexerLeft = indexerMiddle + 1;
             else indexerRigth = indexerMiddle - 1;
         }
         return null;
@@ -138,12 +138,12 @@ internal static class TableExtensions
     /// <returns>Index object</returns>
     internal static Index? GetIndex(this Table table, string name)
     {
-        int indexerLeft = 0, indexerRigth = table.Indexes.Length - 1;
+        int indexerLeft = 0, indexerRigth = table.Indexes.Length - 1, indexerMiddle, indexerCompare;
         while (indexerLeft <= indexerRigth)
         {
-            var indexerMiddle = indexerLeft + indexerRigth;
+            indexerMiddle = indexerLeft + indexerRigth;
             indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
-            var indexerCompare = string.CompareOrdinal(name, table.Indexes[indexerMiddle].Name);
+            indexerCompare = string.CompareOrdinal(name, table.Indexes[indexerMiddle].Name);
             if (indexerCompare == 0) return table.Indexes[indexerMiddle];
             if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
             else indexerRigth = indexerMiddle - 1;
@@ -159,12 +159,12 @@ internal static class TableExtensions
     /// <returns>Field index or -1 if not found</returns>
     internal static int GetRelationIndex(this Table table, string name)
     {
-        int indexerLeft = 0, indexerRigth = table.Relations.Length - 1;
+        int indexerLeft = 0, indexerRigth = table.Relations.Length - 1, indexerMiddle, indexerCompare;
         while (indexerLeft <= indexerRigth)
         {
-            var indexerMiddle = indexerLeft + indexerRigth;
+            indexerMiddle = indexerLeft + indexerRigth;
             indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
-            var indexerCompare = string.CompareOrdinal(name, table.Relations[indexerMiddle].Name);
+            indexerCompare = string.CompareOrdinal(name, table.Relations[indexerMiddle].Name);
             if (indexerCompare == 0) return indexerMiddle;
             if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
             else indexerRigth = indexerMiddle - 1;

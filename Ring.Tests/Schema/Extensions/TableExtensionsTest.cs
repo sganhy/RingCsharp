@@ -81,7 +81,7 @@ public class TableExtensionsTest : BaseExtensionsTest
     {
         // arrange 
         var table = GetAnonymousTable(40, 10);
-        var fields = table.Fields.OrderByDescending(x => x.Name);
+        var fields = table.Fields.OrderByDescending(x => x.Id);
 
         foreach (var field in fields)
         {
