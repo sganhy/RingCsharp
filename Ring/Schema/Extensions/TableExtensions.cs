@@ -206,4 +206,10 @@ internal static class TableExtensions
         return result.ToArray(); 
     }
 
+    internal static void LoadMapper(this Table table, Field[] fieldById)
+    {
+        for (var i = 0; i < fieldById.Length; ++i)
+            table.Mapper[i] = table.GetFieldIndex(fieldById[i].Name);
+    }
+
 }

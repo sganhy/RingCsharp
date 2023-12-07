@@ -252,9 +252,11 @@ internal static class MetaExtensions
             Array.Sort(fieldsById, comparison: (x, y) => x.Id.CompareTo(y.Id));
             Array.Sort(indexes, (x, y) => string.CompareOrdinal(x.Name, y.Name));
 
-            return new (meta.GetEntityId(), meta.GetEntityName(), meta.GetEntityDescription(), meta.Value, physicalName,
-                tableType, relations, fields, GetMapper(fields, fieldsById), indexes, meta.ReferenceId, 
+            var result = new Table(meta.GetEntityId(), meta.GetEntityName(), meta.GetEntityDescription(), meta.Value, physicalName,
+                tableType, relations, fields, new int[fields.Length], indexes, meta.ReferenceId, 
                 PhysicalType.Table, meta.IsEntityBaseline(), meta.IsEntityActive(), meta.IsTableCached(), meta.IsTableReadonly());
+            result.LoadMapper(fieldsById);
+            return result;
         }
         return null;
     }
@@ -361,18 +363,6 @@ internal static class MetaExtensions
             false,false,true);
 
     #region private methods 
-
-    private static int[] GetMapper(Field[] fieldByName, Field[] fieldById)
-    {
-        if (fieldByName.Length > 0)
-        {
-            var result = new int[fieldByName.Length];
-            for (var i = 0; i < fieldById.Length; ++i)
-                result[i] = fieldByName.GetIndex(fieldById[i].Name);
-            return result;
-        }
-        return Array.Empty<int>();
-    }
 
     private static ParameterType ToParameterType(int value)
         => Enum.IsDefined(typeof(ParameterType), value) ? (ParameterType)value : ParameterType.Undefined;
