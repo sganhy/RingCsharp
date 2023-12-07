@@ -766,6 +766,36 @@ public sealed class RecordTest : BaseExtensionsTest
         Assert.Equal("0", result);
     }
 
+    [Fact]
+    public void GetField_DefaultFieldPk_0()
+    {
+        // arrange 
+        var table = _schema.GetTable("weapon");
+        Assert.NotNull(table);
+        var rcd = new Record(table);
+
+        // act 
+        var result = rcd.GetField();
+
+        // assert
+        Assert.Equal(0L, result);
+    }
+
+    [Fact]
+    public void GetField_DefaultFieldPk_77()
+    {
+        // arrange 
+        var table = _schema.GetTable("skill");
+        Assert.NotNull(table);
+        var rcd = new Record(table);
+        rcd.SetField("id", 77L);
+
+        // act 
+        var result = rcd.GetField();
+
+        // assert
+        Assert.Equal(77L, result);
+    }
 
     [Fact]
     public void GetField_NumberFields_DefaultValue()
@@ -785,6 +815,93 @@ public sealed class RecordTest : BaseExtensionsTest
         Assert.Equal("0", result1);
         Assert.Equal("0", result2);
         Assert.Equal(false.ToString(), result3);
+    }
+
+    [Fact]
+    public void GetField_OutBoolean_DefaultValue()
+    {
+        // arrange 
+        var table = _schema.GetTable("alignment");
+        Assert.NotNull(table);
+        var rcd = new Record(table);
+
+        // act 
+        rcd.GetField("chaos", out bool? result);
+
+        // assert
+        Assert.Equal(false, result);
+    }
+
+    [Fact]
+    public void GetField_OutBoolean_True()
+    {
+        // arrange 
+        var table = _schema.GetTable("alignment");
+        Assert.NotNull(table);
+        var rcd = new Record(table);
+        rcd.SetField("law", true);
+
+        // act 
+        rcd.GetField("law", out bool? result);
+
+        // assert
+        Assert.Equal(true, result);
+    }
+
+    [Fact]
+    public void GetField_OutLong_DefaultValue()
+    {
+        // arrange 
+        var table = _schema.GetTable("alignment");
+        Assert.NotNull(table);
+        var rcd = new Record(table);
+
+        // act 
+        rcd.GetField("id", out long? result);
+
+        // assert
+        Assert.Equal(0L, result);
+    }
+
+    [Fact]
+    public void GetField_OutDateTime_ShortDateTime()
+    {
+        // arrange 
+        var table = _schema.GetTable("book");
+        Assert.NotNull(table);
+        var rcd = new Record(table);
+        var expectedValue = DateTime.UtcNow;
+        rcd.SetField("creation_time", expectedValue);
+
+        // act 
+        rcd.GetField("creation_time", out DateTime? result);
+
+        // assert
+        Assert.Equal(expectedValue.ToString("yyyyMMdd"), result?.ToString("yyyyMMdd"));
+    }
+
+    [Fact]
+    public void GetField_OutDateTime_DateTime()
+    {
+        // arrange 
+        var tableBuilder = new TableBuilder();
+        var logTable = tableBuilder.GetLog("Test", DatabaseProvider.SqlLite);
+        var rcd = new Record(logTable);
+        var dt = new DateTime(2005, 12,12,18,17,16,15, DateTimeKind.Utc);
+        rcd.SetField("entry_time", dt);
+
+        // act - 2001, 1, 1, 18, 18, 18, 458
+        rcd.GetField("entry_time", out DateTime? result);
+
+        // assert
+        Assert.NotNull(result);
+        Assert.Equal(dt.Year, result.Value.Year);
+        Assert.Equal(dt.Month, result.Value.Month);
+        Assert.Equal(dt.Day, result.Value.Day);
+        Assert.Equal(dt.Hour, result.Value.Hour);
+        Assert.Equal(dt.Minute, result.Value.Minute);
+        Assert.Equal(dt.Second, result.Value.Second);
+        Assert.Equal(dt.Millisecond, result.Value.Millisecond);
     }
 
     [Fact]

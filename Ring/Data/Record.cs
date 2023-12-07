@@ -61,6 +61,19 @@ public struct Record : IEquatable<Record>
     internal readonly void ClearData() => Array.Fill(_data??Array.Empty<string?>(), null);
 
     /// <summary>
+    ///     Get primary key value (Field name ID)
+    /// </summary>
+    internal readonly long GetField()
+    {
+#pragma warning disable CS8602 // Dereference of a possibly null reference. _type cannot be null here 
+        var fieldId = _type.Mapper[0];
+#pragma warning disable CS8604 // Dereference of a possibly null reference. _type cannot be null here 
+        return long.Parse(_data[fieldId] ?? _type.Fields[fieldId].DefaultValue, DefaultCulture);
+#pragma warning restore CS8604
+#pragma warning restore CS8602
+    }
+
+    /// <summary>
     ///     GetField methods
     /// </summary>
     public readonly string? GetField(string name)
@@ -74,6 +87,73 @@ public struct Record : IEquatable<Record>
 #pragma warning restore CS8602
         ThrowRecordUnkownFieldName(name);
         return null;
+    }
+
+    public readonly void GetField(string name, out bool? value)
+    {
+        value = null;
+        if (_type==null) ThrowRecordUnkownRecordType();
+#pragma warning disable CS8604 // Dereference of a possibly null reference. _type cannot be null here 
+        var fieldId = _type.GetFieldIndex(name);
+#pragma warning restore CS8604
+        if (fieldId<=-1) ThrowRecordUnkownFieldName(name);
+        var field = _type.Fields[fieldId];
+        if (field.Type != FieldType.Boolean) ThrowImpossibleConversion(field.Type,FieldType.Boolean);
+        //BooleanTrue: BooleanFalse
+#pragma warning disable CS8602 // Dereference of a possibly null reference. _data cannot be null here 
+        var result = _data[fieldId] ?? _type.Fields[fieldId].DefaultValue;
+#pragma warning restore CS8602
+        if (BooleanTrue.Equals(result, StringComparison.Ordinal)) value = true;
+        else if (BooleanFalse.Equals(result, StringComparison.Ordinal)) value = false;
+    }
+
+    public readonly void GetField(string name, out long? value)
+    {
+        value=null;
+        if (_type==null) ThrowRecordUnkownRecordType();
+#pragma warning disable CS8604 // Dereference of a possibly null reference. _type cannot be null here 
+        var fieldId=_type.GetFieldIndex(name);
+#pragma warning restore CS8604
+        if (fieldId<=-1) ThrowRecordUnkownFieldName(name);
+        var field = _type.Fields[fieldId];
+        if (field.Type != FieldType.Byte && field.Type != FieldType.Short && field.Type != FieldType.Int && field.Type != FieldType.Long) 
+            ThrowImpossibleConversion(field.Type, FieldType.Long);
+#pragma warning disable CS8602 // Dereference of a possibly null reference. _data cannot be null here 
+        var result = _data[fieldId] ?? _type.Fields[fieldId].DefaultValue;
+#pragma warning restore CS8602
+        if (result!=null) value = long.Parse(result,DefaultCulture);
+    }
+
+    /// <summary>
+    /// Get UTC date/time
+    /// </summary>
+    public readonly void GetField(string name, out DateTime? value)
+    {
+        value = null;
+        if (_type == null) ThrowRecordUnkownRecordType();
+#pragma warning disable CS8604 // Dereference of a possibly null reference. _type cannot be null here 
+        var fieldId = _type.GetFieldIndex(name);
+#pragma warning restore CS8604
+        if (fieldId <= -1) ThrowRecordUnkownFieldName(name);
+        var field = _type.Fields[fieldId];
+        if (field.Type != FieldType.DateTime && field.Type != FieldType.LongDateTime && field.Type != FieldType.ShortDateTime)
+            ThrowImpossibleConversion(field.Type, FieldType.DateTime);
+#pragma warning disable CS8602 // Dereference of a possibly null reference. _data cannot be null here 
+        var result = _data[fieldId] ?? _type.Fields[fieldId].DefaultValue;
+#pragma warning restore CS8602
+        if (result==null) return;
+        var year = int.Parse(result[..4], DefaultCulture);
+        var month = int.Parse(result.Substring(5,2), DefaultCulture);
+        var day = int.Parse(result.Substring(8,2), DefaultCulture);
+        if (field.Type == FieldType.ShortDateTime) value = new DateTime(year, month, day, 0, 0, 0, DateTimeKind.Utc);
+        else
+        { 
+            var hour=int.Parse(result.Substring(11,2),DefaultCulture);
+            var minute = int.Parse(result.Substring(14, 2), DefaultCulture);
+            var second = int.Parse(result.Substring(17, 2), DefaultCulture);
+            var milliSecond = int.Parse(result.Substring(20, 3), DefaultCulture);
+            if (field.Type==FieldType.DateTime) value = new DateTime(year,month,day,hour,minute,second, milliSecond,DateTimeKind.Utc);
+        }
     }
 
     /// <summary>
