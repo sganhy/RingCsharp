@@ -12,6 +12,8 @@ internal static class EnumExtensions
     internal static T? GetCustomAttribute<T>(this Enum value) where T : Attribute =>
         GetField(value)?.GetCustomAttribute<T>(inherit: false);
 
+    #region private methods 
+
     /// <summary>
     /// Gets the FieldInfo for the enum constant, if such a constant is defined; otherwise null.
     /// </summary>
@@ -35,5 +37,7 @@ internal static class EnumExtensions
             default: throw new InvalidOperationException("Unknown EnumType");
         }
     }
+
+    #endregion
 
 }

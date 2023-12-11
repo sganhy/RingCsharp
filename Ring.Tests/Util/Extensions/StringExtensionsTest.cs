@@ -1,4 +1,6 @@
-﻿using Ring.Util.Extensions;
+﻿using Microsoft.VisualBasic;
+using Ring.Util.Extensions;
+using System.Globalization;
 
 namespace Ring.Tests.Util.Extensions;
 
@@ -10,7 +12,7 @@ public class StringExtensionsTest
     }
 
     [Fact]
-    internal void Truncate_NullStriong_Null()
+    public void Truncate_NullStriong_Null()
     {
         // arrange 
         // act 
@@ -21,7 +23,7 @@ public class StringExtensionsTest
     }
 
     [Fact]
-    internal void Truncate_TestStriong_TestString()
+    public void Truncate_TestStriong_TestString()
     {
         // arrange 
         var input = "Test";
@@ -34,7 +36,7 @@ public class StringExtensionsTest
     }
 
     [Fact]
-    internal void Truncate_TestStriong_TruncTestString()
+    public void Truncate_TestStriong_TruncTestString()
     {
         // arrange 
         var input = "Test22";
@@ -53,7 +55,7 @@ public class StringExtensionsTest
     [InlineData(2, 1, 17, true)]
     [InlineData(1, 2, 32, true)]
     [InlineData(1, 2, 499, false)]
-    internal void GetBitValue_BitPosition_Result(char charInput, int elementPosition,int bitPosition, bool expectedResult)
+    public void GetBitValue_BitPosition_Result(char charInput, int elementPosition,int bitPosition, bool expectedResult)
     {
         // arrange 
         var chars = new char[10];
@@ -73,7 +75,7 @@ public class StringExtensionsTest
     [InlineData(27, 31, 1)]
     [InlineData(0, 31, 1)]
     [InlineData(97, 101, 55)]
-    internal void SetBitValue_BitPosition_Result(int firstBitPosition, int secondBitPosition, int falseBitPosition)
+    public void SetBitValue_BitPosition_Result(int firstBitPosition, int secondBitPosition, int falseBitPosition)
     {
         // arrange 
         var chars = new char[10];
@@ -104,7 +106,7 @@ public class StringExtensionsTest
     [InlineData("じゅういち", false)]
     [InlineData("-112", true)]
     [InlineData("-", false)]
-    internal void IsDigits_InputString_BoolResult(string input, bool expectedResult)
+    public void IsDigits_InputString_BoolResult(string input, bool expectedResult)
     {
         // arrange 
         // act 
@@ -125,7 +127,7 @@ public class StringExtensionsTest
     [InlineData("0000000000000000000000000", true)]
     [InlineData("78,888787", false)]
     [InlineData("45.45.45", false)]
-    internal void IsFloat_InputString_BoolResult(string input, bool expectedResult)
+    public void IsFloat_InputString_BoolResult(string input, bool expectedResult)
     {
         // arrange 
         // act 
@@ -135,6 +137,57 @@ public class StringExtensionsTest
         Assert.Equal(expectedResult, result);
     }
 
-    
+    [Theory]
+    [InlineData("-11.2", '.', "-112")]
+    [InlineData("", '.', "")]
+    [InlineData("-11,2", '.', "-11,2")]
+    [InlineData("", ';', "")]
+    [InlineData(null, '8', null)]
+    [InlineData("#~#~#~1", '~', "###1")]
+    [InlineData("11111", '1', "")]
+    [InlineData("  1  ", ' ', "1")]
+    public void StripChar_InputString_ReplacedString(string? inputString, char c, string expectedResult)
+    {
+        // arrange 
+        // act 
+        var result = StringExtensions.RemoveChar(inputString,c);
+        // assert
+        Assert.Equal(expectedResult, result);
+    }
+
+    [Theory]
+    //[InlineData("20211212", "20211212", "yyyyMMdd", null)]
+    //[InlineData("2021-12-12", "20211212", "yyyyMMdd", null)]
+    //[InlineData("2021-12", "20211201", "yyyyMMdd", null)]
+    [InlineData("20211207T19:36:47", "20211207 19:36:47", "yyyyMMdd HH:mm:ss", null)]
+    [InlineData("20211207T193647", "20211207 19:36:47", "yyyyMMdd HH:mm:ss", null)]
+    public void ParseIso8601Date_InputString_DateTimeResult(string input, string expectedDate, string dateFormat ,int? offset)
+    {
+        // arrange 
+        var expectedResult = DateTime.ParseExact(expectedDate, dateFormat, CultureInfo.InvariantCulture);
+
+        // act 
+        (var dateResult, var timespanResult) = StringExtensions.ParseIso8601Date(input);
+
+        // assert
+        Assert.Equal(expectedResult, dateResult);
+    }
+
+    [Theory]
+    [InlineData(null, false)]
+    [InlineData("45", false)]
+    [InlineData("bGlnaHQgd28=", true)]
+    [InlineData("bGlnaHQgdw==", true)]
+    [InlineData("aWwgw6l0YWl0IHVuZSBmb2lzIGxlcyBVU0E=", true)]
+    [InlineData("bGln,HQgd28=", false)]
+    public void IsBase64String_InputString_Result(string input, bool expectedResult)
+    {
+        // arrange 
+        // act 
+        var result = StringExtensions.IsBase64String(input);
+
+        // assert
+        Assert.Equal(expectedResult, result);
+    }
 
 }

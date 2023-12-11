@@ -7,6 +7,8 @@ using Ring.Schema.Models;
 using AutoFixture;
 using Ring.Schema.Builders;
 using System.Globalization;
+using System.Net.WebSockets;
+using Newtonsoft.Json.Linq;
 
 namespace Ring.Tests.Data;
 
@@ -541,6 +543,42 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
+    public void SetField_StringDate1_ExactDate()
+    {
+        // arrange 
+        var table = _schema.GetTable("book");
+        Assert.NotNull(table);
+        var rcd = new Record(table);
+
+        // act 
+        rcd.SetField("publish_date", "1955-12-27");
+
+        // assert
+        Assert.Equal("1955-12-27", rcd.GetField("publish_date"));
+    }
+
+    [Fact]
+    public void SetField_StringDate2_ExactDate()
+    {
+        // arrange 
+        var tableBuilder = new TableBuilder();
+        var logTable = tableBuilder.GetLog("Test", DatabaseProvider.MySql);
+        var field = logTable.GetField("entry_time");
+        var index = logTable.GetFieldIndex("entry_time");
+        var meta = field?.ToMeta(99);
+        meta?.SetFieldType(FieldType.DateTime);
+        var newField = meta?.ToField();
+        logTable.Fields[index] = newField ?? GetAnonymousField();
+        var rcd = new Record(logTable);
+
+        // act 
+        rcd.SetField("entry_time", "1914-10-30T18:09:18.123Z");
+
+        // assert
+        //Assert.Equal("3.01416", rcd.GetField("entry_time"));
+    }
+
+    [Fact]
     public void SetField_ShortDateTime1_ReturnIso8601Format()
     {
         // arrange 
@@ -720,7 +758,116 @@ public sealed class RecordTest : BaseExtensionsTest
         // assert
         Assert.Equal("0.456", rcd.GetField("entry_time"));
     }
-       
+
+    [Fact]
+    public void SetField_ByteArray1_ReturnArray()
+    {
+        // arrange 
+        var tableBuilder = new TableBuilder();
+        var logTable = tableBuilder.GetLog("Test", DatabaseProvider.MySql);
+        var field = logTable.GetField("entry_time");
+        var index = logTable.GetFieldIndex("entry_time");
+        var meta = field?.ToMeta(99);
+        meta?.SetFieldType(FieldType.ByteArray);
+        var newField = meta?.ToField();
+        logTable.Fields[index] = newField ?? GetAnonymousField();
+        var rcd = new Record(logTable);
+        var byteArray = new byte[] { 1,2,3,4,5,6,7,8,9, byte.MinValue, byte.MaxValue };
+
+        // act 
+        rcd.SetField("entry_time", byteArray);
+        rcd.GetField("entry_time", out byte[]? result);
+
+        // assert
+        Assert.NotNull(result);
+        Assert.Equal(11,result.Length);
+        Assert.Equal(1, result[0]);
+        Assert.Equal(2, result[1]);
+        Assert.Equal(3, result[2]);
+        Assert.Equal(4, result[3]);
+        Assert.Equal(5, result[4]);
+        Assert.Equal(6, result[5]);
+        Assert.Equal(7, result[6]);
+        Assert.Equal(8, result[7]);
+        Assert.Equal(9, result[8]);
+        Assert.Equal(byte.MinValue, result[9]);
+        Assert.Equal(byte.MaxValue, result[10]);
+    }
+
+    [Fact]
+    public void SetField_ByteArray2_Null()
+    {
+        // arrange 
+        var tableBuilder = new TableBuilder();
+        var logTable = tableBuilder.GetLog("Test", DatabaseProvider.MySql);
+        var field = logTable.GetField("entry_time");
+        var index = logTable.GetFieldIndex("entry_time");
+        var meta = field?.ToMeta(99);
+        meta?.SetFieldType(FieldType.ByteArray);
+        var newField = meta?.ToField();
+        logTable.Fields[index] = newField ?? GetAnonymousField();
+        var rcd = new Record(logTable);
+        var byteArray = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, byte.MinValue, byte.MaxValue };
+
+        // act 
+        rcd.SetField("entry_time", null);
+        rcd.GetField("entry_time", out byte[]? result);
+
+        // assert
+        Assert.Null(result);
+    }
+
+
+    [Fact]
+    public void SetField_ByteArray3_ThrowInvalidBase64String()
+    {
+        // arrange 
+        var tableBuilder = new TableBuilder();
+        var logTable = tableBuilder.GetLog("Test", DatabaseProvider.MySql);
+        var field = logTable.GetField("entry_time");
+        var index = logTable.GetFieldIndex("entry_time");
+        var meta = field?.ToMeta(99);
+        meta?.SetFieldType(FieldType.ByteArray);
+        var newField = meta?.ToField();
+        logTable.Fields[index] = newField ?? GetAnonymousField();
+        var rcd = new Record(logTable);
+
+        // act 
+        var ex = Assert.Throws<FormatException>(() => rcd.SetField("entry_time", "aze"));
+
+        // assert
+        Assert.Equal("The input is not a valid Base-64 string.", ex.Message);
+    }
+
+
+    [Fact]
+    public void SetField_ByteArray4_ThrowInvalidBase64String()
+    {
+        // arrange 
+        var tableBuilder = new TableBuilder();
+        var logTable = tableBuilder.GetLog("Test", DatabaseProvider.MySql);
+        var field = logTable.GetField("entry_time");
+        var index = logTable.GetFieldIndex("entry_time");
+        var meta = field?.ToMeta(99);
+        meta?.SetFieldType(FieldType.ByteArray);
+        var newField = meta?.ToField();
+        logTable.Fields[index] = newField ?? GetAnonymousField();
+        var rcd = new Record(logTable);
+        var byteArray = new byte[] { _fixture.Create<byte>(), _fixture.Create<byte>(), _fixture.Create<byte>() };
+        var base64 = Convert.ToBase64String(byteArray);
+
+        // act 
+        rcd.SetField("entry_time", base64);
+        rcd.GetField("entry_time", out byte[]? result);
+
+        // assert
+        Assert.NotNull(result);
+        Assert.Equal(3,result.Length);
+        Assert.Equal(byteArray[0], result[0]);
+        Assert.Equal(byteArray[1], result[1]);
+        Assert.Equal(byteArray[2], result[2]);
+    }
+
     [Fact]
     public void GetField_AnonymousField_ThrowArgumentException()
     {
@@ -809,7 +956,6 @@ public sealed class RecordTest : BaseExtensionsTest
         var result1 = rcd.GetField("id");
         var result2 = rcd.GetField("critical_multiplier_1");
         var result3 = rcd.GetField("martial");
-        
 
         // assert
         Assert.Equal("0", result1);

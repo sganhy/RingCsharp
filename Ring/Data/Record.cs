@@ -16,6 +16,7 @@ public struct Record : IEquatable<Record>
     private readonly static string NullString = @"Null";
     private readonly static char HashFieldDelimiter = (char)3; // end of text character
     private readonly static CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
+    private readonly static NumberStyles DefaultNumberStyle = NumberStyles.Integer;
     private readonly static string BooleanTrue = true.ToString(DefaultCulture);
     private readonly static string BooleanFalse = false.ToString(DefaultCulture);
     private readonly static decimal MaxLongValue = long.MaxValue;
@@ -36,7 +37,7 @@ public struct Record : IEquatable<Record>
 
     // should be instanciate when record type is defined
     // _data.Lenght should be > _type.Fields.Length
-    private string?[]? _data; 
+    private string?[]? _data;
     private Table? _type;
 
     /// <summary>
@@ -50,15 +51,15 @@ public struct Record : IEquatable<Record>
     internal Record(Table type)
     {
         _type = type;
-        _data = new string? [type.Fields.Length+1];
+        _data = new string?[type.Fields.Length + 1];
     }
 
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
-    internal readonly string? this[int i]  { get { return _data[i];} set { _data[i]=value; }}
+    internal readonly string? this[int i] { get { return _data[i]; } set { _data[i] = value; } }
 #pragma warning restore CS8602
     public readonly bool IsDirty => _data != null && _data[^1] != null;
     internal readonly Table? Table => _type;
-    internal readonly void ClearData() => Array.Fill(_data??Array.Empty<string?>(), null);
+    internal readonly void ClearData() => Array.Fill(_data ?? Array.Empty<string?>(), null);
 
     /// <summary>
     ///     Get primary key value (Field name ID)
@@ -78,12 +79,12 @@ public struct Record : IEquatable<Record>
     /// </summary>
     public readonly string? GetField(string name)
     {
-        if (_type==null) ThrowRecordUnkownRecordType();
+        if (_type == null) ThrowRecordUnkownRecordType();
 #pragma warning disable CS8604 // Dereference of a possibly null reference. _type cannot be null here 
         var fieldId = _type.GetFieldIndex(name);
 #pragma warning restore CS8604
 #pragma warning disable CS8602 // Dereference of a possibly null reference. _data cannot be null here 
-        if (fieldId>-1) return _data[fieldId] ?? _type.Fields[fieldId].DefaultValue;
+        if (fieldId > -1) return _data[fieldId] ?? _type.Fields[fieldId].DefaultValue;
 #pragma warning restore CS8602
         ThrowRecordUnkownFieldName(name);
         return null;
@@ -92,13 +93,13 @@ public struct Record : IEquatable<Record>
     public readonly void GetField(string name, out bool? value)
     {
         value = null;
-        if (_type==null) ThrowRecordUnkownRecordType();
+        if (_type == null) ThrowRecordUnkownRecordType();
 #pragma warning disable CS8604 // Dereference of a possibly null reference. _type cannot be null here 
         var fieldId = _type.GetFieldIndex(name);
 #pragma warning restore CS8604
-        if (fieldId<=-1) ThrowRecordUnkownFieldName(name);
+        if (fieldId <= -1) ThrowRecordUnkownFieldName(name);
         var field = _type.Fields[fieldId];
-        if (field.Type != FieldType.Boolean) ThrowImpossibleConversion(field.Type,FieldType.Boolean);
+        if (field.Type != FieldType.Boolean) ThrowImpossibleConversion(field.Type, FieldType.Boolean);
         //BooleanTrue: BooleanFalse
 #pragma warning disable CS8602 // Dereference of a possibly null reference. _data cannot be null here 
         var result = _data[fieldId] ?? _type.Fields[fieldId].DefaultValue;
@@ -107,21 +108,38 @@ public struct Record : IEquatable<Record>
         else if (BooleanFalse.Equals(result, StringComparison.Ordinal)) value = false;
     }
 
+    public readonly void GetField(string name, out byte[]? value)
+    {
+        value = null;
+        if (_type == null) ThrowRecordUnkownRecordType();
+#pragma warning disable CS8604 // Dereference of a possibly null reference. _type cannot be null here 
+        var fieldId = _type.GetFieldIndex(name);
+#pragma warning restore CS8604
+        if (fieldId <= -1) ThrowRecordUnkownFieldName(name);
+        var field = _type.Fields[fieldId];
+        if (field.Type != FieldType.ByteArray) ThrowImpossibleConversion(field.Type, FieldType.Boolean);
+        //BooleanTrue: BooleanFalse
+#pragma warning disable CS8602 // Dereference of a possibly null reference. _data cannot be null here 
+        var result = _data[fieldId] ?? _type.Fields[fieldId].DefaultValue;
+#pragma warning restore CS8602
+        if (result != null) value = Convert.FromBase64String(result);
+    }
+
     public readonly void GetField(string name, out long? value)
     {
-        value=null;
-        if (_type==null) ThrowRecordUnkownRecordType();
+        value = null;
+        if (_type == null) ThrowRecordUnkownRecordType();
 #pragma warning disable CS8604 // Dereference of a possibly null reference. _type cannot be null here 
-        var fieldId=_type.GetFieldIndex(name);
+        var fieldId = _type.GetFieldIndex(name);
 #pragma warning restore CS8604
-        if (fieldId<=-1) ThrowRecordUnkownFieldName(name);
+        if (fieldId <= -1) ThrowRecordUnkownFieldName(name);
         var field = _type.Fields[fieldId];
-        if (field.Type != FieldType.Byte && field.Type != FieldType.Short && field.Type != FieldType.Int && field.Type != FieldType.Long) 
+        if (field.Type != FieldType.Byte && field.Type != FieldType.Short && field.Type != FieldType.Int && field.Type != FieldType.Long)
             ThrowImpossibleConversion(field.Type, FieldType.Long);
 #pragma warning disable CS8602 // Dereference of a possibly null reference. _data cannot be null here 
         var result = _data[fieldId] ?? _type.Fields[fieldId].DefaultValue;
 #pragma warning restore CS8602
-        if (result!=null) value = long.Parse(result,DefaultCulture);
+        if (result != null) value = long.Parse(result, DefaultCulture);
     }
 
     /// <summary>
@@ -141,18 +159,18 @@ public struct Record : IEquatable<Record>
 #pragma warning disable CS8602 // Dereference of a possibly null reference. _data cannot be null here 
         var result = _data[fieldId] ?? _type.Fields[fieldId].DefaultValue;
 #pragma warning restore CS8602
-        if (result==null) return;
+        if (result == null) return;
         var year = int.Parse(result[..4], DefaultCulture);
-        var month = int.Parse(result.Substring(5,2), DefaultCulture);
-        var day = int.Parse(result.Substring(8,2), DefaultCulture);
+        var month = int.Parse(result.AsSpan(5, 2), DefaultNumberStyle, DefaultCulture);
+        var day = int.Parse(result.AsSpan(8, 2), DefaultNumberStyle, DefaultCulture);
         if (field.Type == FieldType.ShortDateTime) value = new DateTime(year, month, day, 0, 0, 0, DateTimeKind.Utc);
         else
-        { 
-            var hour=int.Parse(result.Substring(11,2),DefaultCulture);
-            var minute = int.Parse(result.Substring(14, 2), DefaultCulture);
-            var second = int.Parse(result.Substring(17, 2), DefaultCulture);
-            var milliSecond = int.Parse(result.Substring(20, 3), DefaultCulture);
-            if (field.Type==FieldType.DateTime) value = new DateTime(year,month,day,hour,minute,second, milliSecond,DateTimeKind.Utc);
+        {
+            var hour = int.Parse(result.AsSpan(11, 2), DefaultNumberStyle, DefaultCulture);
+            var minute = int.Parse(result.AsSpan(14, 2), DefaultNumberStyle, DefaultCulture);
+            var second = int.Parse(result.AsSpan(17, 2), DefaultNumberStyle, DefaultCulture);
+            var milliSecond = int.Parse(result.AsSpan(20, 3), DefaultNumberStyle, DefaultCulture);
+            if (field.Type == FieldType.DateTime) value = new DateTime(year, month, day, hour, minute, second, milliSecond, DateTimeKind.Utc);
         }
     }
 
@@ -163,11 +181,11 @@ public struct Record : IEquatable<Record>
     /// <param name="value">field value</param>
     public readonly void SetField(string name, string? value)
     {
-        if (_type==null) ThrowRecordUnkownRecordType();
+        if (_type == null) ThrowRecordUnkownRecordType();
 #pragma warning disable CS8604 // Dereference of a possibly null reference. _type cannot be null here 
         var fieldId = _type.GetFieldIndex(name);
 #pragma warning restore CS8604
-        if (fieldId==-1) ThrowRecordUnkownFieldName(name);
+        if (fieldId == -1) ThrowRecordUnkownFieldName(name);
         var type = _type.Fields[fieldId].Type;
         switch (type)
         {
@@ -182,7 +200,7 @@ public struct Record : IEquatable<Record>
             case FieldType.DateTime:
             case FieldType.LongDateTime: SetDateTimeField(fieldId, type, value); break;
             case FieldType.Boolean: SetBooleanField(fieldId, value); break;
-            case FieldType.ByteArray: throw new NotImplementedException();
+            case FieldType.ByteArray: SetByteArrayField(fieldId, value); break;
         }
     }
 
@@ -248,7 +266,16 @@ public struct Record : IEquatable<Record>
         var fieldId = _type.GetFieldIndex(name);
 #pragma warning restore CS8604
         if (fieldId == -1) ThrowRecordUnkownFieldName(name);
-        SetDateTimeField(fieldId, _type.Fields[fieldId].Type, value);
+        SetDateTimeField(fieldId, _type.Fields[fieldId].Type, value, null);
+    }
+    public readonly void SetField(string name, DateTimeOffset value)
+    {
+        if (_type == null) ThrowRecordUnkownRecordType();
+#pragma warning disable CS8604 // Dereference of a possibly null reference. _type cannot be null here 
+        var fieldId = _type.GetFieldIndex(name);
+#pragma warning restore CS8604
+        if (fieldId == -1) ThrowRecordUnkownFieldName(name);
+        SetDateTimeField(fieldId, _type.Fields[fieldId].Type, value.UtcDateTime, value.Offset);
     }
     public readonly void SetField(string name, double value)
     {
@@ -257,8 +284,8 @@ public struct Record : IEquatable<Record>
         var fieldId = _type.GetFieldIndex(name);
 #pragma warning restore CS8604
         if (fieldId == -1) ThrowRecordUnkownFieldName(name);
-        var fieldType=_type.Fields[fieldId].Type;
-        if (fieldType!=FieldType.Float && fieldType!=FieldType.Double) ThrowImpossibleConversion(FieldType.Double, fieldType);
+        var fieldType = _type.Fields[fieldId].Type;
+        if (fieldType != FieldType.Float && fieldType != FieldType.Double) ThrowImpossibleConversion(FieldType.Double, fieldType);
         SetData(fieldId, value.ToString(DefaultCulture));
     }
     public readonly void SetField(string name, float value)
@@ -272,14 +299,26 @@ public struct Record : IEquatable<Record>
         if (fieldType != FieldType.Float && fieldType != FieldType.Double) ThrowImpossibleConversion(FieldType.Float, fieldType);
         SetData(fieldId, value.ToString(DefaultCulture));
     }
-    public static bool operator==(Record left, Record right) => left.Equals(right);
-    public static bool operator!=(Record left, Record right) => !(left==right);
+    public readonly void SetField<T>(string name, T value) where T : IEnumerable<byte>
+    {
+        if (_type == null) ThrowRecordUnkownRecordType();
+#pragma warning disable CS8604 // Dereference of a possibly null reference. _type cannot be null here 
+        var fieldId = _type.GetFieldIndex(name);
+#pragma warning restore CS8604
+        if (fieldId == -1) ThrowRecordUnkownFieldName(name);
+        var fieldType = _type.Fields[fieldId].Type;
+        if (fieldType != FieldType.ByteArray) ThrowImpossibleConversion(FieldType.ByteArray, fieldType);
+        SetData(fieldId, Convert.ToBase64String(value.ToArray()));
+    }
+
+    public static bool operator ==(Record left, Record right) => left.Equals(right);
+    public static bool operator !=(Record left, Record right) => !(left == right);
     public readonly bool Equals(Record other)
     {
         if (ReferenceEquals(_type, other._type)) {
-            if (_data!=null) {
-                var i=0;
-                while (i<_data.Length)
+            if (_data != null) {
+                var i = 0;
+                while (i < _data.Length)
                 {
 #pragma warning disable CS8602 // Dereference of a possibly null reference. --> other._data cannot be null here
                     if (!string.Equals(_data[i], other._data[i], StringComparison.Ordinal)) return false;
@@ -304,7 +343,7 @@ public struct Record : IEquatable<Record>
                 result.Append(_data[i] ?? NullField);
                 result.Append(HashFieldDelimiter);
             }
-        } 
+        }
         return HashHelper.Djb2X(result.ToString());
     }
 
@@ -315,12 +354,12 @@ public struct Record : IEquatable<Record>
         var index = _type.GetFieldIndex(name);
 #pragma warning restore CS8604 // Dereference of a possibly null reference.
 #pragma warning disable CS8602 // Dereference of a possibly null reference. - _type cannot be null here !!!
-        if (index != -1) return _data[^1]!=null && FieldChange(index);
+        if (index != -1) return _data[^1] != null && FieldChange(index);
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
         ThrowRecordUnkownFieldName(name);
         return false;
     }
-    internal readonly bool IsFieldExist(string name) => _type != null && _type.GetFieldIndex(name)!=-1;
+    internal readonly bool IsFieldExist(string name) => _type != null && _type.GetFieldIndex(name) != -1;
 
     #region private methods 
 
@@ -328,7 +367,7 @@ public struct Record : IEquatable<Record>
     private readonly void SetStringField(int fieldId, string? value)
     {
 #pragma warning disable CS8602 // Dereference of a possibly null reference; _type cannot be null here !!
-        if (value==null) SetData(fieldId, null);
+        if (value == null) SetData(fieldId, null);
         else if (value.Length <= _type.Fields[fieldId].Size) SetData(fieldId, value);
         else SetData(fieldId, value.Truncate(_type.Fields[fieldId].Size)); // truncate or exception ??
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
@@ -336,9 +375,9 @@ public struct Record : IEquatable<Record>
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private readonly void SetIntegerField(FieldType fieldType, int fieldId, string? value) {
-        if (value==null) SetData(fieldId, null);
+        if (value == null) SetData(fieldId, null);
         else if (!value.IsNumber()) ThrowWrongStringFormat();
-        else if (value.Length>20) ThrowValueTooLarge(fieldType);
+        else if (value.Length > 20) ThrowValueTooLarge(fieldType);
         else if (decimal.TryParse(value, out decimal dcm))
         {
             if ((fieldType == FieldType.Long && dcm <= MaxLongValue && dcm >= MinLongValue) ||
@@ -355,13 +394,13 @@ public struct Record : IEquatable<Record>
 
     private readonly void SetFloatField(FieldType fieldType, int fieldId, string? value)
     {
-        if (value==null) SetData(fieldId, null);
-        else 
-        { 
+        if (value == null) SetData(fieldId, null);
+        else
+        {
             value = value.Replace(',', '.');
             if (value.IsFloat())
             {
-                if (fieldType==FieldType.Double &&  double.TryParse(value, out double dbl)) 
+                if (fieldType == FieldType.Double && double.TryParse(value, out double dbl))
                     SetData(fieldId, dbl.ToString(DefaultCulture));
                 else if (fieldType == FieldType.Float && float.TryParse(value, out float flt))
                     SetData(fieldId, flt.ToString(DefaultCulture));
@@ -372,40 +411,51 @@ public struct Record : IEquatable<Record>
         ThrowWrongStringFormat();
     }
 
+    private readonly void SetByteArrayField(int fieldId, string? value)
+    {
+        if (value == null) SetData(fieldId, null);
+        else if (value.IsBase64String()) SetData(fieldId, value);
+        else ThrowInvalidBase64String();
+    }
+
     private readonly void SetBooleanField(int fieldId, string? value)
     {
-        if (value==null) SetData(fieldId, null);
-        else if (bool.TryParse(value, out bool result)) SetData(fieldId, result? BooleanTrue: BooleanFalse);
+        if (value == null) SetData(fieldId, null);
+        else if (bool.TryParse(value, out bool result)) SetData(fieldId, result ? BooleanTrue : BooleanFalse);
         else ThrowWrongBooleanValue(value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private readonly void SetDateTimeField(int fieldId, FieldType fieldType, string? value)
     {
-        if (DateTime.TryParse(value,out var dt)) SetDateTimeField(fieldId, fieldType, dt);
-        // throw exception 
+        if (value == null) SetData(fieldId, null);
+        else {
+            (var dateTime, var offset) = value.ParseIso8601Date();
+            if (dateTime.HasValue) SetDateTimeField(fieldId, fieldType, dateTime.Value, offset);
+        }
+        // throw exception here!!!!!
     }
 
-    private readonly void SetDateTimeField(int fieldId, FieldType fieldType, DateTime value)
+    private readonly void SetDateTimeField(int fieldId, FieldType fieldType, DateTime value, TimeSpan? offset)
     {
         if (fieldType == FieldType.DateTime || fieldType == FieldType.LongDateTime || fieldType == FieldType.ShortDateTime)
         {
             // IS0-8601 ==> "YYYY-MM-DDTHH:MM:SS.mmmZ" eg. 2005-12-12T18:17:16.015+04:00; lenght max ==> 30
-            var template=DateTimeTemplates[(byte)fieldType];
-            var count=template.Length;
-            var result=new char[count];
-            var dateToConv = fieldType==FieldType.DateTime?value.ToUniversalTime():value;
-            Array.Copy(template,result,count);
-            SetDateTime(result,4,dateToConv.Year,3);
-            SetDateTime(result,2,dateToConv.Month,6);
-            SetDateTime(result,2,dateToConv.Day,9);
-            if (fieldType!=FieldType.ShortDateTime)
+            var template = DateTimeTemplates[(byte)fieldType];
+            var count = template.Length;
+            var result = new char[count];
+            var dateToConv = fieldType == FieldType.DateTime ? value.ToUniversalTime() : value;
+            Array.Copy(template, result, count);
+            SetDateTime(result, 4, dateToConv.Year, 3);
+            SetDateTime(result, 2, dateToConv.Month, 6);
+            SetDateTime(result, 2, dateToConv.Day, 9);
+            if (fieldType != FieldType.ShortDateTime)
             {
-                SetDateTime(result,2,dateToConv.Hour,12);
-                SetDateTime(result,2,dateToConv.Minute,15);
-                SetDateTime(result,2,dateToConv.Second,18);
-                SetDateTime(result,3,dateToConv.Millisecond,22);
-                if (fieldType==FieldType.LongDateTime)
+                SetDateTime(result, 2, dateToConv.Hour, 12);
+                SetDateTime(result, 2, dateToConv.Minute, 15);
+                SetDateTime(result, 2, dateToConv.Second, 18);
+                SetDateTime(result, 3, dateToConv.Millisecond, 22);
+                if (fieldType == FieldType.LongDateTime)
                 {
                     throw new NotImplementedException();
                 }
@@ -418,13 +468,30 @@ public struct Record : IEquatable<Record>
 
     private static void SetDateTime(char[] input, int size, int value, int lastPosition)
     {
-        var decimalSys=10;
-        input[lastPosition--] += (char)(value%decimalSys); value/=decimalSys;
-        input[lastPosition--] += (char)(value%decimalSys); value/=decimalSys;
-        if (size<3) return;
-        input[lastPosition--] += (char)(value%decimalSys); value/=decimalSys;
-        if (size<4) return;
-        input[lastPosition--] += (char)(value%decimalSys);
+        var decimalSys = 10;
+        input[lastPosition--] += (char)(value % decimalSys); value /= decimalSys;
+        input[lastPosition--] += (char)(value % decimalSys); value /= decimalSys;
+        if (size < 3) return;
+        input[lastPosition--] += (char)(value % decimalSys); value /= decimalSys;
+        if (size < 4) return;
+        input[lastPosition--] += (char)(value % decimalSys);
+    }
+
+    private readonly void MandatoryField(int fieldId)
+    {
+#pragma warning disable CS8602 // Dereference of a possibly null reference. - _type cannot be null here !!!
+        if (_type.Fields[fieldId].DefaultValue==null) { 
+            // throw exception mandatory field 
+        }
+#pragma warning restore CS8602
+    }
+
+    private readonly void InitializeTracking()
+    {
+#pragma warning disable CS8602 // Dereference of a possibly null reference. - _type cannot be null here !!!
+        var index = _type.Fields.Length>>4;
+        _data[^1] = new string(new char[index + 1]);
+#pragma warning restore CS8602
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -432,14 +499,9 @@ public struct Record : IEquatable<Record>
     {
 #pragma warning disable CS8602 // Dereference of a possibly null reference. - _data cannot be null here !!!
         if (string.CompareOrdinal(_data[fieldId],value)==0) return; // detect no change
+        if (value==null && _type.Fields[fieldId].NotNull) MandatoryField(fieldId);
 #pragma warning restore CS8602
-        if (_data[^1]==null)
-        {
-#pragma warning disable CS8602 // Dereference of a possibly null reference. - _type cannot be null here !!!
-            var index=(_type.Fields.Length+_type.Relations.Length) >>4; 
-#pragma warning restore CS8602
-            _data[^1]=new string(new char[index+1]); 
-        }
+        if (_data[^1]==null) InitializeTracking();
 #pragma warning disable CS8604 // Possible null reference argument. - _data cannot be null here !!!
         _data[^1].SetBitValue(fieldId);
 #pragma warning restore CS8604 // Possible null reference argument.
@@ -477,6 +539,9 @@ public struct Record : IEquatable<Record>
             ResourceHelper.GetErrorMessage(ResourceType.RecordCannotConvert), 
             fieldTypeSource.RecordTypeDisplay() ?? NullString,
             fieldTypeDestination.RecordTypeDisplay() ?? NullString));
+
+    private static void ThrowInvalidBase64String() =>
+        throw new FormatException(ResourceHelper.GetErrorMessage(ResourceType.InvalidBase64String));
 
     #endregion
 
