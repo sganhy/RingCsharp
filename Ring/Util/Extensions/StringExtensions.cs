@@ -2,21 +2,41 @@
 using Ring.Util.Helpers;
 using System.Globalization;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 
 namespace Ring.Util.Extensions;
 
 internal static class StringExtensions
 {
-    // Number of 100ns ticks per time unit
-    private const long TicksPerMillisecond = 10000;
-    private const long TicksPerSecond = TicksPerMillisecond * 1000;
-    private const long TicksPerMinute = TicksPerSecond * 60;
-    private const long TicksPerHour = TicksPerMinute * 60;
-    private const long TicksPerDay = TicksPerHour * 24;
-    private static readonly int[] DaysToMonth365 = { 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365 };
-    private static readonly int[] DaysToMonth366 = { 0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366 };
-
+    private static readonly string Date4Suffix = "-01-01";
+    private static readonly string Date7Suffix = "-01";
+    private static readonly string ZuluTimeSuffix = "Z";
     private readonly static CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
+    // Number of 100ns ticks per time unit - year info 
+    private static readonly Dictionary<string, string> DateTimeTemplate = new() {
+        { "9999-99-99",        "yyyy-MM-dd"},
+        { "99999999",          "yyyyMMdd"},
+        { "9999-99",           "yyyy-MM-dd"},
+        { "9999",              "yyyy-MM-dd"},
+        { "T99",               "THH"},
+        { "T99:99",            "THH:mm"},
+        { "T99:99:99",         "THH:mm:ss"},
+        { "T99:99:99.9",       "THH:mm:ss.f"},
+        { "T99:99:99.99",      "THH:mm:ss.ff"},
+        { "T99:99:99.999",     "THH:mm:ss.fff"},
+        { "T99:99:99.9999",    "THH:mm:ss.ffff"},
+        { "T99:99:99.99999",   "THH:mm:ss.fffff"},
+        { "T99:99:99.999999",  "THH:mm:ss.ffffff"},
+        { "T99:99:99.9999999", "THH:mm:ss.fffffff"},
+        { "T9999",      "THHmm"},
+        { "T999999",    "THHmmss"},
+        { "+99:99",     "zzz"},
+        { "-99:99",     "zzz"},
+        { "-9999",      "zzz"},
+        { "+9999",      "zzz"},
+        { "+99",         "zz"},
+        { "-99",         "zz"}
+    };
 
     /// <summary>
     /// Reduce the length of the string it if it is longer than the given maximum 'length'
@@ -57,7 +77,7 @@ internal static class StringExtensions
     internal static bool IsNumber(this string value)
     {
         var count=value.Length;
-        var i=count>0 && value[0]=='-' ?1:0;
+        var i=count>0 && value[0]=='-'?1:0;
         if (i==count) return false;
         while (i<count) if ((value[i++]^'0')>9) return false;
         return true;
@@ -74,35 +94,30 @@ internal static class StringExtensions
         return string.Join(null,value[..pos], value[(pos+1)..]).IsNumber();
     }
 
-    /// <summary>
-    /// Remove a character from a string
-    /// </summary>
-    internal static string RemoveChar(this string? s, char c)
+    internal static DateTimeOffset ParseIso8601Date(this string value)
     {
-        var len=s?.Length??0;
-        if (len <= 0) return s;
-        var newChars = new char[len]; // allocation could be avoided
-        char cc;
-        int index = 0;
-        for (int i = 0; i < len; ++i)
+        var stringSize = value.Length;
+        var i=0;
+        var preTemplate = new char[stringSize];
+        while (i<stringSize) if ((value[i] ^ '0') > 9) preTemplate[i] = value[i++]; else preTemplate[i++] = '9';
+        var template = new string(preTemplate);
+        var valueSuffix = string.Empty;
+        if (stringSize==4) valueSuffix = Date4Suffix;
+        else if (stringSize==7) valueSuffix = Date7Suffix;
+        var timeIndex = template.IndexOf('T', StringComparison.OrdinalIgnoreCase);
+        var timeZoneIndex = GetTimeZoneIndex(template, timeIndex);
+        var dateTemplate = GetDateTemplate(template,timeIndex); 
+        var timeTemplate = GetTimeTemplate(template,timeIndex,timeZoneIndex); 
+        var timeZoneTemplate = GetTimeZoneTemplate(template, timeIndex, timeZoneIndex); 
+        if (dateTemplate!=null)
         {
-#pragma warning disable CS8602 // cannot be null
-            cc = s[i];
-#pragma warning restore CS8602
-            if (cc != c)
-            {
-                newChars[index] = cc;
-                ++index;
-            }
+            if (DateTimeOffset.TryParseExact(value+valueSuffix, dateTemplate+timeTemplate+timeZoneTemplate, 
+                DefaultCulture,DateTimeStyles.AssumeUniversal,out var result))
+                return result;
+            ThrowUnRepresentableDateTime();
         }
-        return new string(newChars, 0, index);
-    }
-
-    internal static (DateTime?, TimeSpan?) ParseIso8601Date(this string value)
-    {
-        (var ticks, var dateSize) = GetDateTicks(value);
-        ticks += GetTimeTicks(value, dateSize);
-        return (new DateTime(ticks, DateTimeKind.Utc), null);
+        ThrowNotSupportedInputDateTime(value);
+        return DateTimeOffset.Now;
     }
 
     /// <summary>
@@ -141,108 +156,49 @@ internal static class StringExtensions
     #region private methods 
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int GetDateTimeItem(string? value, int startposition, int size, int defaultValue)
+    private static string? GetDateTemplate(string template, int timeIndex)
     {
-        var substring = value?.Substring(startposition, size); // no callvirt here!
-        return substring!=null && IsNumber(substring)?int.Parse(substring,DefaultCulture):defaultValue;
+        var result = timeIndex>0 ? template[..timeIndex] : template;
+        return DateTimeTemplate.ContainsKey(result)?DateTimeTemplate[result]:null;
     }
 
-    private static long GetTicks(int year, int month, int day)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int GetTimeZoneIndex(string template, int timeIndex)
     {
-        var days = DateTime.IsLeapYear(year) ? DaysToMonth366 : DaysToMonth365;
-        if (day >= 1 && day <= days[month] - days[month - 1])
+        if (timeIndex > 0)
         {
-            var y = year - 1;
-            var n = y * 365 + y / 4 - y / 100 + y / 400 + days[month - 1] + day - 1;
-            return n * TicksPerDay;
+            if (template.EndsWith(ZuluTimeSuffix, StringComparison.OrdinalIgnoreCase)) return template.Length-1;
+            var index = template.LastIndexOf('+');
+            if (index > 0) return index;
+            index = template.LastIndexOf('-');
+            if (index>timeIndex) return index;
         }
-        ThrowUnRepresentableDateTime();
-        return default;
+        return -1;
     }
 
-    private static (long, int) GetDateTicks(string value)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static string? GetTimeTemplate(string template, int timeIndex, int timeZoneIndex)
     {
-        var stringSize = value.Length;
-        var ticks = 0L;
-        var dateSize = 0;
-
-        // min dateTime size
-        if (stringSize >= 4)
+        if (timeIndex > 0)
         {
-            var year = GetDateTimeItem(value, 0, 4, 1);  // read year
-            var month = 1;
-            var day = 1;
-            var charIndex = value.IndexOf('-');
-            dateSize = 4;
-            if (charIndex < 10 && charIndex > 0)
-            { // yyyy-MM-dd
-                if (stringSize >= 7)
-                {
-                    month = GetDateTimeItem(value, 5, 2, 1);
-                    dateSize += 3;
-                }
-                if (stringSize >= 10) 
-                {
-                    day = GetDateTimeItem(value, 8, 2, 1);
-                    dateSize += 3;
-                }
-            }
-            else
-            { // simplified version yyyyMMdd
-                if (stringSize >= 6)
-                {
-                    month = GetDateTimeItem(value, 4, 2, 1);
-                    dateSize += 2;
-                }
-                if (stringSize >= 8)
-                {
-                    day = GetDateTimeItem(value, 6, 2, 1);
-                    dateSize += 2;
-                }
-            }
-            // manage weeks ??  
-            // validate DateTime
-            if (year >= 1 && year <= 9999 && month >= 1 && month <= 12) ticks += GetTicks(year, month, day);
-            else ThrowUnRepresentableDateTime();
-        } 
-        else ThrowUnRepresentableDateTime();
-
-        return (ticks, dateSize);
-    }
-
-    private static long GetTimeTicks(string value, int dateSize)
-    {
-        var timeString = value[dateSize..];
-        timeString = timeString.RemoveChar(':');
-        var stringSize = timeString.Length;
-        var ticks = 0L;
-
-        if (stringSize > 0) 
-        {
-            // T16:45
-            if (!Equals('T', value[dateSize])||stringSize<=2) ThrowNotSupportedInputDateTime(value);
-            // get hours
-            if (stringSize>2) {
-                var hours = GetDateTimeItem(timeString, 1, 2, 0);
-                if (hours>23) ThrowNotSupportedInputDateTime(value);
-                ticks += hours * TicksPerHour;
-            }
-            // get minutes
-            if (stringSize>4)
-            {
-                var minutes = GetDateTimeItem(timeString, 3, 2, 0);
-                if (minutes > 59) ThrowNotSupportedInputDateTime(value);
-                ticks += minutes * TicksPerMinute;
-            }
-            // get seconds
-            if (stringSize>6)
-            {
-                var seconds = GetDateTimeItem(timeString, 5, 2, 1);
-                if (seconds > 59) ThrowNotSupportedInputDateTime(value);
-                ticks += seconds * TicksPerSecond;
-            }
+            string result=template;
+            if (timeZoneIndex > 0) result=result[..timeZoneIndex];
+            result= result[timeIndex..];
+            return DateTimeTemplate.ContainsKey(result) ? DateTimeTemplate[result] : null;
         }
-        return ticks;
+        return null;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static string? GetTimeZoneTemplate(string template, int timeIndex, int timeZoneIndex)
+    {
+        if (timeIndex > 0 && timeZoneIndex>0)
+        {
+            if (timeZoneIndex>=template.Length-1) return ZuluTimeSuffix;
+            var result = template[timeZoneIndex..];
+            return DateTimeTemplate.ContainsKey(result) ? DateTimeTemplate[result] : null;
+        }
+        return null;
     }
 
     private static void ThrowUnRepresentableDateTime() =>

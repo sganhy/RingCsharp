@@ -27,13 +27,6 @@ public struct Record : IEquatable<Record>
     private readonly static decimal MinShortValue = short.MinValue;
     private readonly static decimal MaxByteValue = sbyte.MaxValue;
     private readonly static decimal MinByteValue = sbyte.MinValue;
-    private readonly static Dictionary<byte, char[]> DateTimeTemplates = new()
-    {
-      { (byte)FieldType.ShortDateTime, new char[] {'0','0','0','0','-','0','0','-','0','0' } },
-      { (byte)FieldType.DateTime, new char[] {'0','0','0','0','-','0','0','-','0','0','T','0','0',':','0','0',':','0','0','.','0','0','0','Z' } },
-      { (byte)FieldType.LongDateTime, new char[] {'0','0','0','0','-','0','0','-','0','0','T','0','0',':',
-          '0','0',':','0','0','.','0','0','0','0','0','0','+','0','0',':','0','0' } }
-    };
 
     // should be instanciate when record type is defined
     // _data.Lenght should be > _type.Fields.Length
@@ -193,7 +186,7 @@ public struct Record : IEquatable<Record>
             case FieldType.Byte:
             case FieldType.Short:
             case FieldType.Int:
-            case FieldType.Long: SetIntegerField(type, fieldId, value); break;
+            case FieldType.Long: SetIntegerField(fieldId, type, value); break;
             case FieldType.Float:
             case FieldType.Double: SetFloatField(type, fieldId, value); break;
             case FieldType.ShortDateTime:
@@ -367,29 +360,27 @@ public struct Record : IEquatable<Record>
     private readonly void SetStringField(int fieldId, string? value)
     {
 #pragma warning disable CS8602 // Dereference of a possibly null reference; _type cannot be null here !!
-        if (value == null) SetData(fieldId, null);
+        if (value==null) SetData(fieldId, null);
         else if (value.Length <= _type.Fields[fieldId].Size) SetData(fieldId, value);
         else SetData(fieldId, value.Truncate(_type.Fields[fieldId].Size)); // truncate or exception ??
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
+#pragma warning restore CS8602
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private readonly void SetIntegerField(FieldType fieldType, int fieldId, string? value) {
-        if (value == null) SetData(fieldId, null);
+    private readonly void SetIntegerField(int fieldId, FieldType numberType, string? value) {
+        if (value==null) SetData(fieldId, null);
         else if (!value.IsNumber()) ThrowWrongStringFormat();
-        else if (value.Length > 20) ThrowValueTooLarge(fieldType);
-        else if (decimal.TryParse(value, out decimal dcm))
+        else if (long.TryParse(value, out var lng))
         {
-            if ((fieldType == FieldType.Long && dcm <= MaxLongValue && dcm >= MinLongValue) ||
-                (fieldType == FieldType.Int && dcm <= MaxIntValue && dcm >= MinIntValue) ||
-                (fieldType == FieldType.Short && dcm <= MaxShortValue && dcm >= MinShortValue) ||
-                (fieldType == FieldType.Byte && dcm <= MaxByteValue && dcm >= MinByteValue))
+            if ((numberType == FieldType.Int && lng <= MaxIntValue && lng >= MinIntValue) ||
+                (numberType == FieldType.Short && lng <= MaxShortValue && lng >= MinShortValue) ||
+                (numberType == FieldType.Byte && lng <= MaxByteValue && lng >= MinByteValue))
             {
-                SetData(fieldId, dcm.ToString(DefaultCulture));
+                SetData(fieldId, lng.ToString(DefaultCulture));
                 return;
             }
-        }
-        ThrowValueTooLarge(fieldType);
+        } 
+        ThrowValueTooLarge(numberType);
     }
 
     private readonly void SetFloatField(FieldType fieldType, int fieldId, string? value)
@@ -425,56 +416,20 @@ public struct Record : IEquatable<Record>
         else ThrowWrongBooleanValue(value);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private readonly void SetDateTimeField(int fieldId, FieldType fieldType, string? value)
     {
         if (value == null) SetData(fieldId, null);
         else {
-            (var dateTime, var offset) = value.ParseIso8601Date();
-            if (dateTime.HasValue) SetDateTimeField(fieldId, fieldType, dateTime.Value, offset);
+            var dateTimeOffset = value.ParseIso8601Date();
+            SetDateTimeField(fieldId, fieldType, dateTimeOffset.DateTime, dateTimeOffset.Offset);
         }
-        // throw exception here!!!!!
     }
 
     private readonly void SetDateTimeField(int fieldId, FieldType fieldType, DateTime value, TimeSpan? offset)
     {
         if (fieldType == FieldType.DateTime || fieldType == FieldType.LongDateTime || fieldType == FieldType.ShortDateTime)
-        {
-            // IS0-8601 ==> "YYYY-MM-DDTHH:MM:SS.mmmZ" eg. 2005-12-12T18:17:16.015+04:00; lenght max ==> 30
-            var template = DateTimeTemplates[(byte)fieldType];
-            var count = template.Length;
-            var result = new char[count];
-            var dateToConv = fieldType == FieldType.DateTime ? value.ToUniversalTime() : value;
-            Array.Copy(template, result, count);
-            SetDateTime(result, 4, dateToConv.Year, 3);
-            SetDateTime(result, 2, dateToConv.Month, 6);
-            SetDateTime(result, 2, dateToConv.Day, 9);
-            if (fieldType != FieldType.ShortDateTime)
-            {
-                SetDateTime(result, 2, dateToConv.Hour, 12);
-                SetDateTime(result, 2, dateToConv.Minute, 15);
-                SetDateTime(result, 2, dateToConv.Second, 18);
-                SetDateTime(result, 3, dateToConv.Millisecond, 22);
-                if (fieldType == FieldType.LongDateTime)
-                {
-                    throw new NotImplementedException();
-                }
-            }
-            SetData(fieldId, new string(result));
-            return;
-        }
-        ThrowImpossibleConversion(FieldType.DateTime, fieldType);
-    }
-
-    private static void SetDateTime(char[] input, int size, int value, int lastPosition)
-    {
-        var decimalSys = 10;
-        input[lastPosition--] += (char)(value % decimalSys); value /= decimalSys;
-        input[lastPosition--] += (char)(value % decimalSys); value /= decimalSys;
-        if (size < 3) return;
-        input[lastPosition--] += (char)(value % decimalSys); value /= decimalSys;
-        if (size < 4) return;
-        input[lastPosition--] += (char)(value % decimalSys);
+            SetData(fieldId, new string(value.ToString(fieldType, offset)));
+        else ThrowImpossibleConversion(FieldType.DateTime, fieldType);
     }
 
     private readonly void MandatoryField(int fieldId)
@@ -499,7 +454,7 @@ public struct Record : IEquatable<Record>
     {
 #pragma warning disable CS8602 // Dereference of a possibly null reference. - _data cannot be null here !!!
         if (string.CompareOrdinal(_data[fieldId],value)==0) return; // detect no change
-        if (value==null && _type.Fields[fieldId].NotNull) MandatoryField(fieldId);
+        if (value==null && _type.Fields[fieldId].NotNull) MandatoryField(fieldId); // manage mandatory fields !!
 #pragma warning restore CS8602
         if (_data[^1]==null) InitializeTracking();
 #pragma warning disable CS8604 // Possible null reference argument. - _data cannot be null here !!!

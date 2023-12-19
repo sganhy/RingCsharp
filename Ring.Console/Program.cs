@@ -3,7 +3,10 @@
 using Npgsql;
 using Ring.Data;
 using Ring.Schema.Builders;
+using Ring.Util.Extensions;
 using System.Globalization;
+var dateTest = "2203-10-21";
+var inde = dateTest.LastIndexOf('-');
 
 DateTimeOffset dto = DateTimeOffset.Now;
 var yos = Convert.FromBase64String("tt");

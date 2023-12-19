@@ -1,5 +1,4 @@
-﻿using Microsoft.VisualBasic;
-using Ring.Util.Extensions;
+﻿using Ring.Util.Extensions;
 using System.Globalization;
 
 namespace Ring.Tests.Util.Extensions;
@@ -12,7 +11,7 @@ public class StringExtensionsTest
     }
 
     [Fact]
-    public void Truncate_NullStriong_Null()
+    public void Truncate_NullString_Null()
     {
         // arrange 
         // act 
@@ -138,36 +137,29 @@ public class StringExtensionsTest
     }
 
     [Theory]
-    [InlineData("-11.2", '.', "-112")]
-    [InlineData("", '.', "")]
-    [InlineData("-11,2", '.', "-11,2")]
-    [InlineData("", ';', "")]
-    [InlineData(null, '8', null)]
-    [InlineData("#~#~#~1", '~', "###1")]
-    [InlineData("11111", '1', "")]
-    [InlineData("  1  ", ' ', "1")]
-    public void StripChar_InputString_ReplacedString(string? inputString, char c, string expectedResult)
+    [InlineData("20211212",   "2021-12-12", "yyyy-MM-dd")]
+    [InlineData("2020-10-01", "2020-10-01", "yyyy-MM-dd")]
+    [InlineData("2019-09",    "2019-09-01", "yyyy-MM-dd")]
+    [InlineData("1998",       "1998-01-01", "yyyy-MM-dd")]
+    [InlineData("20211207T19:36:47", "2021-12-07 19:36:47", "yyyy-MM-dd HH:mm:ss")]
+    [InlineData("20211207T193647"  , "2021-12-07 19:36:47", "yyyy-MM-dd HH:mm:ss")]
+    [InlineData("20211207T19:36:47.078", "2021-12-07 19:36:47.078", "yyyy-MM-dd HH:mm:ss.fff")]
+    [InlineData("20211207T19:36:47.07878", "2021-12-07 19:36:47.07878", "yyyy-MM-dd HH:mm:ss.fffff")]
+    [InlineData("20211207T19:36:47.078078", "2021-12-07 19:36:47.078078", "yyyy-MM-dd HH:mm:ss.ffffff")]
+    [InlineData("2007-07-07T23:59:59.0780785", "2007-07-07 23:59:59.0780785", "yyyy-MM-dd HH:mm:ss.fffffff")]
+    [InlineData("2007-07-07T23:59:59.0780785Z", "2007-07-07 23:59:59.0780785Z", "yyyy-MM-dd HH:mm:ss.fffffffZ")]
+    [InlineData("2007-07-07T23:59:59.0780785+05:00", "2007-07-07 23:59:59.0780785+05:00", "yyyy-MM-dd HH:mm:ss.fffffffK")]
+    [InlineData("2007-07-07T23:59:59.0780785-06:00", "2007-07-07 23:59:59.0780785-06:00", "yyyy-MM-dd HH:mm:ss.fffffffK")]
+    [InlineData("2007-07-07T23:59:59.0780785-0600", "2007-07-07 23:59:59.0780785-0600", "yyyy-MM-dd HH:mm:ss.fffffffK")]
+    [InlineData("2007-07-07T23:59:59.0780785+06", "2007-07-07 23:59:59.0780785+06", "yyyy-MM-dd HH:mm:ss.fffffffzz")]
+    [InlineData("2007-07-07T23:40:59.0780785-06", "2007-07-07 23:40:59.0780785-06", "yyyy-MM-dd HH:mm:ss.fffffffzz")]
+    public void ParseIso8601Date_InputString_DateTimeResult(string input, string expectedDate, string dateFormat)
     {
         // arrange 
-        // act 
-        var result = StringExtensions.RemoveChar(inputString,c);
-        // assert
-        Assert.Equal(expectedResult, result);
-    }
-
-    [Theory]
-    //[InlineData("20211212", "20211212", "yyyyMMdd", null)]
-    //[InlineData("2021-12-12", "20211212", "yyyyMMdd", null)]
-    //[InlineData("2021-12", "20211201", "yyyyMMdd", null)]
-    [InlineData("20211207T19:36:47", "20211207 19:36:47", "yyyyMMdd HH:mm:ss", null)]
-    [InlineData("20211207T193647", "20211207 19:36:47", "yyyyMMdd HH:mm:ss", null)]
-    public void ParseIso8601Date_InputString_DateTimeResult(string input, string expectedDate, string dateFormat ,int? offset)
-    {
-        // arrange 
-        var expectedResult = DateTime.ParseExact(expectedDate, dateFormat, CultureInfo.InvariantCulture);
+        var expectedResult = DateTimeOffset.ParseExact(expectedDate, dateFormat, CultureInfo.InvariantCulture,DateTimeStyles.AssumeUniversal);
 
         // act 
-        (var dateResult, var timespanResult) = StringExtensions.ParseIso8601Date(input);
+        var dateResult = StringExtensions.ParseIso8601Date(input);
 
         // assert
         Assert.Equal(expectedResult, dateResult);

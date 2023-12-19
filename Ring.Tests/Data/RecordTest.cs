@@ -625,6 +625,38 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
+    public void SetField_DateTimeOffset_ReturnIso8601Format()
+    {
+        // arrange 
+        var tableBuilder = new TableBuilder();
+        var logTable = tableBuilder.GetLog("Test", DatabaseProvider.SqlLite);
+        var rcd = new Record(logTable);
+        var dt = DateTime.ParseExact("2005-12-12T18:17:16.015+04:00", "yyyy-MM-ddTHH:mm:ss.fffzzz", CultureInfo.InvariantCulture);
+
+        // act - 2001, 1, 1, 18, 18, 18, 458
+        rcd.SetField("entry_time", dt);
+
+        // assert
+        Assert.Equal("2005-12-12T14:17:16.015Z", rcd.GetField("entry_time"));
+    }
+
+    [Fact]
+    public void SetField_DateTimeNow_ReturnIso8601Format()
+    {
+        // arrange 
+        var tableBuilder = new TableBuilder();
+        var logTable = tableBuilder.GetLog("Test", DatabaseProvider.SqlLite);
+        var rcd = new Record(logTable);
+        var dt = DateTime.UtcNow;
+
+        // act - 2001, 1, 1, 18, 18, 18, 458
+        rcd.SetField("entry_time", dt);
+
+        // assert
+        Assert.Equal(dt.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"), rcd.GetField("entry_time"));
+    }
+
+    [Fact]
     public void SetField_MaxDateTime_ReturnIso8601Format()
     {
         // arrange 
@@ -667,14 +699,14 @@ public sealed class RecordTest : BaseExtensionsTest
         var meta = field?.ToMeta(99);
         meta?.SetFieldType(FieldType.LongDateTime);
         var newField = meta?.ToField();
-        logTable.Fields[index] = newField;
+        logTable.Fields[index] = newField ?? logTable.Fields[0];
         var rcd = new Record(logTable);
-        
-        //var dt = DateTime.ParseExact("2005-12-12T18:17:16.015116+04:00", "yyyy-MM-ddTHH:mm:ss.ffffffzzz", CultureInfo.InvariantCulture);
+        var dt = DateTimeOffset.ParseExact("2005-12-12T18:17:16.015116-07:00", "yyyy-MM-ddTHH:mm:ss.ffffffzzz", CultureInfo.InvariantCulture);
 
-        // act - 2001, 1, 1, 18, 18, 18, 458
-        //rcd.SetField("entry_time", dt);
-        //var test = rcd.GetField("entry_time");
+        // act
+        rcd.SetField("entry_time", dt);
+        var test = rcd.GetField("entry_time");
+
         // assert
         //Assert.Equal("2005-12-12T14:17:16.015Z", rcd.GetField("entry_time"));
     }
