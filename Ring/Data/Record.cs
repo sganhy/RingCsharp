@@ -14,13 +14,12 @@ public struct Record : IEquatable<Record>
 {
     private readonly static string NullField = @"^^";
     private readonly static string NullString = @"Null";
+    private readonly static string DefaultPrimaryKeyValue = @"0";
     private readonly static char HashFieldDelimiter = (char)3; // end of text character
     private readonly static CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
     private readonly static NumberStyles DefaultNumberStyle = NumberStyles.Integer;
     private readonly static string BooleanTrue = true.ToString(DefaultCulture);
     private readonly static string BooleanFalse = false.ToString(DefaultCulture);
-    private readonly static decimal MaxLongValue = long.MaxValue;
-    private readonly static decimal MinLongValue = long.MinValue;
     private readonly static decimal MaxIntValue = int.MaxValue;
     private readonly static decimal MinIntValue = int.MinValue;
     private readonly static decimal MaxShortValue = short.MaxValue;
@@ -58,14 +57,9 @@ public struct Record : IEquatable<Record>
     ///     Get primary key value (Field name ID)
     /// </summary>
     internal readonly long GetField()
-    {
 #pragma warning disable CS8602 // Dereference of a possibly null reference. _type cannot be null here 
-        var fieldId = _type.Mapper[0];
-#pragma warning disable CS8604 // Dereference of a possibly null reference. _type cannot be null here 
-        return long.Parse(_data[fieldId] ?? _type.Fields[fieldId].DefaultValue, DefaultCulture);
-#pragma warning restore CS8604
+        => long.Parse(_data[_type.Mapper[0]] ?? DefaultPrimaryKeyValue, DefaultCulture);
 #pragma warning restore CS8602
-    }
 
     /// <summary>
     ///     GetField methods
@@ -268,7 +262,7 @@ public struct Record : IEquatable<Record>
         var fieldId = _type.GetFieldIndex(name);
 #pragma warning restore CS8604
         if (fieldId == -1) ThrowRecordUnkownFieldName(name);
-        SetDateTimeField(fieldId, _type.Fields[fieldId].Type, value.UtcDateTime, value.Offset);
+        SetDateTimeField(fieldId, _type.Fields[fieldId].Type, value.DateTime, value.Offset);
     }
     public readonly void SetField(string name, double value)
     {
@@ -331,10 +325,12 @@ public struct Record : IEquatable<Record>
         if (_type != null) result.Append(_type.PhysicalName);
         if (_data != null)
         {
-            for (var i = 0; i < fieldCount; ++i)
+            var i=0;
+            while (i<fieldCount)
             {
                 result.Append(_data[i] ?? NullField);
                 result.Append(HashFieldDelimiter);
+                ++i;
             }
         }
         return HashHelper.Djb2X(result.ToString());
@@ -385,10 +381,10 @@ public struct Record : IEquatable<Record>
 
     private readonly void SetFloatField(FieldType fieldType, int fieldId, string? value)
     {
-        if (value == null) SetData(fieldId, null);
+        if (value==null) SetData(fieldId, null);
         else
         {
-            value = value.Replace(',', '.');
+            if (value.Contains(',')) value = value.Replace(',', '.');
             if (value.IsFloat())
             {
                 if (fieldType == FieldType.Double && double.TryParse(value, out double dbl))
@@ -398,27 +394,27 @@ public struct Record : IEquatable<Record>
                 else ThrowValueTooLarge(fieldType);
                 return;
             }
+            ThrowWrongStringFormat();
         }
-        ThrowWrongStringFormat();
     }
 
     private readonly void SetByteArrayField(int fieldId, string? value)
     {
-        if (value == null) SetData(fieldId, null);
+        if (value==null) SetData(fieldId, null);
         else if (value.IsBase64String()) SetData(fieldId, value);
         else ThrowInvalidBase64String();
     }
 
     private readonly void SetBooleanField(int fieldId, string? value)
     {
-        if (value == null) SetData(fieldId, null);
+        if (value==null) SetData(fieldId, null);
         else if (bool.TryParse(value, out bool result)) SetData(fieldId, result ? BooleanTrue : BooleanFalse);
         else ThrowWrongBooleanValue(value);
     }
 
     private readonly void SetDateTimeField(int fieldId, FieldType fieldType, string? value)
     {
-        if (value == null) SetData(fieldId, null);
+        if (value==null) SetData(fieldId, null);
         else {
             var dateTimeOffset = value.ParseIso8601Date();
             SetDateTimeField(fieldId, fieldType, dateTimeOffset.DateTime, dateTimeOffset.Offset);
@@ -441,13 +437,9 @@ public struct Record : IEquatable<Record>
 #pragma warning restore CS8602
     }
 
-    private readonly void InitializeTracking()
-    {
 #pragma warning disable CS8602 // Dereference of a possibly null reference. - _type cannot be null here !!!
-        var index = _type.Fields.Length>>4;
-        _data[^1] = new string(new char[index + 1]);
+    private readonly void InitializeTracking() => _data[^1] = new string(new char[(_type.Fields.Length>>4)+1]);
 #pragma warning restore CS8602
-    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private readonly void SetData(int fieldId, string? value)

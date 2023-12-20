@@ -20,7 +20,7 @@ internal static class DateTimeExtensions
         var template = DateTimeTemplates[(byte)fieldType];
         var count = template.Length;
         var result = new char[count];
-        var dateToConv = fieldType == FieldType.DateTime ? value.ToUniversalTime() : value;
+        var dateToConv = fieldType == FieldType.DateTime || offset==null? value.ToUniversalTime() : value;
         Array.Copy(template, result, count);
         SetDateTime(result, 4, dateToConv.Year, 3);
         SetDateTime(result, 2, dateToConv.Month, 6);
@@ -33,10 +33,17 @@ internal static class DateTimeExtensions
             
             if (fieldType == FieldType.LongDateTime)
             {
-                SetDateTime(result, 7, (int)(value.Ticks%10000000),30);
+                var hours = offset?.Hours ?? 0;
+                SetDateTime(result, 7, (int)(value.Ticks%10000000),26);
+                if (hours < 0)
+                {
+                    result[27] = '-';
+                    hours *= -1;
+                }
+                SetDateTime(result, 2, hours, 29);
+                SetDateTime(result, 2, offset?.Minutes ?? 0, 31);
             }
             else SetDateTime(result, 3, dateToConv.Millisecond, 22);
-            // manage offset
         }
         return new string(result);
     }
@@ -46,10 +53,12 @@ internal static class DateTimeExtensions
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void SetDateTime(char[] input, int size, int value, int lastPosition)
     {
-        for (var i=0; i<size; ++i)
+        var i=0;
+        while (i<size)
         {
-            input[lastPosition--] += (char)(value % DecimalSys);
-            value /= DecimalSys;
+            input[lastPosition--] += (char)(value%DecimalSys);
+            value/=DecimalSys;
+            ++i;
         }
     }
 

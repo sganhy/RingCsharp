@@ -2,7 +2,6 @@
 using Ring.Util.Helpers;
 using System.Globalization;
 using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
 
 namespace Ring.Util.Extensions;
 
@@ -10,7 +9,8 @@ internal static class StringExtensions
 {
     private static readonly string Date4Suffix = "-01-01";
     private static readonly string Date7Suffix = "-01";
-    private static readonly string ZuluTimeSuffix = "Z";
+    private static readonly char ZuluTimeSuffix = 'Z';
+    private static readonly string ZuluTimeStrSuffix = ZuluTimeSuffix.ToString();
     private readonly static CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
     // Number of 100ns ticks per time unit - year info 
     private static readonly Dictionary<string, string> DateTimeTemplate = new() {
@@ -114,10 +114,9 @@ internal static class StringExtensions
             if (DateTimeOffset.TryParseExact(value+valueSuffix, dateTemplate+timeTemplate+timeZoneTemplate, 
                 DefaultCulture,DateTimeStyles.AssumeUniversal,out var result))
                 return result;
-            ThrowUnRepresentableDateTime();
         }
-        ThrowNotSupportedInputDateTime(value);
-        return DateTimeOffset.Now;
+        throw new FormatException(string.Format(CultureInfo.InvariantCulture, 
+            ResourceHelper.GetErrorMessage(ResourceType.NotSupportedInputDateTime), value));
     }
 
     /// <summary>
@@ -167,7 +166,7 @@ internal static class StringExtensions
     {
         if (timeIndex > 0)
         {
-            if (template.EndsWith(ZuluTimeSuffix, StringComparison.OrdinalIgnoreCase)) return template.Length-1;
+            if (template[^1]==ZuluTimeSuffix) return template.Length-1;
             var index = template.LastIndexOf('+');
             if (index > 0) return index;
             index = template.LastIndexOf('-');
@@ -194,20 +193,13 @@ internal static class StringExtensions
     {
         if (timeIndex > 0 && timeZoneIndex>0)
         {
-            if (timeZoneIndex>=template.Length-1) return ZuluTimeSuffix;
+            if (timeZoneIndex>=template.Length-1) return ZuluTimeStrSuffix;
             var result = template[timeZoneIndex..];
             return DateTimeTemplate.ContainsKey(result) ? DateTimeTemplate[result] : null;
         }
         return null;
     }
 
-    private static void ThrowUnRepresentableDateTime() =>
-        throw new ArgumentOutOfRangeException(ResourceHelper.GetErrorMessage(ResourceType.UnRepresentableDateTime));
-
-    private static void ThrowNotSupportedInputDateTime(string input) =>
-        throw new FormatException(string.Format(CultureInfo.InvariantCulture, 
-            ResourceHelper.GetErrorMessage(ResourceType.NotSupportedInputDateTime), input));
-    
     #endregion 
 
 }

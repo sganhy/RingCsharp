@@ -8,7 +8,8 @@ internal static class HashHelper
     internal static int Djb2X(string input)
     {
         var hash = 5381;
-        for (var i = 0; i < input.Length; ++i) hash ^= hash << 5 ^ input[i];
+        var count = input.Length;
+        for (var i=0; i<count; ++i) hash ^= hash << 5 ^ input[i];
         return hash;
     }
 }

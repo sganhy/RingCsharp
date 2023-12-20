@@ -1,4 +1,5 @@
-﻿using Ring.Util.Extensions;
+﻿using Microsoft.VisualBasic;
+using Ring.Util.Extensions;
 using System.Globalization;
 
 namespace Ring.Tests.Util.Extensions;
@@ -163,6 +164,21 @@ public class StringExtensionsTest
 
         // assert
         Assert.Equal(expectedResult, dateResult);
+    }
+
+    [Fact]
+    public void ParseIso8601Date_EmptyInput_ThrowNotSupportedInputDateTime()
+    {
+        // arrange 
+        var expectedValue = "The DateTime represented by the string '{0}' is not supported in calendar 'System.Globalization.GregorianCalendar'.";
+        var input = string.Empty;
+        expectedValue = string.Format(expectedValue, input);
+
+        // act 
+        var ex = Assert.Throws<FormatException>(() => StringExtensions.ParseIso8601Date(string.Empty));
+
+        // assert
+        Assert.Equal(expectedValue, ex.Message);
     }
 
     [Theory]

@@ -49,19 +49,24 @@ internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
     private string BuildSelect(Table table, bool includeRelations)
     {
         var result = new StringBuilder();
-        var columnCount = 0; 
+        var columnCount = 0;
+        var i=0;
+        var itemCount = table.Fields.Length;
         result.Append(DqlSelect);
-        for (var i = 0; i<table.Fields.Length; ++i)
+        while (i<itemCount)
         {
             result.Append(_ddlBuilder.GetPhysicalName(table.Fields[table.Mapper[i]]));
             result.Append(ColumnDelimiter);
             ++columnCount;
+            ++i;
         }
         if (table.Fields.Length > 0) --result.Length;
         if (includeRelations)
         {
             var hasRelation = false;
-            for (var i=0; i < table.Relations.Length; ++i)
+            itemCount = table.Relations.Length;
+            i=0;
+            while (i<itemCount)
             {
                 var relation = table.Relations[i];
                 if (relation.Type == RelationType.Mto || relation.Type == RelationType.Otop)
@@ -72,6 +77,7 @@ internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
                     ++columnCount;
                     hasRelation = true;
                 }
+                ++i;
             }
             if (hasRelation) --result.Length;
         }

@@ -609,7 +609,7 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
-    public void SetField_DateTime_ReturnIso8601Format()
+    public void SetField_DateTime2_ReturnIso8601Format()
     {
         // arrange 
         var tableBuilder = new TableBuilder();
@@ -689,6 +689,32 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
+    public void SetField_DateTime1_ReturnIso8601Format()
+    {
+        // arrange - set dateTime to LongDateTime field
+        var tableBuilder = new TableBuilder();
+        var logTable = tableBuilder.GetLog("Test", DatabaseProvider.MySql);
+        var field = logTable.GetField("entry_time");
+        var index = logTable.GetFieldIndex("entry_time");
+        var meta = field?.ToMeta(99);
+        meta?.SetFieldType(FieldType.LongDateTime);
+        var newField = meta?.ToField();
+        logTable.Fields[index] = newField ?? logTable.Fields[0];
+        var rcd = new Record(logTable);
+        var dt = DateTime.ParseExact("1992-09-28T01:02:03.099099", "yyyy-MM-ddTHH:mm:ss.ffffff", CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal);
+        var expectedResult = dt.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffffff+00:00");
+
+        // act
+        rcd.SetField("entry_time", dt);
+        var result1 = rcd.GetField("entry_time");
+        rcd.GetField("entry_time", out DateTime? dtResult);
+
+        // assert
+        Assert.NotNull(result1);
+        Assert.Equal(expectedResult, result1);
+    }
+
+    [Fact]
     public void SetField_LongDateTime_ReturnIso8601Format()
     {
         // arrange 
@@ -702,13 +728,14 @@ public sealed class RecordTest : BaseExtensionsTest
         logTable.Fields[index] = newField ?? logTable.Fields[0];
         var rcd = new Record(logTable);
         var dt = DateTimeOffset.ParseExact("2005-12-12T18:17:16.015116-07:00", "yyyy-MM-ddTHH:mm:ss.ffffffzzz", CultureInfo.InvariantCulture);
+        var expectedResult=@"2005-12-12T18:17:16.0151160-07:00"; 
 
         // act
         rcd.SetField("entry_time", dt);
-        var test = rcd.GetField("entry_time");
+        var result = rcd.GetField("entry_time");
 
         // assert
-        //Assert.Equal("2005-12-12T14:17:16.015Z", rcd.GetField("entry_time"));
+        Assert.Equal(expectedResult, result);
     }
 
     [Fact]
@@ -767,6 +794,29 @@ public sealed class RecordTest : BaseExtensionsTest
         
         // assert
         Assert.Equal("-789456123.0123", rcd.GetField("entry_time"));
+    }
+
+    [Fact]
+    public void SetField_NullDouble_DefaultDoubleValue()
+    {
+        // arrange 
+        var tableBuilder = new TableBuilder();
+        var logTable = tableBuilder.GetLog("Test", DatabaseProvider.MySql);
+        var field = logTable.GetField("entry_time");
+        var index = logTable.GetFieldIndex("entry_time");
+        var meta = field?.ToMeta(99);
+        meta?.SetFieldType(FieldType.Double);
+        var newField = meta?.ToField();
+        logTable.Fields[index] = newField ?? GetAnonymousField();
+        var rcd = new Record(logTable);
+
+        // act 
+        rcd.SetField("entry_time", null);
+        var result= rcd.GetField("entry_time");
+
+        // assert
+        Assert.NotNull(result);
+        Assert.Equal("0", result);
     }
 
     [Fact]
