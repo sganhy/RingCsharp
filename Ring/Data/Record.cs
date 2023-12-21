@@ -430,11 +430,10 @@ public struct Record : IEquatable<Record>
 
     private readonly void MandatoryField(int fieldId)
     {
-#pragma warning disable CS8602 // Dereference of a possibly null reference. - _type cannot be null here !!!
-        if (_type.Fields[fieldId].DefaultValue==null) { 
+        if (_type!=null && _type.Fields[fieldId].DefaultValue==null) {
             // throw exception mandatory field 
+            ThrowMandatoryFieldCannotBeNull(_type.Fields[fieldId].Name);
         }
-#pragma warning restore CS8602
     }
 
 #pragma warning disable CS8602 // Dereference of a possibly null reference. - _type cannot be null here !!!
@@ -463,9 +462,13 @@ public struct Record : IEquatable<Record>
 #pragma warning restore CS8604 // Possible null reference argument.
 
     // exceptions 
-    private readonly void ThrowRecordUnkownFieldName(string name) => 
+    private readonly void ThrowRecordUnkownFieldName(string fieldName) => 
         throw new ArgumentException(string.Format(DefaultCulture,
-                  ResourceHelper.GetErrorMessage(ResourceType.RecordUnkownFieldName), name, _type?.Name));
+                  ResourceHelper.GetErrorMessage(ResourceType.RecordUnkownFieldName), fieldName, _type?.Name));
+
+    private readonly void ThrowMandatoryFieldCannotBeNull(string fieldName) =>
+        throw new ArgumentException(string.Format(DefaultCulture,
+            ResourceHelper.GetErrorMessage(ResourceType.FieldIsMandatory), _type?.Name, fieldName));
 
     private static void ThrowRecordUnkownRecordType() =>
         throw new ArgumentException(ResourceHelper.GetErrorMessage(ResourceType.RecordUnkownRecordType));
@@ -489,6 +492,8 @@ public struct Record : IEquatable<Record>
 
     private static void ThrowInvalidBase64String() =>
         throw new FormatException(ResourceHelper.GetErrorMessage(ResourceType.InvalidBase64String));
+
+    
 
     #endregion
 

@@ -17,7 +17,11 @@ internal enum ResourceType : short
     RecordValueTooLarge = 104,
     RecordWrongBooleanValue = 105,
     RecordCannotConvert = 106,
+    /// <summary>
+    /// Miscellaneous
+    /// </summary>
     UnRepresentableDateTime = 107,
     NotSupportedInputDateTime = 108,
-    InvalidBase64String = 109
+    InvalidBase64String = 109,
+    FieldIsMandatory = 110
 }
