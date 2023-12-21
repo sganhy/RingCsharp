@@ -8,8 +8,12 @@ using System.Globalization;
 var dateTest = "2203-10-21";
 var inde = dateTest.LastIndexOf('-');
 
+var DefaultCulture = CultureInfo.InvariantCulture;
+var DefaultNumberStyle = NumberStyles.AllowDecimalPoint | NumberStyles.Float;
+
 DateTimeOffset dto = DateTimeOffset.Now;
-var yos = Convert.FromBase64String("tt");
+
+var result= double.Parse("-782.23", DefaultNumberStyle, DefaultCulture);
 
 var POSTGRE_CONN_STRING1 = "User ID=postgres; Password=sa;" +
                 "Host=localhost;Port=5432;Database=postgres; Pooling=false;";

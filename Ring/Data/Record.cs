@@ -18,6 +18,7 @@ public struct Record : IEquatable<Record>
     private readonly static char HashFieldDelimiter = (char)3; // end of text character
     private readonly static CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
     private readonly static NumberStyles DefaultNumberStyle = NumberStyles.Integer;
+    private readonly static NumberStyles DefaultFloatStyle = NumberStyles.AllowDecimalPoint | NumberStyles.Float;
     private readonly static string BooleanTrue = true.ToString(DefaultCulture);
     private readonly static string BooleanFalse = false.ToString(DefaultCulture);
     private readonly static decimal MaxIntValue = int.MaxValue;
@@ -366,7 +367,7 @@ public struct Record : IEquatable<Record>
     private readonly void SetIntegerField(int fieldId, FieldType numberType, string? value) {
         if (value==null) SetData(fieldId, null);
         else if (!value.IsNumber()) ThrowWrongStringFormat();
-        else if (long.TryParse(value, out var lng))
+        else if (long.TryParse(value, DefaultNumberStyle , DefaultCulture, out long lng))
         {
             if ((numberType == FieldType.Int && lng <= MaxIntValue && lng >= MinIntValue) ||
                 (numberType == FieldType.Short && lng <= MaxShortValue && lng >= MinShortValue) ||
@@ -387,9 +388,9 @@ public struct Record : IEquatable<Record>
             if (value.Contains(',')) value = value.Replace(',', '.');
             if (value.IsFloat())
             {
-                if (fieldType == FieldType.Double && double.TryParse(value, out double dbl))
+                if (fieldType == FieldType.Double && double.TryParse(value, DefaultFloatStyle, DefaultCulture, out double dbl))
                     SetData(fieldId, dbl.ToString(DefaultCulture));
-                else if (fieldType == FieldType.Float && float.TryParse(value, out float flt))
+                else if (fieldType == FieldType.Float && float.TryParse(value, DefaultFloatStyle, DefaultCulture, out float flt))
                     SetData(fieldId, flt.ToString(DefaultCulture));
                 else ThrowValueTooLarge(fieldType);
                 return;
