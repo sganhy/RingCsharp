@@ -25,18 +25,18 @@ internal sealed class Relation : BaseEntity, IColumn
 		InverseRelation = this;
 	}
 
-    /// <summary>
-    ///     assign only once the property 
-    /// </summary>
+	/// <summary>
+	///     assign only once the property 
+	/// </summary>
     internal void SetInverseRelation(Relation relation) => 
 		InverseRelation = ReferenceEquals(InverseRelation,this) ? relation : InverseRelation;
 
-    /// <summary>
-    ///     Implement IColumn
-    /// </summary>
-    int IColumn.Id => Id;
-    FieldType IColumn.Type => ToTable.GetPrimaryKey()?.Type ?? FieldType.Undefined;
-    string IColumn.Name => Name;
-    RelationType IColumn.RelationType => Type;
+	/// <summary>
+	///     Implement IColumn
+	/// </summary>
+	int IColumn.Id => Id;
+	FieldType IColumn.Type => ToTable.GetPrimaryKey()?.Type ?? FieldType.Undefined;
+	string IColumn.Name => Name;
+	RelationType IColumn.RelationType => Type;
 
 }

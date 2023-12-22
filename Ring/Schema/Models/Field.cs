@@ -29,11 +29,11 @@ internal sealed class Field : BaseEntity, IColumn
 		Multilingual = multilingual;
 	}
 
-    /// <summary>
-    ///     Implement IColumn
-    /// </summary>
-    int IColumn.Id=>Id;
-    FieldType IColumn.Type=>Type;
-    RelationType IColumn.RelationType => RelationType.Undefined;
-    string IColumn.Name=>Name;
+	/// <summary>
+	///     Implement IColumn
+	/// </summary>
+	int IColumn.Id=>Id;
+	FieldType IColumn.Type=>Type;
+	RelationType IColumn.RelationType => RelationType.Undefined;
+	string IColumn.Name=>Name;
 }
