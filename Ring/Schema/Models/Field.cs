@@ -5,7 +5,7 @@ namespace Ring.Schema.Models;
 /// <summary>
 ///     Logical field sourceType (64 bytes by fields)
 /// </summary>
-internal sealed class Field : BaseEntity
+internal sealed class Field : BaseEntity, IColumn
 {
 	internal readonly bool CaseSensitive;
 	internal readonly string? DefaultValue;
@@ -28,4 +28,12 @@ internal sealed class Field : BaseEntity
 		CaseSensitive = caseSensitif;
 		Multilingual = multilingual;
 	}
+
+    /// <summary>
+    ///     Implement IColumn
+    /// </summary>
+    int IColumn.Id=>Id;
+    FieldType IColumn.Type=>Type;
+    RelationType IColumn.RelationType => RelationType.Undefined;
+    string IColumn.Name=>Name;
 }

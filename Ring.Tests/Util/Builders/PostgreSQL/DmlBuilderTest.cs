@@ -31,12 +31,12 @@ public class DmlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var table = _schema.GetTable("skill");
-        var expectedResult = "INSERT INTO rpg_sheet.t_skill (id,name,sub_name,is_group,category,armor_penality,trained_only,try_again) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)";
+        var expectedResult = "INSERT INTO rpg_sheet.t_skill (id,name,skill2ability,sub_name,is_group,category,armor_penality,trained_only,try_again) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)";
 
         // act 
         Assert.NotNull(table);
-        var result1 = _sut.Insert(table, false);
-        var result2 = _sut.Insert(table, false); // using cache 
+        var result1 = _sut.Insert(table);
+        var result2 = _sut.Insert(table); // using cache 
 
         // assert
         Assert.Equal(expectedResult, result1);
@@ -54,8 +54,8 @@ public class DmlBuilderTest : BaseBuilderTest
 
         // act 
         Assert.NotNull(mtmTable);
-        var result1 = _sut.Insert(mtmTable, true);
-        var result2 = _sut.Insert(mtmTable, true); // using cache 
+        var result1 = _sut.Insert(mtmTable);
+        var result2 = _sut.Insert(mtmTable); // using cache 
 
         // assert
         Assert.Equal(expectedResult, result1);
@@ -79,7 +79,7 @@ public class DmlBuilderTest : BaseBuilderTest
         Assert.NotNull(schema);
         Assert.NotNull(tableTest);
         sut.Init(schema);
-        var result = sut.Insert(tableTest, true);
+        var result = sut.Insert(tableTest);
 
         // assert
         Assert.Equal(expectedResult, result);
@@ -90,12 +90,12 @@ public class DmlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var table = _schema.GetTable("deity");
-        var expectedResult = "INSERT INTO rpg_sheet.t_deity (id,name,nickname,portfolio,symbol,deity2alignment,deity2gender) VALUES ($1,$2,$3,$4,$5,$6,$7)";
+        var expectedResult = "INSERT INTO rpg_sheet.t_deity (id,deity2alignment,name,deity2gender,nickname,portfolio,symbol) VALUES ($1,$2,$3,$4,$5,$6,$7)";
 
         // act 
         Assert.NotNull(table);
-        var result1 = _sut.Insert(table, true);
-        var result2 = _sut.Insert(table, true); // using cache 
+        var result1 = _sut.Insert(table);
+        var result2 = _sut.Insert(table); // using cache 
 
         // assert
         Assert.Equal(expectedResult, result1);
@@ -117,13 +117,14 @@ public class DmlBuilderTest : BaseBuilderTest
         metaList.AddRange(metaTbl);
         var schema = MetaExtensions.ToSchema(metaList.ToArray(), DatabaseProvider.PostgreSql);
         var expectedResult = "INSERT INTO \"@test\".\"@meta\" (id,schema_id,object_type,reference_id,data_type,flags,name,description,value,active) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)";
+        table.LoadMapper();
 
         // act 
         Assert.NotNull(schema);
         Assert.NotNull(table);
         sut.Init(schema);
-        var result1 = sut.Insert(table, true);
-        var result2 = sut.Insert(table, true); // using cache 
+        var result1 = sut.Insert(table);
+        var result2 = sut.Insert(table); // using cache 
 
         // assert
         Assert.Equal(expectedResult, result1);
@@ -145,13 +146,14 @@ public class DmlBuilderTest : BaseBuilderTest
         metaList.AddRange(metaTbl);
         var schema = MetaExtensions.ToSchema(metaList.ToArray(), DatabaseProvider.PostgreSql);
         var expectedResult = "INSERT INTO \"@test\".\"@meta_id\" (id,schema_id,object_type,value) VALUES ($1,$2,$3,$4)";
+        table.LoadMapper();
 
         // act 
         Assert.NotNull(schema);
         Assert.NotNull(table);
         sut.Init(schema);
-        var result1 = sut.Insert(table, true);
-        var result2 = sut.Insert(table, true); // using cache 
+        var result1 = sut.Insert(table);
+        var result2 = sut.Insert(table); // using cache 
 
         // assert
         Assert.Equal(expectedResult, result1);

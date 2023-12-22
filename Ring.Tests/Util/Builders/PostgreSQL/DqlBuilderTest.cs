@@ -31,12 +31,12 @@ public sealed class DqlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var table = _schema.GetTable("skill");
-        var expectedResult = "SELECT id,name,sub_name,is_group,category,armor_penality,trained_only,try_again FROM rpg_sheet.t_skill";
+        var expectedResult = "SELECT id,name,skill2ability,sub_name,is_group,category,armor_penality,trained_only,try_again FROM rpg_sheet.t_skill";
 
         // act 
         Assert.NotNull(table);
-        var result1 = _sut.Select(table, false);
-        var result2 = _sut.Select(table, false); // using cache 
+        var result1 = _sut.SelectFrom(table);
+        var result2 = _sut.SelectFrom(table); // using cache 
 
         // assert
         Assert.Equal(expectedResult, result1);
@@ -54,8 +54,8 @@ public sealed class DqlBuilderTest : BaseBuilderTest
 
         // act 
         Assert.NotNull(mtmTable);
-        var result1 = _sut.Select(mtmTable, true);
-        var result2 = _sut.Select(mtmTable, true); // using cache 
+        var result1 = _sut.SelectFrom(mtmTable);
+        var result2 = _sut.SelectFrom(mtmTable); // using cache 
 
         // assert
         Assert.Equal(expectedResult, result1);
@@ -79,7 +79,7 @@ public sealed class DqlBuilderTest : BaseBuilderTest
         Assert.NotNull(schema);
         Assert.NotNull(tableTest);
         sut.Init(schema);
-        var result = sut.Select(tableTest, true);
+        var result = sut.SelectFrom(tableTest);
 
         // assert
         Assert.Equal(expectedResult, result);
@@ -90,12 +90,12 @@ public sealed class DqlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var table = _schema.GetTable("deity");
-        var expectedResult = "SELECT id,name,nickname,portfolio,symbol,deity2alignment,deity2gender FROM rpg_sheet.t_deity";
+        var expectedResult = "SELECT id,deity2alignment,name,deity2gender,nickname,portfolio,symbol FROM rpg_sheet.t_deity";
 
         // act 
         Assert.NotNull(table);
-        var result1 = _sut.Select(table, true);
-        var result2 = _sut.Select(table, true); // using cache 
+        var result1 = _sut.SelectFrom(table);
+        var result2 = _sut.SelectFrom(table); // using cache 
 
         // assert
         Assert.Equal(expectedResult, result1);
@@ -122,8 +122,8 @@ public sealed class DqlBuilderTest : BaseBuilderTest
         Assert.NotNull(schema);
         Assert.NotNull(table);
         sut.Init(schema);
-        var result1 = sut.Select(table, true);
-        var result2 = sut.Select(table, true); // using cache 
+        var result1 = sut.SelectFrom(table);
+        var result2 = sut.SelectFrom(table); // using cache 
 
         // assert
         Assert.Equal(expectedResult, result1);
@@ -150,8 +150,8 @@ public sealed class DqlBuilderTest : BaseBuilderTest
         Assert.NotNull(schema);
         Assert.NotNull(table);
         sut.Init(schema);
-        var result1 = sut.Select(table, true);
-        var result2 = sut.Select(table, true); // using cache 
+        var result1 = sut.SelectFrom(table);
+        var result2 = sut.SelectFrom(table); // using cache 
 
         // assert
         Assert.Equal(expectedResult, result1);
@@ -182,7 +182,7 @@ public sealed class DqlBuilderTest : BaseBuilderTest
         Assert.NotNull(schema);
         Assert.NotNull(tableTest);
         sut.Init(schema);
-        var result = sut.Select(tableTest, true);
+        var result = sut.SelectFrom(tableTest);
 
         // assert
         Assert.Equal(expectedResult, result);

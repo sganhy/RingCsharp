@@ -59,7 +59,7 @@ public struct Record : IEquatable<Record>
     /// </summary>
     internal readonly long GetField()
 #pragma warning disable CS8602 // Dereference of a possibly null reference. _type cannot be null here 
-        => long.Parse(_data[_type.Mapper[0]] ?? DefaultPrimaryKeyValue, DefaultCulture);
+        => long.Parse(_data[_type.ColumnMapper[0]] ?? DefaultPrimaryKeyValue, DefaultCulture);
 #pragma warning restore CS8602
 
     /// <summary>
@@ -106,7 +106,6 @@ public struct Record : IEquatable<Record>
         if (fieldId <= -1) ThrowRecordUnkownFieldName(name);
         var field = _type.Fields[fieldId];
         if (field.Type != FieldType.ByteArray) ThrowImpossibleConversion(field.Type, FieldType.Boolean);
-        //BooleanTrue: BooleanFalse
 #pragma warning disable CS8602 // Dereference of a possibly null reference. _data cannot be null here 
         var result = _data[fieldId] ?? _type.Fields[fieldId].DefaultValue;
 #pragma warning restore CS8602
@@ -243,9 +242,9 @@ public struct Record : IEquatable<Record>
         var fieldId = _type.GetFieldIndex(name);
 #pragma warning restore CS8604
         if (fieldId == -1) ThrowRecordUnkownFieldName(name);
-        if (_type.Fields[fieldId].Type == FieldType.Boolean) SetData(fieldId, value ? BooleanTrue : BooleanFalse);
-        else { // throw exception
-        }
+        var fieldType = _type.Fields[fieldId].Type;
+        if (fieldType == FieldType.Boolean) SetData(fieldId, value ? BooleanTrue : BooleanFalse);
+        else ThrowImpossibleConversion(FieldType.Boolean, fieldType);
     }
     public readonly void SetField(string name, DateTime value)
     {

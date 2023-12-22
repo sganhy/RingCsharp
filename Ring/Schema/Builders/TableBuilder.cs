@@ -46,7 +46,9 @@ internal sealed class TableBuilder
         };
         metaList.Add(GetUniqueIndex(4, metaList));
         var metaTable = GetTable((int)TableType.Meta, TableMetaName);
-        return GetTable(schemaName, provider, metaList.ToArray(), metaTable, TableType.Meta);
+        var result = GetTable(schemaName, provider, metaList.ToArray(), metaTable, TableType.Meta);
+        result.LoadMapper();
+        return result;
     }
     internal Table GetMetaId(string schemaName, DatabaseProvider provider)
     {
@@ -58,7 +60,9 @@ internal sealed class TableBuilder
         };
         var metaTable = GetTable((int)TableType.MetaId, TableMetaIdName);
         metaList.Add(GetUniqueIndex(3, metaList));
-        return GetTable(schemaName, provider, metaList.ToArray(), metaTable, TableType.MetaId);
+        var result= GetTable(schemaName, provider, metaList.ToArray(), metaTable, TableType.MetaId);
+        result.LoadMapper();
+        return result;
     }
     internal Table GetLog(string schemaName, DatabaseProvider provider)
     {
@@ -76,9 +80,10 @@ internal sealed class TableBuilder
             GetField(FieldDescription, FieldType.String, 0, false),
         };
         var metaTable = GetTable((int)TableType.Log, TableLogName);
-        return GetTable(schemaName, provider, metaList.ToArray(), metaTable, TableType.Log);
+        var result = GetTable(schemaName, provider, metaList.ToArray(), metaTable, TableType.Log);
+        result.LoadMapper();
+        return result;
     }
-
     internal static Table GetMtmTable(Table partialTable, string physicalName)
     {
         // add @ prefix to logical name
@@ -93,7 +98,9 @@ internal sealed class TableBuilder
         metaIndex.SetIndexedColumns(new string[] { partialTable.Name, partialTable.Name });
         var metaArr = new Meta[] { metaRelation, metaRelation, metaIndex };
         var segMent = new ArraySegment<Meta>(metaArr, 0, 3);
-        return MetaExtensions.ToTable(metaTable, segMent, TableType.Mtm, physicalName) ?? partialTable;
+        var result = MetaExtensions.ToTable(metaTable, segMent, TableType.Mtm, physicalName) ?? partialTable;
+        result.ColumnMapper[1] = 1; // columnMapper 4 Mtm table is always {0,1}
+        return result;
     }
 
     #region private methods 

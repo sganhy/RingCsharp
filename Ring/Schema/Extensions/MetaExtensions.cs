@@ -243,19 +243,17 @@ internal static class MetaExtensions
         if (meta.IsTable())
         {
             var fields = tableItems.GetFieldArray();
-            var fieldsById = (Field[])fields.Clone(); // shallow copy
             var relations = tableItems.GetRelationArray();
             var indexes = tableItems.GetIndexArray();
 
             // sort arrays
             Array.Sort(fields, (x, y) => string.CompareOrdinal(x.Name,y.Name));
-            Array.Sort(fieldsById, comparison: (x, y) => x.Id.CompareTo(y.Id));
             Array.Sort(indexes, (x, y) => string.CompareOrdinal(x.Name, y.Name));
 
             var result = new Table(meta.GetEntityId(), meta.GetEntityName(), meta.GetEntityDescription(), meta.Value, physicalName,
-                tableType, relations, fields, new int[fields.Length], indexes, meta.ReferenceId, 
+                tableType, relations, fields, new int[fields.Length + relations.Length], indexes, meta.ReferenceId, 
                 PhysicalType.Table, meta.IsEntityBaseline(), meta.IsEntityActive(), meta.IsTableCached(), meta.IsTableReadonly());
-            result.LoadMapper(fieldsById);
+
             return result;
         }
         return null;
@@ -290,6 +288,7 @@ internal static class MetaExtensions
                 provider, meta.IsEntityActive(), meta.IsEntityBaseline());
 
             result.LoadRelations(schema);
+            result.LoadColumnMappers();
 
             return result;
         }

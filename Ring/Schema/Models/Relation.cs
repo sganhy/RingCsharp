@@ -1,8 +1,9 @@
 ﻿using Ring.Schema.Enums;
+using Ring.Schema.Extensions;
 
 namespace Ring.Schema.Models;
 
-internal sealed class Relation : BaseEntity
+internal sealed class Relation : BaseEntity, IColumn
 {
 	internal Relation InverseRelation { get; private set; } // assigned after initialization
 	internal readonly bool HasConstraint;                   // foreign key constraint should be added
@@ -24,8 +25,18 @@ internal sealed class Relation : BaseEntity
 		InverseRelation = this;
 	}
 
-	// assign only once the property
-	internal void SetInverseRelation(Relation relation) => 
+    /// <summary>
+    ///     assign only once the property 
+    /// </summary>
+    internal void SetInverseRelation(Relation relation) => 
 		InverseRelation = ReferenceEquals(InverseRelation,this) ? relation : InverseRelation;
+
+    /// <summary>
+    ///     Implement IColumn
+    /// </summary>
+    int IColumn.Id => Id;
+    FieldType IColumn.Type => ToTable.GetPrimaryKey()?.Type ?? FieldType.Undefined;
+    string IColumn.Name => Name;
+    RelationType IColumn.RelationType => Type;
 
 }

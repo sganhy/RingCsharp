@@ -2,6 +2,7 @@
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
+using System.ComponentModel.Design.Serialization;
 using System.Reflection;
 using Index = Ring.Schema.Models.Index;
 
@@ -33,8 +34,8 @@ public class BaseBuilderTest
 
         var result = new Table(_fixture.Create<int>(), _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<string>(),
             _fixture.Create<string>(), TableType.Business, relations.ToArray(), fields.ToArray(), 
-            new int[fields.Count], Array.Empty<Index>(), 12, PhysicalType.Table, true, true, true, true);
-        result.LoadMapper(fieldsById.ToArray());
+            new int[fields.Count+relations.Count], Array.Empty<Index>(), 12, PhysicalType.Table, true, true, true, true);
+        result.LoadMapper();
         return result;
     }
 
@@ -63,10 +64,10 @@ public class BaseBuilderTest
         var toTable = new Table(_fixture.Create<int>(), _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<string>(),
             _fixture.Create<string>(), TableType.Business, Array.Empty<Relation>(), fieldList.ToArray(), 
             new int[fieldList.Count], Array.Empty<Index>(), 12, PhysicalType.Table, true, true, true, true);
-        toTable.LoadMapper(fieldList.ToArray());
-
+        toTable.LoadMapper();
+            
         // generate primary key 
-        var result = new Relation(_fixture.Create<int>(), relationName, _fixture.Create<string>(),
+        var result = new Relation(1000, relationName, _fixture.Create<string>(),
             relationType, toTable, notNull, _fixture.Create<bool>(),
             _fixture.Create<bool>(), _fixture.Create<bool>());
 

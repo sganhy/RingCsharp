@@ -16,7 +16,7 @@ internal static class TableExtensions
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static Field? GetField(this Table table, string name)
     {
-        int indexerLeft = 0, indexerRigth = table.Fields.Length - 1, indexerMiddle, indexerCompare;
+        int indexerLeft = 0, indexerRigth = table.Fields.Length-1, indexerMiddle, indexerCompare;
         while (indexerLeft <= indexerRigth)
         {
             indexerMiddle = indexerLeft + indexerRigth;
@@ -50,15 +50,12 @@ internal static class TableExtensions
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static Field? GetField(this Table table, int id)
     {
-        int indexerLeft = 0, indexerRigth = table.Fields.Length - 1, indexerMiddle, indexerCompare;
-        while (indexerLeft <= indexerRigth)
+        var i=0;
+        var fieldCount=table.Fields.Length;
+        while (i<fieldCount)
         {
-            indexerMiddle = indexerLeft + indexerRigth;
-            indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
-            indexerCompare = id - table.Fields[table.Mapper[indexerMiddle]].Id;
-            if (indexerCompare == 0) return table.Fields[table.Mapper[indexerMiddle]];
-            if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
-            else indexerRigth = indexerMiddle - 1;
+            if (table.Fields[i].Id == id) return table.Fields[i];
+            ++i;
         }
         return null;
     }
@@ -174,7 +171,7 @@ internal static class TableExtensions
 
     internal static Field? GetPrimaryKey(this Table table) =>
         (table.Fields.Length > 0 && (table.Type == TableType.Business || table.Type == TableType.Lexicon)) ?
-        table.Fields[table.Mapper[0]] : null;
+        table.Fields[table.ColumnMapper[0]] : null;
 
     /// <summary>
     /// Get first unique index
@@ -206,10 +203,31 @@ internal static class TableExtensions
         return result.ToArray(); 
     }
 
-    internal static void LoadMapper(this Table table, Field[] fieldById)
+    internal static void LoadMapper(this Table table)
     {
-        for (var i = 0; i < fieldById.Length; ++i)
-            table.Mapper[i] = table.GetFieldIndex(fieldById[i].Name);
+        var fieldCount = table.Fields.Length;
+        var relationCount = table.Relations.Length;
+        var columnCount = relationCount+ fieldCount;
+        var index = 0;
+        // copy
+        var columns = new IColumn[columnCount];
+        for (var i=0; i < fieldCount; ++i) columns[i] = table.Fields[i];
+        for (var i=0; i < relationCount; ++i) columns[i+fieldCount] = table.Relations[i];
+        // sort by Id
+        Array.Sort(columns, (x, y) => x.Id.CompareTo(y.Id));
+        for (var i=0; i<columnCount; ++i)
+        {
+            index = table.GetFieldIndex(columns[i].Name);
+            if (index < 0) 
+            {
+                var relation = columns[i];
+                if (relation.RelationType == RelationType.Mto || relation.RelationType == RelationType.Otop)
+                    table.ColumnMapper[i] = table.GetRelationIndex(columns[i].Name) + fieldCount;
+                else table.ColumnMapper[i] = -1; // not really a physical column
+            } 
+            else table.ColumnMapper[i] = index;
+        }
+
     }
 
 }

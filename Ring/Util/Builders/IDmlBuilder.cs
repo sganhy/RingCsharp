@@ -6,7 +6,7 @@ namespace Ring.Util.Builders;
 internal interface IDmlBuilder : ISqlBuilder
 {
     void Init(DbSchema schema);
-    string Insert(Table table, bool includeRelations);
+    string Insert(Table table);
     string Delete(Table table);
     string Update(Table table);
 }

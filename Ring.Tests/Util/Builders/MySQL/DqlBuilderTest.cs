@@ -35,8 +35,8 @@ public sealed class DqlBuilderTest : BaseBuilderTest
 
         // act 
         Assert.NotNull(table);
-        var result1 = _sut.Select(table, false);
-        var result2 = _sut.Select(table, false); // using cache 
+        var result1 = _sut.SelectFrom(table);
+        var result2 = _sut.SelectFrom(table); // using cache 
 
         // assert
         Assert.Equal(expectedResult, result1);

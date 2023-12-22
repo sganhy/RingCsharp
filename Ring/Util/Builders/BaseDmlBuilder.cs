@@ -23,7 +23,6 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
     private string[] _tableIndex;
     private string?[] _tableDelete;
     private string?[] _tableInsert;
-    private string?[] _tableInsertWithRel;
     private string?[] _tableUpdate;
     private readonly IDdlBuilder _ddlBuilder;
     private readonly Field _defaultField;
@@ -33,7 +32,6 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
         _tableIndex = Array.Empty<string>();
         _tableDelete = Array.Empty<string?>();
         _tableInsert = Array.Empty<string?>();
-        _tableInsertWithRel = Array.Empty<string?>();
         _tableUpdate = Array.Empty<string?>();
         _ddlBuilder = Provider.GetDdlBuilder();
         _defaultField = MetaExtensions.GetEmptyField(new Meta(string.Empty), FieldType.Int);
@@ -48,19 +46,17 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
         _tableIndex = GetTableIndex(schema);
         _tableDelete = new string?[mtmCount + tableCount];
         _tableInsert = new string?[mtmCount + tableCount];
-        _tableInsertWithRel = new string?[mtmCount + tableCount];
         _tableUpdate = new string?[mtmCount + tableCount];
     }
 
-    public string Insert(Table table, bool includeRelations) {
+    public string Insert(Table table) {
         // avoid lock
         var index = _tableIndex.GetIndex(table.Name);
-        var result = includeRelations ? _tableInsertWithRel[index] : _tableInsert[index];
+        var result = _tableInsert[index];
         if (result==null)
         {
-            result = BuildInsert(table, includeRelations);
-            if (includeRelations) _tableInsertWithRel[index] = result;
-            else _tableInsert[index] = result;
+            result = BuildInsert(table);
+            _tableInsert[index] = result;
         }
         return result;
     }
@@ -90,45 +86,36 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 
     #region private methods 
 
-    private string BuildInsert(Table table, bool includeRelations)
+    private string BuildInsert(Table table)
     {
         var result = new StringBuilder();
+        var mapperCount = table.ColumnMapper.Length;
+        var fieldCount = table.Fields.Length;
         var columnCount = 0;
+        int index;
+
         result.Append(DmlInsert);
         result.Append(table.PhysicalName);
         result.Append(SqlSpace);
         result.Append(StartParenthesis);
-        for (var i = 0; i < table.Fields.Length; ++i)
+        for (var i = 0; i<mapperCount; ++i)
         {
-            result.Append(_ddlBuilder.GetPhysicalName(table.Fields[table.Mapper[i]]));
-            result.Append(ColumnDelimiter);
+            index = table.ColumnMapper[i];
+            if (index < 0) continue;
+            if (index >= fieldCount) 
+                result.Append(_ddlBuilder.GetPhysicalName(table.Relations[index- fieldCount]));
+            else result.Append(_ddlBuilder.GetPhysicalName(table.Fields[index]));
             ++columnCount;
+            result.Append(ColumnDelimiter);
         }
-        if (table.Fields.Length > 0) --result.Length;
-        if (includeRelations)
-        {
-            var hasRelation = false;
-            for (var i=0; i<table.Relations.Length; ++i)
-            {
-                var relation = table.Relations[i];
-                if (relation.Type == RelationType.Mto || relation.Type == RelationType.Otop)
-                {
-                    if (columnCount > 0 && !Equals(ColumnDelimiter, result[^1])) result.Append(ColumnDelimiter);
-                    result.Append(_ddlBuilder.GetPhysicalName(relation));
-                    result.Append(ColumnDelimiter);
-                    ++columnCount;
-                    hasRelation = true;
-                }
-            }
-            if (hasRelation) --result.Length;
-        }
+        if (columnCount>0) --result.Length;
         result.Append(DmlValues);
-        for (var i = 1; i <= columnCount; ++i)
+        for (var i=1; i<=columnCount; ++i)
         {
             result.Append(string.Format(CultureInfo.InvariantCulture, VariableNameTemplate, i));
             result.Append(ColumnDelimiter);
         }
-        if (columnCount > 0) --result.Length;
+        if (mapperCount > 0) --result.Length;
         result.Append(EndParenthesis);
         return result.ToString();
     }

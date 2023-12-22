@@ -6,5 +6,5 @@ namespace Ring.Util.Builders;
 internal interface IDqlBuilder : ISqlBuilder
 {
     void Init(DbSchema schema);
-    string Select(Table table, bool includeRelations);
+    string SelectFrom(Table table);
 }

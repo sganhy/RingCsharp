@@ -170,7 +170,9 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
     }
     public string Create(Table table, TableSpace? tablespace = null)
     {
-        int i;
+        var i=0;
+        var columnCount = table.ColumnMapper.Length;
+        var fieldCount = table.Fields.Length;
         var result = new StringBuilder();
         result.Append(DdlCreate);
         result.Append(DdlTable);
@@ -178,10 +180,15 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
         result.Append(SqlSpace);
         result.Append('(');
         result.Append(SqlLineFeed);
-        for (i = 0; i < table.Fields.Length; ++i) Create(result, table, table.Fields[table.Mapper[i]]);
-        if (i > 0 && table.Relations.Length == 0) result.Length = result.Length - 2;
-        for (i = 0; i < table.Relations.Length; ++i) Create(result, table, table.Relations[i]);
-        if (i > 0) result.Length = result.Length - 2;
+        while (i < columnCount)
+        {
+            var index = table.ColumnMapper[i];
+            ++i;
+            if (index<0) continue;
+            if (index<fieldCount) Create(result, table, table.Fields[index]);
+            else Create(result, table, table.Relations[index- fieldCount]);
+        }
+        if (i>0) result.Length=result.Length-2;
         result.Append(')');
         if (tablespace != null)
         {

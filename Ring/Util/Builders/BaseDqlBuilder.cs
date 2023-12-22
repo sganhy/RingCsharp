@@ -1,5 +1,4 @@
-﻿using Ring.Schema.Enums;
-using Ring.Schema.Extensions;
+﻿using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using Ring.Util.Extensions;
 using System.Text;
@@ -32,13 +31,13 @@ internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
         _tableIndex = GetTableIndex(schema);
     }
 
-    public string Select(Table table, bool includeRelations)
+    public string SelectFrom(Table table)
     {
         var index = _tableIndex.GetIndex(table.Name);
         var result = _tableSelect[index];
         if (result==null)
         {
-            result = BuildSelect(table, includeRelations);
+            result = BuildSelect(table);
             _tableSelect[index] = result;
         }
         return result;
@@ -46,42 +45,24 @@ internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
 
     #region private methods 
 
-    private string BuildSelect(Table table, bool includeRelations)
+    private string BuildSelect(Table table)
     {
         var result = new StringBuilder();
-        var columnCount = 0;
+        var mapperCount = table.ColumnMapper.Length;
+        var fieldCount = table.Fields.Length;
         var i=0;
-        var itemCount = table.Fields.Length;
+        int index;
         result.Append(DqlSelect);
-        while (i<itemCount)
+        while (i<mapperCount)
         {
-            result.Append(_ddlBuilder.GetPhysicalName(table.Fields[table.Mapper[i]]));
+            index = table.ColumnMapper[i];
+            ++i; // just before continue
+            if (index < 0) continue;
+            if (index >= fieldCount) result.Append(_ddlBuilder.GetPhysicalName(table.Relations[index - fieldCount]));
+            else result.Append(_ddlBuilder.GetPhysicalName(table.Fields[index]));
             result.Append(ColumnDelimiter);
-            ++columnCount;
-            ++i;
         }
-        if (table.Fields.Length > 0) --result.Length;
-        if (includeRelations)
-        {
-            var hasRelation = false;
-            itemCount = table.Relations.Length;
-            i=0;
-            while (i<itemCount)
-            {
-                var relation = table.Relations[i];
-                if (relation.Type == RelationType.Mto || relation.Type == RelationType.Otop)
-                {
-                    if (columnCount > 0 && !Equals(ColumnDelimiter, result[^1])) result.Append(ColumnDelimiter);
-                    result.Append(_ddlBuilder.GetPhysicalName(relation));
-                    result.Append(ColumnDelimiter);
-                    ++columnCount;
-                    hasRelation = true;
-                }
-                ++i;
-            }
-            if (hasRelation) --result.Length;
-        }
-        if (columnCount==0) --result.Length;
+        --result.Length;
         result.Append(DqlFrom);
         result.Append(table.PhysicalName);
         return result.ToString();
