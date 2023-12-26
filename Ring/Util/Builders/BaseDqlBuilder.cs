@@ -57,7 +57,6 @@ internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
         {
             index = table.ColumnMapper[i];
             ++i; // just before continue
-            if (index < 0) continue;
             if (index >= fieldCount) result.Append(_ddlBuilder.GetPhysicalName(table.Relations[index - fieldCount]));
             else result.Append(_ddlBuilder.GetPhysicalName(table.Fields[index]));
             result.Append(ColumnDelimiter);

@@ -184,7 +184,6 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
         {
             var index = table.ColumnMapper[i];
             ++i;
-            if (index<0) continue;
             if (index<fieldCount) Create(result, table, table.Fields[index]);
             else Create(result, table, table.Relations[index- fieldCount]);
         }

@@ -203,29 +203,32 @@ internal static class TableExtensions
         return result.ToArray(); 
     }
 
-    internal static void LoadMapper(this Table table)
+    internal static void LoadColumnMapper(this Table table)
     {
         var fieldCount = table.Fields.Length;
         var relationCount = table.Relations.Length;
-        var columnCount = relationCount+ fieldCount;
+        var columnCount = fieldCount + relationCount; // potentatial column count
         var index = 0;
+        var colPosition = 0;
+        var i=0;
         // copy
         var columns = new IColumn[columnCount];
-        for (var i=0; i < fieldCount; ++i) columns[i] = table.Fields[i];
-        for (var i=0; i < relationCount; ++i) columns[i+fieldCount] = table.Relations[i];
+        for (; i < fieldCount; ++i) columns[i] = table.Fields[i];
+        for (i=0; i < relationCount; ++i) columns[i+fieldCount] = table.Relations[i];
         // sort by Id
         Array.Sort(columns, (x, y) => x.Id.CompareTo(y.Id));
-        for (var i=0; i<columnCount; ++i)
+        i = 0;
+        while (i<columnCount)
         {
             index = table.GetFieldIndex(columns[i].Name);
-            if (index < 0) 
+            if (index < 0)
             {
                 var relation = columns[i];
                 if (relation.RelationType == RelationType.Mto || relation.RelationType == RelationType.Otop)
-                    table.ColumnMapper[i] = table.GetRelationIndex(columns[i].Name) + fieldCount;
-                else table.ColumnMapper[i] = -1; // not really a physical column
+                    table.ColumnMapper[colPosition++] = table.GetRelationIndex(columns[i].Name) + fieldCount;
             } 
-            else table.ColumnMapper[i] = index;
+            else table.ColumnMapper[colPosition++] = index;
+            ++i;
         }
 
     }

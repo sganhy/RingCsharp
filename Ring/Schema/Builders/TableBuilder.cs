@@ -47,7 +47,7 @@ internal sealed class TableBuilder
         metaList.Add(GetUniqueIndex(4, metaList));
         var metaTable = GetTable((int)TableType.Meta, TableMetaName);
         var result = GetTable(schemaName, provider, metaList.ToArray(), metaTable, TableType.Meta);
-        result.LoadMapper();
+        result.LoadColumnMapper();
         return result;
     }
     internal Table GetMetaId(string schemaName, DatabaseProvider provider)
@@ -61,7 +61,7 @@ internal sealed class TableBuilder
         var metaTable = GetTable((int)TableType.MetaId, TableMetaIdName);
         metaList.Add(GetUniqueIndex(3, metaList));
         var result= GetTable(schemaName, provider, metaList.ToArray(), metaTable, TableType.MetaId);
-        result.LoadMapper();
+        result.LoadColumnMapper();
         return result;
     }
     internal Table GetLog(string schemaName, DatabaseProvider provider)
@@ -81,7 +81,7 @@ internal sealed class TableBuilder
         };
         var metaTable = GetTable((int)TableType.Log, TableLogName);
         var result = GetTable(schemaName, provider, metaList.ToArray(), metaTable, TableType.Log);
-        result.LoadMapper();
+        result.LoadColumnMapper();
         return result;
     }
     internal static Table GetMtmTable(Table partialTable, string physicalName)
@@ -99,7 +99,8 @@ internal sealed class TableBuilder
         var metaArr = new Meta[] { metaRelation, metaRelation, metaIndex };
         var segMent = new ArraySegment<Meta>(metaArr, 0, 3);
         var result = MetaExtensions.ToTable(metaTable, segMent, TableType.Mtm, physicalName) ?? partialTable;
-        result.ColumnMapper[1] = 1; // columnMapper 4 Mtm table is always {0,1}
+        result.ColumnMapper[0]=0; // columnMapper 4 Mtm table is always {0,1}
+        result.ColumnMapper[1]=1; // columnMapper 4 Mtm table is always {0,1}
         return result;
     }
 

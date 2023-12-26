@@ -5,7 +5,6 @@ using Index = Ring.Schema.Models.Index;
 using DbSchema = Ring.Schema.Models.Schema;
 using Ring.Util.Builders;
 using System.Globalization;
-using Ring.Util.Extensions;
 
 namespace Ring.Schema.Extensions;
 
@@ -245,13 +244,14 @@ internal static class MetaExtensions
             var fields = tableItems.GetFieldArray();
             var relations = tableItems.GetRelationArray();
             var indexes = tableItems.GetIndexArray();
+            var columnMapperSize = tableItems.GetColumnMapperSize(tableType, fields.Length);
 
             // sort arrays
             Array.Sort(fields, (x, y) => string.CompareOrdinal(x.Name,y.Name));
             Array.Sort(indexes, (x, y) => string.CompareOrdinal(x.Name, y.Name));
 
             var result = new Table(meta.GetEntityId(), meta.GetEntityName(), meta.GetEntityDescription(), meta.Value, physicalName,
-                tableType, relations, fields, new int[fields.Length + relations.Length], indexes, meta.ReferenceId, 
+                tableType, relations, fields, new int[columnMapperSize], indexes, meta.ReferenceId, 
                 PhysicalType.Table, meta.IsEntityBaseline(), meta.IsEntityActive(), meta.IsTableCached(), meta.IsTableReadonly());
 
             return result;
@@ -409,7 +409,7 @@ internal static class MetaExtensions
     private static Field[] GetFieldArray(this ArraySegment<Meta> items)
     {
         // count element
-        int i = 0, count= items.Count, fieldCount=0;
+        int i = 0, count = items.Count, fieldCount = 0;
         var primaryKey = FieldExtensions.GetDefaultPrimaryKey(null, FieldType.Int);
         for (; i<count; ++i) {
             if (items[i].IsField()) {
@@ -540,6 +540,21 @@ internal static class MetaExtensions
             return result;
         }
         return Array.Empty<Index>();
+    }
+
+    private static int GetColumnMapperSize(this ArraySegment<Meta> items, TableType tableType, int fieldCount)
+    {
+        if (tableType == TableType.Mtm) return 2;
+        int count=items.Count, result=fieldCount;
+        for (var i=0; i<count; ++i)
+        {
+            if (items[i].IsRelation()) {
+                var relationType = GetRelationType(items[i]);
+                if (relationType == RelationType.Mto || relationType == RelationType.Otop) 
+                    ++result;
+            }
+        }
+        return result;
     }
 
     private static int MetaSchemaComparer(Meta meta1, Meta meta2)

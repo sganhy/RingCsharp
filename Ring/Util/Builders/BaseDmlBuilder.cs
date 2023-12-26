@@ -101,7 +101,6 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
         for (var i = 0; i<mapperCount; ++i)
         {
             index = table.ColumnMapper[i];
-            if (index < 0) continue;
             if (index >= fieldCount) 
                 result.Append(_ddlBuilder.GetPhysicalName(table.Relations[index- fieldCount]));
             else result.Append(_ddlBuilder.GetPhysicalName(table.Fields[index]));

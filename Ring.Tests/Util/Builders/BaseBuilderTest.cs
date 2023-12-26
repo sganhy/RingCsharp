@@ -35,7 +35,7 @@ public class BaseBuilderTest
         var result = new Table(_fixture.Create<int>(), _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<string>(),
             _fixture.Create<string>(), TableType.Business, relations.ToArray(), fields.ToArray(), 
             new int[fields.Count+relations.Count], Array.Empty<Index>(), 12, PhysicalType.Table, true, true, true, true);
-        result.LoadMapper();
+        result.LoadColumnMapper();
         return result;
     }
 
@@ -64,7 +64,7 @@ public class BaseBuilderTest
         var toTable = new Table(_fixture.Create<int>(), _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<string>(),
             _fixture.Create<string>(), TableType.Business, Array.Empty<Relation>(), fieldList.ToArray(), 
             new int[fieldList.Count], Array.Empty<Index>(), 12, PhysicalType.Table, true, true, true, true);
-        toTable.LoadMapper();
+        toTable.LoadColumnMapper();
             
         // generate primary key 
         var result = new Relation(1000, relationName, _fixture.Create<string>(),
@@ -98,7 +98,7 @@ public class BaseBuilderTest
             new Meta() { Id = 7, Name = "trained_only", ObjectType = (byte)EntityType.Field, DataType=23,Flags=6 },
             new Meta() { Id = 8, Name = "try_again", ObjectType = (byte)EntityType.Field, DataType=23,Flags=6 },
             new Meta() { Id = 1, Name = "id", ObjectType = (byte)EntityType.Field, DataType=2,Flags=2 },
-            new Meta() { Id = 1, Name = "skill2book", ObjectType = (byte)EntityType.Relation, DataType=1021,Flags=786448 }
+            new Meta() { Id = 1, Name = "skill2ability", ObjectType = (byte)EntityType.Relation, DataType=1021,Flags=2883600 }
         };
         foreach (var meta in metaList)
         {

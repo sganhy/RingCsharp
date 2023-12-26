@@ -108,7 +108,7 @@ internal static class SchemaExtensions
         var i = schema.TablesByName.Length - 1;
         while (i>=0)
         {
-            schema.TablesByName[i].LoadMapper();
+            schema.TablesByName[i].LoadColumnMapper();
             --i;
         }
     }

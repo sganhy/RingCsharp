@@ -57,7 +57,7 @@ public class DdlBuilderTest : BaseBuilderTest
         Assert.NotNull(table2);
 #pragma warning disable CS8602
         table2.Relations[0] = GetAnonymousRelation(RelationType.Mto, @"skill2book");
-        table2.LoadMapper();
+        table2.LoadColumnMapper();
         var expectedSql = $"CREATE TABLE {physicalName} (\n" + "    id int2 NOT NULL,\n" +
                 "    name varchar(80) COLLATE \"C\",\n" + "    sub_name varchar(30) COLLATE \"C\",\n" + "    is_group bool,\n" +
                 "    category varchar(8) COLLATE \"C\",\n" + "    armor_penality int2,\n" + "    trained_only bool,\n" +
@@ -82,7 +82,7 @@ public class DdlBuilderTest : BaseBuilderTest
         var table3 = metaTable.ToTable(segment, TableType.Meta, physicalName);
 #pragma warning disable CS8602
         table3.Relations[0] = GetAnonymousRelation(RelationType.Mto, @"skill2book", true);
-        table3.LoadMapper();
+        table3.LoadColumnMapper();
         var expectedSql = $"CREATE TABLE {physicalName} (\n" + "    id int2 NOT NULL,\n" +
                 "    name varchar(80) COLLATE \"C\" NOT NULL,\n" + "    sub_name varchar(30) COLLATE \"C\",\n" + "    is_group bool NOT NULL,\n" +
                 "    category varchar(8) COLLATE \"C\",\n" + "    armor_penality int2 NOT NULL,\n" + "    trained_only bool NOT NULL,\n" +
@@ -110,7 +110,7 @@ public class DdlBuilderTest : BaseBuilderTest
 
 #pragma warning disable CS8602
         table4.Relations[0] = GetAnonymousRelation(RelationType.Mto, @"skill2book", false);
-        table4.LoadMapper();
+        table4.LoadColumnMapper();
         var expectedSql = $"CREATE TABLE {physicalName} (\n" + "    id int2 NOT NULL,\n" +
                 "    name varchar(80) COLLATE \"C\" NOT NULL,\n" + "    sub_name varchar(30) COLLATE \"C\",\n" + "    is_group bool NOT NULL,\n" +
                 "    category varchar(8) COLLATE \"C\",\n" + "    armor_penality int2 NOT NULL,\n" + "    trained_only bool NOT NULL,\n" +
