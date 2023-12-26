@@ -280,7 +280,7 @@ internal static class MetaExtensions
             var tableSpaces = schema.GetTableSpaceArray();
 
             // sort arrays - already sorted by name
-            Array.Sort(parameters, (x, y) => x.Hash.CompareTo(y.Hash));
+            Array.Sort(parameters, (x, y) => x.Id.CompareTo(y.Id));
             Array.Sort(tableById, (x, y) => x.Id.CompareTo(y.Id));
 
             var result = new DbSchema(meta.GetEntityId(), meta.GetEntityName(), meta.GetEntityDescription(), parameters,
@@ -313,15 +313,19 @@ internal static class MetaExtensions
     #region parameter methods  
 
     internal static FieldType GetParameterValueType(this Meta meta) => ToFieldType((byte)(meta.DataType & 127));
-
+    internal static ParameterType GetParameterType(this Meta meta) => ToParameterType(meta.Id);
+    internal static void SetParameterType(this Meta meta, ParameterType parameterType) => meta.Id=(int)parameterType;
     internal static string GetParameterValue(this Meta meta) => meta.Value ?? string.Empty;
-
+    internal static string SetParameterValue(this Meta meta, string? value) => meta.Value = value;
+    internal static void SetParameterValueType(this Meta meta, FieldType valueType) => meta.DataType = (meta.DataType&0xFFF8) + ((byte)valueType)&127;
     internal static Parameter? ToParameter(this Meta meta)
-        => meta.IsParameter() ?
-           new Parameter(meta.GetEntityId(), meta.GetEntityName(), meta.GetEntityDescription(), ToParameterType(meta.Id),
-               meta.GetParameterValueType(), meta.GetParameterValue(), meta.ReferenceId,
+    {
+        var parameterType = meta.GetParameterType();
+        return meta.IsParameter() ?
+           new Parameter(meta.GetEntityId(), meta.GetEntityName(), meta.GetEntityDescription(), parameterType,
+               meta.GetParameterValueType(), meta.GetParameterValue(), parameterType.GetDefaultValue(), meta.ReferenceId,
                meta.IsEntityBaseline(), meta.IsEntityActive()) : null;
-
+    }
     #endregion
 
     #region sequence methods  

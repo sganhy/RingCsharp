@@ -18,7 +18,8 @@ public class ParameterExtensionsTest
         var result = new List<Parameter>();
         foreach (var element in Enum.GetValues(typeof(ParameterType)))
             result.Add(new Parameter((int)element, _fixture.Create<string>(), _fixture.Create<string>(), (ParameterType)element,
-                _fixture.Create<FieldType>(), ((ParameterType)element).GetDefaultValue() ?? string.Empty, schemaId,
+                _fixture.Create<FieldType>(), ((ParameterType)element).GetDefaultValue() ?? string.Empty, 
+                ((ParameterType)element).GetDefaultValue() ?? string.Empty, schemaId,
                 true,true)); 
         // sort by id 
         _parameterCollection = result.OrderBy(o => o.Hash).ToArray();
@@ -118,5 +119,33 @@ public class ParameterExtensionsTest
         Assert.Equal(referenceId, value & int.MaxValue);
         Assert.Equal(paramTypeId, value >> 32);
     }
+
+    [Fact]
+    internal void ToMeta_GetMaxPoolSize_Meta()
+    {
+        // arrange 
+        var paramType = ParameterType.MaxPoolSize;
+        var param = _parameterCollection.GetParameter(paramType, schemaId);
+        var referenceId = _fixture.Create<int>();
+        Assert.NotNull(param);
+
+        // act 
+        var value = ParameterExtensions.ToMeta(param, referenceId); // reverse parameter
+        var paramResult = MetaExtensions.ToParameter(value);
+
+        // assert
+        Assert.NotNull(paramResult);
+        Assert.Equal(param.Id, paramResult.Id);
+        Assert.Equal(param.Name, paramResult.Name);
+        Assert.Equal(param.ValueType, paramResult.ValueType);
+        Assert.Equal(referenceId, paramResult.ReferenceId);
+        Assert.Equal(param.Value, paramResult.Value);
+        Assert.Equal(param.DefaultValue, paramResult.DefaultValue);
+        Assert.Equal(param.Active, paramResult.Active);
+        Assert.Equal(param.Baseline, paramResult.Baseline);
+        Assert.Equal(paramType, paramResult.Type);
+        
+    }
+
 
 }
