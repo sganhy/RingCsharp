@@ -17,9 +17,10 @@ public sealed class SchemaBuilderTest
     {
         // arrange 
         var schemaName = "Test";
+        var maxPoolSize = 20; 
 
         // act 
-        var metaSchema = _sut.GetMeta(schemaName, DatabaseProvider.PostgreSql);
+        var metaSchema = _sut.GetMeta(schemaName, DatabaseProvider.PostgreSql,20);
         var metaTable = metaSchema.GetTable(3);
         var metaLog = metaSchema.GetTable("@log");
         var metaId = metaSchema.GetTable("@meta_id");
@@ -39,5 +40,7 @@ public sealed class SchemaBuilderTest
         Assert.Equal(4, metaId.ColumnMapper.Length);
         Assert.Equal(11, metaLog.Fields.Length);
         Assert.Equal(11, metaLog.ColumnMapper.Length);
+        // test max pool size
+        Assert.Equal(maxPoolSize, metaSchema.Connections.Connections.Length);
     }
 }

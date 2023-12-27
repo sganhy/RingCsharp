@@ -58,7 +58,7 @@ internal static class ParameterExtensions
             DefaultConnPoolSize, CultureInfo.InvariantCulture);
     }
 
-    internal static Meta ToMeta(this Parameter parameter, int referenceId)
+    internal static Meta ToMeta(this Parameter parameter)
     {
         var meta = new Meta();
         // first - define Object type
@@ -66,7 +66,7 @@ internal static class ParameterExtensions
         meta.SetEntityId(parameter.Id);
         meta.SetEntityName(parameter.Name);
         meta.SetEntityDescription(parameter.Description);
-        meta.SetEntityRefId(referenceId);
+        meta.SetEntityRefId(parameter.ReferenceId);
         meta.SetParameterType(parameter.Type);
         meta.SetParameterValue(parameter.Value);
         meta.SetParameterValueType(parameter.ValueType);

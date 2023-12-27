@@ -130,7 +130,7 @@ public class ParameterExtensionsTest
         Assert.NotNull(param);
 
         // act 
-        var value = ParameterExtensions.ToMeta(param, referenceId); // reverse parameter
+        var value = ParameterExtensions.ToMeta(param); // reverse parameter
         var paramResult = MetaExtensions.ToParameter(value);
 
         // assert
@@ -138,7 +138,7 @@ public class ParameterExtensionsTest
         Assert.Equal(param.Id, paramResult.Id);
         Assert.Equal(param.Name, paramResult.Name);
         Assert.Equal(param.ValueType, paramResult.ValueType);
-        Assert.Equal(referenceId, paramResult.ReferenceId);
+        Assert.Equal(param.ReferenceId, paramResult.ReferenceId);
         Assert.Equal(param.Value, paramResult.Value);
         Assert.Equal(param.DefaultValue, paramResult.DefaultValue);
         Assert.Equal(param.Active, paramResult.Active);
