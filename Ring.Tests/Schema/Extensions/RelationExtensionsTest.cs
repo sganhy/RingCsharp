@@ -30,15 +30,15 @@ public class RelationExtensionsTest : BaseExtensionsTest
 
         // assert
         Assert.NotNull(meta);
-        Assert.Equal(1, meta.Id);
+        Assert.Equal(1, meta.GetEntityId());
         Assert.Equal(2, meta.ObjectType);
         Assert.Equal(1054, meta.ReferenceId);
         Assert.Equal(1021, meta.DataType);
-        Assert.Equal("test=test", meta.Description);
+        Assert.Equal("test=test", meta.GetEntityDescription());
         Assert.Equal(524304, meta.Flags);
         Assert.Equal("rule2book", meta.Name);
         Assert.Equal("book2rule", meta.Value);
-        Assert.True(meta.Active);
+        Assert.True(meta.IsEntityActive());
     }
 
     [Fact]
@@ -57,14 +57,14 @@ public class RelationExtensionsTest : BaseExtensionsTest
 
         // assert
         Assert.NotNull(meta);
-        Assert.Equal(1, meta.Id);
+        Assert.Equal(1, meta.GetEntityId());
         Assert.Equal(2, meta.ObjectType);
         Assert.Equal(1013, meta.ReferenceId);
         Assert.Equal(1012, meta.DataType);
         Assert.Equal(786448, meta.Flags);
-        Assert.Equal("align_descriptor2alignment", meta.Name);
+        Assert.Equal("align_descriptor2alignment", meta.GetEntityName());
         Assert.Equal("align2alignment_descriptor", meta.Value);
-        Assert.True(meta.Active);
+        Assert.True(meta.IsEntityActive());
     }
 
     [Fact]

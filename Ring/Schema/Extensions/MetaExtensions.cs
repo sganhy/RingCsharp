@@ -313,8 +313,8 @@ internal static class MetaExtensions
     #region parameter methods  
 
     internal static FieldType GetParameterValueType(this Meta meta) => ToFieldType((byte)(meta.DataType & 127));
-    internal static ParameterType GetParameterType(this Meta meta) => ToParameterType(meta.Id);
-    internal static void SetParameterType(this Meta meta, ParameterType parameterType) => meta.Id=(int)parameterType;
+    internal static ParameterType GetParameterType(this Meta meta) => ToParameterType(meta.GetEntityId());
+    internal static void SetParameterType(this Meta meta, ParameterType parameterType) => meta.SetEntityId((int)parameterType);
     internal static string GetParameterValue(this Meta meta) => meta.Value ?? string.Empty;
     internal static string SetParameterValue(this Meta meta, string? value) => meta.Value = value;
     internal static void SetParameterValueType(this Meta meta, FieldType valueType) => meta.DataType = (meta.DataType&0xFFF8) + ((byte)valueType)&127;

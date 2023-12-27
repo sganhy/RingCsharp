@@ -115,18 +115,22 @@ internal sealed class TableBuilder
         return metaTable.ToTable(new ArraySegment<Meta>(metaArray, 0, metaArray.Length),
                 tableType, ddlBuilder.GetPhysicalName(emptyTable, emptySchema)) ?? emptyTable;
     }
-    private static Meta GetTable(int id, string name) => new()
+    private static Meta GetTable(int id, string name) 
     {
-        Id = id,
-        Name = name,
-        ObjectType = (byte)EntityType.Table
-    };
-    private static Meta GetSchema(int id, string name) => new()
+        var result = new Meta();
+        result.SetEntityId(id);
+        result.SetEntityName(name);
+        result.SetEntityType(EntityType.Table);
+        return result;
+    }
+    private static Meta GetSchema(int id, string name) 
     {
-        Id = id,
-        Name = name,
-        ObjectType = (byte)EntityType.Schema
-    };
+        var result = new Meta();
+        result.SetEntityId(id);
+        result.SetEntityName(name);
+        result.SetEntityType(EntityType.Schema);
+        return result;
+    }
     private Meta GetField(string name, FieldType fieldType, bool notNull)
         => GetField(name, fieldType, 0, notNull);
     private Meta GetField(string name, FieldType fieldType, int fieldSize)
@@ -135,13 +139,11 @@ internal sealed class TableBuilder
         => GetField(name, fieldType, 0, true);
     private Meta GetField(string name, FieldType fieldType, int fieldSize, bool notNull)
     {
-        var meta = new Meta
-        {
-            Id = _ItemId++,
-            Name = name,
-            Flags = 0,
-            ObjectType = (byte)EntityType.Field
-        };
+        ++_ItemId;
+        var meta = new Meta();
+        meta.SetEntityType(EntityType.Field);
+        meta.SetEntityId(_ItemId);
+        meta.SetEntityName(name);
         meta.SetFieldNotNull(notNull);
         meta.SetFieldSize(fieldSize);
         meta.SetFieldType(fieldType);
@@ -150,15 +152,11 @@ internal sealed class TableBuilder
     }
     private static Meta GetUniqueIndex(int firstField, List<Meta> lstMeta)
     {
-        var meta = new Meta
-        {
-            Name = string.Empty,
-            Flags = 0,
-            ObjectType = (byte)EntityType.Index
-        };
+        var meta = new Meta();
         var fields = new List<string>();
-        for (var i = 0; i < firstField; ++i)
-            fields.Add(lstMeta[i].Name);
+        for (var i = 0; i < firstField; ++i) fields.Add(lstMeta[i].GetEntityName());
+        meta.SetEntityName(string.Empty);
+        meta.SetEntityType(EntityType.Index);
         meta.SetIndexUnique(true);
         meta.SetIndexedColumns(fields.ToArray());
         return meta;

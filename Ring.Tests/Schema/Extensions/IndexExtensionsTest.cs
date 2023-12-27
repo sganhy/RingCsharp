@@ -21,14 +21,14 @@ public class IndexExtensionsTest : BaseExtensionsTest
 
         // assert
         Assert.NotNull(meta);
-        Assert.Equal(1, meta.Id);
+        Assert.Equal(1, meta.GetEntityId());
         Assert.Equal(3, meta.ObjectType);
         Assert.Equal(1051, meta.ReferenceId);
         Assert.Equal(0, meta.DataType);
         Assert.Equal(8704, meta.Flags);
-        Assert.Equal("name", meta.Name);
+        Assert.Equal("name", meta.GetEntityName());
         Assert.Equal("name;race2book", meta.Value);
-        Assert.True(meta.Active);
+        Assert.True(meta.IsEntityActive());
     }
 
     [Fact]
@@ -47,14 +47,14 @@ public class IndexExtensionsTest : BaseExtensionsTest
 
         // assert
         Assert.NotNull(meta);
-        Assert.Equal(4, meta.Id);
+        Assert.Equal(4, meta.GetEntityId());
         Assert.Equal(3, meta.ObjectType);
         Assert.Equal(1031, meta.ReferenceId);
         Assert.Equal(0, meta.DataType);
         Assert.Equal(8192, meta.Flags);
-        Assert.Equal("prestige", meta.Name);
+        Assert.Equal("prestige", meta.GetEntityName());
         Assert.Equal("prestige", meta.Value);
-        Assert.True(meta.Active);
+        Assert.True(meta.IsEntityActive());
     }
 
 }

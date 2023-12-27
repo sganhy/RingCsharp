@@ -3,7 +3,10 @@ using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using Ring.Util.Extensions;
+using System.ComponentModel.DataAnnotations;
+using System;
 using System.Reflection;
+using System.Xml.Linq;
 using Index = Ring.Schema.Models.Index;
 
 namespace Ring.Tests.Schema.Extensions;
@@ -60,16 +63,14 @@ public abstract class BaseExtensionsTest
 
     internal Meta GetMeta1Table()
     {
-        var meta = new Meta
-        {
-            Id = 1061,
-            Name = "skill",
-            ObjectType = (byte)EntityType.Table,
-            DataType = 0,
-            Flags = 8704,
-            Description = _fixture.Create<string>(),
-            Active = true
-        };
+        var meta = new Meta();
+        meta.SetEntityId(1061);
+        meta.SetEntityName("skill");
+        meta.SetEntityType(EntityType.Table);
+        meta.DataType = 0;
+        meta.Flags = 8704;
+        meta.SetEntityDescription(_fixture.Create<string>());
+        meta.SetEntityActive(true);
         return meta;
     }
 
@@ -88,8 +89,8 @@ public abstract class BaseExtensionsTest
             new Meta() { Id = 1, Name = "skill2book", ObjectType = (byte)EntityType.Relation, DataType=1021,Flags=786448 }
         };
         foreach (var meta in metaList) { 
-            meta.Description = _fixture.Create<string>();
-            meta.Active = true;
+            meta.SetEntityDescription( _fixture.Create<string>());
+            meta.SetEntityActive(true);
             meta.ReferenceId = 1061;
         }
 
@@ -107,9 +108,9 @@ public abstract class BaseExtensionsTest
         };
         foreach (var meta in metaList)
         {
-            meta.Description = _fixture.Create<string>();
-            meta.Active = true;
-            meta.ReferenceId = 1061;
+            meta.SetEntityDescription(_fixture.Create<string>());
+            meta.SetEntityActive(true);
+            meta.SetEntityRefId(1061);
         }
         return metaList.ToArray();
     }
@@ -121,7 +122,6 @@ public abstract class BaseExtensionsTest
         var resourceName = "Ring.Tests.Resources.meta.csv";
 
 
-#pragma warning disable CS8600 
 #pragma warning disable CS8604 
         using (var stream = assembly.GetManifestResourceStream(resourceName))
         using (var reader = new StreamReader(stream))
@@ -133,21 +133,20 @@ public abstract class BaseExtensionsTest
                 if (line.Length < 6) continue;
                 var meta = new Meta
                 {
-                    Id = int.Parse(line[0]),
                     ObjectType = byte.Parse(line[2]),
                     ReferenceId = int.Parse(line[3]),
                     DataType = int.Parse(line[4]),
                     Flags = long.Parse(line[5]),
-                    Name = line[6],
-                    Description = line[7],
-                    Value = line[8],
-                    Active = bool.Parse(line[9])
+                    Value = line[8]
                 };
+                meta.SetEntityActive(bool.Parse(line[9]));
+                meta.SetEntityId(int.Parse(line[0]));
+                meta.SetEntityName(line[6]);
+                meta.SetEntityDescription(line[7]);
                 result.Add(meta);
             }
         }
 #pragma warning restore CS8604 
-#pragma warning restore CS8600 
         return result.ToArray();
     }
 

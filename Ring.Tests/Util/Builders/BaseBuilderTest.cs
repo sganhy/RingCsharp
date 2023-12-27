@@ -102,8 +102,8 @@ public class BaseBuilderTest
         };
         foreach (var meta in metaList)
         {
-            meta.Description = _fixture.Create<string>();
-            meta.Active = true;
+            meta.SetEntityDescription(_fixture.Create<string>());
+            meta.SetEntityActive(true);
             meta.ReferenceId = 1061;
         }
 
@@ -115,12 +115,12 @@ public class BaseBuilderTest
         {
             Id = 1061,
             Name = "skill",
-            ObjectType = (byte)EntityType.Table,
             DataType = 0,
-            Flags = 8704,
-            Description = _fixture.Create<string>(),
-            Active = true
+            Flags = 8704
         };
+        meta.SetEntityType(EntityType.Table);
+        meta.SetEntityActive(true);
+        meta.SetEntityDescription(_fixture.Create<string>());
         return meta;
     }
 
@@ -143,16 +143,16 @@ public class BaseBuilderTest
                 if (line.Length < 6) continue;
                 var meta = new Meta
                 {
-                    Id = int.Parse(line[0]),
                     ObjectType = byte.Parse(line[2]),
                     ReferenceId = int.Parse(line[3]),
                     DataType = int.Parse(line[4]),
                     Flags = long.Parse(line[5]),
-                    Name = line[6],
-                    Description = line[7],
-                    Value = line[8],
-                    Active = bool.Parse(line[9])
+                    Value = line[8]
                 };
+                meta.SetEntityActive(bool.Parse(line[9]));
+                meta.SetEntityId(int.Parse(line[0]));
+                meta.SetEntityName(line[6]);
+                meta.SetEntityDescription(line[7]);
                 result.Add(meta);
             }
         }

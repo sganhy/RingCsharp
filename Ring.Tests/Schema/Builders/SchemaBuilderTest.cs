@@ -27,6 +27,7 @@ public sealed class SchemaBuilderTest
 
         // assert
         Assert.NotNull(metaSchema);
+        Assert.True(metaSchema.Baseline);
         Assert.NotNull(metaTable);
         Assert.NotNull(metaLog);
         Assert.NotNull(metaId);

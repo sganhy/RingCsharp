@@ -16,7 +16,7 @@ internal sealed class SchemaBuilder
         var metaList = new List<Meta>();
         var source = SchemaSourceType.NativeDataBase;
         var loadType = SchemaLoadType.Full;
-        metaList.Add(new Meta() { ObjectType = (byte)EntityType.Schema, Name=schemaName });
+        metaList.Add(GetMetaWSchemaInfo(schemaName));
         metaList.Add(_parameterBuilder.GetParameter(ParameterType.MaxPoolSize, 
             maxConnPoolSize.ToString(CultureInfo.InvariantCulture),0).ToMeta()) ;
         metaList.AddRange(_tableBuilder.GetMeta(schemaName, provider).ToMeta(0));
@@ -25,5 +25,15 @@ internal sealed class SchemaBuilder
         return metaList.ToArray().ToSchema(provider, source, loadType);
     }
 
+    private static Meta GetMetaWSchemaInfo(string schemaName)
+    {
+        var meta = new Meta();
+        meta.SetEntityId(0);
+        meta.SetEntityName(schemaName);
+        meta.SetEntityType(EntityType.Schema);
+        meta.SetEntityBaseline(true);
+        meta.SetEntityActive(true);
+        return meta;
+    }
 
 }

@@ -182,11 +182,11 @@ public sealed class MetaExtensionsTest : BaseExtensionsTest
             ReferenceId = 1011,
             DataType = 16,
             Flags = 10493964,
-            Name = "name",
-            Description = _fixture.Create<string>(),
-            Value = null,
-            Active = true
+            Value = null
         };
+        meta.SetEntityActive(true);
+        meta.SetEntityName("name");
+        meta.SetEntityDescription(_fixture.Create<string>());
         var exepectedFieldType = FieldType.String;
         var exepectedFieldSize = 80;
 
@@ -195,10 +195,10 @@ public sealed class MetaExtensionsTest : BaseExtensionsTest
 
         // assert
         Assert.NotNull(field);
-        Assert.Equal(field.Id, meta.Id);
-        Assert.Equal(field.Name, meta.Name);
+        Assert.Equal(field.Id, meta.GetEntityId());
+        Assert.Equal(field.Name, meta.GetEntityName());
         Assert.Equal(field.Type, exepectedFieldType);
-        Assert.Equal(field.Description, meta.Description);
+        Assert.Equal(field.Description, meta.GetEntityDescription());
         Assert.Null(field.DefaultValue);
         Assert.Equal(field.Size, exepectedFieldSize);
         Assert.True(field.Active);
@@ -221,10 +221,10 @@ public sealed class MetaExtensionsTest : BaseExtensionsTest
             DataType = 16,
             Flags = 1712142,
             Name = "isbn",
-            Description = _fixture.Create<string>(),
-            Value = "Test2",
-            Active = false
+            Value = "Test2"
         };
+        meta.SetEntityActive(false);
+        meta.SetEntityDescription(_fixture.Create<string>());
         var exepectedFieldType = FieldType.String;
         var exepectedFieldSize = 13;
         var exepectedDefaultValue = "Test2";
@@ -234,10 +234,10 @@ public sealed class MetaExtensionsTest : BaseExtensionsTest
 
         // assert
         Assert.NotNull(field);
-        Assert.Equal(field.Id, meta.Id);
-        Assert.Equal(field.Name, meta.Name);
+        Assert.Equal(field.Id, meta.GetEntityId());
+        Assert.Equal(field.Name, meta.GetEntityName());
         Assert.Equal(field.Type, exepectedFieldType);
-        Assert.Equal(field.Description, meta.Description);
+        Assert.Equal(field.Description, meta.GetEntityDescription());
         Assert.Equal(field.DefaultValue, exepectedDefaultValue);
         Assert.Equal(field.Size, exepectedFieldSize);
         Assert.False(field.Active);
@@ -260,10 +260,10 @@ public sealed class MetaExtensionsTest : BaseExtensionsTest
             DataType = 2,
             Flags = 6,
             Name = "status",
-            Description = _fixture.Create<string>(),
-            Value = "Test3",
-            Active = true
+            Value = "Test3"
         };
+        meta.SetEntityActive(true);
+        meta.SetEntityDescription(_fixture.Create<string>());
         var exepectedFieldType = FieldType.Short;
         var exepectedFieldSize = 0;
         var exepectedDefaultValue = "Test3";
@@ -273,10 +273,10 @@ public sealed class MetaExtensionsTest : BaseExtensionsTest
 
         // assert
         Assert.NotNull(field);
-        Assert.Equal(field.Id, meta.Id);
-        Assert.Equal(field.Name, meta.Name);
+        Assert.Equal(field.Id, meta.GetEntityId());
+        Assert.Equal(field.Name, meta.GetEntityName());
         Assert.Equal(field.Type, exepectedFieldType);
-        Assert.Equal(field.Description, meta.Description);
+        Assert.Equal(field.Description, meta.GetEntityDescription());
         Assert.Equal(field.DefaultValue, exepectedDefaultValue);
         Assert.Equal(field.Size, exepectedFieldSize);
         Assert.True(field.Active);
@@ -299,10 +299,10 @@ public sealed class MetaExtensionsTest : BaseExtensionsTest
             DataType = 2,
             Flags = 6,
             Name = "status",
-            Description = _fixture.Create<string>(),
-            Value = "Test3",
-            Active = true
+            Value = "Test3"
         };
+        meta.SetEntityActive(true);
+        meta.SetEntityDescription(_fixture.Create<string>());
 
         // act 
         var field = MetaExtensions.ToField(meta);
@@ -325,10 +325,10 @@ public sealed class MetaExtensionsTest : BaseExtensionsTest
             DataType = 2,
             Flags = 6,
             Name = "status",
-            Description = _fixture.Create<string>(),
-            Value = null,
-            Active = true
+            Value = null
         };
+        meta.SetEntityActive(true);
+        meta.SetEntityDescription(_fixture.Create<string>());
         var exepectedFieldType = FieldType.Int;
         meta.SetFieldType(exepectedFieldType);
         var exepectedFieldSize = 0;
@@ -339,10 +339,10 @@ public sealed class MetaExtensionsTest : BaseExtensionsTest
 
         // assert
         Assert.NotNull(field);
-        Assert.Equal(field.Id, meta.Id);
-        Assert.Equal(field.Name, meta.Name);
+        Assert.Equal(field.Id, meta.GetEntityId());
+        Assert.Equal(field.Name, meta.GetEntityName());
         Assert.Equal(field.Type, exepectedFieldType);
-        Assert.Equal(field.Description, meta.Description);
+        Assert.Equal(field.Description, meta.GetEntityDescription());
         Assert.Equal(field.DefaultValue, exepectedDefaultValue);
         Assert.Equal(field.Size, exepectedFieldSize);
         Assert.True(field.Active);
@@ -395,10 +395,10 @@ public sealed class MetaExtensionsTest : BaseExtensionsTest
             DataType = 0,
             Flags = 8704,
             Name = name,
-            Description = _fixture.Create<string>(),
-            Value = "name;object2book",
-            Active = true
+            Value = "name;object2book"
         };
+        meta.SetEntityActive(true);
+        meta.SetEntityDescription(_fixture.Create<string>());
 
         // act 
         var index = meta.ToIndex();
@@ -407,7 +407,7 @@ public sealed class MetaExtensionsTest : BaseExtensionsTest
         Assert.NotNull(index);
         Assert.Equal(index.Id, id);
         Assert.Equal(index.Name, name);
-        Assert.Equal(index.Description, meta.Description);
+        Assert.Equal(index.Description, meta.GetEntityDescription());
         Assert.True(index.Active);
         Assert.True(index.Baseline);
         Assert.True(index.Unique);
@@ -488,10 +488,10 @@ public sealed class MetaExtensionsTest : BaseExtensionsTest
             DataType = 1021,
             Flags = 786448,
             Name = "ability2book",
-            Description = _fixture.Create<string>(),
-            Value = "book2ability",
-            Active = true
+            Value = "book2ability"
         };
+        meta.SetEntityActive(true);
+        meta.SetEntityDescription(_fixture.Create<string>());
         var exepectedRelType = RelationType.Mtm;
 
         // act 
@@ -499,10 +499,10 @@ public sealed class MetaExtensionsTest : BaseExtensionsTest
 
         // assert
         Assert.NotNull(relation);
-        Assert.Equal(relation.Id, meta.Id);
-        Assert.Equal(relation.Name, meta.Name);
+        Assert.Equal(relation.Id, meta.GetEntityId());
+        Assert.Equal(relation.Name, meta.GetEntityName());
         Assert.Equal(relation.Type, exepectedRelType);
-        Assert.Equal(relation.Description, meta.Description);
+        Assert.Equal(relation.Description, meta.GetEntityDescription());
         Assert.True(relation.Active);
         Assert.False(relation.NotNull);
         Assert.False(relation.Baseline);
@@ -523,19 +523,19 @@ public sealed class MetaExtensionsTest : BaseExtensionsTest
             DataType = 16,
             Flags = 286720,
             Name = "@language",
-            Description = _fixture.Create<string>(),
-            Value = expectedValue,
-            Active = true
+            Value = expectedValue
         };
+        meta.SetEntityActive(true);
+        meta.SetEntityDescription(_fixture.Create<string>());
 
         // act 
         var parameter = MetaExtensions.ToParameter(meta);
 
         // assert
         Assert.NotNull(parameter);
-        Assert.Equal(meta.Id, parameter.Id);
-        Assert.Equal(meta.Name, parameter.Name);
-        Assert.Equal(meta.Description, parameter.Description);
+        Assert.Equal(meta.GetEntityId(), parameter.Id);
+        Assert.Equal(meta.GetEntityName(), parameter.Name);
+        Assert.Equal(meta.GetEntityDescription(), parameter.Description);
         Assert.Equal(expectedValue, parameter.Value);
         Assert.Equal(FieldType.String, parameter.ValueType);
         Assert.True(parameter.Baseline);
@@ -590,28 +590,28 @@ public sealed class MetaExtensionsTest : BaseExtensionsTest
         var meta = new Meta
         {
             Id = 2,
-            ObjectType = (byte)EntityType.Tablespace,
             ReferenceId = 0,
             DataType = 0,
             Flags = 1024,
             Name = "rpg_index",
-            Description = _fixture.Create<string>(),
-            Value = "c:\\temp\\rpg\\index",
-            Active = true
+            Value = "c:\\temp\\rpg\\index"
         };
+        meta.SetEntityType(EntityType.Tablespace);
+        meta.SetEntityActive(true);
+        meta.SetEntityDescription(_fixture.Create<string>());
 
         // act 
         var tableSpace = MetaExtensions.ToTableSpace(meta);
 
         // assert
         Assert.NotNull(tableSpace);
-        Assert.Equal(tableSpace.Description, meta.Description);
-        Assert.Equal(tableSpace.Name, meta.Name);
+        Assert.Equal(tableSpace.Description, meta.GetEntityDescription());
+        Assert.Equal(tableSpace.Name, meta.GetEntityName());
         Assert.True(tableSpace.Index);
         Assert.False(tableSpace.Table);
         Assert.False(tableSpace.Constraint);
         Assert.True(tableSpace.Active);
-        Assert.Equal(tableSpace.Id, meta.Id);
+        Assert.Equal(tableSpace.Id, meta.GetEntityId());
     }
 
     [Fact]
@@ -749,9 +749,9 @@ public sealed class MetaExtensionsTest : BaseExtensionsTest
         var relation = MetaExtensions.GetEmptyRelation(meta, RelationType.Otm);
 
         // assert
-        Assert.Equal(relation.Name, meta.Name);
+        Assert.Equal(relation.Name, meta.GetEntityName());
         Assert.Equal(RelationType.Otm, relation.Type);
-        Assert.Equal(relation.ToTable.Name, meta.Name);
+        Assert.Equal(relation.ToTable.Name, meta.GetEntityName());
         Assert.Equal(TableType.Fake, relation.ToTable.Type);
     }
 
