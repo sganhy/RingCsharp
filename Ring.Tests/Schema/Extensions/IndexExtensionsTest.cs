@@ -22,8 +22,8 @@ public class IndexExtensionsTest : BaseExtensionsTest
         // assert
         Assert.NotNull(meta);
         Assert.Equal(1, meta.GetEntityId());
-        Assert.Equal(3, meta.ObjectType);
-        Assert.Equal(1051, meta.ReferenceId);
+        Assert.Equal(EntityType.Index, meta.GetEntityType());
+        Assert.Equal(1051, meta.GetEntityRefId());
         Assert.Equal(0, meta.DataType);
         Assert.Equal(8704, meta.Flags);
         Assert.Equal("name", meta.GetEntityName());
@@ -48,8 +48,8 @@ public class IndexExtensionsTest : BaseExtensionsTest
         // assert
         Assert.NotNull(meta);
         Assert.Equal(4, meta.GetEntityId());
-        Assert.Equal(3, meta.ObjectType);
-        Assert.Equal(1031, meta.ReferenceId);
+        Assert.Equal(EntityType.Index, meta.GetEntityType());
+        Assert.Equal(1031, meta.GetEntityRefId());
         Assert.Equal(0, meta.DataType);
         Assert.Equal(8192, meta.Flags);
         Assert.Equal("prestige", meta.GetEntityName());

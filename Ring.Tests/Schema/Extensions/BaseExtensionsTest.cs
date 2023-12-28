@@ -91,7 +91,7 @@ public abstract class BaseExtensionsTest
         foreach (var meta in metaList) { 
             meta.SetEntityDescription( _fixture.Create<string>());
             meta.SetEntityActive(true);
-            meta.ReferenceId = 1061;
+            meta.SetEntityRefId(1061);
         }
 
         return metaList.ToArray();
@@ -134,11 +134,11 @@ public abstract class BaseExtensionsTest
                 var meta = new Meta
                 {
                     ObjectType = byte.Parse(line[2]),
-                    ReferenceId = int.Parse(line[3]),
                     DataType = int.Parse(line[4]),
                     Flags = long.Parse(line[5]),
                     Value = line[8]
                 };
+                meta.SetEntityRefId(int.Parse(line[3]));
                 meta.SetEntityActive(bool.Parse(line[9]));
                 meta.SetEntityId(int.Parse(line[0]));
                 meta.SetEntityName(line[6]);

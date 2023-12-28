@@ -104,7 +104,7 @@ public class BaseBuilderTest
         {
             meta.SetEntityDescription(_fixture.Create<string>());
             meta.SetEntityActive(true);
-            meta.ReferenceId = 1061;
+            meta.SetEntityRefId(1061);
         }
 
         return metaList.ToArray();
@@ -113,11 +113,11 @@ public class BaseBuilderTest
     {
         var meta = new Meta
         {
-            Id = 1061,
-            Name = "skill",
             DataType = 0,
             Flags = 8704
         };
+        meta.SetEntityId(1061);
+        meta.SetEntityName("skill");
         meta.SetEntityType(EntityType.Table);
         meta.SetEntityActive(true);
         meta.SetEntityDescription(_fixture.Create<string>());
@@ -144,11 +144,11 @@ public class BaseBuilderTest
                 var meta = new Meta
                 {
                     ObjectType = byte.Parse(line[2]),
-                    ReferenceId = int.Parse(line[3]),
                     DataType = int.Parse(line[4]),
                     Flags = long.Parse(line[5]),
                     Value = line[8]
                 };
+                meta.SetEntityRefId(int.Parse(line[3]));
                 meta.SetEntityActive(bool.Parse(line[9]));
                 meta.SetEntityId(int.Parse(line[0]));
                 meta.SetEntityName(line[6]);

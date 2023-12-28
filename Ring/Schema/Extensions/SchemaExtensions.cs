@@ -87,7 +87,7 @@ internal static class SchemaExtensions
             {
                 var meta = schemaItems[i];
                 var fromTable = schema.GetTable(meta.ReferenceId); // get table by id
-                var toTable = schema.GetTable(meta.DataType); // get table by id
+                var toTable = schema.GetTable(meta.DataType);
                 if (toTable != null && fromTable!=null)
                 {
                     var relation = meta.ToRelation(toTable);

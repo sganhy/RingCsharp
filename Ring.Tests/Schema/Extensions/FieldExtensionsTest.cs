@@ -36,7 +36,7 @@ public class FieldExtensionsTest : BaseExtensionsTest
         Assert.Equal(meta.GetEntityDescription(), description);
         Assert.Equal(meta.GetFieldType(), fieldType);
         Assert.Equal(meta.GetFieldSize(), size);
-        Assert.Equal(meta.ReferenceId, tableId);
+        Assert.Equal(meta.GetEntityRefId(), tableId);
         Assert.True(meta.IsEntityBaseline());
         Assert.True(meta.IsFieldNotNull());
         Assert.True(meta.IsFieldMultilingual());
@@ -65,7 +65,7 @@ public class FieldExtensionsTest : BaseExtensionsTest
         Assert.Equal(meta.GetEntityDescription(), description);
         Assert.Equal(meta.GetFieldType(), fieldType);
         Assert.Equal(meta.GetFieldSize(), size);
-        Assert.Equal(meta.ReferenceId, tableId);
+        Assert.Equal(meta.GetEntityRefId(), tableId);
         Assert.False(meta.IsEntityBaseline());
         Assert.False(meta.IsFieldNotNull());
         Assert.False(meta.IsFieldMultilingual());

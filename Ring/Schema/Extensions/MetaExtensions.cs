@@ -187,10 +187,14 @@ internal static class MetaExtensions
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static void SetEntityName(this Meta meta, string name) => meta.Name = name;
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static string GetEntityName(this Meta meta) => meta.Name ?? string.Empty;
+
     internal static void SetEntityRefId(this Meta meta, int refId) => meta.ReferenceId = refId;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static string GetEntityName(this Meta meta) => meta.Name ?? string.Empty;
+    internal static int GetEntityRefId(this Meta meta) => meta.ReferenceId;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int GetEntityId(this Meta meta) => meta.Id;
