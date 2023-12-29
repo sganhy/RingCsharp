@@ -2,6 +2,7 @@
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.Design.Serialization;
 using System.Reflection;
 using Index = Ring.Schema.Models.Index;
@@ -90,15 +91,15 @@ public class BaseBuilderTest
     {
         var metaList = new List<Meta>
         {
-            new Meta() { Id = 2, Name = "name", ObjectType = (byte)EntityType.Field, DataType=16,Flags=10493964 },
-            new Meta() { Id = 3, Name = "sub_name", ObjectType = (byte)EntityType.Field, DataType=16,Flags=3932170 },
-            new Meta() { Id = 4, Name = "is_group", ObjectType = (byte)EntityType.Field, DataType=23,Flags=6 },
-            new Meta() { Id = 5, Name = "category", ObjectType = (byte)EntityType.Field, DataType=16,Flags=1048578 },
-            new Meta() { Id = 6, Name = "armor_penality", ObjectType = (byte)EntityType.Field, DataType=3,Flags=6 },
-            new Meta() { Id = 7, Name = "trained_only", ObjectType = (byte)EntityType.Field, DataType=23,Flags=6 },
-            new Meta() { Id = 8, Name = "try_again", ObjectType = (byte)EntityType.Field, DataType=23,Flags=6 },
-            new Meta() { Id = 1, Name = "id", ObjectType = (byte)EntityType.Field, DataType=2,Flags=2 },
-            new Meta() { Id = 1, Name = "skill2ability", ObjectType = (byte)EntityType.Relation, DataType=1021,Flags=2883600 }
+            { GetMeta(2,"name", EntityType.Field,16, 10493964L) },
+            { GetMeta(3,"sub_name", EntityType.Field,16, 3932170L) },
+            { GetMeta(4,"is_group", EntityType.Field,23, 6L) },
+            { GetMeta(5,"category", EntityType.Field,16, 1048578L) },
+            { GetMeta(6,"armor_penality", EntityType.Field,3, 6L) },
+            { GetMeta(7,"trained_only", EntityType.Field,23, 6L) },
+            { GetMeta(8,"try_again", EntityType.Field,23, 6L) },
+            { GetMeta(1,"id", EntityType.Field,2, 2L) },
+            { GetMeta(1,"skill2book", EntityType.Relation,1021, 2883600L) }
         };
         foreach (var meta in metaList)
         {
@@ -143,11 +144,11 @@ public class BaseBuilderTest
                 if (line.Length < 6) continue;
                 var meta = new Meta
                 {
-                    ObjectType = byte.Parse(line[2]),
                     DataType = int.Parse(line[4]),
                     Flags = long.Parse(line[5]),
                     Value = line[8]
                 };
+                meta.SetEntityType(byte.Parse(line[2]));
                 meta.SetEntityRefId(int.Parse(line[3]));
                 meta.SetEntityActive(bool.Parse(line[9]));
                 meta.SetEntityId(int.Parse(line[0]));
@@ -159,6 +160,17 @@ public class BaseBuilderTest
 #pragma warning restore CS8604 
 #pragma warning restore CS8600 
         return result.ToArray();
+    }
+
+    private Meta GetMeta(int id, string name, EntityType entityType, int dataType, long flags)
+    {
+        var result = new Meta();
+        result.SetEntityId(id);
+        result.SetEntityName(name);
+        result.SetEntityType(entityType);
+        result.Flags = flags;
+        result.DataType = dataType;
+        return result;
     }
 
 }

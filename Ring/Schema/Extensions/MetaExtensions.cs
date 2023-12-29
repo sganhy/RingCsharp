@@ -222,6 +222,7 @@ internal static class MetaExtensions
         return EntityType.Undefined;
     }
     internal static void SetEntityType(this Meta meta, EntityType entityType) => meta.ObjectType = (byte)entityType;
+    internal static void SetEntityType(this Meta meta, byte entityType) => meta.ObjectType = entityType;
     internal static bool IsEntityBaseline(this Meta meta) => meta.ReadFlag(BitPositionEntityBaseline);
     internal static void SetEntityBaseline(this Meta meta, bool value) => meta.WriteFlag(BitPositionEntityBaseline, value);
 

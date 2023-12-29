@@ -370,7 +370,7 @@ public sealed class MetaExtensionsTest : BaseExtensionsTest
     {
         // arrange
         var meta = _fixture.Create<Meta>();
-        meta.ObjectType = dataType;
+        meta.SetEntityType(dataType);
 
         // act 
         var result = MetaExtensions.GetEntityType(meta);
