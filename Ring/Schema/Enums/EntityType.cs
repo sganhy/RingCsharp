@@ -1,7 +1,8 @@
 ﻿namespace Ring.Schema.Enums;
 
-//more than 127 reserved for unitesting
-//value should be defined as [0,126[ 
+/// <summary>
+/// more than 127 reserved for unitesting; value should be defined as [0,126[ 
+/// </summary>
 internal enum EntityType : byte
 {
     Table       = 0,

@@ -16,13 +16,18 @@ internal sealed class SchemaBuilder
         var metaList = new List<Meta>();
         var source = SchemaSourceType.NativeDataBase;
         var loadType = SchemaLoadType.Full;
-        metaList.Add(GetMetaWSchemaInfo(schemaName));
+        var schemaInfo = GetMetaWSchemaInfo(schemaName);
+        metaList.Add(schemaInfo);
         metaList.Add(_parameterBuilder.GetParameter(ParameterType.MaxPoolSize, 
             maxConnPoolSize.ToString(CultureInfo.InvariantCulture),0).ToMeta()) ;
         metaList.AddRange(_tableBuilder.GetMeta(schemaName, provider).ToMeta(0));
         metaList.AddRange(_tableBuilder.GetMetaId(schemaName, provider).ToMeta(0));
         metaList.AddRange(_tableBuilder.GetLog(schemaName, provider).ToMeta(0));
-        return metaList.ToArray().ToSchema(provider, source, loadType);
+        var result = metaList.ToArray().ToSchema(provider, source, loadType) ?? MetaExtensions.GetEmptySchema(schemaInfo, provider);
+        // initialise cache for : DmlBuiler & DqlBuiler
+        result.DmlBuiler.Init(result);
+        result.DqlBuiler.Init(result);
+        return result;
     }
 
     private static Meta GetMetaWSchemaInfo(string schemaName)
