@@ -16,5 +16,4 @@ internal static class Global
         _defaultSchema = _metaSchema;
     }
 
-
 }

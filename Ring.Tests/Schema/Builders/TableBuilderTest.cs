@@ -78,7 +78,39 @@ public class TableBuilderTest
         Assert.Equal(FieldType.Byte, metaIdTable.Fields[metaIdTable.ColumnMapper[2]].Type);
         Assert.Equal(FieldType.Long, metaIdTable.Fields[metaIdTable.ColumnMapper[3]].Type);
     }
-    
+
+    [Fact]
+    internal void GetCatalog_PostgreSqlTable_TableCatalog()
+    {
+        // arrange 
+        // act 
+        var catalog = _sut.GetCatalog(EntityType.Table, DatabaseProvider.PostgreSql);
+        catalog.LoadColumnMapper();
+
+        // assert
+        Assert.Equal("information_schema.tables", catalog.PhysicalName);
+        Assert.Equal(PhysicalType.View, catalog.PhysicalType);
+        Assert.Equal(2, catalog.Fields.Length);
+        Assert.Equal("table_schema", catalog.Fields[catalog.ColumnMapper[0]].Name);
+        Assert.Equal("table_name", catalog.Fields[catalog.ColumnMapper[1]].Name);
+    }
+
+    [Fact]
+    internal void GetCatalog_MySqlTable_TableCatalog()
+    {
+        // arrange 
+        // act 
+        var catalog = _sut.GetCatalog(EntityType.Table, DatabaseProvider.MySql);
+        catalog.LoadColumnMapper();
+
+        // assert
+        Assert.Equal("information_schema.tables", catalog.PhysicalName);
+        Assert.Equal(PhysicalType.View, catalog.PhysicalType);
+        Assert.Equal(2, catalog.Fields.Length);
+        Assert.Equal("table_schema", catalog.Fields[catalog.ColumnMapper[0]].Name);
+        Assert.Equal("table_name", catalog.Fields[catalog.ColumnMapper[1]].Name);
+    }
+
     [Fact]
     internal void GetLog_AnonymousSchema_LogTableObject()
     {

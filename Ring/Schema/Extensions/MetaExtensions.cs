@@ -242,7 +242,7 @@ internal static class MetaExtensions
     /// <param name="items">sorted by name, to improve performance</param>
     /// <param name="tableType">table type is define by schema builder</param>
     /// <param name="physicalName">physical name is define by provider</param>
-    internal static Table? ToTable(this Meta meta, ArraySegment<Meta> tableItems, TableType tableType, string physicalName)
+    internal static Table? ToTable(this Meta meta, ArraySegment<Meta> tableItems, TableType tableType, PhysicalType physicalType, string physicalName)
     {
         if (meta.IsTable())
         {
@@ -256,8 +256,8 @@ internal static class MetaExtensions
             Array.Sort(indexes, (x, y) => string.CompareOrdinal(x.Name, y.Name));
 
             var result = new Table(meta.GetEntityId(), meta.GetEntityName(), meta.GetEntityDescription(), meta.Value, physicalName,
-                tableType, relations, fields, new int[columnMapperSize], indexes, meta.ReferenceId, 
-                PhysicalType.Table, meta.IsEntityBaseline(), meta.IsEntityActive(), meta.IsTableCached(), meta.IsTableReadonly());
+                tableType, relations, fields, new int[columnMapperSize], indexes, meta.ReferenceId,
+                physicalType, meta.IsEntityBaseline(), meta.IsEntityActive(), meta.IsTableCached(), meta.IsTableReadonly());
 
             return result;
         }
@@ -495,7 +495,7 @@ internal static class MetaExtensions
                 var segment = dico.ContainsKey(metaTable.Id) ?
                     new ArraySegment<Meta>(schema, dico[metaTable.Id].Item1, dico[metaTable.Id].Item2) :
                     new ArraySegment<Meta>(schema, 0, 0);
-                var table = schema[i].ToTable(segment, TableType.Business, physicalName);
+                var table = schema[i].ToTable(segment, TableType.Business, PhysicalType.Table, physicalName);
                 if (table!=null) result.Add(table);
             }
         }

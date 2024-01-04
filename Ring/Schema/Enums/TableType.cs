@@ -10,8 +10,8 @@ internal enum TableType : byte
     Log                   = 7,
     Lexicon               = 8,
     LexiconItem           = 9,
-    SchemaDictionary      = 22,
-    TableDictionary       = 24,
-    TableSpaceDictionary  = 25,
+    SchemaCatalog         = 22,
+    TableCatalog          = 24,
+    TableSpaceCatalog     = 25,
     Logical               = 27
 }

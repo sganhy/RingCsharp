@@ -13,8 +13,8 @@ internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
     private readonly IDdlBuilder _ddlBuilder;
 
     // clauses
-    private static readonly string DqlSelect = @"SELECT ";
-    private static readonly string DqlFrom = @" FROM ";
+    protected static readonly string DqlSelect = @"SELECT ";
+    protected static readonly string DqlFrom = @" FROM ";
 
     internal BaseDqlBuilder() : base()
     {
@@ -43,6 +43,11 @@ internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
         return result;
     }
 
+    public string Exists(Table table)
+    {
+        return BuildSelect(table);
+    }
+
     #region private methods 
 
     private string BuildSelect(Table table)
@@ -65,8 +70,8 @@ internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
         result.Append(DqlFrom);
         result.Append(table.PhysicalName);
         return result.ToString();
-    }
+    }  
 
-    #endregion 
+    #endregion
 
 }

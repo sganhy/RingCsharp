@@ -17,9 +17,9 @@ internal sealed class Table : BaseEntity
 	internal readonly CacheId CacheId;
 	internal readonly bool Readonly;
 
-    /// <summary>
-    ///     Ctor
-    /// </summary>
+	/// <summary>
+	///     Ctor
+	/// </summary>
 	internal Table(int id, string name, string? description, string? subject, string physicalName, TableType type,
 		Relation[] relations, Field[] fields, int [] mapper, Index[] indexes, int schemaId, PhysicalType physicalType, 
 		bool baseline, bool active, bool cached, bool readonlyTable) : base(id, name, description, active, baseline)

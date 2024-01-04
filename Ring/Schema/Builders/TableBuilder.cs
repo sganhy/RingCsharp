@@ -6,7 +6,6 @@ namespace Ring.Schema.Builders;
 
 internal sealed class TableBuilder
 {
-    private int _ItemId = 1;
     internal static readonly string SystemTablePrefix = "@";
     internal static readonly string TableMetaIdName = SystemTablePrefix + "meta_id";
     internal static readonly string TableMetaName = SystemTablePrefix + "meta";
@@ -30,8 +29,17 @@ internal sealed class TableBuilder
     internal static readonly string FieldLineNumber = "line_number";
     internal static readonly string FieldMessage = "message";
 
+    // catalogs 
+    private static readonly Dictionary<EntityType,Catalog> _postreSqlCatalog= new () {
+        { EntityType.Table, new Catalog { FieldSchemaName="table_schema", FieldEntityName= "table_name", ViewName="tables" } }
+    };
+
+
+#pragma warning disable CA1822 // Mark members as static
     internal Table GetMeta(string schemaName, DatabaseProvider provider)
     {
+#pragma warning restore CA1822 
+
         var metaList = new List<Meta> {
             GetField(FieldId, FieldType.Int),
             GetField(FieldSchemaId, FieldType.Int),
@@ -50,8 +58,11 @@ internal sealed class TableBuilder
         result.LoadColumnMapper();
         return result;
     }
+
+#pragma warning disable CA1822 // Mark members as static
     internal Table GetMetaId(string schemaName, DatabaseProvider provider)
     {
+#pragma warning restore CA1822 
         var metaList = new List<Meta> {
             GetField(FieldId, FieldType.Int),
             GetField(FieldSchemaId, FieldType.Int),
@@ -64,7 +75,9 @@ internal sealed class TableBuilder
         result.LoadColumnMapper();
         return result;
     }
+#pragma warning disable CA1822 // Mark members as static
     internal Table GetLog(string schemaName, DatabaseProvider provider)
+#pragma warning restore CA1822
     {
         var metaList = new List<Meta> {
             GetField(FieldId, FieldType.Long),
@@ -84,7 +97,23 @@ internal sealed class TableBuilder
         result.LoadColumnMapper();
         return result;
     }
-    internal static Table GetMtmTable(Table partialTable, string physicalName)
+
+#pragma warning disable CA1822 // Mark members as static
+    internal Table GetCatalog(EntityType entityType, DatabaseProvider provider)
+    {
+#pragma warning restore CA1822
+        var tableType = GetTablType(entityType);
+        var metaList = new List<Meta>(){ GetField(GetSchemaFieldName(provider,entityType), FieldType.String) };
+        if (entityType != EntityType.Schema)
+            metaList.Add(GetField(GetEntityFieldName(provider, entityType), FieldType.String));
+        var catalog = GetTable((int)tableType, GetCatalogViewName(provider, entityType));
+        var result = GetTable(GetCatalogSchemaName(provider), provider, metaList.ToArray(), catalog, 
+            tableType,PhysicalType.View);
+        result.LoadColumnMapper();
+        return result;
+    }
+
+    internal static Table GetMtm(Table partialTable, string physicalName)
     {
         // add @ prefix to logical name
         var metaTable = new Meta(SystemTablePrefix + partialTable.Name);
@@ -98,7 +127,7 @@ internal sealed class TableBuilder
         metaIndex.SetIndexedColumns(new string[] { partialTable.Name, partialTable.Name });
         var metaArr = new Meta[] { metaRelation, metaRelation, metaIndex };
         var segMent = new ArraySegment<Meta>(metaArr, 0, 3);
-        var result = MetaExtensions.ToTable(metaTable, segMent, TableType.Mtm, physicalName) ?? partialTable;
+        var result = MetaExtensions.ToTable(metaTable, segMent, TableType.Mtm, PhysicalType.Table, physicalName) ?? partialTable;
         result.ColumnMapper[0]=0; // columnMapper 4 Mtm table is always {0,1}
         result.ColumnMapper[1]=1; // columnMapper 4 Mtm table is always {0,1}
         return result;
@@ -106,14 +135,16 @@ internal sealed class TableBuilder
 
     #region private methods 
 
-    private static Table GetTable(string schemaName, DatabaseProvider provider, Meta[] metaArray, Meta metaTable, TableType tableType)
+    private static Table GetTable(string schemaName, DatabaseProvider provider, Meta[] metaArray, Meta metaTable, TableType tableType, 
+        PhysicalType? physicalType=null)
     {
         var ddlBuilder = provider.GetDdlBuilder();
-        var emptyTable = MetaExtensions.GetEmptyTable(metaTable, TableType.Meta);
+        var emptyTable = MetaExtensions.GetEmptyTable(metaTable, tableType);
         var emptySchema = MetaExtensions.GetEmptySchema(GetSchema(0, schemaName), provider);
         metaTable.SetEntityBaseline(true);
+        for (var i=0; i<metaArray.Length; ++i) metaArray[i].SetEntityId(i);
         return metaTable.ToTable(new ArraySegment<Meta>(metaArray, 0, metaArray.Length),
-                tableType, ddlBuilder.GetPhysicalName(emptyTable, emptySchema)) ?? emptyTable;
+                tableType, physicalType ?? PhysicalType.Table, ddlBuilder.GetPhysicalName(emptyTable, emptySchema)) ?? emptyTable;
     }
     private static Meta GetTable(int id, string name) 
     {
@@ -131,19 +162,18 @@ internal sealed class TableBuilder
         result.SetEntityType(EntityType.Schema);
         return result;
     }
-    private Meta GetField(string name, FieldType fieldType, bool notNull)
+    private static Meta GetField(string name, FieldType fieldType, bool notNull)
         => GetField(name, fieldType, 0, notNull);
-    private Meta GetField(string name, FieldType fieldType, int fieldSize)
+    private static Meta GetField(string name, FieldType fieldType, int fieldSize)
         => GetField(name, fieldType, fieldSize, true);
-    private Meta GetField(string name, FieldType fieldType)
+    private static Meta GetField(string name, FieldType fieldType)
         => GetField(name, fieldType, 0, true);
-    private Meta GetField(string name, FieldType fieldType, int fieldSize, bool notNull)
+    private static Meta GetField(string name, FieldType fieldType, int fieldSize, bool notNull)
     {
-        ++_ItemId;
         var meta = new Meta();
         meta.SetEntityType(EntityType.Field);
-        meta.SetEntityId(_ItemId);
         meta.SetEntityName(name);
+        meta.SetFieldCaseSensitive(true);
         meta.SetFieldNotNull(notNull);
         meta.SetFieldSize(fieldSize);
         meta.SetFieldType(fieldType);
@@ -160,6 +190,79 @@ internal sealed class TableBuilder
         meta.SetIndexUnique(true);
         meta.SetIndexedColumns(fields.ToArray());
         return meta;
+    }
+    private static TableType GetTablType(EntityType entityType)
+    {
+        TableType result;
+        switch (entityType)
+        {
+            case EntityType.Table:
+                result = TableType.TableCatalog;
+                break;
+            case EntityType.Schema:
+                result = TableType.SchemaCatalog;
+                break;
+            case EntityType.Tablespace:
+                result = TableType.TableCatalog;
+                break;
+            default:
+                result = TableType.Logical;
+                break;
+        }
+        return result;
+    }
+    private static string GetCatalogSchemaName(DatabaseProvider provider)
+    {
+        string result;
+        switch (provider)
+        {
+            case DatabaseProvider.PostgreSql:
+            case DatabaseProvider.MySql:
+            case DatabaseProvider.SqlServer:
+                result = "information_schema";
+                break;
+            default:
+                result = string.Empty;
+                break;
+        }
+        return result;
+    }
+    private static string GetCatalogViewName(DatabaseProvider provider, EntityType entityType)
+    {
+        var result = string.Empty;
+        switch (provider)
+        {
+            case DatabaseProvider.PostgreSql:
+            case DatabaseProvider.MySql:
+                result = _postreSqlCatalog[entityType].ViewName;
+                break;
+        }
+        return result;
+    }
+    private static string GetSchemaFieldName(DatabaseProvider provider, EntityType entityType)
+    {
+        var result = string.Empty;
+        switch (provider)
+        {
+            case DatabaseProvider.PostgreSql:
+            case DatabaseProvider.MySql:
+                result = _postreSqlCatalog[entityType].FieldSchemaName;
+                break;
+        }
+        return result;
+    }
+
+    private static string GetEntityFieldName(DatabaseProvider provider, EntityType entityType)
+    {
+        var result = string.Empty;
+        switch (provider)
+        {
+            case DatabaseProvider.PostgreSql:
+            case DatabaseProvider.MySql:
+                result = _postreSqlCatalog[entityType].FieldEntityName;
+                break;
+        }
+        return result;
     }
 
     #endregion

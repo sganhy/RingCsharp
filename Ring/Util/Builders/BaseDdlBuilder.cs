@@ -152,6 +152,11 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
                 result.Append(tableName);
                 result.Append(EndPhysicalNameDelimiter);
                 break;
+            case TableType.SchemaCatalog:
+            case TableType.TableCatalog:
+            case TableType.TableSpaceCatalog:
+                result.Append(tableName);
+                break; 
             default:
                 if (table.Name.StartsWith(SpecialEntityPrefix))
                 {

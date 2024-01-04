@@ -7,4 +7,6 @@ internal interface IDqlBuilder : ISqlBuilder
 {
     void Init(DbSchema schema);
     string SelectFrom(Table table);
+    string Exists(Table table);
+
 }

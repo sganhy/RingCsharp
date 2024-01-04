@@ -624,7 +624,7 @@ public sealed class MetaExtensionsTest : BaseExtensionsTest
         var segment = new ArraySegment<Meta>(metaItems, 0, metaItems.Length);
 
         // act 
-        var table = MetaExtensions.ToTable(metaTable, segment, TableType.Fake, physicalName);
+        var table = MetaExtensions.ToTable(metaTable, segment, TableType.Fake, PhysicalType.Table, physicalName);
         var field = table?.GetField("name");
         var fieldPk = table?.GetField("id");
 
@@ -660,7 +660,7 @@ public sealed class MetaExtensionsTest : BaseExtensionsTest
         var segment = new ArraySegment<Meta>(metaItems, 0, metaItems.Length);
 
         // act 
-        var table = MetaExtensions.ToTable(metaTable, segment, TableType.Mtm, physicalName);
+        var table = MetaExtensions.ToTable(metaTable, segment, TableType.Mtm, PhysicalType.Table, physicalName);
         var fieldPk = table?.GetField("id");
 
         // assert
