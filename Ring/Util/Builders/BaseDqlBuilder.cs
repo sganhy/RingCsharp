@@ -1,4 +1,6 @@
-﻿using Ring.Schema.Extensions;
+﻿using Ring.Schema.Builders;
+using Ring.Schema.Enums;
+using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using Ring.Util.Extensions;
 using System.Text;
@@ -10,11 +12,8 @@ internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
 {
     private string[] _tableIndex;
     private string?[] _tableSelect;
+    private string? _catalogTable;
     private readonly IDdlBuilder _ddlBuilder;
-
-    // clauses
-    protected static readonly string DqlSelect = @"SELECT ";
-    protected static readonly string DqlFrom = @" FROM ";
 
     internal BaseDqlBuilder() : base()
     {
@@ -45,8 +44,17 @@ internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
 
     public string Exists(Table table)
     {
-        return BuildSelect(table);
+        if (_catalogTable==null)
+        {
+            var tableBuilder = new TableBuilder();
+            table = tableBuilder.GetCatalog(EntityType.Table, Provider);
+            var result= new StringBuilder(BuildSelect(table));
+            //AppendFilter()
+            //_catalogTable = result;
+        }
+        return _catalogTable;
     }
+        
 
     #region private methods 
 
@@ -57,7 +65,7 @@ internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
         var fieldCount = table.Fields.Length;
         var i=0;
         int index;
-        result.Append(DqlSelect);
+        result.Append(SqlSelect);
         while (i<mapperCount)
         {
             index = table.ColumnMapper[i];
@@ -67,11 +75,11 @@ internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
             result.Append(ColumnDelimiter);
         }
         --result.Length;
-        result.Append(DqlFrom);
+        result.Append(SqlFrom);
         result.Append(table.PhysicalName);
         return result.ToString();
-    }  
-
+    }
+        
     #endregion
 
 }

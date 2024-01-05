@@ -5,6 +5,7 @@ namespace Ring.Schema.Extensions;
 internal static class FieldTypeExtensions
 {
     internal static string RecordTypeDisplay(this FieldType fieldType) {
+#pragma warning disable IDE0066 // Convert switch statement to expression
         switch (fieldType)
         {
             case FieldType.Long: return "Int64";
@@ -14,5 +15,6 @@ internal static class FieldTypeExtensions
             default:
                 return fieldType.ToString();
         }
+#pragma warning restore IDE0066
     }
 }

@@ -38,6 +38,7 @@ internal sealed class ResourceHelper
 
     internal string[] GetReservedWords(DatabaseProvider databaseProvider)
     {
+#pragma warning disable IDE0066 // Convert switch statement to expression
         switch (databaseProvider)
         {
             case DatabaseProvider.PostgreSql:
@@ -49,6 +50,7 @@ internal sealed class ResourceHelper
             case DatabaseProvider.SqlLite:
                 return GetCompressedResource(ResourceType.SQLiteReservedKeyWord.ToString() + CompressedRessourceSuffix);
         }
+#pragma warning restore IDE0066
         return Array.Empty<string>();
     }
 

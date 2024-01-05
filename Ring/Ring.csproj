@@ -43,4 +43,8 @@
 	<InternalsVisibleTo Include="Ring.Console" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Util\Builders\Oracle\" />
+  </ItemGroup>
+
 </Project>

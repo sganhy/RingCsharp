@@ -1,5 +1,9 @@
-﻿using Ring.Schema.Enums;
+﻿using Ring.Data;
+using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
+using Ring.Schema.Models;
+using System.Runtime.CompilerServices;
+using System.Text;
 using DbSchema = Ring.Schema.Models.Schema;
 
 namespace Ring.Util.Builders;
@@ -17,9 +21,24 @@ internal abstract class BaseSqlBuilder : ISqlBuilder
     protected const char ColumnDelimiter = ',';
     protected const char SqlLineFeed = '\n';
 
+    // clauses
+    protected static readonly string SqlSelect = @"SELECT ";
+    protected static readonly string SqlFrom = @" FROM ";
+    protected static readonly string SqlWhere = @" WHERE ";
+
     public abstract DatabaseProvider Provider { get; }
 
     public BaseSqlBuilder() {}
+
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#pragma warning disable CA1822 // Mark members as static
+    public void AppendFilter(int index, Field field, OperatorType operatorType, StringBuilder selectFrom)
+#pragma warning restore CA1822 // Mark members as static
+    {
+        if (index == 0) selectFrom.Append(SqlWhere);
+        return;
+    }
 
     /// <summary>
     /// Get sorted list of logical table name

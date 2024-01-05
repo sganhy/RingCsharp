@@ -194,6 +194,7 @@ internal sealed class TableBuilder
     private static TableType GetTablType(EntityType entityType)
     {
         TableType result;
+#pragma warning disable IDE0066 // Convert switch statement to expression
         switch (entityType)
         {
             case EntityType.Table:
@@ -209,11 +210,13 @@ internal sealed class TableBuilder
                 result = TableType.Logical;
                 break;
         }
+#pragma warning restore IDE0066
         return result;
     }
     private static string GetCatalogSchemaName(DatabaseProvider provider)
     {
         string result;
+#pragma warning disable IDE0066 // Convert switch statement to expression
         switch (provider)
         {
             case DatabaseProvider.PostgreSql:
@@ -225,6 +228,7 @@ internal sealed class TableBuilder
                 result = string.Empty;
                 break;
         }
+#pragma warning restore IDE0066
         return result;
     }
     private static string GetCatalogViewName(DatabaseProvider provider, EntityType entityType)

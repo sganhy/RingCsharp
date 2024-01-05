@@ -27,6 +27,7 @@ internal static class EnumExtensions
 
     private static int ToInt32(object? value)
     {
+#pragma warning disable IDE0066 // Convert switch statement to expression
         switch (Convert.GetTypeCode(value))
         {
             case TypeCode.Int16:
@@ -36,6 +37,7 @@ internal static class EnumExtensions
                 return Convert.ToInt32(value, CultureInfo.InvariantCulture);
             default: throw new InvalidOperationException("Unknown EnumType");
         }
+#pragma warning restore IDE0066
     }
 
     #endregion
