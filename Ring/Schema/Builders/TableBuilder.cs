@@ -113,7 +113,9 @@ internal sealed class TableBuilder
         return result;
     }
 
-    internal static Table GetMtm(Table partialTable, string physicalName)
+#pragma warning disable CA1822 // Mark members as static
+    internal Table GetMtm(Table partialTable, string physicalName)
+#pragma warning restore CA1822
     {
         // add @ prefix to logical name
         var metaTable = new Meta(SystemTablePrefix + partialTable.Name);

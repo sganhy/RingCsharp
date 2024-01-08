@@ -3,8 +3,6 @@
 #pragma warning disable CA1008 // Enums should have zero value
 #pragma warning disable CA1027 // Mark enums with FlagsAttribute
 public enum OperatorType
-#pragma warning restore CA1027 // Mark enums with FlagsAttribute
-#pragma warning restore CA1008 // Enums should have zero value
 {
     Equal = 1,
     NotEqual = 2,
@@ -16,3 +14,5 @@ public enum OperatorType
     NotLike = 8,
     In = 10
 }
+#pragma warning restore CA1027
+#pragma warning restore CA1008

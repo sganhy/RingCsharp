@@ -13,10 +13,12 @@ public class DatabaseProviderExtensionsTest
         var input = "Test22";
 
         // act 
-        var result = DatabaseProvider.PostgreSql.IsReservedWord(input);
+        var result1 = DatabaseProvider.PostgreSql.IsReservedWord(input);
+        var result2 = DatabaseProvider.PostgreSql.IsReservedWord(input); // using cache
 
         // assert
-        Assert.False(result);
+        Assert.False(result1);
+        Assert.False(result2);
     }
 
 

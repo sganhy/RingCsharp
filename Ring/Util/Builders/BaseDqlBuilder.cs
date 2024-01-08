@@ -50,7 +50,7 @@ internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
             table = tableBuilder.GetCatalog(EntityType.Table, Provider);
             var result= new StringBuilder(BuildSelect(table));
             //AppendFilter()
-            //_catalogTable = result;
+            _catalogTable = result.ToString();
         }
         return _catalogTable;
     }

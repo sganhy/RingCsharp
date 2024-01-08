@@ -2,27 +2,26 @@
 using System.Runtime.CompilerServices;
 
 namespace Ring.Data.Extensions;
+
 internal static class OperationTypeExtensions
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static string GetSqlOperator(this OperatorType GetStringOperation, DatabaseProvider provider)
+    internal static string ToSql(this OperatorType GetStringOperation, DatabaseProvider provider)
     {
-        string result;
 #pragma warning disable IDE0066 // Convert switch statement to expression
         switch (GetStringOperation)
         {
-            case OperatorType.Equal: result = "="; break;
-            case OperatorType.NotEqual: result = provider == DatabaseProvider.PostgreSql?"<>":"!="; break;
-            case OperatorType.Greater: result = ">"; break;
-            case OperatorType.GreaterOrEqual: result = ">="; break;
-            case OperatorType.Less: result = "<"; break;
-            case OperatorType.LessOrEqual: result = "<="; break;
-            case OperatorType.Like: result = " like "; break;
-            case OperatorType.NotLike: result = " NOT like "; break;
-            case OperatorType.In: result = " IN "; break;
+            case OperatorType.Equal: return "=";
+            case OperatorType.NotEqual: return provider==DatabaseProvider.PostgreSql?"<>":"!="; 
+            case OperatorType.Greater: return ">"; 
+            case OperatorType.GreaterOrEqual: return ">="; 
+            case OperatorType.Less: return "<";
+            case OperatorType.LessOrEqual: return "<=";
+            case OperatorType.Like: return " like ";
+            case OperatorType.NotLike: return " NOT like "; 
+            case OperatorType.In: return " IN ";
             default: throw new NotSupportedException();
         }
 #pragma warning restore IDE0066
-        return result;
     }
 }

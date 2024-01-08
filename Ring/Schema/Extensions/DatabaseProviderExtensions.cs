@@ -35,7 +35,6 @@ internal static class DatabaseProviderExtensions
         throw new NotImplementedException();
     }
 
-
     internal static IDmlBuilder GetDmlBuilder(this DatabaseProvider provider)
     {
 #pragma warning disable IDE0066 // Convert switch statement to expression
