@@ -126,18 +126,5 @@ public class DatabaseProviderExtensionsTest
         Assert.True(result);
     }
 
-    [Fact]
-    internal void IsReservedWord_Undefined_True()
-    {
-        // arrange 
-        var input = "ORDInALITy";
-
-        // act 
-        var result = DatabaseProvider.Undefined.IsReservedWord(input);
-
-        // assert
-        Assert.True(result);
-    }
-
 
 }

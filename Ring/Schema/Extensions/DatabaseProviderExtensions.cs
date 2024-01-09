@@ -63,7 +63,7 @@ internal static class DatabaseProviderExtensions
             case DatabaseProvider.SqlServer: return _sqlServerWords.Exists(word.ToUpper(CultureInfo.InvariantCulture));
             case DatabaseProvider.SqlLite: return _sqlLiteWords.Exists(word.ToUpper(CultureInfo.InvariantCulture));
         }
-        return false;
+        throw new NotImplementedException();
     }
 
 #pragma warning restore IDE0066
