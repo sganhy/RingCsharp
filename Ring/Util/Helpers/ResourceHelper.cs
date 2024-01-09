@@ -1,5 +1,6 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Util.Enums;
+using System.Globalization;
 using System.IO.Compression;
 using System.Reflection;
 
@@ -36,19 +37,21 @@ internal sealed class ResourceHelper
     internal string? GetDescription(LogType logType)
         => ((int)logType <= _logDescriptions.Length) ? _logDescriptions[(int)logType - 1] : string.Empty;
 
-    internal string[] GetReservedWords(DatabaseProvider databaseProvider)
+    internal static string[] GetReservedWords(DatabaseProvider databaseProvider)
     {
 #pragma warning disable IDE0066 // Convert switch statement to expression
         switch (databaseProvider)
         {
+            case DatabaseProvider.Oracle:
+                return GetCompressedResource(ResourceType.PostgreSQLReservedKeyWord.ToString() + CompressedRessourceSuffix, true, true);
             case DatabaseProvider.PostgreSql:
-                return GetCompressedResource(ResourceType.PostgreSQLReservedKeyWord.ToString() + CompressedRessourceSuffix);
+                return GetCompressedResource(ResourceType.PostgreSQLReservedKeyWord.ToString() + CompressedRessourceSuffix, true, true);
             case DatabaseProvider.MySql:
-                return GetCompressedResource(ResourceType.MySQLReservedKeyWord.ToString() + CompressedRessourceSuffix);
+                return GetCompressedResource(ResourceType.MySQLReservedKeyWord.ToString() + CompressedRessourceSuffix, true, true);
             case DatabaseProvider.SqlServer:
-                return GetCompressedResource(ResourceType.SQLServerReservedKeyWord.ToString() + CompressedRessourceSuffix);
+                return GetCompressedResource(ResourceType.SQLServerReservedKeyWord.ToString() + CompressedRessourceSuffix, true, true);
             case DatabaseProvider.SqlLite:
-                return GetCompressedResource(ResourceType.SQLiteReservedKeyWord.ToString() + CompressedRessourceSuffix);
+                return GetCompressedResource(ResourceType.SQLiteReservedKeyWord.ToString() + CompressedRessourceSuffix, true, true);
         }
 #pragma warning restore IDE0066
         return Array.Empty<string>();
@@ -113,7 +116,7 @@ internal sealed class ResourceHelper
         return (resultMessage, resultDesc);
     }
 
-    private static string[] GetCompressedResource(string fileName)
+    private static string[] GetCompressedResource(string fileName, bool sortResult, bool toUpper)
     {
         var resource = ResourceNameSpace + fileName;
         var assembly = Assembly.GetExecutingAssembly();
@@ -123,10 +126,11 @@ internal sealed class ResourceHelper
             if (stream == null) return result;
             using var decompressionStream = new GZipStream(stream, CompressionMode.Decompress);
             using var reader = new StreamReader(decompressionStream);
-            result = reader.ReadToEnd().Split(ResourceEndOfLine);
+            result = toUpper ? reader.ReadToEnd().ToUpper(CultureInfo.InvariantCulture).Split(ResourceEndOfLine) :
+                reader.ReadToEnd().Split(ResourceEndOfLine);
         }
         // sort result 
-        Array.Sort(result);
+        if (sortResult) Array.Sort(result);
         return result;
     }
 
