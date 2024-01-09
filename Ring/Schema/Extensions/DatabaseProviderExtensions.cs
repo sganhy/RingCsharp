@@ -16,6 +16,7 @@ internal static class DatabaseProviderExtensions
     private readonly static string[] _sqlLiteWords = ResourceHelper.GetReservedWords(DatabaseProvider.SqlLite);
 
 #pragma warning disable IDE0066 // Convert switch statement to expression
+
     internal static IDdlBuilder GetDdlBuilder(this DatabaseProvider provider)
     {
         switch (provider)
@@ -52,8 +53,6 @@ internal static class DatabaseProviderExtensions
         }
         throw new NotImplementedException();
     }
-#pragma warning restore IDE0066
-
     internal static bool IsReservedWord(this DatabaseProvider provider, string word)
     {
         switch (provider)
@@ -64,7 +63,9 @@ internal static class DatabaseProviderExtensions
             case DatabaseProvider.SqlServer: return _sqlServerWords.Exists(word.ToUpper(CultureInfo.InvariantCulture));
             case DatabaseProvider.SqlLite: return _sqlLiteWords.Exists(word.ToUpper(CultureInfo.InvariantCulture));
         }
-        return true;
+        return false;
     }
+
+#pragma warning restore IDE0066
 
 }

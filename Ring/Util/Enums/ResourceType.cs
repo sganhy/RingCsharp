@@ -4,6 +4,7 @@ internal enum ResourceType : short
 {
     LogMessage = 1,
     SqlCommand = 2,
+    OracleReservedKeyWord = 17,
     PostgreSQLReservedKeyWord = 19,
     MySQLReservedKeyWord = 21,
     SQLServerReservedKeyWord = 36,

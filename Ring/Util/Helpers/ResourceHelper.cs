@@ -33,7 +33,8 @@ internal sealed class ResourceHelper
 
 #pragma warning disable CA1822
 
-    internal string? GetMessage(LogType logType) => ((int)logType <= _logMessages.Length) ? _logMessages[(int)logType - 1] : string.Empty;
+    internal string? GetMessage(LogType logType) 
+        => ((int)logType <= _logMessages.Length) ? _logMessages[(int)logType - 1] : string.Empty;
     internal string? GetDescription(LogType logType)
         => ((int)logType <= _logDescriptions.Length) ? _logDescriptions[(int)logType - 1] : string.Empty;
 
@@ -43,7 +44,7 @@ internal sealed class ResourceHelper
         switch (databaseProvider)
         {
             case DatabaseProvider.Oracle:
-                return GetCompressedResource(ResourceType.PostgreSQLReservedKeyWord.ToString() + CompressedRessourceSuffix, true, true);
+                return GetCompressedResource(ResourceType.OracleReservedKeyWord.ToString() + CompressedRessourceSuffix, true, true);
             case DatabaseProvider.PostgreSql:
                 return GetCompressedResource(ResourceType.PostgreSQLReservedKeyWord.ToString() + CompressedRessourceSuffix, true, true);
             case DatabaseProvider.MySql:
@@ -59,6 +60,7 @@ internal sealed class ResourceHelper
 
 #pragma warning restore CA1822
 
+    #region private methods
 
     private static void LoadRessources()
     {
@@ -126,7 +128,8 @@ internal sealed class ResourceHelper
             if (stream == null) return result;
             using var decompressionStream = new GZipStream(stream, CompressionMode.Decompress);
             using var reader = new StreamReader(decompressionStream);
-            result = toUpper ? reader.ReadToEnd().ToUpper(CultureInfo.InvariantCulture).Split(ResourceEndOfLine) :
+            result = toUpper ? 
+                reader.ReadToEnd().ToUpper(CultureInfo.InvariantCulture).Split(ResourceEndOfLine) :
                 reader.ReadToEnd().Split(ResourceEndOfLine);
         }
         // sort result 
@@ -134,5 +137,6 @@ internal sealed class ResourceHelper
         return result;
     }
 
+    #endregion 
 
 }
