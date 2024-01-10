@@ -29,12 +29,6 @@ internal sealed class TableBuilder
     internal static readonly string FieldLineNumber = "line_number";
     internal static readonly string FieldMessage = "message";
 
-    // catalogs 
-    private static readonly Dictionary<EntityType,Catalog> _postreSqlCatalog= new () {
-        { EntityType.Table, new Catalog { FieldSchemaName="table_schema", FieldEntityName= "table_name", ViewName="tables" } }
-    };
-
-
 #pragma warning disable CA1822 // Mark members as static
     internal Table GetMeta(string schemaName, DatabaseProvider provider)
     {
@@ -103,11 +97,11 @@ internal sealed class TableBuilder
     {
 #pragma warning restore CA1822
         var tableType = GetTablType(entityType);
-        var metaList = new List<Meta>(){ GetField(GetSchemaFieldName(provider,entityType), FieldType.String) };
+        var metaList = new List<Meta>(){ GetField(provider.GetSchemaFieldName(entityType), FieldType.String) };
         if (entityType != EntityType.Schema)
-            metaList.Add(GetField(GetEntityFieldName(provider, entityType), FieldType.String));
-        var catalog = GetTable((int)tableType, GetCatalogViewName(provider, entityType));
-        var result = GetTable(GetCatalogSchemaName(provider), provider, metaList.ToArray(), catalog, 
+            metaList.Add(GetField(provider.GetEntityFieldName(entityType), FieldType.String));
+        var catalog = GetTable((int)tableType, provider.GetCatalogViewName(entityType));
+        var result = GetTable(provider.GetCatalogSchema(), provider, metaList.ToArray(), catalog, 
             tableType,PhysicalType.View);
         result.LoadColumnMapper();
         return result;
@@ -213,61 +207,6 @@ internal sealed class TableBuilder
                 break;
         }
 #pragma warning restore IDE0066
-        return result;
-    }
-    private static string GetCatalogSchemaName(DatabaseProvider provider)
-    {
-        string result;
-#pragma warning disable IDE0066 // Convert switch statement to expression
-        switch (provider)
-        {
-            case DatabaseProvider.PostgreSql:
-            case DatabaseProvider.MySql:
-            case DatabaseProvider.SqlServer:
-                result = "information_schema";
-                break;
-            default:
-                result = string.Empty;
-                break;
-        }
-#pragma warning restore IDE0066
-        return result;
-    }
-    private static string GetCatalogViewName(DatabaseProvider provider, EntityType entityType)
-    {
-        var result = string.Empty;
-        switch (provider)
-        {
-            case DatabaseProvider.PostgreSql:
-            case DatabaseProvider.MySql:
-                result = _postreSqlCatalog[entityType].ViewName;
-                break;
-        }
-        return result;
-    }
-    private static string GetSchemaFieldName(DatabaseProvider provider, EntityType entityType)
-    {
-        var result = string.Empty;
-        switch (provider)
-        {
-            case DatabaseProvider.PostgreSql:
-            case DatabaseProvider.MySql:
-                result = _postreSqlCatalog[entityType].FieldSchemaName;
-                break;
-        }
-        return result;
-    }
-
-    private static string GetEntityFieldName(DatabaseProvider provider, EntityType entityType)
-    {
-        var result = string.Empty;
-        switch (provider)
-        {
-            case DatabaseProvider.PostgreSql:
-            case DatabaseProvider.MySql:
-                result = _postreSqlCatalog[entityType].FieldEntityName;
-                break;
-        }
         return result;
     }
 
