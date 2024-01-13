@@ -1,34 +1,41 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
 using Npgsql;
+using Ring;
 using Ring.Data;
 using Ring.Schema.Builders;
-using Ring.Util.Extensions;
-using System.Globalization;
-var dateTest = "2203-10-21";
-var inde = dateTest.LastIndexOf('-');
+using System.Data;
 
-var DefaultCulture = CultureInfo.InvariantCulture;
-var DefaultNumberStyle = NumberStyles.AllowDecimalPoint | NumberStyles.Float;
-
-DateTimeOffset dto = DateTimeOffset.Now;
-
-var result= double.Parse("-782.23", DefaultNumberStyle, DefaultCulture);
 
 var POSTGRE_CONN_STRING1 = "User ID=postgres; Password=sa;" +
                 "Host=localhost;Port=5432;Database=postgres; Pooling=false;";
 var val = true;
 int ok = 19;
 float opop = 0.4f;
-var con = new NpgsqlConnection(connectionString: "Server=localhost;Port=5432;User Id=postgres;Password=passw0rd;Database=testdb;");
 TimeZone localZone = TimeZone.CurrentTimeZone;
 var myDateTime = DateTime.Now;
 TableBuilder builder = new ();
 
-var t = builder.GetMeta("test", Ring.Schema.Enums.DatabaseProvider.PostgreSql);
-var dtTest  = DateTime.ParseExact("2005-12-12T54:17:16.01578+06:00", "yyyy-MM-ddTHH:mm:ss.fffffzzz", CultureInfo.InvariantCulture);
-//Initialize.Start(typeof(NpgsqlConnection), POSTGRE_CONN_STRING1); +06:00
+Initialize.Start(typeof(NpgsqlConnection), POSTGRE_CONN_STRING1);
 
+var connection = new NpgsqlConnection(POSTGRE_CONN_STRING1);
+connection.Open();
+using var command = new NpgsqlCommand();
+command.Connection = connection;
+//command.CommandText = "select table_schema, table_name from information_schema.tables";
+command.CommandText = "select 1";
+command.CommandType = CommandType.Text;
+command.Parameters.Clear();
+var dt = DateTime.Now;
+using var reader = command.ExecuteReader();
+int count = 0; 
+while (reader.Read())
+{
+    ++count;
+}
+var ts = DateTime.Now - dt;
+connection.Close();
+Console.WriteLine(ts);
 //char[] chars = new char[5];
 //var testu = new string(chars);
 //testu.SetBitValue(44);

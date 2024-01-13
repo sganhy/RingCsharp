@@ -41,13 +41,12 @@ internal static class ParameterExtensions
                 CultureInfo.InvariantCulture);
     }
     internal static string GetDbConnectionString(this Parameter[] parameters, int schemaId)
-    {
-        return string.Empty;
-    }
+        => GetParameter(parameters, ParameterType.DbConnectionString, schemaId)?.Value ?? string.Empty;
+
     internal static Type GetDbConnectionType(this Parameter[] parameters, int schemaId)
     {
-        var ss = string.Empty;
-        return ss.GetType();
+        var stringType=GetParameter(parameters, ParameterType.DbConnectionType, schemaId)?.Value ?? string.Empty;
+        return Type.GetType(stringType);
     }
 
     internal static int GetMaxPoolSize(this Parameter[] parameters, int schemaId)

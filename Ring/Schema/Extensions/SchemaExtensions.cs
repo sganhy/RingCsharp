@@ -1,6 +1,7 @@
 ﻿using Ring.Schema.Builders;
 using Ring.Schema.Enums;
 using Ring.Schema.Models;
+using System.Data;
 using System.Runtime.CompilerServices;
 using DbSchema = Ring.Schema.Models.Schema;
 
@@ -120,6 +121,32 @@ internal static class SchemaExtensions
             for (var j = schema.TablesById[i].Relations.Length - 1; j >= 0; --j)
                 if (schema.TablesById[i].Relations[j].Type == RelationType.Mtm) ++count;
         return count >> 1;
+    }
+
+    internal static void SelectQuery(this DbSchema schema, Table table, string sql, IDbDataParameter[] parameters)
+    {
+        var conn = schema.Connections.Get();
+        var count = 0;
+        try
+        {
+            using var command = conn.CreateCommand();
+            command.CommandText = sql;
+            command.CommandType = CommandType.Text;
+            command.Parameters.Clear();
+            for (var i = 0; i < parameters.Length; ++i) command.Parameters.Add(parameters[i]);
+            var dt = DateTime.Now;
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                count++;
+            }
+            var ts = DateTime.Now - dt;
+            Console.WriteLine(ts);
+        }
+        finally
+        {
+            schema.Connections.Put(conn);
+        }
     }
 
     #region private methods 

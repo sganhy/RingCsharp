@@ -11,7 +11,7 @@ internal sealed class SchemaBuilder
     private readonly TableBuilder _tableBuilder = new();
     private readonly ParameterBuilder _parameterBuilder = new();
 
-    internal DbSchema GetMeta(string schemaName, DatabaseProvider provider, int maxConnPoolSize)
+    internal DbSchema GetMeta(string schemaName, DatabaseProvider provider, int maxConnPoolSize, string connectionString, Type connectionType)
     {
         var metaList = new List<Meta>();
         var source = SchemaSourceType.NativeDataBase;
@@ -19,7 +19,9 @@ internal sealed class SchemaBuilder
         var schemaInfo = GetMetaWSchemaInfo(schemaName);
         metaList.Add(schemaInfo);
         metaList.Add(_parameterBuilder.GetParameter(ParameterType.MaxPoolSize, 
-            maxConnPoolSize.ToString(CultureInfo.InvariantCulture),0).ToMeta()) ;
+            maxConnPoolSize.ToString(CultureInfo.InvariantCulture),0).ToMeta());
+        metaList.Add(_parameterBuilder.GetParameter(ParameterType.DbConnectionString, connectionString, 0).ToMeta());
+        metaList.Add(_parameterBuilder.GetParameter(ParameterType.DbConnectionType, connectionType.AssemblyQualifiedName, 0).ToMeta());
         metaList.AddRange(_tableBuilder.GetMeta(schemaName, provider).ToMeta(0));
         metaList.AddRange(_tableBuilder.GetMetaId(schemaName, provider).ToMeta(0));
         metaList.AddRange(_tableBuilder.GetLog(schemaName, provider).ToMeta(0));
