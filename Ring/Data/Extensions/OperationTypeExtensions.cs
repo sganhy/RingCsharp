@@ -6,13 +6,14 @@ namespace Ring.Data.Extensions;
 internal static class OperationTypeExtensions
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static string ToSql(this OperatorType GetStringOperation, DatabaseProvider provider)
+    internal static string ToSql(this OperatorType GetStringOperation, DatabaseProvider provider, string? value)
     {
 #pragma warning disable IDE0066 // Convert switch statement to expression
         switch (GetStringOperation)
         {
-            case OperatorType.Equal: return "=";
-            case OperatorType.NotEqual: return provider==DatabaseProvider.PostgreSql?"<>":"!="; 
+            case OperatorType.Equal: return string.IsNullOrEmpty(value) ? " IS " : "=";
+            case OperatorType.NotEqual: return string.IsNullOrEmpty(value) 
+                    ? " IS NOT " : provider==DatabaseProvider.PostgreSql ? "<>" : "!="; 
             case OperatorType.Greater: return ">"; 
             case OperatorType.GreaterOrEqual: return ">="; 
             case OperatorType.Less: return "<";

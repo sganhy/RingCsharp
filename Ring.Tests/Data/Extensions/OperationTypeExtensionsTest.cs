@@ -11,12 +11,12 @@ public sealed class OperationTypeExtensionsTest
     [InlineData(OperatorType.NotEqual, "<>", DatabaseProvider.PostgreSql)]
     [InlineData(OperatorType.NotEqual, "!=", DatabaseProvider.Oracle)]
     [InlineData(OperatorType.Like, " like ", DatabaseProvider.Oracle)]
-    internal void ToSql_Input_OnlyOneTrueFlag(OperatorType operatorType, string expectedValue, 
+    internal void ToSql_InputTestValue_OnlyOneTrueFlag(OperatorType operatorType, string expectedValue, 
         DatabaseProvider databaseProvider)
     {
         // arrange 
         // act 
-        var result = OperationTypeExtensions.ToSql(operatorType, databaseProvider);
+        var result = OperationTypeExtensions.ToSql(operatorType, databaseProvider, "TEST");
 
         // assert
         Assert.Equal(result, expectedValue,true);
