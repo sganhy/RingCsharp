@@ -23,7 +23,7 @@ connection.Open();
 using var command = new NpgsqlCommand();
 command.Connection = connection;
 //command.CommandText = "select table_schema, table_name from information_schema.tables";
-command.CommandText = "select test, test_2 from rpg_sheet.newtable where test_2=:B1";
+command.CommandText = "SELECT table_schema, table_name FROM information_schema.tables";
 command.CommandType = CommandType.Text;
 var param1 = new NpgsqlParameter("B1", NpgsqlTypes.NpgsqlDbType.Smallint);
 param1.NpgsqlValue = (short)3;

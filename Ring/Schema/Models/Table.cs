@@ -8,7 +8,7 @@ internal sealed class Table : BaseEntity
 	internal readonly Field[] Fields;         // sorted by name
 	internal readonly Relation[] Relations;   // sorted by name
 	internal readonly Index[] Indexes;
-	internal readonly int[] ColumnMapper;           // [tableId] <= position into Fields
+	internal readonly int[] ColumnMapper;     // [tableId] <= position into Fields
 	internal readonly string PhysicalName;
 	internal readonly PhysicalType PhysicalType;
 	internal readonly int SchemaId;
