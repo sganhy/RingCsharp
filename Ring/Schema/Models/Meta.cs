@@ -16,7 +16,7 @@ internal sealed class Meta
 	internal string? Value;
 	internal bool Active = true;
 
-	public Meta() => Name = string.Empty; // this constructor should be public due to Xunit lib usage
+	public Meta() => Name = string.Empty; // this constructor should be public due to XUnit lib usage
 	internal Meta(string name) => Name = name;
 
 #if DEBUG
