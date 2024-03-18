@@ -12,7 +12,7 @@ internal sealed class ConnectionPool
 	internal int LastIndex;
 	internal ushort PutRequestCount;
 	internal long CreationCount; // db connection creation count 
-	internal readonly IDbConnection[] Connections;
+	internal readonly System.Data.IDbConnection[] Connections;
 	internal readonly string ConnectionString;
 	internal readonly Type ConnectionType;
 	internal readonly object SyncRoot;
@@ -28,7 +28,7 @@ internal sealed class ConnectionPool
 		SyncRoot = new object();
 		MinConnection = minPoolSize;
 		MaxConnection = maxPoolSize;
-		Connections = new IDbConnection[maxPoolSize];
+        Connections = new System.Data.IDbConnection[maxPoolSize];
 		Cursor = minPoolSize - 1;     // cursor on min last element 
 		LastIndex = maxPoolSize - 1;
 		SwapIndex = 0;

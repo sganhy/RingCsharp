@@ -1,12 +1,12 @@
-﻿namespace Ring;
+﻿namespace Ring.Data;
 
-public interface IRingConnection
+public interface IDbConnection
 {
     string ConnectionString { get; }
     DateTime CreationTime { get; }
     DateTime? LastConnection { get; }
     void Close();
-    IRingConnection Create();
+    IDbConnection Create();
     string?[][]? ExecuteSelect(string sql, int columnCount, Span<string> parameterValues, Span<byte> parameterTypes);
     ValueTask<string?[][]?> ExecuteSelectAsync(string sql, int columnCount, Span<string> parameterValues, Span<byte> parameterTypes);
 }
