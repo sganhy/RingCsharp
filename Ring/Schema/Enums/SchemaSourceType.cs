@@ -4,9 +4,9 @@ namespace Ring.Schema.Enums;
 public enum SchemaSourceType
 #pragma warning restore CA1027 // Mark enums with FlagsAttribute
 {
-    UnDefined = 0,
-    NativeXml = 1,
-    ClfyXml = 2,
-    NativeDataBase = 4,
-    ClfyDataBase = 5,
+	UnDefined = 0,
+	NativeXml = 1,
+	ClfyXml = 2,
+	NativeDataBase = 4,
+	ClfyDataBase = 5,
 }

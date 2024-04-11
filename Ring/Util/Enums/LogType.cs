@@ -2,5 +2,5 @@
 
 internal enum LogType
 {
-    FileNotFound = 19
+	FileNotFound = 19
 }

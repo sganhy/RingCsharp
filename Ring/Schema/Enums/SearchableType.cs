@@ -2,6 +2,6 @@
 
 internal enum SearchableType
 {
-    None = 0, 
-    Phone = 1
+	None = 0, 
+	Phone = 1
 }
