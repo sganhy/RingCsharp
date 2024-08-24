@@ -4,10 +4,10 @@ using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using Ring.Util.Builders;
-using Ring.Util.Builders.PostgreSQL;
+using Ring.Util.Builders.Static.MySQL;
 using DbSchema = Ring.Schema.Models.Schema;
 
-namespace Ring.Tests.Util.Builders.PostgreSQL;
+namespace Ring.Tests.Util.Builders.Static.MySQL;
 
 public class DmlBuilderTest : BaseBuilderTest
 {
@@ -20,8 +20,8 @@ public class DmlBuilderTest : BaseBuilderTest
         _fixture = new Fixture();
         var metaList = GetSchema1();
         var meta = new Meta(_fixture.Create<string>());
-        _schema = MetaExtensions.ToSchema(metaList, DatabaseProvider.PostgreSql) ?? 
-            MetaExtensions.GetEmptySchema(meta, DatabaseProvider.PostgreSql);
+        _schema = metaList.ToSchema(DatabaseProvider.MySql) ??
+            MetaExtensions.GetEmptySchema(meta, DatabaseProvider.MySql);
         _sut = new DmlBuilder();
         _sut.Init(_schema);
     }
@@ -31,7 +31,7 @@ public class DmlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var table = _schema.GetTable("skill");
-        var expectedResult = "INSERT INTO rpg_sheet.t_skill (id,name,skill2ability,sub_name,is_group,category,armor_penality,trained_only,try_again) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)";
+        var expectedResult = "INSERT INTO rpg_sheet.t_skill (id,name,skill2ability,sub_name,is_group,category,armor_penality,trained_only,try_again) VALUES (:a1,:a2,:a3,:a4,:a5,:a6,:a7,:a8,:a9)";
 
         // act 
         Assert.NotNull(table);
@@ -50,7 +50,7 @@ public class DmlBuilderTest : BaseBuilderTest
         var table = _schema.GetTable(1021); // get book
         var relation = table?.GetRelation("book2class");
         var mtmTable = relation?.ToTable;
-        var expectedResult = "INSERT INTO rpg_sheet.\"@mtm_01021_01031_009\" (book2class,class2book) VALUES ($1,$2)";
+        var expectedResult = "INSERT INTO rpg_sheet.`@mtm_01021_01031_009` (book2class,class2book) VALUES (:a1,:a2)";
 
         // act 
         Assert.NotNull(mtmTable);
@@ -71,7 +71,7 @@ public class DmlBuilderTest : BaseBuilderTest
         meta.SetEntityType(EntityType.Table);
         var metaSch = new Meta("Test");
         metaSch.SetEntityType(EntityType.Schema);
-        var schema = MetaExtensions.ToSchema(new Meta[] { meta, metaSch }, DatabaseProvider.PostgreSql);
+        var schema = (new Meta[] { meta, metaSch }).ToSchema(DatabaseProvider.MySql);
         var expectedResult = "INSERT INTO test.t_test () VALUES ()";
         var tableTest = schema?.GetTable("Test");
 
@@ -90,7 +90,7 @@ public class DmlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var table = _schema.GetTable("deity");
-        var expectedResult = "INSERT INTO rpg_sheet.t_deity (id,deity2alignment,name,deity2gender,nickname,portfolio,symbol) VALUES ($1,$2,$3,$4,$5,$6,$7)";
+        var expectedResult = "INSERT INTO rpg_sheet.t_deity (id,deity2alignment,name,deity2gender,nickname,portfolio,symbol) VALUES (:a1,:a2,:a3,:a4,:a5,:a6,:a7)";
 
         // act 
         Assert.NotNull(table);
@@ -103,69 +103,11 @@ public class DmlBuilderTest : BaseBuilderTest
     }
 
     [Fact]
-    internal void Insert_TableMeta_InsertSql()
-    {
-        // arrange 
-        var sut = new DmlBuilder();
-        var tblBuilder = new TableBuilder();
-        var schemaName = "@Test";
-        var table = tblBuilder.GetMeta(schemaName, DatabaseProvider.PostgreSql);
-        var metaTbl = table.ToMeta(0);
-        var metaSch = new Meta(schemaName);
-        metaSch.SetEntityType(EntityType.Schema);
-        var metaList = new List<Meta>() { metaSch };
-        metaList.AddRange(metaTbl);
-        var schema = MetaExtensions.ToSchema(metaList.ToArray(), DatabaseProvider.PostgreSql);
-        var expectedResult = "INSERT INTO \"@test\".\"@meta\" (id,schema_id,object_type,reference_id,data_type,flags,name,description,value,active) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)";
-        table.LoadColumnMapper();
-
-        // act 
-        Assert.NotNull(schema);
-        Assert.NotNull(table);
-        sut.Init(schema);
-        var result1 = sut.Insert(table);
-        var result2 = sut.Insert(table); // using cache 
-
-        // assert
-        Assert.Equal(expectedResult, result1);
-        Assert.Equal(expectedResult, result2);
-    }
-
-    [Fact]
-    internal void Insert_TableMetaId_InsertSql()
-    {
-        // arrange 
-        var sut = new DmlBuilder();
-        var tblBuilder = new TableBuilder();
-        var schemaName = "@Test";
-        var table = tblBuilder.GetMetaId(schemaName, DatabaseProvider.PostgreSql);
-        var metaTbl = table.ToMeta(0);
-        var metaSch = new Meta(schemaName);
-        metaSch.SetEntityType(EntityType.Schema);
-        var metaList = new List<Meta>() { metaSch };
-        metaList.AddRange(metaTbl);
-        var schema = MetaExtensions.ToSchema(metaList.ToArray(), DatabaseProvider.PostgreSql);
-        var expectedResult = "INSERT INTO \"@test\".\"@meta_id\" (id,schema_id,object_type,value) VALUES ($1,$2,$3,$4)";
-        table.LoadColumnMapper();
-
-        // act 
-        Assert.NotNull(schema);
-        Assert.NotNull(table);
-        sut.Init(schema);
-        var result1 = sut.Insert(table);
-        var result2 = sut.Insert(table); // using cache 
-
-        // assert
-        Assert.Equal(expectedResult, result1);
-        Assert.Equal(expectedResult, result2);
-    }
-
-    [Fact]
     internal void Delete_Table1_DeleteSql()
     {
         // arrange 
         var table = _schema.GetTable("skill");
-        var expectedResult = "DELETE FROM rpg_sheet.t_skill WHERE id=$1";
+        var expectedResult = "DELETE FROM rpg_sheet.t_skill WHERE id=:a1";
 
         // act 
         Assert.NotNull(table);
@@ -184,7 +126,7 @@ public class DmlBuilderTest : BaseBuilderTest
         var table = _schema.GetTable(1021); // get book
         var relation = table?.GetRelation("book2class");
         var mtmTable = relation?.ToTable;
-        var expectedResult = "DELETE FROM rpg_sheet.\"@mtm_01021_01031_009\" WHERE book2class=$1 AND class2book=$2";
+        var expectedResult = "DELETE FROM rpg_sheet.`@mtm_01021_01031_009` WHERE book2class=:a1 AND class2book=:a2";
 
         // act 
         Assert.NotNull(mtmTable);
@@ -203,14 +145,14 @@ public class DmlBuilderTest : BaseBuilderTest
         var sut = new DmlBuilder();
         var tblBuilder = new TableBuilder();
         var schemaName = "@Test";
-        var table = tblBuilder.GetMeta(schemaName, DatabaseProvider.PostgreSql);
+        var table = tblBuilder.GetMeta(schemaName, DatabaseProvider.MySql);
         var metaTbl = table.ToMeta(0);
         var metaSch = new Meta(schemaName);
         metaSch.SetEntityType(EntityType.Schema);
         var metaList = new List<Meta>() { metaSch };
         metaList.AddRange(metaTbl);
-        var schema = MetaExtensions.ToSchema(metaList.ToArray(), DatabaseProvider.PostgreSql);
-        var expectedResult = "DELETE FROM \"@test\".\"@meta\" WHERE id=$1 AND schema_id=$2 AND object_type=$3 AND reference_id=$4";
+        var schema = metaList.ToArray().ToSchema(DatabaseProvider.MySql);
+        var expectedResult = "DELETE FROM `@test`.`@meta` WHERE id=:a1 AND schema_id=:a2 AND object_type=:a3 AND reference_id=:a4";
 
         // act 
         Assert.NotNull(schema);
@@ -231,14 +173,14 @@ public class DmlBuilderTest : BaseBuilderTest
         var sut = new DmlBuilder();
         var tblBuilder = new TableBuilder();
         var schemaName = "@Test";
-        var table = tblBuilder.GetMetaId(schemaName, DatabaseProvider.PostgreSql);
+        var table = tblBuilder.GetMetaId(schemaName, DatabaseProvider.MySql);
         var metaTbl = table.ToMeta(0);
         var metaSch = new Meta(schemaName);
         metaSch.SetEntityType(EntityType.Schema);
         var metaList = new List<Meta>() { metaSch };
         metaList.AddRange(metaTbl);
-        var schema = MetaExtensions.ToSchema(metaList.ToArray(), DatabaseProvider.PostgreSql);
-        var expectedResult = "DELETE FROM \"@test\".\"@meta_id\" WHERE id=$1 AND schema_id=$2 AND object_type=$3";
+        var schema = metaList.ToArray().ToSchema(DatabaseProvider.MySql);
+        var expectedResult = "DELETE FROM `@test`.`@meta_id` WHERE id=:a1 AND schema_id=:a2 AND object_type=:a3";
 
         // act 
         Assert.NotNull(schema);
@@ -257,7 +199,7 @@ public class DmlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var table = _schema.GetTable("armor");
-        var expectedResult = "UPDATE rpg_sheet.t_armor SET {0} WHERE id=$1";
+        var expectedResult = "UPDATE rpg_sheet.t_armor SET {0} WHERE id=:a1";
 
         // act 
         Assert.NotNull(table);
@@ -276,14 +218,14 @@ public class DmlBuilderTest : BaseBuilderTest
         var sut = new DmlBuilder();
         var tblBuilder = new TableBuilder();
         var schemaName = "@Test";
-        var table = tblBuilder.GetMeta(schemaName, DatabaseProvider.PostgreSql);
+        var table = tblBuilder.GetMeta(schemaName, DatabaseProvider.MySql);
         var metaTbl = table.ToMeta(0);
         var metaSch = new Meta(schemaName);
         metaSch.SetEntityType(EntityType.Schema);
         var metaList = new List<Meta>() { metaSch };
         metaList.AddRange(metaTbl);
-        var schema = MetaExtensions.ToSchema(metaList.ToArray(), DatabaseProvider.PostgreSql);
-        var expectedResult = "UPDATE \"@test\".\"@meta\" SET {0} WHERE id=$1 AND schema_id=$2 AND object_type=$3 AND reference_id=$4";
+        var schema = metaList.ToArray().ToSchema(DatabaseProvider.PostgreSql);
+        var expectedResult = "UPDATE `@test`.`@meta` SET {0} WHERE id=:a1 AND schema_id=:a2 AND object_type=:a3 AND reference_id=:a4";
 
         // act 
         Assert.NotNull(schema);
@@ -304,14 +246,14 @@ public class DmlBuilderTest : BaseBuilderTest
         var sut = new DmlBuilder();
         var tblBuilder = new TableBuilder();
         var schemaName = "@Test";
-        var table = tblBuilder.GetMetaId(schemaName, DatabaseProvider.PostgreSql);
+        var table = tblBuilder.GetMetaId(schemaName, DatabaseProvider.MySql);
         var metaTbl = table.ToMeta(0);
         var metaSch = new Meta(schemaName);
         metaSch.SetEntityType(EntityType.Schema);
         var metaList = new List<Meta>() { metaSch };
         metaList.AddRange(metaTbl);
-        var schema = MetaExtensions.ToSchema(metaList.ToArray(), DatabaseProvider.PostgreSql);
-        var expectedResult = "UPDATE \"@test\".\"@meta_id\" SET {0} WHERE id=$1 AND schema_id=$2 AND object_type=$3";
+        var schema = metaList.ToArray().ToSchema(DatabaseProvider.PostgreSql);
+        var expectedResult = "UPDATE `@test`.`@meta_id` SET {0} WHERE id=:a1 AND schema_id=:a2 AND object_type=:a3";
 
         // act 
         Assert.NotNull(schema);

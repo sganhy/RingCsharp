@@ -1,7 +1,7 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Models;
 
-namespace Ring.Util.Builders.Oracle;
+namespace Ring.Util.Builders.Static.Oracle;
 
 internal sealed class DdlBuilder : BaseDdlBuilder
 {
@@ -23,7 +23,7 @@ internal sealed class DdlBuilder : BaseDdlBuilder
         { FieldType.LongDateTime,  "TIMESTAMP" }
     };
 
-    public DdlBuilder() : base() {}
+    public DdlBuilder() : base() { }
 
     public override string Create(TableSpace tablespace) => tablespace.Name;
     public override DatabaseProvider Provider => _currentProvider;

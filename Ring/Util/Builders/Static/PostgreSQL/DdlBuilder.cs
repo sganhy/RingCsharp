@@ -2,7 +2,7 @@
 using Ring.Schema.Models;
 using System.Text;
 
-namespace Ring.Util.Builders.PostgreSQL;
+namespace Ring.Util.Builders.Static.PostgreSQL;
 
 internal sealed class DdlBuilder : BaseDdlBuilder
 {
@@ -23,7 +23,7 @@ internal sealed class DdlBuilder : BaseDdlBuilder
         { FieldType.LongDateTime,  "timestamp with time zone" }
     };
 
-    public DdlBuilder() : base() {}
+    public DdlBuilder() : base() { }
 
     public override DatabaseProvider Provider => DatabaseProvider.PostgreSql;
     protected override string StringCollateInformation => @"COLLATE ""C""";

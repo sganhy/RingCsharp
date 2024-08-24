@@ -3,9 +3,9 @@ using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using Ring.Util.Builders;
-using Ring.Util.Builders.PostgreSQL;
+using Ring.Util.Builders.Static.PostgreSQL;
 
-namespace Ring.Tests.Util.Builders.PostgreSQL;
+namespace Ring.Tests.Util.Builders.Static.PostgreSQL;
 
 public class DdlBuilderTest : BaseBuilderTest
 {

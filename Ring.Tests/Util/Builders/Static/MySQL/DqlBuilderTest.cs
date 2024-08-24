@@ -1,13 +1,12 @@
 ﻿using AutoFixture;
-using Ring.Schema.Builders;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using Ring.Util.Builders;
-using Ring.Util.Builders.PostgreSQL;
+using Ring.Util.Builders.Static.PostgreSQL;
 using DbSchema = Ring.Schema.Models.Schema;
 
-namespace Ring.Tests.Util.Builders.MySQL;
+namespace Ring.Tests.Util.Builders.Static.MySQL;
 
 public sealed class DqlBuilderTest : BaseBuilderTest
 {
@@ -20,7 +19,7 @@ public sealed class DqlBuilderTest : BaseBuilderTest
         _fixture = new Fixture();
         var metaList = GetSchema1();
         var meta = new Meta(_fixture.Create<string>());
-        _schema = MetaExtensions.ToSchema(metaList, DatabaseProvider.MySql) ??
+        _schema = metaList.ToSchema(DatabaseProvider.MySql) ??
             MetaExtensions.GetEmptySchema(meta, DatabaseProvider.MySql);
         _sut = new DqlBuilder();
         _sut.Init(_schema);

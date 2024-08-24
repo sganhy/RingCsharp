@@ -1,7 +1,7 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Models;
 
-namespace Ring.Util.Builders.SQLite;
+namespace Ring.Util.Builders.Static.SQLite;
 
 internal sealed class DdlBuilder : BaseDdlBuilder
 {
@@ -23,7 +23,7 @@ internal sealed class DdlBuilder : BaseDdlBuilder
         { FieldType.LongDateTime,  "TEXT"    }
     };
 
-    public DdlBuilder() : base() {}
+    public DdlBuilder() : base() { }
 
     public override string Create(TableSpace tablespace) => string.Empty; // no tablespace on SQLite
 

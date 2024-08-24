@@ -14,7 +14,7 @@ int ok = 19;
 float opop = 0.4f;
 TimeZone localZone = TimeZone.CurrentTimeZone;
 var myDateTime = DateTime.Now;
-TableBuilder builder = new ();
+//TableBuilder builder = new ();
 
 Initialize.Start(typeof(NpgsqlConnection), POSTGRE_CONN_STRING1);
 

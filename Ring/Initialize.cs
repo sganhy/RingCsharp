@@ -1,4 +1,6 @@
 ﻿using Ring.Schema.Enums;
+using System.Runtime.CompilerServices;
+
 
 namespace Ring;
 

@@ -1,7 +1,7 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Models;
 
-namespace Ring.Util.Builders.MySQL;
+namespace Ring.Util.Builders.Static.MySQL;
 
 internal sealed class DqlBuilder : BaseDqlBuilder
 {

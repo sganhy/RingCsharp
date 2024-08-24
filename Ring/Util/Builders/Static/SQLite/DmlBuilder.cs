@@ -1,6 +1,6 @@
 ﻿using Ring.Schema.Enums;
 
-namespace Ring.Util.Builders.SQLite;
+namespace Ring.Util.Builders.Static.SQLite;
 
 internal sealed class DmlBuilder : BaseDmlBuilder
 {

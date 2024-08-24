@@ -4,10 +4,10 @@ using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using Ring.Util.Builders;
-using Ring.Util.Builders.PostgreSQL;
+using Ring.Util.Builders.Static.PostgreSQL;
 using DbSchema = Ring.Schema.Models.Schema;
 
-namespace Ring.Tests.Util.Builders.PostgreSQL;
+namespace Ring.Tests.Util.Builders.Static.PostgreSQL;
 
 public sealed class DqlBuilderTest : BaseBuilderTest
 {
@@ -20,7 +20,7 @@ public sealed class DqlBuilderTest : BaseBuilderTest
         _fixture = new Fixture();
         var metaList = GetSchema1();
         var meta = new Meta(_fixture.Create<string>());
-        _schema = MetaExtensions.ToSchema(metaList, DatabaseProvider.PostgreSql) ??
+        _schema = metaList.ToSchema(DatabaseProvider.PostgreSql) ??
             MetaExtensions.GetEmptySchema(meta, DatabaseProvider.PostgreSql);
         _sut = new DqlBuilder();
         _sut.Init(_schema);
@@ -71,7 +71,7 @@ public sealed class DqlBuilderTest : BaseBuilderTest
         meta.SetEntityType(EntityType.Table);
         var metaSch = new Meta("Test");
         metaSch.SetEntityType(EntityType.Schema);
-        var schema = MetaExtensions.ToSchema(new Meta[] { meta, metaSch }, DatabaseProvider.PostgreSql);
+        var schema = (new Meta[] { meta, metaSch }).ToSchema(DatabaseProvider.PostgreSql);
         var expectedResult = "SELECT FROM test.t_test";
         var tableTest = schema?.GetTable("Test");
 
@@ -115,7 +115,7 @@ public sealed class DqlBuilderTest : BaseBuilderTest
         metaSch.SetEntityType(EntityType.Schema);
         var metaList = new List<Meta>() { metaSch };
         metaList.AddRange(metaTbl);
-        var schema = MetaExtensions.ToSchema(metaList.ToArray(), DatabaseProvider.PostgreSql);
+        var schema = metaList.ToArray().ToSchema(DatabaseProvider.PostgreSql);
         var expectedResult = "SELECT id,schema_id,object_type,reference_id,data_type,flags,name,description,value,active FROM \"@test\".\"@meta\"";
 
         // act 
@@ -143,7 +143,7 @@ public sealed class DqlBuilderTest : BaseBuilderTest
         metaSch.SetEntityType(EntityType.Schema);
         var metaList = new List<Meta>() { metaSch };
         metaList.AddRange(metaTbl);
-        var schema = MetaExtensions.ToSchema(metaList.ToArray(), DatabaseProvider.PostgreSql);
+        var schema = metaList.ToArray().ToSchema(DatabaseProvider.PostgreSql);
         var expectedResult = "SELECT id,schema_id,object_type,value FROM \"@test\".\"@meta_id\"";
 
         // act 
@@ -174,7 +174,7 @@ public sealed class DqlBuilderTest : BaseBuilderTest
         metaField2.SetEntityType(EntityType.Field);
         var metaField3 = new Meta("@User");
         metaField3.SetEntityType(EntityType.Field);
-        var schema = MetaExtensions.ToSchema(new Meta[] { meta, metaSch, metaField1, metaField2, metaField3 }, DatabaseProvider.PostgreSql);
+        var schema = (new Meta[] { meta, metaSch, metaField1, metaField2, metaField3 }).ToSchema(DatabaseProvider.PostgreSql);
         var expectedResult = "SELECT \"@User\",\"ANALYZE\",\"CURRENT_TIMESTAMP\" FROM test.t_lateral";
         var tableTest = schema?.GetTable("Lateral");
 
@@ -198,7 +198,7 @@ public sealed class DqlBuilderTest : BaseBuilderTest
         var table = MetaExtensions.GetEmptyTable(meta, TableType.Business);
 
         // act 
-        var result=sut.Exists(table);
+        var result = sut.Exists(table);
 
         // assert
         Assert.NotNull(result);
