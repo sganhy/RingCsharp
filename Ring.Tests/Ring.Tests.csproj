@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 	<LangVersion>10.0</LangVersion>
-	<Platforms>AnyCPU;x64</Platforms>
+	<Platforms>x64</Platforms>
 	<PlatformTarget>x64</PlatformTarget>
 	<PublishAot>True</PublishAot>
 	<PublishTrimmed>True</PublishTrimmed>
