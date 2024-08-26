@@ -1,6 +1,6 @@
 ﻿using Ring.Schema.Enums;
 
-namespace Ring.Util.Builders.Static.PostgreSQL;
+namespace Ring.Util.Builders.PostgreSQL;
 
 internal sealed class DqlBuilder : BaseDqlBuilder
 {

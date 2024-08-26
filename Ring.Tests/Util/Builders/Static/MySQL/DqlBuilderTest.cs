@@ -3,7 +3,7 @@ using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using Ring.Util.Builders;
-using Ring.Util.Builders.Static.PostgreSQL;
+using Ring.Util.Builders.PostgreSQL;
 using DbSchema = Ring.Schema.Models.Schema;
 
 namespace Ring.Tests.Util.Builders.Static.MySQL;

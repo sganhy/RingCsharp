@@ -1,9 +1,34 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
+	  <TargetFramework>net8.0</TargetFramework>
+	  <ImplicitUsings>enable</ImplicitUsings>
+	  <Nullable>enable</Nullable>
+	  <LangVersion>10.0</LangVersion>
+	  <Platforms>x64</Platforms>
+	  <PlatformTarget>x64</PlatformTarget>
+	  <AnalysisLevel>6.0-all</AnalysisLevel>
+	  <AssemblyVersion>1.0.1.0</AssemblyVersion>
+	  <FileVersion>1.0.1.0</FileVersion>
+	  <RepositoryType>https://github.com/sganhy/RingCsharp.git</RepositoryType>
+	  <RepositoryUrl>https://github.com/sganhy/RingCsharp</RepositoryUrl>
+	  <Description>Ring.Sqlite</Description>
+	  <Title>Ring.Sqlite</Title>
+	  <NoWarn>CA1307;CA1802</NoWarn>
+	  <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+	  <SignAssembly>True</SignAssembly>
+	  <AssemblyOriginatorKeyFile>Ring.Sqlite.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+		<IsAotCompatible>True</IsAotCompatible>
+		<DebugType>full</DebugType>
+		<WarningLevel>6</WarningLevel>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+		<IsAotCompatible>True</IsAotCompatible>
+		<WarningLevel>6</WarningLevel>
+	</PropertyGroup>
 
 </Project>

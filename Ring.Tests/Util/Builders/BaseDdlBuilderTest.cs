@@ -1,6 +1,6 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Util.Builders;
-using Ring.Util.Builders.Static.PostgreSQL;
+using Ring.Util.Builders.PostgreSQL;
 
 namespace Ring.Tests.Util.Builders;
 

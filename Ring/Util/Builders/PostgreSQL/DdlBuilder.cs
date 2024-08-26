@@ -2,7 +2,7 @@
 using Ring.Schema.Models;
 using System.Text;
 
-namespace Ring.Util.Builders.Static.PostgreSQL;
+namespace Ring.Util.Builders.PostgreSQL;
 
 internal sealed class DdlBuilder : BaseDdlBuilder
 {

@@ -1,7 +1,7 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Models;
 
-namespace Ring.Util.Builders.Static.SQLServer;
+namespace Ring.Util.Builders.SQLServer;
 
 internal sealed class DdlBuilder : BaseDdlBuilder
 {

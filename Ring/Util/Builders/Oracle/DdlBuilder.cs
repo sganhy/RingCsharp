@@ -1,11 +1,11 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Models;
 
-namespace Ring.Util.Builders.Static.MySQL;
+namespace Ring.Util.Builders.Oracle;
 
 internal sealed class DdlBuilder : BaseDdlBuilder
 {
-    private readonly static DatabaseProvider _currentProvider = DatabaseProvider.MySql;
+    private readonly static DatabaseProvider _currentProvider = DatabaseProvider.Oracle;
     private readonly static Dictionary<FieldType, string> _dataType = new()
     {
         { FieldType.String,        "VARCHAR"   },

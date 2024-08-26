@@ -27,11 +27,11 @@ internal static class DatabaseProviderExtensions
     {
         switch (provider)
         {
-            case DatabaseProvider.Oracle: return new Util.Builders.Static.Oracle.DdlBuilder();
-            case DatabaseProvider.PostgreSql: return new Util.Builders.Static.PostgreSQL.DdlBuilder();
-            case DatabaseProvider.MySql: return new Util.Builders.Static.MySQL.DdlBuilder();
-            case DatabaseProvider.SqlServer: return new Util.Builders.Static.SQLServer.DdlBuilder();
-            case DatabaseProvider.SqlLite: return new Util.Builders.Static.SQLite.DdlBuilder();
+            case DatabaseProvider.Oracle: return new Util.Builders.Oracle.DdlBuilder();
+            case DatabaseProvider.PostgreSql: return new Util.Builders.PostgreSQL.DdlBuilder();
+            case DatabaseProvider.MySql: return new Util.Builders.MySQL.DdlBuilder();
+            case DatabaseProvider.SqlServer: return new Util.Builders.SQLServer.DdlBuilder();
+            case DatabaseProvider.SqlLite: return new Util.Builders.SQLite.DdlBuilder();
         }
         throw new NotImplementedException();
     }
@@ -39,11 +39,11 @@ internal static class DatabaseProviderExtensions
     {
         switch (provider)
         {
-            case DatabaseProvider.Oracle: return new Util.Builders.Static.Oracle.DmlBuilder();
-            case DatabaseProvider.PostgreSql: return new Util.Builders.Static.PostgreSQL.DmlBuilder();
-            case DatabaseProvider.MySql: return new Util.Builders.Static.MySQL.DmlBuilder();
-            case DatabaseProvider.SqlServer: return new Util.Builders.Static.SQLServer.DmlBuilder();
-            case DatabaseProvider.SqlLite: return new Util.Builders.Static.SQLite.DmlBuilder();
+            case DatabaseProvider.Oracle: return new Util.Builders.Oracle.DmlBuilder();
+            case DatabaseProvider.PostgreSql: return new Util.Builders.PostgreSQL.DmlBuilder();
+            case DatabaseProvider.MySql: return new Util.Builders.MySQL.DmlBuilder();
+            case DatabaseProvider.SqlServer: return new Util.Builders.SQLServer.DmlBuilder();
+            case DatabaseProvider.SqlLite: return new Util.Builders.SQLite.DmlBuilder();
         }
         throw new NotImplementedException();
     }
@@ -51,11 +51,11 @@ internal static class DatabaseProviderExtensions
     {
         switch (provider)
         {
-            case DatabaseProvider.Oracle: return new Util.Builders.Static.Oracle.DqlBuilder();
-            case DatabaseProvider.PostgreSql: return new Util.Builders.Static.PostgreSQL.DqlBuilder();
-            case DatabaseProvider.MySql: return new Util.Builders.Static.MySQL.DqlBuilder();
-            case DatabaseProvider.SqlServer: return new Util.Builders.Static.SQLServer.DqlBuilder();
-            case DatabaseProvider.SqlLite: return new Util.Builders.Static.SQLite.DqlBuilder();
+            case DatabaseProvider.Oracle: return new Util.Builders.Oracle.DqlBuilder();
+            case DatabaseProvider.PostgreSql: return new Util.Builders.PostgreSQL.DqlBuilder();
+            case DatabaseProvider.MySql: return new Util.Builders.MySQL.DqlBuilder();
+            case DatabaseProvider.SqlServer: return new Util.Builders.SQLServer.DqlBuilder();
+            case DatabaseProvider.SqlLite: return new Util.Builders.SQLite.DqlBuilder();
         }
         throw new NotImplementedException();
     }

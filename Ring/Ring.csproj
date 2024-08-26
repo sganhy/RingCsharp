@@ -26,7 +26,6 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IsAotCompatible>True</IsAotCompatible>
-    <DebugType>full</DebugType>
     <WarningLevel>6</WarningLevel>
   </PropertyGroup>
 
