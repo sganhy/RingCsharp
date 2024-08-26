@@ -31,4 +31,8 @@
 		<WarningLevel>6</WarningLevel>
 	</PropertyGroup>
 
+	<ItemGroup>
+	  <ProjectReference Include="..\Ring\Ring.csproj" />
+	</ItemGroup>
+
 </Project>
