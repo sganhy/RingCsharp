@@ -36,7 +36,9 @@ internal sealed class LogBuilder
         var stackTrace = new StackTrace(true);
         var threadId = Environment.CurrentManagedThreadId;
         var callingFrame = stackTrace.GetFrame(2);
+#pragma warning disable IL2026 // Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code
         var methodInfo = callingFrame?.GetMethod();
+#pragma warning restore IL2026 
         var method = methodInfo?.Name;
         var callSite = methodInfo?.ReflectedType?.FullName;
         var lineNumber = callingFrame?.GetFileLineNumber();

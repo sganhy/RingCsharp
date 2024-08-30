@@ -7,7 +7,10 @@ internal sealed class CacheId
 	internal long MaximumId;
 	internal int ReservedRange;  // cache a range of id 
 
-	public CacheId()
+    /// <summary>
+    ///     Ctor
+    /// </summary>
+    public CacheId()
 	{
 		CurrentId = 0L;
 		MaximumId = long.MaxValue;

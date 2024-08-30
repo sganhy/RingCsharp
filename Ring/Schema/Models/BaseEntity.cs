@@ -26,7 +26,7 @@ internal abstract class BaseEntity
 	}
 
 #if DEBUG
-	public override string ToString() => Name;
+	public override string ToString() => $"{Id} - {Name}";
 #endif
 
 }

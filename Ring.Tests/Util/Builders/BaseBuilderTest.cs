@@ -26,7 +26,7 @@ public class BaseBuilderTest
         var fieldsById = new List<Field>(fields);
         var relations = new List<Relation>();
 
-        for (var i = 0; i < numberOfRelation; i++) relations.Add(GetAnonymousRelation(RelationType.Mto, "skill2book"));
+        for (var i = 0; i < numberOfRelation; i++) relations.Add(GetAnonymousRelation(RelationType.Mto, i+20, "skill2book"));
 
         // sort lists
         fields = fields.OrderBy(o => o.Name).ToList();
@@ -55,7 +55,7 @@ public class BaseBuilderTest
         return result;
     }
 
-    internal Relation GetAnonymousRelation(RelationType relationType, string? name = null, bool notNull = true)
+    internal Relation GetAnonymousRelation(RelationType relationType, int id, string? name = null, bool notNull = true)
     {
         // generate primary key 
         Field primaryKey = FieldExtensions.GetDefaultPrimaryKey(null, FieldType.Long) ?? default!;
@@ -68,13 +68,11 @@ public class BaseBuilderTest
         toTable.LoadColumnMapper();
             
         // generate primary key 
-        var result = new Relation(1000, relationName, _fixture.Create<string>(),
-            relationType, toTable, notNull, _fixture.Create<bool>(),
+        var result = new Relation(id, relationName, _fixture.Create<string>(), relationType, toTable, -1, notNull, _fixture.Create<bool>(), 
             _fixture.Create<bool>(), _fixture.Create<bool>());
 
         return result;
     }
-
 
     internal FieldType GetAnonymousFieldType()
     {
@@ -87,7 +85,7 @@ public class BaseBuilderTest
         return result;
     }
 
-    internal Meta[] GetMeta2TableItems()
+    internal Meta[] GetMeta2TableItems(bool addMtmRelationship)
     {
         var metaList = new List<Meta>
         {
@@ -97,10 +95,15 @@ public class BaseBuilderTest
             { GetMeta(5,"category", EntityType.Field,16, 1048578L) },
             { GetMeta(6,"armor_penality", EntityType.Field,3, 6L) },
             { GetMeta(7,"trained_only", EntityType.Field,23, 6L) },
-            { GetMeta(8,"try_again", EntityType.Field,23, 6L) },
+            { GetMeta(9,"try_again", EntityType.Field,23, 6L) },
             { GetMeta(1,"id", EntityType.Field,2, 2L) },
-            { GetMeta(1,"skill2book", EntityType.Relation,1021, 2883600L) }
+            { GetMeta(1,"skill2book", EntityType.Relation,1021, 2883600L)}
         };
+        // 2,0,2,1011,1021,786448,ability2book,,book2ability,true
+        if (addMtmRelationship)
+        {
+            metaList.Add(GetMeta(8, "ability2book", EntityType.Relation, 1021, 786448L));
+        }
         foreach (var meta in metaList)
         {
             meta.SetEntityDescription(_fixture.Create<string>());

@@ -123,32 +123,6 @@ internal static class SchemaExtensions
         return count >> 1;
     }
 
-    internal static void SelectQuery(this DbSchema schema, Table table, string sql, IDbDataParameter[] parameters)
-    {
-        var conn = schema.Connections.Get();
-        var count = 0;
-        try
-        {
-            using var command = conn.CreateCommand();
-            command.CommandText = sql;
-            command.CommandType = CommandType.Text;
-            command.Parameters.Clear();
-            for (var i = 0; i < parameters.Length; ++i) command.Parameters.Add(parameters[i]);
-            var dt = DateTime.Now;
-            using var reader = command.ExecuteReader();
-            while (reader.Read())
-            {
-                count++;
-            }
-            var ts = DateTime.Now - dt;
-            Console.WriteLine(ts);
-        }
-        finally
-        {
-            schema.Connections.Put(conn);
-        }
-    }
-
     #region private methods 
     private static void LoadInverseRelations(this DbSchema schema, Meta[] schemaItems)
     {

@@ -25,7 +25,7 @@ internal sealed class Schema : BaseEntity
 		bool active, bool baseline) : base(id, name, description, active, baseline)
 	{
 		Connections = new ConnectionPool(id, parameters.GetMinPoolSize(id), parameters.GetMaxPoolSize(id),
-                                 parameters.GetDbConnectionString(id), parameters.GetDbConnectionType(id));
+                                 parameters.GetDbConnectionString(id));
 		Lexicons = lexicons;
 		LoadType = loadType;
 		Type = type;

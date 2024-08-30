@@ -45,9 +45,11 @@ public class LogBuilderTest
     internal void GetInfo_FileNotFound_LogObject()
     {
         // arrange 
-        var sut = new LogBuilder();
-        sut.SchemaId = _fixture.Create<int>();
-        sut.JobId = _fixture.Create<long?>();
+        var sut = new LogBuilder
+        {
+            SchemaId = _fixture.Create<int>(),
+            JobId = _fixture.Create<long?>()
+        };
         var currentThreadId = Environment.CurrentManagedThreadId;
         // act
         var log = sut.GetInfo(LogType.FileNotFound);

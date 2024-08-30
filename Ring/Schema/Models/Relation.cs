@@ -10,11 +10,12 @@ internal sealed class Relation : BaseEntity, IColumn
 	internal readonly bool NotNull;                         // foreign key constraint should be added
 	internal readonly Table ToTable;
 	internal readonly RelationType Type;
+	internal readonly int RecordIndex;                      // index of relationship into record._data by default -1
 
 	/// <summary>
 	///     Ctor
 	/// </summary>
-	internal Relation(int id, string name, string? description, RelationType type, Table toObject,
+	internal Relation(int id, string name, string? description, RelationType type, Table toObject, int recordIndex,
 		bool notnull, bool constraint,bool baseline, bool active)
 		: base(id, name, description, active, baseline)
 	{
@@ -23,7 +24,8 @@ internal sealed class Relation : BaseEntity, IColumn
 		HasConstraint = constraint;
 		NotNull = notnull;
 		InverseRelation = this;
-	}
+		RecordIndex = recordIndex;
+    }
 
 	/// <summary>
 	///     assign only once the property 

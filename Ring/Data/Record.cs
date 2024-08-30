@@ -44,7 +44,7 @@ public struct Record : IEquatable<Record>
     internal Record(Table type)
     {
         _type = type;
-        _data = new string?[type.Fields.Length + 1];
+        _data = new string?[type.ColumnMapper.Length + 1];
     }
 
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
@@ -493,7 +493,6 @@ public struct Record : IEquatable<Record>
     private static void ThrowInvalidBase64String() =>
         throw new FormatException(ResourceHelper.GetErrorMessage(ResourceType.InvalidBase64String));
 
-    
 
     #endregion
 

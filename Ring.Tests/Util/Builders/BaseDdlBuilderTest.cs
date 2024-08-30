@@ -65,7 +65,7 @@ public sealed class BaseDdlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var table = GetAnonymousTable(12, 2);
-        var relation = GetAnonymousRelation(RelationType.Mto);
+        var relation = GetAnonymousRelation(RelationType.Mto,8);
         var expectedSql = $"ALTER TABLE {table.PhysicalName} ADD {relation.Name} int8";
 
         // act 
@@ -95,7 +95,7 @@ public sealed class BaseDdlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var table = GetAnonymousTable(12, 2);
-        var relation = GetAnonymousRelation(RelationType.Mto);
+        var relation = GetAnonymousRelation(RelationType.Mto,4);
         var expectedSql = $"ALTER TABLE {table.PhysicalName} DROP COLUMN {relation.Name}";
 
         // act 

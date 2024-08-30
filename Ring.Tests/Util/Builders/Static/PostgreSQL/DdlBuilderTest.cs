@@ -49,24 +49,24 @@ public class DdlBuilderTest : BaseBuilderTest
     [Fact]
     public void Create_Table2_DdlQuery()
     {
+        // arrange 
         var metaTable = GetMeta2Table();
-        var metaItems = GetMeta2TableItems();
+        var metaItems = GetMeta2TableItems(true);
         var physicalName = _fixture.Create<string>();
         var segment = new ArraySegment<Meta>(metaItems, 0, metaItems.Length);
         var table2 = metaTable.ToTable(segment, TableType.Business, PhysicalType.Table, physicalName);
         Assert.NotNull(table2);
-#pragma warning disable CS8602
-        table2.Relations[0] = GetAnonymousRelation(RelationType.Mto, @"skill2book");
+        table2.Relations[1] = GetAnonymousRelation(RelationType.Mto, 1, @"skill2book");
+        table2.Relations[0] = GetAnonymousRelation(RelationType.Mtm, 8, @"ability2book");
         table2.LoadColumnMapper();
-        var expectedSql = $"CREATE TABLE {physicalName} (\n" + "    id int2 NOT NULL,\n" +
+        var expectedSql = $"CREATE TABLE {physicalName} (\n" + "    id int2 NOT NULL,\n    skill2book int8,\n" +
                 "    name varchar(80) COLLATE \"C\",\n" + "    sub_name varchar(30) COLLATE \"C\",\n" + "    is_group bool,\n" +
                 "    category varchar(8) COLLATE \"C\",\n" + "    armor_penality int2,\n" + "    trained_only bool,\n" +
-                "    try_again bool,\n" + "    skill2book int8)";
+                "    try_again bool)";
 
         // act 
         var ddl = _sut.Create(table2);
 
-#pragma warning restore  CS8602
 
         // assert
         Assert.Equal(expectedSql, ddl);
@@ -75,13 +75,14 @@ public class DdlBuilderTest : BaseBuilderTest
     [Fact]
     public void Create_Table3_DdlQuery()
     {
+        // arrange 
         var metaTable = GetMeta2Table();
-        var metaItems = GetMeta2TableItems();
+        var metaItems = GetMeta2TableItems(false);
         var physicalName = _fixture.Create<string>();
         var segment = new ArraySegment<Meta>(metaItems, 0, metaItems.Length);
         var table3 = metaTable.ToTable(segment, TableType.Meta, PhysicalType.Table, physicalName);
 #pragma warning disable CS8602
-        table3.Relations[0] = GetAnonymousRelation(RelationType.Mto, @"skill2book", true);
+        table3.Relations[0] = GetAnonymousRelation(RelationType.Mto, 11, @"skill2book", true);
         table3.LoadColumnMapper();
         var expectedSql = $"CREATE TABLE {physicalName} (\n" + "    id int2 NOT NULL,\n" +
                 "    name varchar(80) COLLATE \"C\" NOT NULL,\n" + "    sub_name varchar(30) COLLATE \"C\",\n" + "    is_group bool NOT NULL,\n" +
@@ -100,16 +101,17 @@ public class DdlBuilderTest : BaseBuilderTest
     [Fact]
     public void Create_Table4_DdlQuery()
     {
+        // arrange 
         var metaTable = GetMeta2Table();
         var tablespaceName = _fixture.Create<string>();
         var tablespace = GetAnonymousTableSpace(tablespaceName);
-        var metaItems = GetMeta2TableItems();
+        var metaItems = GetMeta2TableItems(false);
         var physicalName = _fixture.Create<string>();
         var segment = new ArraySegment<Meta>(metaItems, 0, metaItems.Length);
         var table4 = metaTable.ToTable(segment, TableType.Fake, PhysicalType.Table, physicalName);
 
 #pragma warning disable CS8602
-        table4.Relations[0] = GetAnonymousRelation(RelationType.Mto, @"skill2book", false);
+        table4.Relations[0] = GetAnonymousRelation(RelationType.Mto, 11,@"skill2book", false);
         table4.LoadColumnMapper();
         var expectedSql = $"CREATE TABLE {physicalName} (\n" + "    id int2 NOT NULL,\n" +
                 "    name varchar(80) COLLATE \"C\" NOT NULL,\n" + "    sub_name varchar(30) COLLATE \"C\",\n" + "    is_group bool NOT NULL,\n" +
@@ -203,7 +205,7 @@ public class DdlBuilderTest : BaseBuilderTest
     public void GetPhysicalName_Relation1_RelationName()
     {
         // arrange 
-        var relation = GetAnonymousRelation(RelationType.Otop, "rETURnINg", false);
+        var relation = GetAnonymousRelation(RelationType.Otop, 5,"rETURnINg", false);
         var expectedSql = $"\"{relation.Name}\"";
 
         // act 

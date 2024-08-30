@@ -174,7 +174,7 @@ internal static class MetaExtensions
 
     internal static Relation? ToRelation(this Meta meta, Table to)
          => meta.IsRelation() ?
-           new Relation(meta.GetEntityId(), meta.GetEntityName(), meta.GetEntityDescription(), meta.GetRelationType(), to,
+           new Relation(meta.GetEntityId(), meta.GetEntityName(), meta.GetEntityDescription(), meta.GetRelationType(), to, -1,
                meta.IsRelationNotNull(), meta.HasRelationConstraint(), meta.IsEntityBaseline(), meta.IsEntityActive()) : null;
 
     #endregion
@@ -364,7 +364,7 @@ internal static class MetaExtensions
 
     internal static Relation GetEmptyRelation(Meta meta, RelationType relationType, TableType tableType=TableType.Fake) =>
         new(meta.GetEntityId(), meta.GetEntityName(), meta.GetEntityDescription(), relationType, 
-            GetEmptyTable(new Meta(meta.GetEntityName()), tableType), false, false, true, true);
+            GetEmptyTable(new Meta(meta.GetEntityName()), tableType), -1, false, false, true, true);
 
     internal static Field GetEmptyField(Meta meta, FieldType fieldType) =>
         new(meta.GetEntityId(), meta.GetEntityName(), meta.GetEntityDescription(), fieldType, 0, null,true,false,

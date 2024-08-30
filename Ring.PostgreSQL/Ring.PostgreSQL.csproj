@@ -32,6 +32,10 @@
 	</PropertyGroup>
 	
 	<ItemGroup>
+	  <PackageReference Include="Npgsql" Version="8.0.3" />
+	</ItemGroup>
+	
+	<ItemGroup>
 	  <ProjectReference Include="..\Ring\Ring.csproj" />
 	</ItemGroup>
 	
