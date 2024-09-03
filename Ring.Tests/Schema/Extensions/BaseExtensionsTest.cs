@@ -31,6 +31,7 @@ public abstract class BaseExtensionsTest
             _fixture.Create<string>(), TableType.Business, relations.ToArray(), fields.ToArray(), 
             new int[fields.Count+relations.Count], Array.Empty<Index>(), 12, PhysicalType.Table, true, true, true, true);
         result.LoadColumnMapper();
+        result.LoadRecordIndex();
         return result;
     }
 

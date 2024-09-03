@@ -114,6 +114,16 @@ internal static class SchemaExtensions
         }
     }
 
+    internal static void LoadRecordIndexes(this DbSchema schema)
+    {
+        var i = schema.TablesByName.Length - 1;
+        while (i >= 0)
+        {
+            schema.TablesByName[i].LoadRecordIndex();
+            --i;
+        }
+    }
+
     internal static int GetMtmTableCount(this DbSchema schema)
     {
         var count = 0;
@@ -192,7 +202,7 @@ internal static class SchemaExtensions
             }
         }
     }
-       
+
     private static Relation CreateMtmRelation(Relation relation, Table mtmTable)
     {
         var meta = relation.ToMeta(0);

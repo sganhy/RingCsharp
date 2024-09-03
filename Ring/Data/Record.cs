@@ -1,4 +1,5 @@
-﻿using Ring.Schema.Enums;
+﻿using Microsoft.VisualBasic;
+using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using Ring.Util.Enums;
@@ -297,7 +298,6 @@ public struct Record : IEquatable<Record>
         if (fieldType != FieldType.ByteArray) ThrowImpossibleConversion(FieldType.ByteArray, fieldType);
         SetData(fieldId, Convert.ToBase64String(value.ToArray()));
     }
-
     public static bool operator ==(Record left, Record right) => left.Equals(right);
     public static bool operator !=(Record left, Record right) => !(left == right);
     public readonly bool Equals(Record other)
@@ -348,7 +348,27 @@ public struct Record : IEquatable<Record>
         ThrowRecordUnkownFieldName(name);
         return false;
     }
+
     internal readonly bool IsFieldExist(string name) => _type != null && _type.GetFieldIndex(name) != -1;
+
+    /// <summary>
+    ///     Return relation value by name
+    /// </summary>
+    /// <param name="name">Name of the relation</param>
+    /// <returns>relation value; if not defined return 0L</returns>
+    internal readonly long? GetRelation(string name)
+    {
+        if (_type == null) ThrowRecordUnkownRecordType();
+#pragma warning disable CS8604 // Dereference of a possibly null reference. _type cannot be null here 
+        var relation = _type.GetRelation(name);
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+        if (relation == null) ThrowRecordUnkownRelationName(name);
+        else if (relation.RecordIndex >= 0 && _data[relation.RecordIndex] != null) 
+            return long.Parse(_data[relation.RecordIndex], CultureInfo.InvariantCulture);
+#pragma warning restore CS8602
+#pragma warning restore CS8604
+        return null;
+    }
 
     #region private methods 
 
@@ -462,37 +482,49 @@ public struct Record : IEquatable<Record>
 #pragma warning restore CS8604 // Possible null reference argument.
 
     // exceptions 
+    [MethodImpl(MethodImplOptions.NoInlining)]
     private readonly void ThrowRecordUnkownFieldName(string fieldName) => 
         throw new ArgumentException(string.Format(DefaultCulture,
                   ResourceHelper.GetErrorMessage(ResourceType.RecordUnkownFieldName), fieldName, _type?.Name));
 
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private readonly void ThrowRecordUnkownRelationName(string relationName) =>
+        throw new ArgumentException(string.Format(DefaultCulture,
+                  ResourceHelper.GetErrorMessage(ResourceType.RecordUnkownRelationName), relationName, _type?.Name));
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
     private readonly void ThrowMandatoryFieldCannotBeNull(string fieldName) =>
         throw new ArgumentException(string.Format(DefaultCulture,
             ResourceHelper.GetErrorMessage(ResourceType.FieldIsMandatory), _type?.Name, fieldName));
 
+    [MethodImpl(MethodImplOptions.NoInlining)]
     private static void ThrowRecordUnkownRecordType() =>
         throw new ArgumentException(ResourceHelper.GetErrorMessage(ResourceType.RecordUnkownRecordType));
 
+    [MethodImpl(MethodImplOptions.NoInlining)]
     private static void ThrowWrongStringFormat() =>
         throw new FormatException(ResourceHelper.GetErrorMessage(ResourceType.RecordWrongStringFormat));
-
+    
+    [MethodImpl(MethodImplOptions.NoInlining)]
     private static void ThrowValueTooLarge(FieldType fieldType) =>
         throw new OverflowException(string.Format(DefaultCulture, 
             ResourceHelper.GetErrorMessage(ResourceType.RecordValueTooLarge), fieldType.RecordTypeDisplay()));
 
+    [MethodImpl(MethodImplOptions.NoInlining)]
     private static void ThrowWrongBooleanValue(string? value) =>
         throw new FormatException(string.Format(DefaultCulture,
             ResourceHelper.GetErrorMessage(ResourceType.RecordWrongBooleanValue), value?? NullString));
 
+    [MethodImpl(MethodImplOptions.NoInlining)]
     private static void ThrowImpossibleConversion(FieldType fieldTypeSource, FieldType fieldTypeDestination) =>
         throw new ArgumentException(string.Format(DefaultCulture,
             ResourceHelper.GetErrorMessage(ResourceType.RecordCannotConvert), 
             fieldTypeSource.RecordTypeDisplay() ?? NullString,
             fieldTypeDestination.RecordTypeDisplay() ?? NullString));
 
+    [MethodImpl(MethodImplOptions.NoInlining)]
     private static void ThrowInvalidBase64String() =>
         throw new FormatException(ResourceHelper.GetErrorMessage(ResourceType.InvalidBase64String));
-
 
     #endregion
 

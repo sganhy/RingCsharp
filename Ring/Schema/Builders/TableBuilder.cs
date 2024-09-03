@@ -50,6 +50,7 @@ internal sealed class TableBuilder
         var metaTable = GetTable((int)TableType.Meta, TableMetaName);
         var result = GetTable(schemaName, provider, metaList.ToArray(), metaTable, TableType.Meta);
         result.LoadColumnMapper();
+        result.LoadRecordIndex();
         return result;
     }
 
@@ -67,6 +68,7 @@ internal sealed class TableBuilder
         metaList.Add(GetUniqueIndex(3, metaList));
         var result= GetTable(schemaName, provider, metaList.ToArray(), metaTable, TableType.MetaId);
         result.LoadColumnMapper();
+        result.LoadRecordIndex();
         return result;
     }
 #pragma warning disable CA1822 // Mark members as static
@@ -89,6 +91,7 @@ internal sealed class TableBuilder
         var metaTable = GetTable((int)TableType.Log, TableLogName);
         var result = GetTable(schemaName, provider, metaList.ToArray(), metaTable, TableType.Log);
         result.LoadColumnMapper();
+        result.LoadRecordIndex();
         return result;
     }
 
@@ -104,6 +107,7 @@ internal sealed class TableBuilder
         var result = GetTable(provider.GetCatalogSchema(), provider, metaList.ToArray(), catalog, 
             tableType,PhysicalType.View);
         result.LoadColumnMapper();
+        result.LoadRecordIndex();
         return result;
     }
 

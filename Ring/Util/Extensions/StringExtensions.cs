@@ -124,7 +124,7 @@ internal static class StringExtensions
     /// </summary>
     /// <param name="value">Value to test</param>
     /// <returns>Boolean value, true if the string is base64, otherwise false</returns>
-    internal static bool IsBase64String(this string value)
+    internal static bool IsBase64String(this string? value)
     {
         if (value == null || value.Length == 0 || value.Length % 4 != 0
             || value.Contains(' ') || value.Contains('\t') || value.Contains('\r') || value.Contains('\n')) return false;

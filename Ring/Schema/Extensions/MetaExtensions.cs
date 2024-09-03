@@ -293,7 +293,8 @@ internal static class MetaExtensions
                 provider, meta.IsEntityActive(), meta.IsEntityBaseline());
 
             result.LoadRelations(schema);
-            result.LoadColumnMappers();
+            result.LoadColumnMappers(); // load column mapper on tables
+            result.LoadRecordIndexes(); // load record indexes on relations
 
             return result;
         }

@@ -188,7 +188,7 @@ public class StringExtensionsTest
     [InlineData("bGlnaHQgdw==", true)]
     [InlineData("aWwgw6l0YWl0IHVuZSBmb2lzIGxlcyBVU0E=", true)]
     [InlineData("bGln,HQgd28=", false)]
-    public void IsBase64String_InputString_Result(string input, bool expectedResult)
+    public void IsBase64String_InputString_Result(string? input, bool expectedResult)
     {
         // arrange 
         // act 

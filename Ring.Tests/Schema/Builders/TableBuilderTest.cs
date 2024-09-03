@@ -21,6 +21,7 @@ public class TableBuilderTest
         // act 
         var metaTable = _sut.GetMeta(schemaName,DatabaseProvider.PostgreSql);
         metaTable.LoadColumnMapper();
+        metaTable.LoadRecordIndex();
 
         // assert
         Assert.Equal("test.\"@meta\"", metaTable.PhysicalName);
@@ -59,6 +60,7 @@ public class TableBuilderTest
         // act 
         var metaIdTable = _sut.GetMetaId(schemaName, DatabaseProvider.PostgreSql);
         metaIdTable.LoadColumnMapper();
+        metaIdTable.LoadRecordIndex();
 
         // assert
         Assert.Equal("test.\"@meta_id\"", metaIdTable.PhysicalName);
@@ -86,6 +88,7 @@ public class TableBuilderTest
         // act 
         var catalog = _sut.GetCatalog(EntityType.Table, DatabaseProvider.PostgreSql);
         catalog.LoadColumnMapper();
+        catalog.LoadRecordIndex();
 
         // assert
         Assert.Equal("information_schema.tables", catalog.PhysicalName);
@@ -102,6 +105,7 @@ public class TableBuilderTest
         // act 
         var catalog = _sut.GetCatalog(EntityType.Table, DatabaseProvider.MySql);
         catalog.LoadColumnMapper();
+        catalog.LoadRecordIndex();
 
         // assert
         Assert.Equal("information_schema.tables", catalog.PhysicalName);
@@ -120,6 +124,7 @@ public class TableBuilderTest
         // act 
         var logTable = _sut.GetLog(schemaName, DatabaseProvider.PostgreSql);
         logTable.LoadColumnMapper();
+        logTable.LoadRecordIndex();
 
         // assert
         Assert.Equal("test.\"@log\"", logTable.PhysicalName);

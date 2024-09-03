@@ -10,12 +10,12 @@ internal sealed class Relation : BaseEntity, IColumn
 	internal readonly bool NotNull;                         // foreign key constraint should be added
 	internal readonly Table ToTable;
 	internal readonly RelationType Type;
-	internal readonly int RecordIndex;                      // index of relationship into record._data by default -1
+	internal int RecordIndex { get; private set; }          // index of relationship into record._data by default -1
 
-	/// <summary>
-	///     Ctor
-	/// </summary>
-	internal Relation(int id, string name, string? description, RelationType type, Table toObject, int recordIndex,
+    /// <summary>
+    ///     Ctor
+    /// </summary>
+    internal Relation(int id, string name, string? description, RelationType type, Table toObject, int recordIndex,
 		bool notnull, bool constraint,bool baseline, bool active)
 		: base(id, name, description, active, baseline)
 	{
@@ -33,10 +33,12 @@ internal sealed class Relation : BaseEntity, IColumn
 	internal void SetInverseRelation(Relation relation) => 
 		InverseRelation = ReferenceEquals(InverseRelation,this) ? relation : InverseRelation;
 
-	/// <summary>
-	///     Implement IColumn
-	/// </summary>
-	int IColumn.Id => Id;
+    internal void SetRecordIndex(int index) => RecordIndex = index;
+
+    /// <summary>
+    ///     Implement IColumn
+    /// </summary>
+    int IColumn.Id => Id;
 	FieldType IColumn.Type => ToTable.GetPrimaryKey()?.Type ?? FieldType.Undefined;
 	string IColumn.Name => Name;
 	RelationType IColumn.RelationType => Type;

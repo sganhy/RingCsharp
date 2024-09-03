@@ -118,6 +118,7 @@ public class DmlBuilderTest : BaseBuilderTest
         var schema = metaList.ToArray().ToSchema(DatabaseProvider.PostgreSql);
         var expectedResult = "INSERT INTO \"@test\".\"@meta\" (id,schema_id,object_type,reference_id,data_type,flags,name,description,value,active) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)";
         table.LoadColumnMapper();
+        table.LoadRecordIndex();
 
         // act 
         Assert.NotNull(schema);
@@ -147,6 +148,7 @@ public class DmlBuilderTest : BaseBuilderTest
         var schema = metaList.ToArray().ToSchema(DatabaseProvider.PostgreSql);
         var expectedResult = "INSERT INTO \"@test\".\"@meta_id\" (id,schema_id,object_type,value) VALUES ($1,$2,$3,$4)";
         table.LoadColumnMapper();
+        table.LoadRecordIndex();
 
         // act 
         Assert.NotNull(schema);

@@ -233,4 +233,24 @@ internal static class TableExtensions
 
     }
 
+    internal static void LoadRecordIndex(this Table table)
+    {
+        var fieldCount = table.Fields.Length;
+        var relationCount = table.Relations.Length;
+        var i = 0;
+        var currentIndex = 0;
+        while (i < relationCount)
+        {
+            var relation = table.Relations[i];
+            if (relation.Type == RelationType.Mto || relation.Type == RelationType.Otop)
+            {
+                relation.SetRecordIndex(currentIndex + fieldCount);
+                ++currentIndex;
+            }
+            else relation.SetRecordIndex(-1);
+            ++i;
+        }
+    }
+
+
 }

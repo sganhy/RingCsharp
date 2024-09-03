@@ -198,7 +198,7 @@ public sealed class RecordTest : BaseExtensionsTest
         // assert
         Assert.Equal(result1, result2);
     }
-
+    
     [Fact]
     public void SetField_AnonymousValue_RecordUnkownRecordType()
     {
@@ -949,7 +949,7 @@ public sealed class RecordTest : BaseExtensionsTest
         Assert.Equal(byteArray[1], result[1]);
         Assert.Equal(byteArray[2], result[2]);
     }
-
+            
     [Fact]
     public void GetField_AnonymousField_ThrowArgumentException()
     {
@@ -1092,6 +1092,21 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
+    public void GetField_OutLong_ThrowRecordUnkownFieldName()
+    {
+        // arrange 
+        var table = _schema.GetTable("campaign_setting");
+        Assert.NotNull(table);
+        var rcd = new Record(table);
+
+        // act 
+        var ex = Assert.Throws<ArgumentException>(() => rcd.GetField("789", out long? lngOut));
+
+        // assert
+        Assert.Equal("Field name '789' does not exist for object type 'campaign_setting'.", ex.Message);
+    }
+
+    [Fact]
     public void GetField_OutDateTime_ShortDateTime()
     {
         // arrange 
@@ -1230,7 +1245,6 @@ public sealed class RecordTest : BaseExtensionsTest
         Assert.False(result);
     }
 
-
     [Fact]
     public void ClearData_AnonymousRecord_DataResetToNull()
     {
@@ -1324,5 +1338,24 @@ public sealed class RecordTest : BaseExtensionsTest
         // assert
         Assert.False(result);
     }
+
+    [Fact]
+    public void GetRelation_RandomName_8989()
+    {
+        // arrange 
+        var tableDeity = _schema.GetTable("deity");
+        Assert.NotNull(tableDeity);
+        var rcd = new Record(tableDeity);
+        rcd.SetField("symbol", "tests");
+        var expectedValue = "8989";
+        rcd[6] = expectedValue;
+
+        // act 
+        var result = rcd.GetRelation("deity2gender");
+
+        // assert
+        Assert.Equal(expectedValue, result.ToString());
+    }
+
 }
 
