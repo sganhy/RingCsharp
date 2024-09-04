@@ -108,12 +108,12 @@ internal static class StringExtensions
         var timeZoneIndex = GetTimeZoneIndex(template, timeIndex);
         var dateTemplate = GetDateTemplate(template,timeIndex); 
         var timeTemplate = GetTimeTemplate(template,timeIndex,timeZoneIndex); 
-        var timeZoneTemplate = GetTimeZoneTemplate(template, timeIndex, timeZoneIndex); 
-        if (dateTemplate!=null)
+        var timeZoneTemplate = GetTimeZoneTemplate(template, timeIndex, timeZoneIndex);
+        if (dateTemplate != null && 
+            DateTimeOffset.TryParseExact(value + valueSuffix, dateTemplate + timeTemplate + timeZoneTemplate,
+                DefaultCulture, DateTimeStyles.AssumeUniversal, out var result))
         {
-            if (DateTimeOffset.TryParseExact(value+valueSuffix, dateTemplate+timeTemplate+timeZoneTemplate, 
-                DefaultCulture,DateTimeStyles.AssumeUniversal,out var result))
-                return result;
+            return result;
         }
         throw new FormatException(string.Format(CultureInfo.InvariantCulture, 
             ResourceHelper.GetErrorMessage(ResourceType.NotSupportedInputDateTime), value));

@@ -1340,7 +1340,7 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
-    public void GetRelation_RandomName_8989()
+    public void GetRelation_Deity2gender_8989()
     {
         // arrange 
         var tableDeity = _schema.GetTable("deity");
@@ -1352,6 +1352,24 @@ public sealed class RecordTest : BaseExtensionsTest
 
         // act 
         var result = rcd.GetRelation("deity2gender");
+
+        // assert
+        Assert.Equal(expectedValue, result.ToString());
+    }
+
+    [Fact]
+    public void GetRelation_Deity2alignment_9797()
+    {
+        // arrange 
+        var tableDeity = _schema.GetTable("deity");
+        Assert.NotNull(tableDeity);
+        var rcd = new Record(tableDeity);
+        rcd.SetField("symbol", "tests");
+        var expectedValue = "9797";
+        rcd[5] = expectedValue;
+
+        // act 
+        var result = rcd.GetRelation("deity2alignment");
 
         // assert
         Assert.Equal(expectedValue, result.ToString());
