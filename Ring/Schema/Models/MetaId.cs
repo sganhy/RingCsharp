@@ -2,7 +2,6 @@
 
 namespace Ring.Schema.Models;
 
-// removed => SchemaId;
 internal sealed class MetaId
 {
 	internal readonly int Id;

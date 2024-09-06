@@ -140,7 +140,6 @@ internal static class StringExtensions
         // Now traverse over characters
         for (var i = 0; i <= index; i++)
         {
-            //if (!Base64Chars.Contains(value[i])) return false;
             var c = (int)value[i];
             if (c >= 47 && c <= 57) continue; // '/' U ['0'..'9']
             if (c >= 65 && c <= 90) continue;

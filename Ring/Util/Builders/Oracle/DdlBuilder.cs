@@ -32,9 +32,9 @@ internal sealed class DdlBuilder : BaseDdlBuilder
     protected override int VarcharMaxSize => 65535;
     protected override string StringCollateInformation => throw new NotImplementedException();
     protected override string GetPhysicalName(TableSpace tablespace) => tablespace.Name;
-    protected override char SchemaSeparator => '.';
-    protected override char StartPhysicalNameDelimiter => '`';
-    protected override char EndPhysicalNameDelimiter => StartPhysicalNameDelimiter;
+    protected override string SchemaSeparator => ".";
+    protected override string StartPhysicalNameDelimiter => "`";
+    protected override string EndPhysicalNameDelimiter => StartPhysicalNameDelimiter;
     protected override string TablePrefix => DefaultTablePrefix;
 
 }

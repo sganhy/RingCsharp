@@ -387,6 +387,7 @@ public struct Record : IEquatable<Record>
         else if (!value.IsNumber()) ThrowWrongStringFormat();
         else if (long.TryParse(value, DefaultNumberStyle , DefaultCulture, out long lng))
         {
+#pragma warning disable S1066 // Mergeable "if" statements should be combined
             if ((numberType == FieldType.Int && lng <= MaxIntValue && lng >= MinIntValue) ||
                 (numberType == FieldType.Short && lng <= MaxShortValue && lng >= MinShortValue) ||
                 (numberType == FieldType.Byte && lng <= MaxByteValue && lng >= MinByteValue))
@@ -394,6 +395,7 @@ public struct Record : IEquatable<Record>
                 SetData(fieldId, lng.ToString(DefaultCulture));
                 return;
             }
+#pragma warning restore S1066
         } 
         ThrowValueTooLarge(numberType);
     }

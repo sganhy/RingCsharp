@@ -37,9 +37,9 @@ internal sealed class DdlBuilder : BaseDdlBuilder
     protected override Dictionary<FieldType, string> DataType => _dataType;
     protected override int VarcharMaxSize => -1;
     protected override string StringCollateInformation => throw new NotImplementedException();
-    protected override char SchemaSeparator => '.';
-    protected override char StartPhysicalNameDelimiter => '[';
-    protected override char EndPhysicalNameDelimiter => ']';
+    protected override string SchemaSeparator => ".";
+    protected override string StartPhysicalNameDelimiter => "[";
+    protected override string EndPhysicalNameDelimiter => "]";
     protected override string TablePrefix => DefaultTablePrefix;
 
 }

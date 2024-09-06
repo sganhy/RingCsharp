@@ -122,7 +122,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
     public string GetPhysicalName(DbSchema schema)
     {
 #pragma warning disable CA1308 // Normalize strings to uppercase
-        var physicalName = NamingConvention.ToSnakeCase(schema.Name).ToLowerInvariant();
+        var physicalName = NamingConvention.ToSnakeCase(schema.Name)?.ToLowerInvariant()??string.Empty;
 #pragma warning restore CA1308
         return schema.Name.StartsWith(SpecialEntityPrefix) || Provider.IsReservedWord(physicalName) ?
             string.Join(null, StartPhysicalNameDelimiter, physicalName, EndPhysicalNameDelimiter) :
@@ -172,6 +172,8 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
         }
         return result.ToString();
     }
+
+
     public string Create(Table table, TableSpace? tablespace = null)
     {
         var i=0;
@@ -217,10 +219,10 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
     protected abstract Dictionary<FieldType, string> DataType { get; }
     protected abstract int VarcharMaxSize { get; }
     protected abstract string StringCollateInformation { get; }
-    protected abstract char SchemaSeparator { get; }
+    protected abstract string SchemaSeparator { get; }
     protected abstract string TablePrefix { get; }
-    protected abstract char StartPhysicalNameDelimiter { get; }
-    protected abstract char EndPhysicalNameDelimiter { get; }
+    protected abstract string StartPhysicalNameDelimiter { get; }
+    protected abstract string EndPhysicalNameDelimiter { get; }
     public string Create(Index index, Table table, TableSpace? tablespace = null)
     {
         throw new NotImplementedException();

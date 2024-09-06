@@ -32,11 +32,13 @@ internal sealed class ResourceHelper
     }
 
 #pragma warning disable CA1822
+#pragma warning disable S2325 // Methods and properties that don't access instance data should be static
 
-    internal string? GetMessage(LogType logType) 
+    internal string? GetMessage(LogType logType)
         => ((int)logType <= _logMessages.Length) ? _logMessages[(int)logType - 1] : string.Empty;
     internal string? GetDescription(LogType logType)
         => ((int)logType <= _logDescriptions.Length) ? _logDescriptions[(int)logType - 1] : string.Empty;
+
 
     internal static string[] GetReservedWords(DatabaseProvider databaseProvider)
     {
@@ -58,6 +60,7 @@ internal sealed class ResourceHelper
         return Array.Empty<string>();
     }
 
+#pragma warning restore S2325 // Methods and properties that don't access instance data should be static
 #pragma warning restore CA1822
 
     #region private methods
