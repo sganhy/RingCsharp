@@ -172,7 +172,6 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
         }
         return result.ToString();
     }
-
   
     protected abstract string MtmPrefix { get; }
     protected string GetDataType(Field field) =>
@@ -229,7 +228,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
             if (index < fieldCount) Create(result, table, table.Fields[index]);
             else Create(result, table, table.Relations[index - fieldCount]);
         }
-        if (i > 0) result.Length = result.Length - 2;
+        if (i > 0) result.Length -= 2;
         result.Append(')');
         if (tablespace != null)
         {

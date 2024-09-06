@@ -111,7 +111,7 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
         result.Append(DmlValues);
         for (var i=1; i<=columnCount; ++i)
         {
-            result.Append(string.Format(CultureInfo.InvariantCulture, VariableNameTemplate, i));
+            result.AppendFormat(CultureInfo.InvariantCulture, VariableNameTemplate, i);
             result.Append(ColumnDelimiter);
         }
         if (mapperCount > 0) --result.Length;
@@ -142,8 +142,10 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
                     var keyCount = firstUniqueIndex?.Columns.Length??0;
                     for (var i=0; i<keyCount; ++i, ++variableIndex)
                     {
+#pragma warning disable S2589 // Boolean expressions should not be gratuitous
                         var field = MetaExtensions.GetEmptyField(new Meta(firstUniqueIndex?.Columns[i]
                                         ?? string.Empty), FieldType.Int);
+#pragma warning restore S2589 
                         result.Append(_ddlBuilder.GetPhysicalName(field));
                         result.Append(DmlEqual);
                         result.AppendFormat(CultureInfo.InvariantCulture, VariableNameTemplate, variableIndex);
@@ -171,7 +173,7 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
             case TableType.Lexicon:
                 result.Append(_ddlBuilder.GetPhysicalName(table.GetPrimaryKey() ?? _defaultField));
                 result.Append(DmlEqual);
-                result.Append(string.Format(CultureInfo.InvariantCulture, VariableNameTemplate, 1));
+                result.AppendFormat(CultureInfo.InvariantCulture, VariableNameTemplate, 1);
                 break;
             case TableType.Meta:
             case TableType.MetaId:
@@ -181,11 +183,13 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
                     var keyCount = firstUniqueIndex?.Columns.Length ?? 0;
                     for (var i = 0; i < keyCount; ++i, ++variableIndex)
                     {
+#pragma warning disable S2589 // Boolean expressions should not be gratuitous
                         var field = MetaExtensions.GetEmptyField(new Meta(firstUniqueIndex?.Columns[i]
                                         ?? string.Empty), FieldType.Int);
+#pragma warning restore S2589
                         result.Append(_ddlBuilder.GetPhysicalName(field));
                         result.Append(DmlEqual);
-                        result.Append(string.Format(CultureInfo.InvariantCulture, VariableNameTemplate, variableIndex));
+                        result.AppendFormat(CultureInfo.InvariantCulture, VariableNameTemplate, variableIndex);
                         // last element?
                         if (i < keyCount - 1) result.Append(DmlAnd);
                     }
