@@ -173,36 +173,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
         return result.ToString();
     }
 
-
-    public string Create(Table table, TableSpace? tablespace = null)
-    {
-        var i=0;
-        var columnCount = table.ColumnMapper.Length;
-        var fieldCount = table.Fields.Length;
-        var result = new StringBuilder();
-        result.Append(DdlCreate);
-        result.Append(DdlTable);
-        result.Append(table.PhysicalName);
-        result.Append(SqlSpace);
-        result.Append('(');
-        result.Append(SqlLineFeed);
-        while (i < columnCount)
-        {
-            var index = table.ColumnMapper[i];
-            ++i;
-            if (index<fieldCount) Create(result, table, table.Fields[index]);
-            else Create(result, table, table.Relations[index- fieldCount]);
-        }
-        if (i>0) result.Length=result.Length-2;
-        result.Append(')');
-        if (tablespace != null)
-        {
-            result.Append(SqlSpace);
-            result.Append(DdlTableSpace);
-            result.Append(GetPhysicalName(tablespace));
-        }
-        return result.ToString();
-    }
+  
     protected abstract string MtmPrefix { get; }
     protected string GetDataType(Field field) =>
             GetDataType(DataType[field.Type], field.Type, field.Size, VarcharMaxSize,
@@ -237,6 +208,35 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
         result.Append(DdlCreate)
             .Append(DdlSchema)
             .Append(GetPhysicalName(schema));
+        return result.ToString();
+    }
+    public string Create(Table table, TableSpace? tablespace = null)
+    {
+        var i = 0;
+        var columnCount = table.ColumnMapper.Length;
+        var fieldCount = table.Fields.Length;
+        var result = new StringBuilder();
+        result.Append(DdlCreate);
+        result.Append(DdlTable);
+        result.Append(table.PhysicalName);
+        result.Append(SqlSpace);
+        result.Append('(');
+        result.Append(SqlLineFeed);
+        while (i < columnCount)
+        {
+            var index = table.ColumnMapper[i];
+            ++i;
+            if (index < fieldCount) Create(result, table, table.Fields[index]);
+            else Create(result, table, table.Relations[index - fieldCount]);
+        }
+        if (i > 0) result.Length = result.Length - 2;
+        result.Append(')');
+        if (tablespace != null)
+        {
+            result.Append(SqlSpace);
+            result.Append(DdlTableSpace);
+            result.Append(GetPhysicalName(tablespace));
+        }
         return result.ToString();
     }
 

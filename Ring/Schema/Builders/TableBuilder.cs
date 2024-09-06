@@ -29,10 +29,9 @@ internal sealed class TableBuilder
     internal static readonly string FieldLineNumber = "line_number";
     internal static readonly string FieldMessage = "message";
 
-#pragma warning disable CA1822 // Mark members as static
-    internal Table GetMeta(string schemaName, DatabaseProvider provider)
-    {
-#pragma warning restore CA1822 
+#pragma warning disable CA1822, S2325
+    internal Table GetMeta(string schemaName, DatabaseProvider provider) {
+#pragma warning restore CA1822, S2325
 
         var metaList = new List<Meta> {
             GetField(FieldId, FieldType.Int),
@@ -54,10 +53,9 @@ internal sealed class TableBuilder
         return result;
     }
 
-#pragma warning disable CA1822 // Mark members as static
-    internal Table GetMetaId(string schemaName, DatabaseProvider provider)
-    {
-#pragma warning restore CA1822 
+#pragma warning disable CA1822, S2325 // Mark members as static
+    internal Table GetMetaId(string schemaName, DatabaseProvider provider) {
+#pragma warning restore CA1822, S2325
         var metaList = new List<Meta> {
             GetField(FieldId, FieldType.Int),
             GetField(FieldSchemaId, FieldType.Int),
@@ -71,10 +69,10 @@ internal sealed class TableBuilder
         result.LoadRecordIndex();
         return result;
     }
-#pragma warning disable CA1822 // Mark members as static
-    internal Table GetLog(string schemaName, DatabaseProvider provider)
-#pragma warning restore CA1822
-    {
+
+#pragma warning disable CA1822, S2325 // Mark members as static
+    internal Table GetLog(string schemaName, DatabaseProvider provider) {
+#pragma warning restore CA1822, S2325
         var metaList = new List<Meta> {
             GetField(FieldId, FieldType.Long),
             GetField(FieldEntryTime, FieldType.DateTime),
@@ -95,10 +93,9 @@ internal sealed class TableBuilder
         return result;
     }
 
-#pragma warning disable CA1822 // Mark members as static
-    internal Table GetCatalog(EntityType entityType, DatabaseProvider provider)
-    {
-#pragma warning restore CA1822
+#pragma warning disable CA1822, S2325 // Mark members as static
+    internal Table GetCatalog(EntityType entityType, DatabaseProvider provider) {
+#pragma warning restore CA1822, S2325
         var tableType = GetTablType(entityType);
         var metaList = new List<Meta>(){ GetField(provider.GetSchemaFieldName(entityType), FieldType.String) };
         if (entityType != EntityType.Schema)
@@ -111,10 +108,10 @@ internal sealed class TableBuilder
         return result;
     }
 
-#pragma warning disable CA1822 // Mark members as static
-    internal Table GetMtm(Table partialTable, string physicalName)
-#pragma warning restore CA1822
-    {
+#pragma warning disable CA1822, S2325 // Mark members as static
+    internal Table GetMtm(Table partialTable, string physicalName) { 
+#pragma warning restore CA1822, S2325
+
         // add @ prefix to logical name
         var metaTable = new Meta(SystemTablePrefix + partialTable.Name);
         metaTable.SetEntityType(EntityType.Table);

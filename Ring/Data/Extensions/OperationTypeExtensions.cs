@@ -1,14 +1,14 @@
 ﻿using Ring.Schema.Enums;
-using System.Runtime.CompilerServices;
 
 namespace Ring.Data.Extensions;
 
 internal static class OperationTypeExtensions
 {
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static string ToSql(this OperatorType GetStringOperation, DatabaseProvider provider, string? value)
     {
-#pragma warning disable IDE0066 // Convert switch statement to expression
+        // Convert switch statement to expression
+        // Ternary operators should not be nested
+#pragma warning disable IDE0066, S3358 
         switch (GetStringOperation)
         {
             case OperatorType.Equal: return string.IsNullOrEmpty(value) ? " IS " : "=";
@@ -23,6 +23,6 @@ internal static class OperationTypeExtensions
             case OperatorType.In: return " IN ";
             default: throw new NotSupportedException();
         }
-#pragma warning restore IDE0066
+#pragma warning restore S3358 , IDE0066
     }
 }
