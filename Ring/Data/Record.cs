@@ -316,7 +316,7 @@ public struct Record : IEquatable<Record>
         }
         return false;
     }
-    public override readonly bool Equals(object? obj) => obj != null && obj is Record record && Equals(record);
+    public override readonly bool Equals(object? obj) => obj is Record record && Equals(record);
     public override readonly int GetHashCode()
     {
         var result = new StringBuilder();

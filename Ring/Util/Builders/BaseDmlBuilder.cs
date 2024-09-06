@@ -27,7 +27,7 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
     private readonly IDdlBuilder _ddlBuilder;
     private readonly Field _defaultField;
 
-    internal BaseDmlBuilder() : base()
+    protected BaseDmlBuilder() 
     {
         _tableIndex = Array.Empty<string>();
         _tableDelete = Array.Empty<string?>();
@@ -131,7 +131,7 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
             case TableType.Lexicon:
                 result.Append(_ddlBuilder.GetPhysicalName(table.GetPrimaryKey()??_defaultField));
                 result.Append(DmlEqual);
-                result.Append(string.Format(CultureInfo.InvariantCulture, VariableNameTemplate, 1));
+                result.AppendFormat(CultureInfo.InvariantCulture, VariableNameTemplate, 1);
                 break;
             case TableType.Mtm:
             case TableType.Meta:
@@ -146,7 +146,7 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
                                         ?? string.Empty), FieldType.Int);
                         result.Append(_ddlBuilder.GetPhysicalName(field));
                         result.Append(DmlEqual);
-                        result.Append(string.Format(CultureInfo.InvariantCulture, VariableNameTemplate, variableIndex));
+                        result.AppendFormat(CultureInfo.InvariantCulture, VariableNameTemplate, variableIndex);
                         // last element?
                         if (i< keyCount-1) result.Append(DmlAnd);
                     }

@@ -30,7 +30,7 @@ public class BaseBuilderTest
 
         // sort lists
         fields = fields.OrderBy(o => o.Name).ToList();
-        fieldsById = fieldsById.OrderBy(o => o.Id).ToList();
+        fieldsById.Sort((t1, t2) => t1.Id.CompareTo(t2.Id));
         relations = relations.OrderBy(o => o.Name).ToList();
 
         var result = new Table(_fixture.Create<int>(), _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<string>(),
@@ -166,7 +166,7 @@ public class BaseBuilderTest
         return result.ToArray();
     }
 
-    private Meta GetMeta(int id, string name, EntityType entityType, int dataType, long flags)
+    private static Meta GetMeta(int id, string name, EntityType entityType, int dataType, long flags)
     {
         var result = new Meta();
         result.SetEntityId(id);

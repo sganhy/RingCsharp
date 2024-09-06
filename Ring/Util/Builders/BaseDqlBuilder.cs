@@ -15,7 +15,7 @@ internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
     private string? _catalogTable;
     private readonly IDdlBuilder _ddlBuilder;
 
-    internal BaseDqlBuilder() : base()
+    protected BaseDqlBuilder()
     {
         _tableSelect = Array.Empty<string>();
         _tableIndex = Array.Empty<string>();

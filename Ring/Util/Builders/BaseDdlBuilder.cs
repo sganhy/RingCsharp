@@ -42,8 +42,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
     // conventions
     protected readonly static char SpecialEntityPrefix = '@';
 
-
-    public BaseDdlBuilder() : base() { }
+    protected BaseDdlBuilder() {}
 
     public string AlterAddColumn(Table table, Field field)
     {
@@ -139,7 +138,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
     {
         var result = new StringBuilder(63); // schema name max length(30)  + table name max length(30) + 1 '.' + 2 '"'
 #pragma warning disable CA1308 // Normalize strings to uppercase
-        var tableName = NamingConvention.ToSnakeCase(table.Name).ToLowerInvariant();
+        var tableName = NamingConvention.ToSnakeCase(table.Name)?.ToLowerInvariant();
 #pragma warning restore CA1308 
         result.Append(GetPhysicalName(schema));
         result.Append(SchemaSeparator);

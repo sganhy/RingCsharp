@@ -12,8 +12,8 @@ internal static class OperationTypeExtensions
         switch (GetStringOperation)
         {
             case OperatorType.Equal: return string.IsNullOrEmpty(value) ? " IS " : "=";
-            case OperatorType.NotEqual: return string.IsNullOrEmpty(value) 
-                    ? " IS NOT " : provider==DatabaseProvider.PostgreSql ? "<>" : "!="; 
+            case OperatorType.NotEqual: return string.IsNullOrEmpty(value)
+                    ? " IS NOT " : provider == DatabaseProvider.PostgreSql ? "<>" : "!=";
             case OperatorType.Greater: return ">"; 
             case OperatorType.GreaterOrEqual: return ">="; 
             case OperatorType.Less: return "<";

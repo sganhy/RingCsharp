@@ -28,7 +28,7 @@ internal abstract class BaseSqlBuilder : ISqlBuilder
 
     public abstract DatabaseProvider Provider { get; }
 
-    public BaseSqlBuilder() {}
+    protected BaseSqlBuilder() {}
 
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -37,7 +37,6 @@ internal abstract class BaseSqlBuilder : ISqlBuilder
 #pragma warning restore CA1822 // Mark members as static
     {
         if (index == 0) selectFrom.Append(SqlWhere);
-        return;
     }
 
     /// <summary>

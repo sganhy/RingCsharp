@@ -126,7 +126,6 @@ public class ParameterExtensionsTest
         // arrange 
         var paramType = ParameterType.MaxPoolSize;
         var param = _parameterCollection.GetParameter(paramType, schemaId);
-        var referenceId = _fixture.Create<int>();
         Assert.NotNull(param);
 
         // act 
@@ -144,8 +143,6 @@ public class ParameterExtensionsTest
         Assert.Equal(param.Active, paramResult.Active);
         Assert.Equal(param.Baseline, paramResult.Baseline);
         Assert.Equal(paramType, paramResult.Type);
-        
     }
-
 
 }

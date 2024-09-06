@@ -186,7 +186,7 @@ public sealed class RecordTest : BaseExtensionsTest
         // arrange 
         var tableGender = _schema.GetTable("gender");
         Assert.NotNull(tableGender);
-        var rcd1 = new Record(tableGender); ;
+        var rcd1 = new Record(tableGender); 
         rcd1[1] = "45";
         var rcd2 = new Record(tableGender);
         rcd2.SetField("iso_code", 45);
@@ -573,9 +573,13 @@ public sealed class RecordTest : BaseExtensionsTest
 
         // act 
         rcd.SetField("entry_time", "1914-10-30T18:09:18.123Z");
+        rcd.GetField("entry_time", out DateTime? dt);
 
         // assert
-        //Assert.Equal("3.01416", rcd.GetField("entry_time"));
+        Assert.True(dt.HasValue);
+        Assert.Equal(1914, dt.Value.Year);
+        Assert.Equal(10, dt.Value.Month);
+        Assert.Equal(30, dt.Value.Day);
     }
 
     [Fact]
@@ -587,10 +591,10 @@ public sealed class RecordTest : BaseExtensionsTest
         var rcd = new Record(table);
 
         // act 
-        rcd.SetField("publish_date", new DateTime(2001,1,1,18,18,18));
+        rcd.SetField("publish_date", new DateTime(2001,2,23,18,18,18, DateTimeKind.Local));
 
         // assert
-        Assert.Equal("2001-01-01", rcd.GetField("publish_date"));
+        Assert.Equal("2001-02-23", rcd.GetField("publish_date"));
     }
 
     [Fact]
@@ -602,7 +606,7 @@ public sealed class RecordTest : BaseExtensionsTest
         var rcd = new Record(table);
 
         // act 
-        rcd.SetField("publish_date", new DateTime(1, 10, 27, 18, 18, 18));
+        rcd.SetField("publish_date", new DateTime(1, 10, 27, 18, 18,0, DateTimeKind.Local));
 
         // assert
         Assert.Equal("0001-10-27", rcd.GetField("publish_date"));
@@ -629,15 +633,15 @@ public sealed class RecordTest : BaseExtensionsTest
     {
         // arrange 
         var tableBuilder = new TableBuilder();
-        var logTable = tableBuilder.GetLog("Test", DatabaseProvider.SqlLite);
+        var logTable = tableBuilder.GetLog("Test", DatabaseProvider.Oracle);
         var rcd = new Record(logTable);
-        var dt = DateTime.ParseExact("2005-12-12T18:17:16.015+04:00", "yyyy-MM-ddTHH:mm:ss.fffzzz", CultureInfo.InvariantCulture);
+        var dt = DateTime.ParseExact("2006-10-14T18:18:19.015+04:00", "yyyy-MM-ddTHH:mm:ss.fffzzz", CultureInfo.InvariantCulture);
 
         // act - 2001, 1, 1, 18, 18, 18, 458
         rcd.SetField("entry_time", dt);
 
         // assert
-        Assert.Equal("2005-12-12T14:17:16.015Z", rcd.GetField("entry_time"));
+        Assert.Equal("2006-10-14T14:18:19.015Z", rcd.GetField("entry_time"));
     }
 
     [Fact]
@@ -889,7 +893,6 @@ public sealed class RecordTest : BaseExtensionsTest
         var newField = meta?.ToField();
         logTable.Fields[index] = newField ?? GetAnonymousField();
         var rcd = new Record(logTable);
-        var byteArray = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, byte.MinValue, byte.MaxValue };
 
         // act 
         rcd.SetField("entry_time", null);
@@ -898,7 +901,6 @@ public sealed class RecordTest : BaseExtensionsTest
         // assert
         Assert.Null(result);
     }
-
 
     [Fact]
     public void SetField_ByteArray3_ThrowInvalidBase64String()

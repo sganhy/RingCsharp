@@ -10,7 +10,7 @@ internal static class NamingConvention
     private static readonly char SpecialCharacter = '@';
     private static readonly string SpecialCharacterStr = SpecialCharacter.ToString();
 
-    public static string ToSnakeCase(string name)
+    public static string? ToSnakeCase(string? name)
     {
 #pragma warning disable CA1308 // Normalize strings to uppercase
 
