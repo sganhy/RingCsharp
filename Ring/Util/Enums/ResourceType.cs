@@ -13,6 +13,7 @@ internal enum ResourceType : short
     /// <summary>
     /// Record ressources
     /// </summary>
+    RecordWrongRelationType = 99,
     RecordUnkownRelationName = 100,
     RecordUnkownFieldName = 101,
 	RecordUnkownRecordType = 102,

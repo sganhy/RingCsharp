@@ -1265,16 +1265,23 @@ public sealed class RecordTest : BaseExtensionsTest
         rcd1.SetField("critical_range", _fixture.Create<short>());
         rcd1.SetField("critical_multiplier_1", _fixture.Create<short>());
         rcd1.SetField("critical_multiplier_2", _fixture.Create<short>());
-        var rcd2 = new Record(); // empty record 
-        
+        table = _schema.GetTable("book"); // book
+        Assert.NotNull(table);
+        var rcd2 = new Record(table); // empty record 
+        rcd2.SetField("title", _fixture.Create<string>());
+
         // act 
         rcd1.ClearData();
         rcd2.ClearData();
 
         // assert
-        for (var i = 0; i <= rcd1.Table?.Fields.Length; ++i)
+        for (var i = 0; i <= rcd1.Table?.ColumnMapper.Length; ++i)
         {
             Assert.Null(rcd1[i]);
+        }
+        for (var i = 0; i <= rcd2.Table?.ColumnMapper.Length; ++i)
+        {
+            Assert.Null(rcd2[i]);
         }
     }
 
@@ -1375,6 +1382,62 @@ public sealed class RecordTest : BaseExtensionsTest
 
         // assert
         Assert.Equal(expectedValue, result.ToString());
+    }
+
+    [Fact]
+    public void GetRelation_Book2rule_7777()
+    {
+        // arrange 
+        var tableBook = _schema.GetTable("book");
+        Assert.NotNull(tableBook);
+        var rcd = new Record(tableBook);
+        rcd.SetField("title", "tests");
+        var expectedValue = "7777";
+        rcd[11] = expectedValue;
+
+        // act 
+        var result = rcd.GetRelation("book2rule");
+
+        // assert
+        Assert.Equal(expectedValue, result.ToString());
+    }
+
+    [Fact]
+    public void GetRelation_Book2alignment_ThrowWrongRelationType()
+    {
+        // arrange 
+        var tableBook = _schema.GetTable("book");
+        Assert.NotNull(tableBook);
+        var rcd = new Record(tableBook);
+        rcd.SetField("title", "tests");
+        var expectedValue = "Relation name 'book2alignment' has a wrong RelationType.";
+
+        // act 
+        var ex = Assert.Throws<ArgumentException>(() => rcd.GetRelation("book2alignment"));
+
+        // assert
+        Assert.Equal(expectedValue, ex.Message);
+    }
+
+    [Fact]
+    public void SetRelation_Book2rule_4004()
+    {
+        // arrange 
+        var tableBook = _schema.GetTable("book");
+        Assert.NotNull(tableBook);
+        var rcd = new Record(tableBook);
+        var expectedValue = "4004";
+
+        // act 
+        rcd.SetRelation("book2rule", long.Parse(expectedValue));
+        var result = rcd.GetRelation("book2rule");
+
+        // assert
+        Assert.Equal(expectedValue, result.ToString());
+        Assert.True(rcd.IsDirty);
+        Assert.True(rcd.IsRelationChanged("book2rule"));
+        Assert.True(rcd.IsRelationExist("book2rule"));
+
     }
 
 }

@@ -342,7 +342,7 @@ public struct Record : IEquatable<Record>
         var index = _type.GetFieldIndex(name);
 #pragma warning restore CS8604 // Dereference of a possibly null reference.
 #pragma warning disable CS8602 // Dereference of a possibly null reference. - _type cannot be null here !!!
-        if (index != -1) return _data[^1] != null && FieldChange(index);
+        if (index != -1) return _data[^1] != null && IsColumnChanged(index);
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
         ThrowRecordUnkownFieldName(name);
         return false;
@@ -350,11 +350,27 @@ public struct Record : IEquatable<Record>
 
     internal readonly bool IsFieldExist(string name) => _type != null && _type.GetFieldIndex(name) != -1;
 
+    internal readonly bool IsRelationChanged(string name)
+    {
+        if (_type == null) ThrowRecordUnkownRecordType();
+#pragma warning disable CS8604 // Dereference of a possibly null reference. _type cannot be null here 
+        var relation = _type.GetRelation(name);
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+        if (relation == null) ThrowRecordUnkownRelationName(name);
+        var index = relation.RecordIndex;
+        if (index >= 0) return _data[^1] != null && IsColumnChanged(index);
+#pragma warning restore CS8602
+#pragma warning restore CS8604
+        return false;
+    }
+
+    internal readonly bool IsRelationExist(string name) => _type != null && _type.GetRelationIndex(name) != -1;
+
     /// <summary>
-    ///     Return relation value by name
+    ///     Return relation ID value by name
     /// </summary>
     /// <param name="name">Name of the relation</param>
-    /// <returns>relation value; if not defined return 0L</returns>
+    /// <returns>relation ID value; if not defined return null</returns>
     internal readonly long? GetRelation(string name)
     {
         if (_type == null) ThrowRecordUnkownRecordType();
@@ -362,11 +378,26 @@ public struct Record : IEquatable<Record>
         var relation = _type.GetRelation(name);
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
         if (relation == null) ThrowRecordUnkownRelationName(name);
-        else if (relation.RecordIndex >= 0 && _data[relation.RecordIndex] != null) 
-            return long.Parse(_data[relation.RecordIndex], CultureInfo.InvariantCulture);
+        var index = relation.RecordIndex;
+        if (index >= 0 && _data[index] != null) return long.Parse(_data[index], CultureInfo.InvariantCulture);
+        else ThrowRecordWrongRelationType(name);
 #pragma warning restore CS8602
 #pragma warning restore CS8604
         return null;
+    }
+
+    internal void SetRelation(string name, long? value)
+    {
+        if (_type == null) ThrowRecordUnkownRecordType();
+#pragma warning disable CS8604 // Dereference of a possibly null reference. _type cannot be null here 
+        var relation = _type.GetRelation(name);
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+        if (relation == null) ThrowRecordUnkownRelationName(name);
+        var index = relation.RecordIndex;
+        if (index >= 0) SetData(index, value?.ToString(DefaultCulture));
+        else ThrowRecordWrongRelationType(name);
+#pragma warning restore CS8602
+#pragma warning restore CS8604
     }
 
     #region private methods 
@@ -478,7 +509,7 @@ public struct Record : IEquatable<Record>
 #pragma warning disable CS8602 // Dereference of a possibly null reference. - _data cannot be null here !!!
 #pragma warning disable CS8604 // Possible null reference argument. - _data[^1] cannot be null here !!!
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private readonly bool FieldChange(int fieldId) => _data[^1].GetBitValue(fieldId);
+    private readonly bool IsColumnChanged(int fieldId) => _data[^1].GetBitValue(fieldId);
 #pragma warning restore CS8602 // Possible null reference argument.
 #pragma warning restore CS8604 // Possible null reference argument.
 
@@ -487,6 +518,11 @@ public struct Record : IEquatable<Record>
     private readonly void ThrowRecordUnkownFieldName(string fieldName) => 
         throw new ArgumentException(string.Format(DefaultCulture,
                   ResourceHelper.GetErrorMessage(ResourceType.RecordUnkownFieldName), fieldName, _type?.Name));
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private readonly void ThrowRecordWrongRelationType(string relationName) =>
+        throw new ArgumentException(string.Format(DefaultCulture,
+                  ResourceHelper.GetErrorMessage(ResourceType.RecordWrongRelationType), relationName, _type?.Name));
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     private readonly void ThrowRecordUnkownRelationName(string relationName) =>
