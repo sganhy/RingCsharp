@@ -1275,11 +1275,11 @@ public sealed class RecordTest : BaseExtensionsTest
         rcd2.ClearData();
 
         // assert
-        for (var i = 0; i <= rcd1.Table?.ColumnMapper.Length; ++i)
+        for (var i = 0; i <= rcd1.Table?.RecordIndexes.Length; ++i)
         {
             Assert.Null(rcd1[i]);
         }
-        for (var i = 0; i <= rcd2.Table?.ColumnMapper.Length; ++i)
+        for (var i = 0; i <= rcd2.Table?.RecordIndexes.Length; ++i)
         {
             Assert.Null(rcd2[i]);
         }

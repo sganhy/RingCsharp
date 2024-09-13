@@ -2,6 +2,7 @@
 
 using Npgsql;
 using Ring;
+using Ring.Console;
 using Ring.Data;
 using Ring.Schema.Builders;
 using System.Data;
@@ -9,6 +10,15 @@ using System.Data;
 
 var POSTGRE_CONN_STRING1 = "User ID=postgres; Password=sa;" +
                 "Host=localhost;Port=5432;Database=postgres; Pooling=false;";
+
+
+{
+    var ee = new TestRecord(11, true);
+    ee.Id = 445;
+    Record rcd22 = new Record();
+    rcd22.ClearData();
+}
+
 var val = true;
 int ok = 19;
 float opop = 0.4f;

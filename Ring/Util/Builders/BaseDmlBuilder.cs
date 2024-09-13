@@ -19,6 +19,7 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
     private static readonly string DmlWhere = @" WHERE ";
     private static readonly string DmlAnd = " AND ";
     private static readonly char DmlEqual = '=';
+    private static readonly string FirstParameter = @"1";
 
     private string[] _tableIndex;
     private string?[] _tableDelete;
@@ -89,32 +90,27 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
     private string BuildInsert(Table table)
     {
         var result = new StringBuilder();
-        var mapperCount = table.ColumnMapper.Length;
-        var fieldCount = table.Fields.Length;
-        var columnCount = 0;
-        int index;
+        var columnCount = table.Columns.Length;
 
         result.Append(DmlInsert);
         result.Append(table.PhysicalName);
         result.Append(SqlSpace);
         result.Append(StartParenthesis);
-        for (var i = 0; i<mapperCount; ++i)
+        for (var i = 0; i<columnCount; ++i)
         {
-            index = table.ColumnMapper[i];
-            if (index >= fieldCount) 
-                result.Append(_ddlBuilder.GetPhysicalName(table.Relations[index- fieldCount]));
-            else result.Append(_ddlBuilder.GetPhysicalName(table.Fields[index]));
-            ++columnCount;
+            var column = table.Columns[i];
+            if (column.Type == EntityType.Relation) result.Append(_ddlBuilder.GetPhysicalName((Relation)column));
+            else result.Append(_ddlBuilder.GetPhysicalName((Field)column));
             result.Append(ColumnDelimiter);
         }
         if (columnCount>0) --result.Length;
         result.Append(DmlValues);
         for (var i=1; i<=columnCount; ++i)
         {
-            result.AppendFormat(CultureInfo.InvariantCulture, VariableNameTemplate, i);
+            result.AppendFormat(CultureInfo.InvariantCulture, VariableNameTemplate, i.ToString(CultureInfo.InvariantCulture));
             result.Append(ColumnDelimiter);
         }
-        if (mapperCount > 0) --result.Length;
+        if (columnCount > 0) --result.Length;
         result.Append(EndParenthesis);
         return result.ToString();
     }
@@ -131,7 +127,7 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
             case TableType.Lexicon:
                 result.Append(_ddlBuilder.GetPhysicalName(table.GetPrimaryKey()??_defaultField));
                 result.Append(DmlEqual);
-                result.AppendFormat(CultureInfo.InvariantCulture, VariableNameTemplate, 1);
+                result.AppendFormat(CultureInfo.InvariantCulture, VariableNameTemplate, FirstParameter);
                 break;
             case TableType.Mtm:
             case TableType.Meta:
@@ -148,7 +144,8 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 #pragma warning restore S2589 
                         result.Append(_ddlBuilder.GetPhysicalName(field));
                         result.Append(DmlEqual);
-                        result.AppendFormat(CultureInfo.InvariantCulture, VariableNameTemplate, variableIndex);
+                        result.AppendFormat(CultureInfo.InvariantCulture, VariableNameTemplate, 
+                            variableIndex.ToString(CultureInfo.InvariantCulture));
                         // last element?
                         if (i< keyCount-1) result.Append(DmlAnd);
                     }
@@ -173,7 +170,7 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
             case TableType.Lexicon:
                 result.Append(_ddlBuilder.GetPhysicalName(table.GetPrimaryKey() ?? _defaultField));
                 result.Append(DmlEqual);
-                result.AppendFormat(CultureInfo.InvariantCulture, VariableNameTemplate, 1);
+                result.AppendFormat(CultureInfo.InvariantCulture, VariableNameTemplate, FirstParameter);
                 break;
             case TableType.Meta:
             case TableType.MetaId:
@@ -189,7 +186,8 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 #pragma warning restore S2589
                         result.Append(_ddlBuilder.GetPhysicalName(field));
                         result.Append(DmlEqual);
-                        result.AppendFormat(CultureInfo.InvariantCulture, VariableNameTemplate, variableIndex);
+                        result.AppendFormat(CultureInfo.InvariantCulture, VariableNameTemplate, 
+                            variableIndex.ToString(CultureInfo.InvariantCulture));
                         // last element?
                         if (i < keyCount - 1) result.Append(DmlAnd);
                     }

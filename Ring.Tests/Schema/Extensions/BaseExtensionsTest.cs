@@ -30,9 +30,9 @@ public abstract class BaseExtensionsTest
         relations = relations.OrderBy(o => o.Name).ToList();
         var result = new Table(_fixture.Create<int>(), _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<string>(),
             _fixture.Create<string>(), TableType.Business, relations.ToArray(), fields.ToArray(), 
-            new int[fields.Count+relations.Count], Array.Empty<Index>(), 12, PhysicalType.Table, true, true, true, true);
-        result.LoadColumnMapper();
-        result.LoadRecordIndex();
+            new int[fields.Count+relations.Count], new IColumn[fields.Count + relations.Count], Array.Empty<Index>(), 12, PhysicalType.Table, true, true, true, true);
+        result.LoadColumnInformation();
+        result.LoadRelationRecordIndex();
         return result;
     }
 
@@ -55,7 +55,7 @@ public abstract class BaseExtensionsTest
     internal Relation GetAnonymousRelation(string? name=null)
     {
         var toTable = new Table(_fixture.Create<int>(), _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<string>(),
-            _fixture.Create<string>(), TableType.Business, Array.Empty<Relation>(), Array.Empty<Field>(), Array.Empty<int>(), 
+            _fixture.Create<string>(), TableType.Business, Array.Empty<Relation>(), Array.Empty<Field>(), Array.Empty<int>(), Array.Empty<IColumn>(),
             Array.Empty<Index>(), 12, PhysicalType.Table, true, true, true, true);
         var result = new Relation(_fixture.Create<int>(), name??_fixture.Create<string>(), _fixture.Create<string>(),
             _fixture.Create<RelationType>(), toTable, -1, _fixture.Create<bool>(), _fixture.Create<bool>(),

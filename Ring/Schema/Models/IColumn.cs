@@ -6,6 +6,7 @@ internal interface IColumn
 {
 	int Id { get; }
 	string Name { get; }
-	FieldType Type { get; }
+	FieldType FieldType { get; }
 	RelationType RelationType { get; }
+    EntityType Type { get; }
 }

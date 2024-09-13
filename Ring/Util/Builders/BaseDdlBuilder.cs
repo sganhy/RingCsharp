@@ -4,6 +4,7 @@ using Ring.Schema.Models;
 using System.Text;
 using Index = Ring.Schema.Models.Index;
 using DbSchema = Ring.Schema.Models.Schema;
+using System.Runtime.CompilerServices;
 
 namespace Ring.Util.Builders;
 
@@ -212,8 +213,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
     public string Create(Table table, TableSpace? tablespace = null)
     {
         var i = 0;
-        var columnCount = table.ColumnMapper.Length;
-        var fieldCount = table.Fields.Length;
+        var columnCount = table.Columns.Length;
         var result = new StringBuilder();
         result.Append(DdlCreate);
         result.Append(DdlTable);
@@ -223,10 +223,10 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
         result.Append(SqlLineFeed);
         while (i < columnCount)
         {
-            var index = table.ColumnMapper[i];
+            var column = table.Columns[i];
+            if (column.Type == EntityType.Field) Create(result, table, (Field)column);
+            else Create(result, table, (Relation)column);
             ++i;
-            if (index < fieldCount) Create(result, table, table.Fields[index]);
-            else Create(result, table, table.Relations[index - fieldCount]);
         }
         if (i > 0) result.Length -= 2;
         result.Append(')');
@@ -241,6 +241,8 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 
     #region private methods 
     private static string GetSizeInfo(int size) => $"({size})";
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
     private void Create(StringBuilder stringBuilder, Table table, Field field)
     {
         stringBuilder.Append(Indent);

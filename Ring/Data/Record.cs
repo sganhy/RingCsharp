@@ -10,7 +10,7 @@ using System.Text;
 
 namespace Ring.Data;
 
-public struct Record : IEquatable<Record>
+public struct Record : IEquatable<Record>, IDisposable
 {
     private readonly static string NullField = @"^^";
     private readonly static string NullString = @"Null";
@@ -44,7 +44,7 @@ public struct Record : IEquatable<Record>
     internal Record(Table type)
     {
         _type = type;
-        _data = new string?[type.ColumnMapper.Length + 1];
+        _data = new string?[type.RecordIndexes.Length + 1];
     }
 
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
@@ -59,7 +59,7 @@ public struct Record : IEquatable<Record>
     /// </summary>
     internal readonly long GetField()
 #pragma warning disable CS8602 // Dereference of a possibly null reference. _type cannot be null here 
-        => long.Parse(_data[_type.ColumnMapper[0]] ?? DefaultPrimaryKeyValue, DefaultCulture);
+        => long.Parse(_data[_type.RecordIndexes[0]] ?? DefaultPrimaryKeyValue, DefaultCulture);
 #pragma warning restore CS8602
 
     /// <summary>
@@ -562,6 +562,12 @@ public struct Record : IEquatable<Record>
     [MethodImpl(MethodImplOptions.NoInlining)]
     private static void ThrowInvalidBase64String() =>
         throw new FormatException(ResourceHelper.GetErrorMessage(ResourceType.InvalidBase64String));
+
+    public void Dispose()
+    {
+        int oi = 0;
+        ++oi;
+    }
 
     #endregion
 

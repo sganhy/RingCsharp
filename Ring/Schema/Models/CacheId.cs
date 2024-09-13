@@ -1,6 +1,6 @@
 ﻿namespace Ring.Schema.Models;
 
-internal sealed class CacheId
+internal struct CacheId
 {
 	internal readonly object SyncRoot;
 	internal long CurrentId;

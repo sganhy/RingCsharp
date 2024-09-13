@@ -6,7 +6,7 @@ using Ring.Util.Builders;
 using Ring.Util.Builders.PostgreSQL;
 using DbSchema = Ring.Schema.Models.Schema;
 
-namespace Ring.Tests.Util.Builders.Static.MySQL;
+namespace Ring.Tests.Util.Builders.MySQL;
 
 public sealed class DqlBuilderTest : BaseBuilderTest
 {

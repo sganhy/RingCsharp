@@ -40,11 +40,11 @@ public sealed class SchemaBuilderTest
         Assert.Equal("test.\"@log\"", metaLog.PhysicalName);
         Assert.Equal("test.\"@meta_id\"", metaId.PhysicalName);
         Assert.Equal(10, metaTable.Fields.Length);
-        Assert.Equal(10, metaTable.ColumnMapper.Length);
+        Assert.Equal(10, metaTable.RecordIndexes.Length);
         Assert.Equal(4, metaId.Fields.Length);
-        Assert.Equal(4, metaId.ColumnMapper.Length);
+        Assert.Equal(4, metaId.RecordIndexes.Length);
         Assert.Equal(11, metaLog.Fields.Length);
-        Assert.Equal(11, metaLog.ColumnMapper.Length);
+        Assert.Equal(11, metaLog.RecordIndexes.Length);
         // test max pool size
         Assert.Equal(maxPoolSize, metaSchema.Connections.Connections.Length);
     }

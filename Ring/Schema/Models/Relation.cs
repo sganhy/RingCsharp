@@ -39,8 +39,9 @@ internal sealed class Relation : BaseEntity, IColumn
     ///     Implement IColumn
     /// </summary>
     int IColumn.Id => Id;
-	FieldType IColumn.Type => ToTable.GetPrimaryKey()?.Type ?? FieldType.Undefined;
+	FieldType IColumn.FieldType => ToTable.GetPrimaryKey()?.Type ?? FieldType.Undefined;
 	string IColumn.Name => Name;
 	RelationType IColumn.RelationType => Type;
+    EntityType IColumn.Type => EntityType.Relation;
 
 }

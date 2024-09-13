@@ -32,8 +32,9 @@ internal sealed class Field : BaseEntity, IColumn
 	/// <summary>
 	///     Implement IColumn
 	/// </summary>
-	int IColumn.Id=>Id;
-	FieldType IColumn.Type=>Type;
+	int IColumn.Id => Id;
+	FieldType IColumn.FieldType => Type;
 	RelationType IColumn.RelationType => RelationType.Undefined;
-	string IColumn.Name=>Name;
+    EntityType IColumn.Type => EntityType.Field;
+    string IColumn.Name => Name;
 }

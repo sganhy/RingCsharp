@@ -256,7 +256,7 @@ internal static class MetaExtensions
             Array.Sort(indexes, (x, y) => string.CompareOrdinal(x.Name, y.Name));
 
             var result = new Table(meta.GetEntityId(), meta.GetEntityName(), meta.GetEntityDescription(), meta.Value, physicalName,
-                tableType, relations, fields, new int[columnMapperSize], indexes, meta.ReferenceId,
+                tableType, relations, fields, new int[columnMapperSize], new IColumn[columnMapperSize], indexes, meta.ReferenceId,
                 physicalType, meta.IsEntityBaseline(), meta.IsEntityActive(), meta.IsTableCached(), meta.IsTableReadonly());
 
             return result;
@@ -359,7 +359,7 @@ internal static class MetaExtensions
 
     internal static Table GetEmptyTable(Meta meta, TableType tableType) =>
         new(meta.GetEntityId(), meta.GetEntityName(), meta.GetEntityDescription(), meta.Value, string.Empty,
-             tableType, Array.Empty<Relation>(), Array.Empty<Field>(), Array.Empty<int>(), 
+             tableType, Array.Empty<Relation>(), Array.Empty<Field>(), Array.Empty<int>(), Array.Empty<IColumn>(),
              Array.Empty<Index>(), meta.ReferenceId, PhysicalType.Table, meta.IsEntityBaseline(), meta.IsEntityActive(), 
              meta.IsTableCached(), meta.IsTableReadonly());
 

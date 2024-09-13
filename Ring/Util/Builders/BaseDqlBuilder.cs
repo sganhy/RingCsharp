@@ -61,17 +61,15 @@ internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
     private string BuildSelect(Table table)
     {
         var result = new StringBuilder();
-        var mapperCount = table.ColumnMapper.Length;
-        var fieldCount = table.Fields.Length;
+        var columnCount = table.Columns.Length;
         var i=0;
-        int index;
         result.Append(SqlSelect);
-        while (i<mapperCount)
+        while (i<columnCount)
         {
-            index = table.ColumnMapper[i];
+            var column = table.Columns[i];
             ++i; // just before continue
-            if (index >= fieldCount) result.Append(_ddlBuilder.GetPhysicalName(table.Relations[index - fieldCount]));
-            else result.Append(_ddlBuilder.GetPhysicalName(table.Fields[index]));
+            if (column.Type==EntityType.Relation) result.Append(_ddlBuilder.GetPhysicalName((Relation)column));
+            else result.Append(_ddlBuilder.GetPhysicalName((Field)column));
             result.Append(ColumnDelimiter);
         }
         --result.Length;

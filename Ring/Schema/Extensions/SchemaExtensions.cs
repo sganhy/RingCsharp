@@ -109,7 +109,7 @@ internal static class SchemaExtensions
         var i = schema.TablesByName.Length - 1;
         while (i>=0)
         {
-            schema.TablesByName[i].LoadColumnMapper();
+            schema.TablesByName[i].LoadColumnInformation();
             --i;
         }
     }
@@ -119,7 +119,7 @@ internal static class SchemaExtensions
         var i = schema.TablesByName.Length - 1;
         while (i >= 0)
         {
-            schema.TablesByName[i].LoadRecordIndex();
+            schema.TablesByName[i].LoadRelationRecordIndex();
             --i;
         }
     }
@@ -190,6 +190,8 @@ internal static class SchemaExtensions
                             mtmTable.Relations[1] = relation.GetRelation(RelationType.Mto);
                             mtmTable.Relations[0] = inverseRelation.GetRelation(RelationType.Mto);
                         }
+                        mtmTable.Columns[0] = mtmTable.Relations[0];
+                        mtmTable.Columns[1] = mtmTable.Relations[1];
                         mtmTable.Indexes[0].Columns[0] = mtmTable.Relations[0].Name;
                         mtmTable.Indexes[0].Columns[1] = mtmTable.Relations[1].Name;
                         mtm.Add(physicalName, mtmTable);

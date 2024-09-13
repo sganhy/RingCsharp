@@ -1,6 +1,7 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Models;
 using System.Runtime.CompilerServices;
+using System.Runtime.Serialization.Formatters.Binary;
 using Index = Ring.Schema.Models.Index;
 
 namespace Ring.Schema.Extensions;
@@ -171,7 +172,7 @@ internal static class TableExtensions
 
     internal static Field? GetPrimaryKey(this Table table) =>
         (table.Fields.Length > 0 && (table.Type == TableType.Business || table.Type == TableType.Lexicon)) ?
-        table.Fields[table.ColumnMapper[0]] : null;
+        table.Fields[table.RecordIndexes[0]] : null;
 
     /// <summary>
     /// Get first unique index
@@ -203,14 +204,19 @@ internal static class TableExtensions
         return result.ToArray(); 
     }
 
-    internal static void LoadColumnMapper(this Table table)
+
+    /// <summary>
+    /// Load Table.RecordIndexes[] & Table.Columns[]
+    /// </summary>
+    internal static void LoadColumnInformation(this Table table)
     {
         var fieldCount = table.Fields.Length;
         var relationCount = table.Relations.Length;
         var columnCount = fieldCount + relationCount; // potentatial column count
         var index = 0;
         var colPosition = 0;
-        var i=0;
+        var relationIndex = fieldCount;
+        var i =0;
         // copy
         var columns = new IColumn[columnCount];
         for (; i < fieldCount; ++i) columns[i] = table.Fields[i];
@@ -225,15 +231,28 @@ internal static class TableExtensions
             {
                 var relation = columns[i];
                 if (relation.RelationType == RelationType.Mto || relation.RelationType == RelationType.Otop)
-                    table.ColumnMapper[colPosition++] = table.GetRelationIndex(columns[i].Name) + fieldCount;
-            } 
-            else table.ColumnMapper[colPosition++] = index;
+                {
+                    table.RecordIndexes[colPosition] = relationIndex;
+                    table.Columns[colPosition] = columns[i];
+                    ++colPosition;
+                    ++relationIndex;
+                }
+            }
+            else
+            {
+                table.Columns[colPosition] = columns[i];
+                table.RecordIndexes[colPosition] = index;
+                ++colPosition;
+            }
             ++i;
         }
 
     }
 
-    internal static void LoadRecordIndex(this Table table)
+    /// <summary>
+    /// Compute index of relation(s) to Record._data[]; default value equal to -1
+    /// </summary>
+    internal static void LoadRelationRecordIndex(this Table table)
     {
         var fieldCount = table.Fields.Length;
         var relationCount = table.Relations.Length;
@@ -251,6 +270,5 @@ internal static class TableExtensions
             ++i;
         }
     }
-
-
+    
 }

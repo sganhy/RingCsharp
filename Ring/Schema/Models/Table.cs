@@ -8,8 +8,9 @@ internal sealed class Table : BaseEntity
 	internal readonly Field[] Fields;         // sorted by name (field.id should b)
 	internal readonly Relation[] Relations;   // sorted by name
 	internal readonly Index[] Indexes;
-	internal readonly int[] ColumnMapper;     // [tableId] <= position into Fields & Relations sorted by Column.Id
-	internal readonly string PhysicalName;
+	internal readonly int[] RecordIndexes;    // [tableId] <= position into Fields & Relations sorted by Column.Id
+    internal readonly IColumn[] Columns;      // columns 
+    internal readonly string PhysicalName;
 	internal readonly PhysicalType PhysicalType;
 	internal readonly int SchemaId;
 	internal readonly string? Subject;
@@ -21,13 +22,14 @@ internal sealed class Table : BaseEntity
 	///     Ctor
 	/// </summary>
 	internal Table(int id, string name, string? description, string? subject, string physicalName, TableType type,
-		Relation[] relations, Field[] fields, int [] mapper, Index[] indexes, int schemaId, PhysicalType physicalType, 
+		Relation[] relations, Field[] fields, int [] recordIndexes, IColumn[] columns, Index[] indexes, int schemaId, PhysicalType physicalType, 
 		bool baseline, bool active, bool cached, bool readonlyTable) : base(id, name, description, active, baseline)
 	{
 		Type = type;
 		Fields = fields;
-		ColumnMapper = mapper;
-		Relations = relations;
+		RecordIndexes = recordIndexes;
+		Columns = columns;
+        Relations = relations;
 		Indexes = indexes;
 		Readonly = readonlyTable;
 		Subject = subject;
