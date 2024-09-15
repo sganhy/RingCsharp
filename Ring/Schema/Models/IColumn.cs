@@ -8,5 +8,5 @@ internal interface IColumn
 	string Name { get; }
 	FieldType FieldType { get; }
 	RelationType RelationType { get; }
-    EntityType Type { get; }
+	EntityType Type { get; }
 }

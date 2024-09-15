@@ -26,21 +26,37 @@ public sealed class DqlBuilderTest : BaseBuilderTest
     }
 
     [Fact]
-    internal void Select_Table1_SqlQuery()
+    internal void Select_Table1_SelectSql()
     {
         // arrange 
-        var table = _schema.GetTable("gender");
+        var table1 = _schema.GetTable("gender");
         var expectedResult = "SELECT id,name,short_name,iso_code,status FROM rpg_sheet.t_gender";
 
         // act 
-        Assert.NotNull(table);
-        var result1 = _sut.SelectFrom(table);
-        var result2 = _sut.SelectFrom(table); // using cache 
+        Assert.NotNull(table1);
+        var result1 = _sut.SelectFrom(table1);
+        var result2 = _sut.SelectFrom(table1); // using cache 
 
         // assert
         Assert.Equal(expectedResult, result1);
         Assert.Equal(expectedResult, result2);
     }
 
+    [Fact]
+    internal void Select_Table2_SelectSql()
+    {
+        // arrange 
+        var table2 = _schema.GetTable("feat");
+        var expectedResult = "SELECT id,name,feat2feat_type,fighter,feat2parent_feat,multiple_times,effects_stack,metamagic,epic,target_object,prerequisites,benefit FROM rpg_sheet.t_feat";
+
+        // act 
+        Assert.NotNull(table2);
+        var result1 = _sut.SelectFrom(table2);
+        var result2 = _sut.SelectFrom(table2); // using cache 
+
+        // assert
+        Assert.Equal(expectedResult, result1);
+        Assert.Equal(expectedResult, result2);
+    }
 
 }

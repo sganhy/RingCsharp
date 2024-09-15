@@ -54,7 +54,6 @@ internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
         }
         return _catalogTable;
     }
-        
 
     #region private methods 
 

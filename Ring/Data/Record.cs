@@ -10,7 +10,7 @@ using System.Text;
 
 namespace Ring.Data;
 
-public struct Record : IEquatable<Record>, IDisposable
+public struct Record : IEquatable<Record>
 {
     private readonly static string NullField = @"^^";
     private readonly static string NullString = @"Null";
@@ -166,7 +166,7 @@ public struct Record : IEquatable<Record>, IDisposable
     /// </summary>
     /// <param name="name">field name</param>
     /// <param name="value">field value</param>
-    public readonly void SetField(string name, string? value)
+    public void SetField(string name, string? value)
     {
         if (_type == null) ThrowRecordUnkownRecordType();
 #pragma warning disable CS8604 // Dereference of a possibly null reference. _type cannot be null here 
@@ -191,7 +191,7 @@ public struct Record : IEquatable<Record>, IDisposable
         }
     }
 
-    internal readonly void SetField(string name, long value, FieldType fieldType)
+    internal void SetField(string name, long value, FieldType fieldType)
     {
         if (_type == null) ThrowRecordUnkownRecordType();
 #pragma warning disable CS8604 // Dereference of a possibly null reference. _type cannot be null here 
@@ -227,15 +227,15 @@ public struct Record : IEquatable<Record>, IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public readonly void SetField(string name, long value) => SetField(name, value, FieldType.Long);
+    public void SetField(string name, long value) => SetField(name, value, FieldType.Long);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public readonly void SetField(string name, int value) => SetField(name, value, FieldType.Int);
+    public void SetField(string name, int value) => SetField(name, value, FieldType.Int);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public readonly void SetField(string name, short value) => SetField(name, value, FieldType.Short);
-    public readonly void SetField(string name, sbyte value) => SetField(name, value, FieldType.Byte);
-    public readonly void SetField(string name, bool value)
+    public void SetField(string name, short value) => SetField(name, value, FieldType.Short);
+    public void SetField(string name, sbyte value) => SetField(name, value, FieldType.Byte);
+    public void SetField(string name, bool value)
     {
         if (_type == null) ThrowRecordUnkownRecordType();
 #pragma warning disable CS8604 // Dereference of a possibly null reference. _type cannot be null here 
@@ -246,7 +246,7 @@ public struct Record : IEquatable<Record>, IDisposable
         if (fieldType == FieldType.Boolean) SetData(fieldId, value ? BooleanTrue : BooleanFalse);
         else ThrowImpossibleConversion(FieldType.Boolean, fieldType);
     }
-    public readonly void SetField(string name, DateTime value)
+    public void SetField(string name, DateTime value)
     {
         if (_type == null) ThrowRecordUnkownRecordType();
 #pragma warning disable CS8604 // Dereference of a possibly null reference. _type cannot be null here 
@@ -255,7 +255,7 @@ public struct Record : IEquatable<Record>, IDisposable
         if (fieldId == -1) ThrowRecordUnkownFieldName(name);
         SetDateTimeField(fieldId, _type.Fields[fieldId].Type, value, null);
     }
-    public readonly void SetField(string name, DateTimeOffset value)
+    public void SetField(string name, DateTimeOffset value)
     {
         if (_type == null) ThrowRecordUnkownRecordType();
 #pragma warning disable CS8604 // Dereference of a possibly null reference. _type cannot be null here 
@@ -264,7 +264,7 @@ public struct Record : IEquatable<Record>, IDisposable
         if (fieldId == -1) ThrowRecordUnkownFieldName(name);
         SetDateTimeField(fieldId, _type.Fields[fieldId].Type, value.DateTime, value.Offset);
     }
-    public readonly void SetField(string name, double value)
+    public void SetField(string name, double value)
     {
         if (_type == null) ThrowRecordUnkownRecordType();
 #pragma warning disable CS8604 // Dereference of a possibly null reference. _type cannot be null here 
@@ -275,7 +275,7 @@ public struct Record : IEquatable<Record>, IDisposable
         if (fieldType != FieldType.Float && fieldType != FieldType.Double) ThrowImpossibleConversion(FieldType.Double, fieldType);
         SetData(fieldId, value.ToString(DefaultCulture));
     }
-    public readonly void SetField(string name, float value)
+    public void SetField(string name, float value)
     {
         if (_type == null) ThrowRecordUnkownRecordType();
 #pragma warning disable CS8604 // Dereference of a possibly null reference. _type cannot be null here 
@@ -286,7 +286,7 @@ public struct Record : IEquatable<Record>, IDisposable
         if (fieldType != FieldType.Float && fieldType != FieldType.Double) ThrowImpossibleConversion(FieldType.Float, fieldType);
         SetData(fieldId, value.ToString(DefaultCulture));
     }
-    public readonly void SetField<T>(string name, T value) where T : IEnumerable<byte>
+    public void SetField<T>(string name, T value) where T : IEnumerable<byte>
     {
         if (_type == null) ThrowRecordUnkownRecordType();
 #pragma warning disable CS8604 // Dereference of a possibly null reference. _type cannot be null here 
@@ -403,7 +403,7 @@ public struct Record : IEquatable<Record>, IDisposable
     #region private methods 
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private readonly void SetStringField(int fieldId, string? value)
+    private void SetStringField(int fieldId, string? value)
     {
 #pragma warning disable CS8602 // Dereference of a possibly null reference; _type cannot be null here !!
         if (value==null) SetData(fieldId, null);
@@ -413,7 +413,7 @@ public struct Record : IEquatable<Record>, IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private readonly void SetIntegerField(int fieldId, FieldType numberType, string? value) {
+    private void SetIntegerField(int fieldId, FieldType numberType, string? value) {
         if (value==null) SetData(fieldId, null);
         else if (!value.IsNumber()) ThrowWrongStringFormat();
         else if (long.TryParse(value, DefaultNumberStyle , DefaultCulture, out long lng))
@@ -431,7 +431,7 @@ public struct Record : IEquatable<Record>, IDisposable
         ThrowValueTooLarge(numberType);
     }
 
-    private readonly void SetFloatField(FieldType fieldType, int fieldId, string? value)
+    private void SetFloatField(FieldType fieldType, int fieldId, string? value)
     {
         if (value==null) SetData(fieldId, null);
         else
@@ -450,21 +450,21 @@ public struct Record : IEquatable<Record>, IDisposable
         }
     }
 
-    private readonly void SetByteArrayField(int fieldId, string? value)
+    private void SetByteArrayField(int fieldId, string? value)
     {
         if (value==null) SetData(fieldId, null);
         else if (value.IsBase64String()) SetData(fieldId, value);
         else ThrowInvalidBase64String();
     }
 
-    private readonly void SetBooleanField(int fieldId, string? value)
+    private void SetBooleanField(int fieldId, string? value)
     {
         if (value==null) SetData(fieldId, null);
         else if (bool.TryParse(value, out bool result)) SetData(fieldId, result ? BooleanTrue : BooleanFalse);
         else ThrowWrongBooleanValue(value);
     }
 
-    private readonly void SetDateTimeField(int fieldId, FieldType fieldType, string? value)
+    private void SetDateTimeField(int fieldId, FieldType fieldType, string? value)
     {
         if (value==null) SetData(fieldId, null);
         else {
@@ -473,7 +473,7 @@ public struct Record : IEquatable<Record>, IDisposable
         }
     }
 
-    private readonly void SetDateTimeField(int fieldId, FieldType fieldType, DateTime value, TimeSpan? offset)
+    private void SetDateTimeField(int fieldId, FieldType fieldType, DateTime value, TimeSpan? offset)
     {
         if (fieldType == FieldType.DateTime || fieldType == FieldType.LongDateTime || fieldType == FieldType.ShortDateTime)
             SetData(fieldId, new string(value.ToString(fieldType, offset)));
@@ -489,11 +489,11 @@ public struct Record : IEquatable<Record>, IDisposable
     }
 
 #pragma warning disable CS8602 // Dereference of a possibly null reference. - _type cannot be null here !!!
-    private readonly void InitializeTracking() => _data[^1] = new string(new char[(_type.Fields.Length>>4)+1]);
+    private void InitializeTracking() => _data[^1] = new string(new char[(_type.Fields.Length>>4)+1]);
 #pragma warning restore CS8602
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private readonly void SetData(int fieldId, string? value)
+    private void SetData(int fieldId, string? value)
     {
 #pragma warning disable CS8602 // Dereference of a possibly null reference. - _data cannot be null here !!!
         if (string.CompareOrdinal(_data[fieldId],value)==0) return; // detect no change
@@ -562,12 +562,6 @@ public struct Record : IEquatable<Record>, IDisposable
     [MethodImpl(MethodImplOptions.NoInlining)]
     private static void ThrowInvalidBase64String() =>
         throw new FormatException(ResourceHelper.GetErrorMessage(ResourceType.InvalidBase64String));
-
-    public void Dispose()
-    {
-        int oi = 0;
-        ++oi;
-    }
 
     #endregion
 
