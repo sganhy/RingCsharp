@@ -15,7 +15,7 @@ internal sealed class Relation : BaseEntity, IColumn
     /// <summary>
     ///     Ctor
     /// </summary>
-    internal Relation(int id, string name, string? description, RelationType type, Table toObject, int recordIndex,
+	internal Relation(int id, string name, string? description, RelationType type, Table toObject, int recordIndex,
 		bool notnull, bool constraint,bool baseline, bool active)
 		: base(id, name, description, active, baseline)
 	{
@@ -33,15 +33,14 @@ internal sealed class Relation : BaseEntity, IColumn
 	internal void SetInverseRelation(Relation relation) => 
 		InverseRelation = ReferenceEquals(InverseRelation,this) ? relation : InverseRelation;
 
-    internal void SetRecordIndex(int index) => RecordIndex = index;
+	internal void SetRecordIndex(int index) => RecordIndex = index;
 
     /// <summary>
     ///     Implement IColumn
     /// </summary>
-    int IColumn.Id => Id;
+	int IColumn.Id => Id;
 	FieldType IColumn.FieldType => ToTable.GetPrimaryKey()?.Type ?? FieldType.Undefined;
 	string IColumn.Name => Name;
 	RelationType IColumn.RelationType => Type;
-    EntityType IColumn.Type => EntityType.Relation;
-
+	EntityType IColumn.Type => EntityType.Relation;
 }

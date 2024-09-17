@@ -9,8 +9,8 @@ internal sealed class Table : BaseEntity
 	internal readonly Relation[] Relations;   // sorted by name
 	internal readonly Index[] Indexes;
 	internal int[] RecordIndexes;    // [tableId] <= position into Fields & Relations sorted by Column.Id
-    internal readonly IColumn[] Columns;      // columns 
-    internal readonly string PhysicalName;
+	internal readonly IColumn[] Columns;      // columns 
+	internal readonly string PhysicalName;
 	internal readonly PhysicalType PhysicalType;
 	internal readonly int SchemaId;
 	internal readonly string? Subject;
@@ -29,7 +29,7 @@ internal sealed class Table : BaseEntity
 		Fields = fields;
 		RecordIndexes = recordIndexes;
 		Columns = columns;
-        Relations = relations;
+		Relations = relations;
 		Indexes = indexes;
 		Readonly = readonlyTable;
 		Subject = subject;
