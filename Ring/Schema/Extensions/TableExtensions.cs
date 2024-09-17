@@ -2,6 +2,7 @@
 using Ring.Schema.Models;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Xml.Linq;
 using Index = Ring.Schema.Models.Index;
 
 namespace Ring.Schema.Extensions;
@@ -17,13 +18,14 @@ internal static class TableExtensions
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static Field? GetField(this Table table, string name)
     {
-        int indexerLeft = 0, indexerRigth = table.Fields.Length-1, indexerMiddle, indexerCompare;
+        var span = new ReadOnlySpan<Field>(table.Fields);
+        int indexerLeft = 0, indexerRigth = span.Length-1, indexerMiddle, indexerCompare;
         while (indexerLeft <= indexerRigth)
         {
             indexerMiddle = indexerLeft + indexerRigth;
             indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
-            indexerCompare = string.CompareOrdinal(name, table.Fields[indexerMiddle].Name);
-            if (indexerCompare == 0) return table.Fields[indexerMiddle];
+            indexerCompare = string.CompareOrdinal(name, span[indexerMiddle].Name);
+            if (indexerCompare == 0) return span[indexerMiddle];
             if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
             else indexerRigth = indexerMiddle - 1;
         }
@@ -39,6 +41,7 @@ internal static class TableExtensions
     /// <returns>Field object</returns>
     internal static Field? GetField(this Table table, string name, StringComparison comparisonType)
     {
+        // no need span here! not efficient method
         for (var i = table.Fields.Length - 1; i >= 0; --i)
             if (table.Fields[i] != null && string.Equals(name, table.Fields[i].Name, comparisonType))
                 return table.Fields[i];
@@ -46,9 +49,8 @@ internal static class TableExtensions
     }
 
     /// <summary>
-    /// Get Fields by id ==> O(log n) complexity
+    /// Get Fields by id ==> O(n) complexity
     /// </summary>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static Field? GetField(this Table table, int id)
     {
         var i=0;
@@ -70,12 +72,13 @@ internal static class TableExtensions
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int GetFieldIndex(this Table table, string name)
     {
-        int indexerLeft = 0, indexerRigth = table.Fields.Length - 1, indexerMiddle, indexerCompare;
+        var span = new ReadOnlySpan<Field>(table.Fields);
+        int indexerLeft = 0, indexerRigth = span.Length - 1, indexerMiddle, indexerCompare;
         while (indexerLeft <= indexerRigth)
         {
             indexerMiddle = indexerLeft + indexerRigth;
             indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
-            indexerCompare = string.CompareOrdinal(name, table.Fields[indexerMiddle].Name);
+            indexerCompare = string.CompareOrdinal(name, span[indexerMiddle].Name);
             if (indexerCompare == 0) return indexerMiddle;
             if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
             else indexerRigth = indexerMiddle - 1;
@@ -92,13 +95,14 @@ internal static class TableExtensions
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static Relation? GetRelation(this Table table, string name)
     {
-        int indexerLeft = 0, indexerRigth = table.Relations.Length - 1, indexerMiddle, indexerCompare;
+        var span = new ReadOnlySpan<Relation>(table.Relations);
+        int indexerLeft = 0, indexerRigth = span.Length - 1, indexerMiddle, indexerCompare;
         while (indexerLeft <= indexerRigth)
         {
             indexerMiddle = indexerLeft + indexerRigth;
             indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
-            indexerCompare = string.CompareOrdinal(name, table.Relations[indexerMiddle].Name);
-            if (indexerCompare==0) return table.Relations[indexerMiddle];
+            indexerCompare = string.CompareOrdinal(name, span[indexerMiddle].Name);
+            if (indexerCompare==0) return span[indexerMiddle];
             if (indexerCompare>0) indexerLeft = indexerMiddle + 1;
             else indexerRigth = indexerMiddle - 1;
         }
@@ -125,27 +129,8 @@ internal static class TableExtensions
     /// <returns>Relation object</returns>
     internal static Relation? GetRelation(this Table table, int id)
     {
-        for (var i = table.Relations.Length - 1; i >= 0; --i)
-            if (id == table.Relations[i].Id) return table.Relations[i];
-        return null;
-    }
-
-    /// <summary>
-    /// Get relation object by id ==> O(n) complexity
-    /// </summary>
-    /// <returns>Index object</returns>
-    internal static Index? GetIndex(this Table table, string name)
-    {
-        int indexerLeft = 0, indexerRigth = table.Indexes.Length - 1, indexerMiddle, indexerCompare;
-        while (indexerLeft <= indexerRigth)
-        {
-            indexerMiddle = indexerLeft + indexerRigth;
-            indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
-            indexerCompare = string.CompareOrdinal(name, table.Indexes[indexerMiddle].Name);
-            if (indexerCompare == 0) return table.Indexes[indexerMiddle];
-            if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
-            else indexerRigth = indexerMiddle - 1;
-        }
+        for (var i=table.Relations.Length - 1; i >= 0; --i)
+            if (id==table.Relations[i].Id) return table.Relations[i];
         return null;
     }
 
@@ -157,17 +142,38 @@ internal static class TableExtensions
     /// <returns>Field index or -1 if not found</returns>
     internal static int GetRelationIndex(this Table table, string name)
     {
-        int indexerLeft = 0, indexerRigth = table.Relations.Length - 1, indexerMiddle, indexerCompare;
+        var span = new ReadOnlySpan<Relation>(table.Relations);
+        int indexerLeft = 0, indexerRigth = span.Length - 1, indexerMiddle, indexerCompare;
         while (indexerLeft <= indexerRigth)
         {
             indexerMiddle = indexerLeft + indexerRigth;
             indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
-            indexerCompare = string.CompareOrdinal(name, table.Relations[indexerMiddle].Name);
+            indexerCompare = string.CompareOrdinal(name, span[indexerMiddle].Name);
             if (indexerCompare == 0) return indexerMiddle;
             if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
             else indexerRigth = indexerMiddle - 1;
         }
         return -1;
+    }
+
+    /// <summary>
+    /// Get index object by name ==> O(log n) complexity
+    /// </summary>
+    /// <returns>Index object</returns>
+    internal static Index? GetIndex(this Table table, string name)
+    {
+        var span = new ReadOnlySpan<Index>(table.Indexes);
+        int indexerLeft = 0, indexerRigth = span.Length - 1, indexerMiddle, indexerCompare;
+        while (indexerLeft <= indexerRigth)
+        {
+            indexerMiddle = indexerLeft + indexerRigth;
+            indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
+            indexerCompare = string.CompareOrdinal(name, span[indexerMiddle].Name);
+            if (indexerCompare == 0) return span[indexerMiddle];
+            if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
+            else indexerRigth = indexerMiddle - 1;
+        }
+        return null;
     }
 
     internal static Field? GetPrimaryKey(this Table table) =>

@@ -11,7 +11,7 @@ using System.Data;
 
 
 var fixture = new Fixture();
-var test = fixture.CreateMany<string>(1000000).ToArray();
+var test = fixture.CreateMany<string>(128).ToArray();
 test[1] = "111111";
 Array.Sort(test);
 var index = test.GetIndex("111111");
@@ -20,20 +20,32 @@ var index = test.GetIndex("111111");
 var date = DateTime.Now;
 Console.WriteLine("-- TEST 1 --");
 Console.WriteLine("GetIndex(this string[] elements, string value) : ");
-for (var i = 0; i < 200000; ++i)
+for (var i = 0; i < 250000; ++i)
     index = test.GetIndex("111111");
 
 Console.WriteLine((long)(DateTime.Now-  date).TotalMilliseconds);
 
+
+// test 3
+date = DateTime.Now;
+Console.WriteLine("-- TEST 3 --");
+Console.WriteLine("GetSpanReadOnlyIndex(this string[] elements, string value) : ");
+for (var i = 0; i < 250000; ++i)
+    index = test.GetSpanReadOnlyIndex("111111");
+
+Console.WriteLine((long)(DateTime.Now - date).TotalMilliseconds);
+
 // test 2
 date = DateTime.Now;
 Console.WriteLine("-- TEST 2 --");
-Console.WriteLine("GetSpanIndex(this Span<string> elements, string value) : ");
-var span = test.AsSpan();
-for (var i = 0; i < 200000; ++i)
-    index = span.GetSpanIndex("111111");
+Console.WriteLine("GetSpanIndex(this string[] elements, string value) : ");
+for (var i = 0; i < 250000; ++i)
+    index = test.GetSpanIndex("111111");
 
 Console.WriteLine((long)(DateTime.Now - date).TotalMilliseconds);
+
+
+
 
 int oi = 0;
 ++oi;

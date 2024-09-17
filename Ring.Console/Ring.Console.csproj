@@ -14,6 +14,7 @@
     <PublishAot>True</PublishAot>
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>Ring.Console.snk</AssemblyOriginatorKeyFile>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>

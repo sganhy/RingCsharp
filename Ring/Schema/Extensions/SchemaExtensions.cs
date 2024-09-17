@@ -17,13 +17,14 @@ internal static class SchemaExtensions
     /// </summary>
     internal static Sequence? GetSequence(this DbSchema schema, string name)
     {
-        int indexerLeft = 0, indexerRigth = schema.Sequences.Length - 1;
+        var span = new ReadOnlySpan<Sequence>(schema.Sequences);
+        int indexerLeft = 0, indexerRigth = span.Length - 1;
         while (indexerLeft <= indexerRigth)
         {
             var indexerMiddle = indexerLeft + indexerRigth;
             indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
-            var indexerCompare = string.CompareOrdinal(name, schema.Sequences[indexerMiddle].Name);
-            if (indexerCompare == 0) return schema.Sequences[indexerMiddle];
+            var indexerCompare = string.CompareOrdinal(name, span[indexerMiddle].Name);
+            if (indexerCompare == 0) return span[indexerMiddle];
             if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
             else indexerRigth = indexerMiddle - 1;
         }
@@ -36,13 +37,14 @@ internal static class SchemaExtensions
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static Table? GetTable(this DbSchema schema, int id)
     {
-        int indexerLeft = 0, indexerRigth = schema.TablesById.Length - 1, indexerMiddle, indexerCompare;
+        var span = new ReadOnlySpan<Table>(schema.TablesById);
+        int indexerLeft = 0, indexerRigth = span.Length - 1, indexerMiddle, indexerCompare;
         while (indexerLeft <= indexerRigth)
         {
             indexerMiddle = indexerLeft + indexerRigth;
             indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
-            indexerCompare = id - schema.TablesById[indexerMiddle].Id;
-            if (indexerCompare == 0L) return schema.TablesById[indexerMiddle];
+            indexerCompare = id - span[indexerMiddle].Id;
+            if (indexerCompare == 0L) return span[indexerMiddle];
             if (indexerCompare > 0L) indexerLeft = indexerMiddle + 1;
             else indexerRigth = indexerMiddle - 1;
         }
@@ -55,13 +57,14 @@ internal static class SchemaExtensions
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static Table? GetTable(this DbSchema schema, string name)
     {
-        int indexerLeft = 0, indexerRigth = schema.TablesById.Length - 1, indexerMiddle, indexerCompare;
+        var span = new ReadOnlySpan<Table>(schema.TablesByName);
+        int indexerLeft = 0, indexerRigth = span.Length - 1, indexerMiddle, indexerCompare;
         while (indexerLeft <= indexerRigth)
         {
             indexerMiddle = indexerLeft + indexerRigth;
             indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
-            indexerCompare = string.CompareOrdinal(name, schema.TablesByName[indexerMiddle].Name); 
-            if (indexerCompare == 0) return schema.TablesByName[indexerMiddle];
+            indexerCompare = string.CompareOrdinal(name, span[indexerMiddle].Name); 
+            if (indexerCompare == 0) return span[indexerMiddle];
             if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
             else indexerRigth = indexerMiddle - 1;
         }
