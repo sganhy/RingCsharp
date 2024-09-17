@@ -12,9 +12,9 @@ internal sealed class Relation : BaseEntity, IColumn
 	internal readonly RelationType Type;
 	internal int RecordIndex { get; private set; }          // index of relationship into record._data by default -1
 
-    /// <summary>
-    ///     Ctor
-    /// </summary>
+	/// <summary>
+	///     Ctor
+	/// </summary>
 	internal Relation(int id, string name, string? description, RelationType type, Table toObject, int recordIndex,
 		bool notnull, bool constraint,bool baseline, bool active)
 		: base(id, name, description, active, baseline)
@@ -35,9 +35,9 @@ internal sealed class Relation : BaseEntity, IColumn
 
 	internal void SetRecordIndex(int index) => RecordIndex = index;
 
-    /// <summary>
-    ///     Implement IColumn
-    /// </summary>
+	/// <summary>
+	///     Implement IColumn
+	/// </summary>
 	int IColumn.Id => Id;
 	FieldType IColumn.FieldType => ToTable.GetPrimaryKey()?.Type ?? FieldType.Undefined;
 	string IColumn.Name => Name;
