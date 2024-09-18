@@ -7,10 +7,10 @@ internal struct CacheId
 	internal long MaximumId;
 	internal int ReservedRange;  // cache a range of id 
 
-    /// <summary>
-    ///     Ctor
-    /// </summary>
-    public CacheId()
+	/// <summary>
+	///     Ctor
+	/// </summary>
+	public CacheId()
 	{
 		CurrentId = 0L;
 		MaximumId = long.MaxValue;

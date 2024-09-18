@@ -25,7 +25,7 @@ internal sealed class Relation : BaseEntity, IColumn
 		NotNull = notnull;
 		InverseRelation = this;
 		RecordIndex = recordIndex;
-    }
+	}
 
 	/// <summary>
 	///     assign only once the property 

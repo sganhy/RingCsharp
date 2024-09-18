@@ -28,7 +28,7 @@ internal sealed class ConnectionPool
 		SyncRoot = new object();
 		MinConnection = minPoolSize;
 		MaxConnection = maxPoolSize;
-        Connections = new IRingConnection[maxPoolSize];
+		Connections = new IRingConnection[maxPoolSize];
 		Cursor = minPoolSize - 1;     // cursor on min last element 
 		LastIndex = maxPoolSize - 1;
 		SwapIndex = 0;
