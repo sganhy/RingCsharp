@@ -23,6 +23,7 @@ Console.WriteLine("GetIndex(this string[] elements, string value) : ");
 for (var i = 0; i < 250000; ++i)
     index = test.GetIndex("111111");
 
+Console.WriteLine($"Index: {index}");
 Console.WriteLine((long)(DateTime.Now-  date).TotalMilliseconds);
 
 
@@ -32,19 +33,38 @@ Console.WriteLine("-- TEST 3 --");
 Console.WriteLine("GetSpanReadOnlyIndex(this string[] elements, string value) : ");
 for (var i = 0; i < 250000; ++i)
     index = test.GetSpanReadOnlyIndex("111111");
-
+Console.WriteLine($"Index: {index}");
 Console.WriteLine((long)(DateTime.Now - date).TotalMilliseconds);
 
 // test 2
 date = DateTime.Now;
 Console.WriteLine("-- TEST 2 --");
-Console.WriteLine("GetSpanIndex(this string[] elements, string value) : ");
+Console.WriteLine("GetSpanIndex1(this string[] elements, string value) : ");
 for (var i = 0; i < 250000; ++i)
-    index = test.GetSpanIndex("111111");
-
+    index = test.GetSpanIndex1("111111");
+Console.WriteLine($"Index: {index}");
 Console.WriteLine((long)(DateTime.Now - date).TotalMilliseconds);
 
 
+// test 4
+date = DateTime.Now;
+var segment = new ArraySegment<string>(test);
+Console.WriteLine("-- TEST 4 --");
+Console.WriteLine("GetGetSegmentIndexSpanIndex(this ArraySegment elements, string value) : ");
+for (var i = 0; i < 250000; ++i)
+    index = segment.GetSegmentIndex("111111");
+Console.WriteLine($"Index: {index}");
+Console.WriteLine((long)(DateTime.Now - date).TotalMilliseconds);
+
+
+// test 2
+date = DateTime.Now;
+Console.WriteLine("-- TEST 5 --");
+Console.WriteLine("GetSpanIndex2(this string[] elements, string value) : ");
+for (var i = 0; i < 250000; ++i)
+    index = test.GetSpanIndex2("111111");
+Console.WriteLine($"Index: {index}");
+Console.WriteLine((long)(DateTime.Now - date).TotalMilliseconds);
 
 
 int oi = 0;

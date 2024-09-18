@@ -386,6 +386,23 @@ public sealed class RecordTest : BaseExtensionsTest
         Assert.Equal(expectedValue.ToString(), rcd.GetField("cost"));
     }
 
+    [Fact]
+    public void SetField_NullInt_ReturnDefaultInt()
+    {
+        // arrange 
+        var table = _schema.GetTable("weapon");
+        Assert.NotNull(table);
+        var rcd = new Record(table);
+        long? result = 0L;
+
+        // act 
+        rcd.SetField("range_increment", 8888); 
+        rcd.SetField("range_increment", null); // reset test 
+        rcd.GetField("range_increment", out result);
+
+        // assert
+        Assert.Equal(0, result);
+    }
 
     [Fact]
     public void SetField_AnonymousLong_ReturnLong()
@@ -1439,6 +1456,23 @@ public sealed class RecordTest : BaseExtensionsTest
         Assert.True(rcd.IsRelationExist("book2rule"));
 
     }
+
+    [Fact]
+    public void IsRelationChanged_Book2rule_4004()
+    {
+        // arrange 
+        var tableBook = _schema.GetTable("book");
+        Assert.NotNull(tableBook);
+        var rcd = new Record(tableBook);
+
+        // act 
+        rcd.SetRelation("book2rule", _fixture.Create<long>());
+        var result = rcd.IsRelationChanged("book2rule");
+
+        // assert
+        Assert.True(result);
+    }
+
 
 }
 

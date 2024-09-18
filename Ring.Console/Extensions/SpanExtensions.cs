@@ -11,9 +11,9 @@ namespace Ring.Console.Extensions;
 internal static class SpanExtensions
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static int GetSpanIndex(this string[] elements, string value)
+    internal static int GetSpanIndex1(this string[] elements, string value)
     {
-        ReadOnlySpan<string> span = elements.AsSpan<string>();
+        ReadOnlySpan<string> span = elements.AsSpan();
         int indexerLeft = 0, indexerRigth = elements.Length - 1, indexerMiddle;
         while (indexerLeft <= indexerRigth)
         {
@@ -26,6 +26,24 @@ internal static class SpanExtensions
         }
         return -1;
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static int GetSpanIndex2(this string[] elements,in string value)
+    {
+        var span = new ReadOnlySpan<string>(elements);
+        int indexerLeft = 0, indexerRigth = elements.Length - 1, indexerMiddle;
+        while (indexerLeft <= indexerRigth)
+        {
+            indexerMiddle = indexerLeft + indexerRigth;
+            indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
+            var indexerCompare = string.CompareOrdinal(value, span[indexerMiddle]);
+            if (indexerCompare == 0) return indexerMiddle;
+            if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
+            else indexerRigth = indexerMiddle - 1;
+        }
+        return -1;
+    }
+
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int GetSpanReadOnlyIndex(this string[] elements, string value)
