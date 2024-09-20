@@ -10,6 +10,10 @@ using Ring.Console.Extensions;
 using System.Data;
 
 
+
+var runa = string.CompareOrdinal("Test", "bf3ad255-f04e-44ac-9cf1-dd5d836f7d99");
+string tt= default(string);
+
 var fixture = new Fixture();
 var test = fixture.CreateMany<string>(128).ToArray();
 test[1] = "111111";

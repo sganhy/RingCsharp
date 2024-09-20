@@ -1,8 +1,6 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Models;
 using System.Runtime.CompilerServices;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Xml.Linq;
 using Index = Ring.Schema.Models.Index;
 
 namespace Ring.Schema.Extensions;
@@ -67,7 +65,7 @@ internal static class TableExtensions
     /// Get index field by name, case sensitive search ==> O(log n) complexity
     /// </summary>
     /// <param name="table">table object</param>
-    /// <param name="fieldName">field name</param>
+    /// <param name="name">field name</param>
     /// <returns>Field index or -1 if not found</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int GetFieldIndex(this Table table, string name)

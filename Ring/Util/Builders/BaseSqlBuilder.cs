@@ -60,7 +60,7 @@ internal abstract class BaseSqlBuilder : ISqlBuilder
                     ++mtmIndex;
                 }
             }
-        Array.Sort(result);
+        Array.Sort(result, (x, y) => string.CompareOrdinal(x, y));
         return result;
     }
 

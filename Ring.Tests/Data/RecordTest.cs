@@ -387,7 +387,7 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
-    public void SetField_NullInt_ReturnDefaultInt()
+    public void SetField_NullShort_ReturnDefaultShort()
     {
         // arrange 
         var table = _schema.GetTable("weapon");
@@ -402,6 +402,23 @@ public sealed class RecordTest : BaseExtensionsTest
 
         // assert
         Assert.Equal(0, result);
+    }
+
+    [Fact]
+    public void SetField_NullFloat_ReturnDefaultFloat()
+    {
+        // arrange 
+        var table = _schema.GetTable("rule");
+        Assert.NotNull(table);
+        var rcd = new Record(table);
+        
+        // act 
+        rcd.SetField("version", 8888);
+        rcd.SetField("version", null); // reset test 
+        var result= rcd.GetField("version");
+
+        // assert
+        Assert.Null(result);
     }
 
     [Fact]

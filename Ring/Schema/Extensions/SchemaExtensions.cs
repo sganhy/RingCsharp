@@ -109,22 +109,14 @@ internal static class SchemaExtensions
 
     internal static void LoadColumnMappers(this DbSchema schema)
     {
-        var i = schema.TablesByName.Length - 1;
-        while (i>=0)
-        {
+        for (var i = schema.TablesByName.Length-1; i >= 0;--i)
             schema.TablesByName[i].LoadColumnInformation();
-            --i;
-        }
     }
 
     internal static void LoadRecordIndexes(this DbSchema schema)
     {
-        var i = schema.TablesByName.Length - 1;
-        while (i >= 0)
-        {
+        for (var i = schema.TablesByName.Length-1; i >= 0; --i)
             schema.TablesByName[i].LoadRelationRecordIndex();
-            --i;
-        }
     }
 
     internal static int GetMtmTableCount(this DbSchema schema)

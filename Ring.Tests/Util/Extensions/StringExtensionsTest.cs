@@ -1,15 +1,10 @@
-﻿using Microsoft.VisualBasic;
-using Ring.Util.Extensions;
+﻿using Ring.Util.Extensions;
 using System.Globalization;
 
 namespace Ring.Tests.Util.Extensions;
 
 public class StringExtensionsTest
 {
-    
-    public StringExtensionsTest()
-    {
-    }
 
     [Fact]
     public void Truncate_NullString_Null()
