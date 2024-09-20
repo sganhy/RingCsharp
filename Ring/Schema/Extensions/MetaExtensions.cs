@@ -239,7 +239,7 @@ internal static class MetaExtensions
     /// Create a instance of table, relation assigned later by schema creation
     /// </summary>
     /// <param name="meta">meta talbe</param>
-    /// <param name="items">sorted by name, to improve performance</param>
+    /// <param name="tableItems">sorted by name, to improve performance</param>
     /// <param name="tableType">table type is define by schema builder</param>
     /// <param name="physicalName">physical name is define by provider</param>
     internal static Table? ToTable(this Meta meta, ArraySegment<Meta> tableItems, TableType tableType, PhysicalType physicalType, string physicalName)

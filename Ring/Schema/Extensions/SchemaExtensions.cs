@@ -1,7 +1,6 @@
 ﻿using Ring.Schema.Builders;
 using Ring.Schema.Enums;
 using Ring.Schema.Models;
-using System.Data;
 using System.Runtime.CompilerServices;
 using DbSchema = Ring.Schema.Models.Schema;
 
@@ -109,14 +108,12 @@ internal static class SchemaExtensions
 
     internal static void LoadColumnMappers(this DbSchema schema)
     {
-        for (var i = schema.TablesByName.Length-1; i >= 0;--i)
-            schema.TablesByName[i].LoadColumnInformation();
+        foreach (var tbl in schema.TablesByName) tbl.LoadColumnInformation();
     }
 
     internal static void LoadRecordIndexes(this DbSchema schema)
     {
-        for (var i = schema.TablesByName.Length-1; i >= 0; --i)
-            schema.TablesByName[i].LoadRelationRecordIndex();
+        foreach (var tbl in schema.TablesByName) tbl.LoadRelationRecordIndex();
     }
 
     internal static int GetMtmTableCount(this DbSchema schema)
@@ -129,14 +126,12 @@ internal static class SchemaExtensions
     }
 
     #region private methods 
-    private static void LoadInverseRelations(this DbSchema schema, Meta[] schemaItems)
+    private static void LoadInverseRelations(this DbSchema schema, Span<Meta> schemaItems)
     {
-        var count = schemaItems.Length;
-        for (var i=0; i<count; ++i)
+        foreach (var meta in schemaItems)
         {
-            if (schemaItems[i].IsRelation())
+            if (meta.IsRelation())
             {
-                var meta = schemaItems[i];
                 var fromTable = schema.GetTable(meta.ReferenceId); // get table by id
                 if (fromTable != null)
                 {
@@ -203,8 +198,7 @@ internal static class SchemaExtensions
     private static Relation CreateMtmRelation(Relation relation, Table mtmTable)
     {
         var meta = relation.ToMeta(0);
-        var result = MetaExtensions.ToRelation(meta, mtmTable) ?? default!;
-        return result;
+        return MetaExtensions.ToRelation(meta, mtmTable) ?? default!;
     }
 
     #endregion 

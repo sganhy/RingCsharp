@@ -237,10 +237,8 @@ public struct Record : IEquatable<Record>
 	public void SetField(string name, DateTime value)
 	{
 		if (_type == null) ThrowRecordUnkownRecordType();
-#pragma warning disable CS8604 // Dereference of a possibly null reference. _type cannot be null here 
-		var fieldId = _type.GetFieldIndex(name);
-#pragma warning restore CS8604
-		if (fieldId == -1) ThrowRecordUnkownFieldName(name);
+        var fieldId = _type.GetFieldIndex(name);
+        if (fieldId == -1) ThrowRecordUnkownFieldName(name);
 		SetDateTimeField(fieldId, _type.Fields[fieldId].Type, value, null);
 	}
 	public void SetField(string name, DateTimeOffset value)
@@ -318,10 +316,10 @@ public struct Record : IEquatable<Record>
 	internal readonly bool IsFieldChanged(string name)
 	{
 		if (_type == null) ThrowRecordUnkownRecordType();
-#pragma warning disable CS8604, CS8602 // Dereference of a possibly null reference. _type cannot be null here 
         var index = _type.GetFieldIndex(name);
-		if (index != -1) return _data[^1] != null && IsColumnChanged(index);
-#pragma warning restore CS8602, CS8604 // Dereference of a possibly null reference.
+#pragma warning disable CS8604, CS8602 // Dereference of a possibly null reference. _type cannot be null here 
+        if (index != -1) return _data[^1] != null && IsColumnChanged(index);
+#pragma warning restore CS8602, CS8604
         ThrowRecordUnkownFieldName(name);
 		return false;
 	}
@@ -365,11 +363,9 @@ public struct Record : IEquatable<Record>
 		if (_type == null) ThrowRecordUnkownRecordType();
         var relation = _type.GetRelation(name);
 		if (relation == null) ThrowRecordUnkownRelationName(name);
-#pragma warning disable CS8604, CS8602, S2259 // Dereference of a possibly null reference. _type cannot be null here 
         var index = relation.RecordIndex;
 		if (index >= 0) SetData(index, value?.ToString(DefaultCulture));
 		else ThrowRecordWrongRelationType(name);
-#pragma warning restore S2259, CS8602, CS8604
     }
 
     #region private methods 
