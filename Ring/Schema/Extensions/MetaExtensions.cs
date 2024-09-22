@@ -5,6 +5,7 @@ using Index = Ring.Schema.Models.Index;
 using DbSchema = Ring.Schema.Models.Schema;
 using Ring.Util.Builders;
 using System.Globalization;
+using System;
 
 namespace Ring.Schema.Extensions;
 
@@ -248,7 +249,7 @@ internal static class MetaExtensions
         {
             var fields = tableItems.GetFieldArray();
             var relations = tableItems.GetRelationArray();
-            var indexes = tableItems.GetIndexArray();
+            var indexes = tableItems.GetIndexes();
             var columnMapperSize = tableItems.GetColumnMapperSize(tableType, fields.Length);
 
             // sort arrays
@@ -273,16 +274,16 @@ internal static class MetaExtensions
     {
         // sort ASC by reference_id, name
         Array.Sort(schema, (x, y) => MetaSchemaComparer(x,y)); 
-        var meta = schema.GetSchema();
+        var meta = GetSchema(schema);
         if (meta != null)
         {
             var ddlBuilder = provider.GetDdlBuilder();
-            var parameters = schema.GetParameterArray();
+            var parameters = GetParameters(schema);
             var lexicons = new List<Lexicon>();
             var sequences = new List<Sequence>();
-            var tableByName = schema.GetTableArray(ddlBuilder, meta, provider);
-            var tableById = (Table[])tableByName.Clone(); 
-            var tableSpaces = schema.GetTableSpaceArray();
+            var tableByName = GetTables(schema, ddlBuilder, meta, provider);
+            var tableById = ShallowCopy(tableByName);
+            var tableSpaces = GetTableSpaces(schema);
 
             // sort arrays - already sorted by name
             Array.Sort(parameters, (x, y) => x.Id.CompareTo(y.Id));
@@ -451,7 +452,7 @@ internal static class MetaExtensions
         return relationCount > 0 ? new Relation[relationCount] : Array.Empty<Relation>();
     }
 
-    private static Meta? GetSchema(this Meta [] schema)
+    private static Meta? GetSchema(Span<Meta> schema)
     {
         var i=0;
         var count=schema.Length;
@@ -463,15 +464,15 @@ internal static class MetaExtensions
         return null;
     }
 
-    private static Table[] GetTableArray(this Meta[] schema, IDdlBuilder ddlBuilder, Meta metaSchema, 
-        DatabaseProvider provider)
+    private static Table[] GetTables(Meta [] schema, IDdlBuilder ddlBuilder, Meta metaSchema, DatabaseProvider provider)
     {
         int startIndex, count;
         var i=0;
         var metaCount = schema.Length;
-        var tableCount = metaCount > 250 ? metaCount / 10 : 30;
+        var tableCount = metaCount > 250 ? metaCount / 5 : 100;
         var dico = new Dictionary<int, (int, int)>(tableCount); // table_id, start index , count
         var emptySchema = GetEmptySchema(metaSchema, provider);
+
         // build dico
         while (i<metaCount)
         {
@@ -487,7 +488,6 @@ internal static class MetaExtensions
         var result = new List<Table>(dico.Count);
         for (i=0; i<metaCount; ++i)
         {
-            // Meta meta, ArraySegment<Meta> tableItems, TableType tableType, string physicalName
             if (schema[i].IsTable())
             {
                 var metaTable = schema[i];
@@ -497,40 +497,33 @@ internal static class MetaExtensions
                     new ArraySegment<Meta>(schema, dico[metaTable.Id].Item1, dico[metaTable.Id].Item2) :
                     new ArraySegment<Meta>(schema, 0, 0);
                 var table = schema[i].ToTable(segment, TableType.Business, PhysicalType.Table, physicalName);
-                if (table!=null) result.Add(table);
+#pragma warning disable CS8604 // Possible null reference argument.
+                result.Add(table);
+#pragma warning restore CS8604
             }
         }
         return result.ToArray();
     }
 
-    private static TableSpace[] GetTableSpaceArray(this Meta[] schema)
+    private static TableSpace[] GetTableSpaces(Span<Meta> schema)
     {
         var result = new List<TableSpace>();
-        for (var i = 0; i < schema.Length; ++i)
-        {
-            if (schema[i].IsTableSpace())
-            {
-                var param = schema[i].ToTableSpace();
-                if (param != null) result.Add(param);
-            }
-        }
+#pragma warning disable CS8604
+        foreach (var meta in schema) if (meta.IsTableSpace()) result.Add(meta.ToTableSpace());
+#pragma warning restore CS8604 // Possible null reference argument.
         return result.ToArray();
     }
 
-    private static Parameter[] GetParameterArray(this Meta[] schema)
+    private static Parameter[] GetParameters(Span<Meta> schema)
     {
         var result = new List<Parameter>();
-        for (var i=0; i<schema.Length; ++i)
-        {
-            if (schema[i].IsParameter()) {
-                var param = schema[i].ToParameter();
-                if (param!= null) result.Add(param);
-            }
-        }
+#pragma warning disable CS8604
+        foreach (var meta in schema) if (meta.IsParameter()) result.Add(meta.ToParameter());
+#pragma warning restore CS8604 // Possible null reference argument.
         return result.ToArray();
     }
 
-    private static Index[] GetIndexArray(this ArraySegment<Meta> items)
+    private static Index[] GetIndexes(this ArraySegment<Meta> items)
     {
         // count element
         int j= 0, count = items.Count, indexCount = 0;
@@ -574,6 +567,15 @@ internal static class MetaExtensions
         if (result != 0) return result;
         return string.CompareOrdinal(meta1.Name, meta2.Name);
     }
-        
+
+    private static Table[] ShallowCopy(Span<Table> tables)
+    {
+        var count = tables.Length;
+        var result = new Table[count];
+        for (var i = 0; i < count; ++i) result[i] = tables[i];
+        return result;
+    }
+
+
     #endregion
 }

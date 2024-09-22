@@ -9,6 +9,7 @@ using Ring.Schema.Builders;
 using System.Globalization;
 using System.Net.WebSockets;
 using Newtonsoft.Json.Linq;
+using System.Reflection;
 
 namespace Ring.Tests.Data;
 
@@ -59,10 +60,10 @@ public sealed class RecordTest : BaseExtensionsTest
         // arrange 
         var table = _schema.GetTable("feat");
         Assert.NotNull(table);
-        var rcd1 = new Record(table);
-        for (var i = 1; i < table.Fields.Length; ++i) rcd1[i] = _fixture.Create<string?>();
+        var rcd1 = new Record(table, GetBucket(table,5,6), table.RecordSize*2);
+        for (var i = 0; i < table.RecordSize; ++i) rcd1[i] = _fixture.Create<string?>();
         var rcd2 = new Record(table);
-        for (var i = 1; i < table.Fields.Length; ++i) rcd2[i] = rcd1[i];
+        for (var i = 0; i < table.RecordSize; ++i) rcd2[i] = rcd1[i];
 
         // act 
         var result = rcd1.Equals(rcd2);
@@ -136,7 +137,8 @@ public sealed class RecordTest : BaseExtensionsTest
         Assert.NotNull(tableGender);
         Assert.NotNull(tableRace);
         var rcd1 = new Record(tableGender);
-        var rcd2 = new Record(tableRace);
+        var rcd2 = new Record(tableRace, new string?[tableRace.RecordSize*4], tableRace.RecordSize*2);
+        rcd2.SetField("name", "123123");
 
         // act 
         var result1 = rcd2.Equals((object)rcd1);
@@ -186,7 +188,7 @@ public sealed class RecordTest : BaseExtensionsTest
         // arrange 
         var tableGender = _schema.GetTable("gender");
         Assert.NotNull(tableGender);
-        var rcd1 = new Record(tableGender); 
+        var rcd1 = new Record(tableGender, new string?[tableGender.RecordSize*3], tableGender.RecordSize); 
         rcd1[1] = "45";
         var rcd2 = new Record(tableGender);
         rcd2.SetField("iso_code", 45);
@@ -230,10 +232,11 @@ public sealed class RecordTest : BaseExtensionsTest
     [Fact]
     public void SetField_AnonymousString_ReturnSameString()
     {
+        // test with one record 
         // arrange 
         var table = _schema.GetTable("campaign_setting");
         Assert.NotNull(table);
-        var rcd = new Record(table);
+        var rcd = new Record(table, new string?[table.RecordSize*5], table.RecordSize * 3);
 
         // act 
         rcd.SetField("name", "test1");
@@ -247,10 +250,11 @@ public sealed class RecordTest : BaseExtensionsTest
     [Fact]
     public void SetField_AnonymousShort_ReturnShortValue()
     {
+        // test with more than one record 
         // arrange 
         var table = _schema.GetTable("alignment");
         Assert.NotNull(table);
-        var rcd = new Record(table);
+        var rcd = new Record(table,new string?[table.RecordSize*4], table.RecordSize*2);
         var expectedValue = _fixture.Create<short>().ToString();
 
         // act 
@@ -387,12 +391,12 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
-    public void SetField_NullShort_ReturnDefaultShort()
+    public void SetField_NullShort_ReturnDefaultLong()
     {
         // arrange 
         var table = _schema.GetTable("weapon");
         Assert.NotNull(table);
-        var rcd = new Record(table);
+        var rcd = new Record(table, new string?[table.RecordSize*3], table.RecordSize*2); // multiple records
         long? result = 0L;
 
         // act 
@@ -603,7 +607,7 @@ public sealed class RecordTest : BaseExtensionsTest
         meta?.SetFieldType(FieldType.DateTime);
         var newField = meta?.ToField();
         logTable.Fields[index] = newField ?? GetAnonymousField();
-        var rcd = new Record(logTable);
+        var rcd = new Record(logTable, new string?[logTable.RecordSize*3], logTable.RecordSize);
 
         // act 
         rcd.SetField("entry_time", "1914-10-30T18:09:18.123Z");
@@ -970,7 +974,7 @@ public sealed class RecordTest : BaseExtensionsTest
         meta?.SetFieldType(FieldType.ByteArray);
         var newField = meta?.ToField();
         logTable.Fields[index] = newField ?? GetAnonymousField();
-        var rcd = new Record(logTable);
+        var rcd = new Record(logTable, new string?[logTable.RecordSize*3], logTable.RecordSize); // mutliple record 
         var byteArray = new byte[] { _fixture.Create<byte>(), _fixture.Create<byte>(), _fixture.Create<byte>() };
         var base64 = Convert.ToBase64String(byteArray);
 
@@ -1013,7 +1017,7 @@ public sealed class RecordTest : BaseExtensionsTest
         var result = rcd.GetField("is_group");
 
         // assert
-        Assert.Equal("True", result, true);
+        Assert.Equal("True", result, true); // check default value
     }
 
     [Fact]
@@ -1028,12 +1032,13 @@ public sealed class RecordTest : BaseExtensionsTest
         var result = rcd.GetField("id");
 
         // assert
-        Assert.Equal("0", result);
+        Assert.Equal("0", result); // check default value
     }
 
     [Fact]
     public void GetField_DefaultFieldPk_0()
     {
+        // test with one record 
         // arrange 
         var table = _schema.GetTable("weapon");
         Assert.NotNull(table);
@@ -1049,10 +1054,11 @@ public sealed class RecordTest : BaseExtensionsTest
     [Fact]
     public void GetField_DefaultFieldPk_77()
     {
+        // test with multiple record
         // arrange 
         var table = _schema.GetTable("skill");
         Assert.NotNull(table);
-        var rcd = new Record(table);
+        var rcd = new Record(table, GetBucket(table,7,20), table.RecordSize*5);
         rcd.SetField("id", 77L);
 
         // act 
@@ -1093,7 +1099,7 @@ public sealed class RecordTest : BaseExtensionsTest
         rcd.GetField("chaos", out bool? result);
 
         // assert
-        Assert.Equal(false, result);
+        Assert.Equal(false, result); // check default value
     }
 
     [Fact]
@@ -1102,7 +1108,7 @@ public sealed class RecordTest : BaseExtensionsTest
         // arrange 
         var table = _schema.GetTable("alignment");
         Assert.NotNull(table);
-        var rcd = new Record(table);
+        var rcd = new Record(table, new string?[table.RecordSize*4], table.RecordSize * 2); // multiple record 
         rcd.SetField("law", true);
 
         // act 
@@ -1148,7 +1154,7 @@ public sealed class RecordTest : BaseExtensionsTest
         // arrange 
         var table = _schema.GetTable("book");
         Assert.NotNull(table);
-        var rcd = new Record(table);
+        var rcd = new Record(table, new string?[table.RecordSize*3], table.RecordSize); // multiple record
         var expectedValue = DateTime.UtcNow;
         rcd.SetField("creation_time", expectedValue);
 
@@ -1165,7 +1171,7 @@ public sealed class RecordTest : BaseExtensionsTest
         // arrange 
         var tableBuilder = new TableBuilder();
         var logTable = tableBuilder.GetLog("Test", DatabaseProvider.SqlLite);
-        var rcd = new Record(logTable);
+        var rcd = new Record(logTable, new string?[logTable.RecordSize*4], logTable.RecordSize *2);
         var dt = new DateTime(2005, 12,12,18,17,16,15, DateTimeKind.Utc);
         rcd.SetField("entry_time", dt);
 
@@ -1189,7 +1195,7 @@ public sealed class RecordTest : BaseExtensionsTest
         // arrange 
         var table = _schema.GetTable("armor");
         Assert.NotNull(table);
-        var rcd = new Record(table);
+        var rcd = new Record(table, new string?[table.RecordSize*5], table.RecordSize*2);
         rcd.SetField("name", _fixture.Create<string>());
 
         // act 
@@ -1198,7 +1204,6 @@ public sealed class RecordTest : BaseExtensionsTest
         // assert
         Assert.True(result);
     }
-
 
     [Fact]
     public void IsFieldChange_SetNameField_False()
@@ -1301,7 +1306,7 @@ public sealed class RecordTest : BaseExtensionsTest
         rcd1.SetField("critical_multiplier_2", _fixture.Create<short>());
         table = _schema.GetTable("book"); // book
         Assert.NotNull(table);
-        var rcd2 = new Record(table); // empty record 
+        var rcd2 = new Record(table, GetBucket(table,4,80), 3 * table.RecordSize); // as fourth record
         rcd2.SetField("title", _fixture.Create<string>());
 
         // act 
@@ -1323,21 +1328,34 @@ public sealed class RecordTest : BaseExtensionsTest
     public void IsDirty_NoChanges_False()
     {
         // arrange 
-        var table = _schema.GetTable(1071); // weapon
+        var table = _schema.GetTable(1071); // weapon, add multiple container 
         Assert.NotNull(table);
-        var rcd = new Record(table);
-        for (var i = 0; i < table.Fields.Length; i++) rcd[i] = _fixture.Create<string>();
+        var bucket = GetBucket(table, 5, 12);
+        var rcd1 = new Record(table, bucket, 0);                  // first record  ; offset = 0 
+        var rcd2 = new Record(table, bucket, table.RecordSize);   // second record ; offset = 20
+        var rcd3 = new Record(table, bucket, table.RecordSize*2); // third record  ; offset = 40
+        var rcd4 = new Record(table, bucket, table.RecordSize*3); // fourth record ; offset = 60
+        var rcd5 = new Record(table, bucket, table.RecordSize*4); // fitfh record  ; offset = 80
 
         // act 
-        var result = rcd.IsDirty;
+        var result1 = rcd1.IsDirty;
+        var result2 = rcd2.IsDirty;
+        var result3 = rcd3.IsDirty;
+        var result4 = rcd4.IsDirty;
+        var result5 = rcd5.IsDirty;
 
         // assert
-        Assert.False(result);
+        Assert.False(result1);
+        Assert.False(result2);
+        Assert.False(result3);
+        Assert.False(result4);
+        Assert.False(result5);
     }
 
     [Fact]
     public void IsDirty_ChangeAmmo_True()
     {
+        // test with basic record without bucket!
         // arrange 
         var table = _schema.GetTable(1071); // weapon
         Assert.NotNull(table);
@@ -1369,17 +1387,22 @@ public sealed class RecordTest : BaseExtensionsTest
     public void IsDirty_ChangeWithSameValue_False()
     {
         // arrange 
-        var table = _schema.GetTable(1071); // weapon
+        var table = _schema.GetTable(1053); // gender
         Assert.NotNull(table);
-        var rcd = new Record(table);
-        for (var i = 0; i < table.Fields.Length; i++) rcd[i] = _fixture.Create<string>();
+        var bucket = GetBucket(table, 3, 20); // gender.name ==> lenght(20)
+        var arr = bucket.ToArray();
+        var rcd1 = new Record(table, arr, 0); // first record  ; offset = 0 
+        var rcd2 = new Record(table, arr, table.RecordSize); // second record  ; offset = 20 
 
         // act 
-        rcd.SetField("name", rcd.GetField("name"));
-        var result = rcd.IsDirty;
+        rcd1.SetField("name", rcd1.GetField("name"));
+        var result1 = rcd1.IsDirty;
+        rcd2.SetField("name", rcd2.GetField("name"));
+        var result2 = rcd2.IsDirty;
 
         // assert
-        Assert.False(result);
+        Assert.False(result1);
+        Assert.False(result2);
     }
 
     [Fact]
@@ -1424,7 +1447,7 @@ public sealed class RecordTest : BaseExtensionsTest
         // arrange 
         var tableBook = _schema.GetTable("book");
         Assert.NotNull(tableBook);
-        var rcd = new Record(tableBook);
+        var rcd = new Record(tableBook, new string?[tableBook.RecordSize*6], tableBook.RecordSize*4);
         rcd.SetField("title", "tests");
         var expectedValue = "7777";
         rcd[11] = expectedValue;
@@ -1459,7 +1482,7 @@ public sealed class RecordTest : BaseExtensionsTest
         // arrange 
         var tableBook = _schema.GetTable("book");
         Assert.NotNull(tableBook);
-        var rcd = new Record(tableBook);
+        var rcd = new Record(tableBook, new string?[tableBook.RecordSize*3], tableBook.RecordSize);
         var expectedValue = "4004";
 
         // act 
@@ -1488,6 +1511,19 @@ public sealed class RecordTest : BaseExtensionsTest
 
         // assert
         Assert.True(result);
+    }
+
+
+    private string?[] GetBucket(Table table, int recordCount, int maxStringSize)
+    {
+        var bucket = new string?[table.RecordSize * recordCount]; // 15 records 
+        for (var i = 0; i < bucket.Length; i++)
+        {
+            // don't fill flag string (last string into array)
+            if (i==0 || i% table.RecordSize != table.RecordIndexes.Length) 
+                bucket[i] = string.Join("", _fixture.CreateMany<char>(maxStringSize)); 
+        }
+        return bucket;
     }
 
 
