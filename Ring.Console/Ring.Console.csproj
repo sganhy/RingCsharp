@@ -23,6 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Ring.PostgreSQL\Ring.PostgreSQL.csproj" />
     <ProjectReference Include="..\Ring\Ring.csproj" />
   </ItemGroup>
 

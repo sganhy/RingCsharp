@@ -8,75 +8,25 @@ using Ring.Data;
 using Ring.Schema.Builders;
 using Ring.Console.Extensions;
 using System.Data;
+using Ring.PostgreSQL;
 
+var POSTGRE_CONN_STRING1 = "User ID=postgres; Password=sa;Host=localhost;Port=5432;Database=postgres; Pooling=false;";
 
+var configuration = new Configuration { ConnectionString = POSTGRE_CONN_STRING1 };
+IRingConnection conn = new Ring.PostgreSQL.Connection(configuration);
 
-var runa = string.CompareOrdinal("Test", "bf3ad255-f04e-44ac-9cf1-dd5d836f7d99");
-string tt= default(string);
+conn.Open();
 
-var fixture = new Fixture();
-var test = fixture.CreateMany<string>(128).ToArray();
-test[1] = "111111";
-Array.Sort(test);
-var index = test.GetIndex("111111");
+var sql = "select id, skill2book, \"name\", sub_name, is_group, category, armor_penality, trained_only, try_again from public.skill";
 
-// test 1
-var date = DateTime.Now;
-Console.WriteLine("-- TEST 1 --");
-Console.WriteLine("GetIndex(this string[] elements, string value) : ");
-for (var i = 0; i < 250000; ++i)
-    index = test.GetIndex("111111");
-
-Console.WriteLine($"Index: {index}");
-Console.WriteLine((long)(DateTime.Now-  date).TotalMilliseconds);
-
-
-// test 3
-date = DateTime.Now;
-Console.WriteLine("-- TEST 3 --");
-Console.WriteLine("GetSpanReadOnlyIndex(this string[] elements, string value) : ");
-for (var i = 0; i < 250000; ++i)
-    index = test.GetSpanReadOnlyIndex("111111");
-Console.WriteLine($"Index: {index}");
-Console.WriteLine((long)(DateTime.Now - date).TotalMilliseconds);
-
-// test 2
-date = DateTime.Now;
-Console.WriteLine("-- TEST 2 --");
-Console.WriteLine("GetSpanIndex1(this string[] elements, string value) : ");
-for (var i = 0; i < 250000; ++i)
-    index = test.GetSpanIndex1("111111");
-Console.WriteLine($"Index: {index}");
-Console.WriteLine((long)(DateTime.Now - date).TotalMilliseconds);
-
-
-// test 4
-date = DateTime.Now;
-var segment = new ArraySegment<string>(test);
-Console.WriteLine("-- TEST 4 --");
-Console.WriteLine("GetGetSegmentIndexSpanIndex(this ArraySegment elements, string value) : ");
-for (var i = 0; i < 250000; ++i)
-    index = segment.GetSegmentIndex("111111");
-Console.WriteLine($"Index: {index}");
-Console.WriteLine((long)(DateTime.Now - date).TotalMilliseconds);
-
-
-// test 2
-date = DateTime.Now;
-Console.WriteLine("-- TEST 5 --");
-Console.WriteLine("GetSpanIndex2(this string[] elements, string value) : ");
-for (var i = 0; i < 250000; ++i)
-    index = test.GetSpanIndex2("111111");
-Console.WriteLine($"Index: {index}");
-Console.WriteLine((long)(DateTime.Now - date).TotalMilliseconds);
-
+conn.ExecuteSelect(sql, 9, new (string, byte)[0]);
 
 int oi = 0;
 ++oi;
 
+
 /*
-var POSTGRE_CONN_STRING1 = "User ID=postgres; Password=sa;" +
-                "Host=localhost;Port=5432;Database=postgres; Pooling=false;";
+
 
 
 {
