@@ -77,25 +77,26 @@ internal static class SchemaExtensions
     /// <param name="schemaItems">Should be sorted by name</param>
     internal static void LoadRelations(this DbSchema schema, Meta[] schemaItems)
     {
-        var i = 0;
-        var count= schemaItems.Length;
-        var tableCount= schema.TablesById.Length;
         var relationDicoIndex = new Dictionary<int,int>(schema.TablesById.Length*2); // (tableId, relation index)
+        var spanMeta = new ReadOnlySpan<Meta>(schemaItems);
+        var spanTablesById = new ReadOnlySpan<Table>(schema.TablesById);
+
         // load dico
-        for (; i<tableCount; ++i) relationDicoIndex.Add(schema.TablesById[i].Id, 0);
+        foreach (var table in spanTablesById) relationDicoIndex.Add(table.Id, 0);
+
         // load relation
-        for (i=0; i<count; ++i)
+        foreach (var meta in spanMeta)
         {
-            if (schemaItems[i].IsRelation())
+            if (meta.IsRelation())
             {
-                var meta = schemaItems[i];
                 var fromTable = schema.GetTable(meta.ReferenceId); // get table by id
                 var toTable = schema.GetTable(meta.DataType);
                 if (toTable != null && fromTable!=null)
                 {
                     var relation = meta.ToRelation(toTable);
-                    if (relation==null) continue; // useless test here 
+#pragma warning disable CS8601 // Possible null reference assignment. Cannot be null here !!
                     fromTable.Relations[relationDicoIndex[fromTable.Id]] = relation;
+#pragma warning restore CS8601 
                     ++relationDicoIndex[fromTable.Id];
                 }
             }
@@ -108,21 +109,24 @@ internal static class SchemaExtensions
 
     internal static void LoadColumnMappers(this DbSchema schema)
     {
-        foreach (var tbl in schema.TablesByName) tbl.LoadColumnInformation();
+        var span = new Span<Table>(schema.TablesByName);
+        foreach (var tbl in span) tbl.LoadColumnInformation();
     }
 
     internal static void LoadRecordIndexes(this DbSchema schema)
     {
-        foreach (var tbl in schema.TablesByName) tbl.LoadRelationRecordIndex();
+        var span = new Span<Table>(schema.TablesByName);
+        foreach (var tbl in span) tbl.LoadRelationRecordIndex();
     }
 
     internal static int GetMtmTableCount(this DbSchema schema)
     {
-        var count = 0;
-        for (var i = 0; i < schema.TablesById.Length; ++i)
-            for (var j = schema.TablesById[i].Relations.Length - 1; j >= 0; --j)
-                if (schema.TablesById[i].Relations[j].Type == RelationType.Mtm) ++count;
-        return count >> 1;
+        var result = 0;
+        var span = new ReadOnlySpan<Table>(schema.TablesById);
+        foreach (var table in span)
+            for (var j=table.Relations.Length-1;j >= 0; --j)
+                if (table.Relations[j].Type == RelationType.Mtm) ++result;
+        return result >> 1;
     }
 
     #region private methods 
@@ -145,17 +149,13 @@ internal static class SchemaExtensions
 
     private static void LoadMtm(this DbSchema schema)
     {
-        var count = schema.TablesById.Length;
         var ddlBuilder = schema.Provider.GetDdlBuilder();
         var tableBuilder = new TableBuilder();
-        var i = 0;
-        Table table;
+        var span = new Span<Table>(schema.TablesById);
         Table mtmTable;
-        
         var mtm = new Dictionary<string,Table>(schema.GetMtmTableCount()*2); // store mtm physical name
-        for (; i<count; ++i)
+        foreach (var table in span)
         {
-            table = schema.TablesById[i];
             for (var j=table.Relations.Length - 1; j >= 0; --j)
             {
                 if (table.Relations[j].Type == RelationType.Mtm) 
@@ -198,7 +198,7 @@ internal static class SchemaExtensions
     private static Relation CreateMtmRelation(Relation relation, Table mtmTable)
     {
         var meta = relation.ToMeta(0);
-        return MetaExtensions.ToRelation(meta, mtmTable) ?? default!;
+        return MetaExtensions.ToRelation(meta, mtmTable);
     }
 
     #endregion 

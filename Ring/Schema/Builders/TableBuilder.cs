@@ -138,8 +138,9 @@ internal sealed class TableBuilder
         var ddlBuilder = provider.GetDdlBuilder();
         var emptyTable = MetaExtensions.GetEmptyTable(metaTable, tableType);
         var emptySchema = MetaExtensions.GetEmptySchema(GetSchema(0, schemaName), provider);
+        var spanMeta = metaArray.AsSpan();
         metaTable.SetEntityBaseline(true);
-        for (var i=0; i<metaArray.Length; ++i) metaArray[i].SetEntityId(i);
+        for (var i=0; i< spanMeta.Length; ++i) spanMeta[i].SetEntityId(i);
         return metaTable.ToTable(new ArraySegment<Meta>(metaArray, 0, metaArray.Length),
                 tableType, physicalType ?? PhysicalType.Table, ddlBuilder.GetPhysicalName(emptyTable, emptySchema)) ?? emptyTable;
     }

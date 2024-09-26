@@ -420,23 +420,26 @@ internal static class MetaExtensions
     private static Field[] GetFieldArray(this ArraySegment<Meta> items)
     {
         // count element
-        int i = 0, count = items.Count, fieldCount = 0;
+        int fieldCount = 0;
         var primaryKey = FieldExtensions.GetDefaultPrimaryKey(null, FieldType.Int);
-        for (; i<count; ++i) {
-            if (items[i].IsField()) {
+        var span = items.AsSpan();
+        foreach (var item in span) {
+            if (item.IsField()) {
                 ++fieldCount;
-                if (string.Equals(primaryKey?.Name, items[i].Name, StringComparison.OrdinalIgnoreCase)) 
-                    primaryKey = primaryKey.GetDefaultPrimaryKey(items[i].GetFieldType());
+                if (string.Equals(primaryKey?.Name, item.Name, StringComparison.OrdinalIgnoreCase)) 
+                    primaryKey = primaryKey.GetDefaultPrimaryKey(item.GetFieldType());
             }
         }
         var result = new Field[fieldCount]; // allow once
         var fieldIndex = 0;
-        for (i=0; i<count; ++i)
+        foreach (var item in span)
         {
-            if (items[i].IsField())
+            if (item.IsField())
             {
-                result[fieldIndex] = string.Equals(primaryKey?.Name, items[i].Name, StringComparison.OrdinalIgnoreCase) ?
-                    primaryKey ?? default! : items[i].ToField() ?? default!; 
+#pragma warning disable CS8601 // Possible null reference assignment.
+                result[fieldIndex] = string.Equals(primaryKey?.Name, item.Name, StringComparison.OrdinalIgnoreCase) ?
+                    primaryKey : item.ToField();
+#pragma warning restore CS8601
                 ++fieldIndex;
             }
         }
@@ -526,33 +529,35 @@ internal static class MetaExtensions
     private static Index[] GetIndexes(this ArraySegment<Meta> items)
     {
         // count element
-        int j= 0, count = items.Count, indexCount = 0;
-        for (; j <count; ++j) if (items[j].IsIndex()) ++indexCount;
-        if (indexCount > 0)
+        var indexCount = 0;
+        var span = items.AsSpan();
+        foreach(var item in span) if (item.IsIndex()) ++indexCount;
+        if (indexCount <= 0) return Array.Empty<Index>();
+        var result = new Index[indexCount];
+        var fieldIndex = 0;
+        foreach (var item in span)
         {
-            var result = new Index[indexCount];
-            var fieldIndex = 0;
-            for (j = 0; j < count; ++j)
+            if (item.IsIndex())
             {
-                if (items[j].IsIndex())
-                {
-                    result[fieldIndex] = items[j].ToIndex() ?? default!;
-                    ++fieldIndex;
-                }
+                // cannot be null here 
+#pragma warning disable CS8601 // Possible null reference assignment.
+                result[fieldIndex] = item.ToIndex();
+#pragma warning restore CS8601
+                ++fieldIndex;
             }
-            return result;
         }
-        return Array.Empty<Index>();
+        return result;
     }
 
     private static int GetColumnMapperSize(this ArraySegment<Meta> items, TableType tableType, int fieldCount)
     {
         if (tableType == TableType.Mtm) return 2;
-        int count=items.Count, result=fieldCount;
-        for (var i=0; i<count; ++i)
+        var result = fieldCount;
+        var span = items.AsSpan();
+        foreach (var item in span)
         {
-            if (items[i].IsRelation()) {
-                var relationType = GetRelationType(items[i]);
+            if (item.IsRelation()) {
+                var relationType = GetRelationType(item);
                 if (relationType == RelationType.Mto || relationType == RelationType.Otop) 
                     ++result;
             }
@@ -570,12 +575,10 @@ internal static class MetaExtensions
 
     private static Table[] ShallowCopy(Span<Table> tables)
     {
-        var count = tables.Length;
-        var result = new Table[count];
-        for (var i = 0; i < count; ++i) result[i] = tables[i];
+        var result = new Table[tables.Length]; //Modify start & length as required
+        tables.CopyTo(result.AsSpan());
         return result;
     }
-
 
     #endregion
 }
