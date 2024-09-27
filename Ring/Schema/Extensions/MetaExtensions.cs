@@ -449,8 +449,9 @@ internal static class MetaExtensions
     private static Relation[] GetRelationArray(this ArraySegment<Meta> items)
     {
         // count element
-        int count = items.Count, relationCount = 0;
-        for (var i = 0; i < count; ++i) if (items[i].IsRelation()) ++relationCount;
+        var relationCount = 0;
+        var span = items.AsSpan();
+        foreach(var item in span) if (item.IsRelation()) ++relationCount;
         // relation are assigned later
         return relationCount > 0 ? new Relation[relationCount] : Array.Empty<Relation>();
     }
@@ -469,17 +470,16 @@ internal static class MetaExtensions
 
     private static Table[] GetTables(Meta [] schema, IDdlBuilder ddlBuilder, Meta metaSchema, DatabaseProvider provider)
     {
-        int startIndex, count;
-        var i=0;
+        int startIndex, count, i = 0;
         var metaCount = schema.Length;
-        var tableCount = metaCount > 250 ? metaCount / 5 : 100;
+        var tableCount = metaCount > 400 ? metaCount / 4 : 100;
         var dico = new Dictionary<int, (int, int)>(tableCount); // table_id, start index , count
         var emptySchema = GetEmptySchema(metaSchema, provider);
+        var schemaSpan = new ReadOnlySpan<Meta>(schema);
 
-        // build dico
-        while (i<metaCount)
+        //pass 1: build dico
+        foreach (var meta in schemaSpan)
         {
-            var meta = schema[i];
             if (meta.IsField() || meta.IsRelation() || meta.IsIndex())
             {
                 if (!dico.ContainsKey(meta.ReferenceId)) dico.Add(meta.ReferenceId, (i,0));
@@ -488,18 +488,19 @@ internal static class MetaExtensions
             }
             ++i;
         }
+        
+        //pass 2: create tableArray
         var result = new List<Table>(dico.Count);
-        for (i=0; i<metaCount; ++i)
+        foreach (var meta in schemaSpan)
         {
-            if (schema[i].IsTable())
+            if (meta.IsTable())
             {
-                var metaTable = schema[i];
-                var emptyTable = GetEmptyTable(metaTable, TableType.Fake);
+                var emptyTable = GetEmptyTable(meta, TableType.Fake);
                 var physicalName = ddlBuilder.GetPhysicalName(emptyTable, emptySchema);
-                var segment = dico.ContainsKey(metaTable.Id) ?
-                    new ArraySegment<Meta>(schema, dico[metaTable.Id].Item1, dico[metaTable.Id].Item2) :
+                var segment = dico.ContainsKey(meta.Id) ?
+                    new ArraySegment<Meta>(schema, dico[meta.Id].Item1, dico[meta.Id].Item2) :
                     new ArraySegment<Meta>(schema, 0, 0);
-                var table = schema[i].ToTable(segment, TableType.Business, PhysicalType.Table, physicalName);
+                var table = meta.ToTable(segment, TableType.Business, PhysicalType.Table, physicalName);
 #pragma warning disable CS8604 // Possible null reference argument.
                 result.Add(table);
 #pragma warning restore CS8604

@@ -10,6 +10,10 @@ using Ring.Console.Extensions;
 using System.Data;
 using Ring.PostgreSQL;
 
+
+
+(var tes1, var test2) =   GetTest();
+
 var POSTGRE_CONN_STRING1 = "User ID=postgres; Password=sa;Host=localhost;Port=5432;Database=postgres; Pooling=false;";
 
 var configuration = new Configuration { ConnectionString = POSTGRE_CONN_STRING1 };
@@ -76,3 +80,10 @@ int oi = 0;
 ++oi;
 
 */
+
+
+(int , string ) GetTest ()
+
+{
+    return (0, "Test");
+}

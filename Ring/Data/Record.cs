@@ -74,7 +74,7 @@ public struct Record : IEquatable<Record>
 	internal readonly Table? Table => _type;
     internal void ClearData()
 	{
-		var span = _data.AsSpan<string?>();
+		var span = _data.AsSpan();
 		var lastIndex = _type?.RecordSize + _offset;
 		for (var i= _offset; i< lastIndex; ++i) span[i] = null;
     }
