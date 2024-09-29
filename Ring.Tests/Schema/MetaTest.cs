@@ -53,15 +53,12 @@ public sealed class MetaTest : BaseExtensionsTest
         Assert.False(result42Position);
     }
 
-    /*
+    [Theory]
+    [InlineData(long.MaxValue, 4)]
     [InlineData(long.MaxValue / 2, 19)]
     [InlineData(long.MaxValue / 4, 34)]
     [InlineData(long.MaxValue / 8, 50)]
     [InlineData(long.MaxValue, 64)]
-    */
-
-    [Theory]
-    [InlineData(long.MaxValue, 4)]
     internal void WriteFlag_Input_TrueFlag(long flags, byte bitPosition)
     {
         // arrange 
@@ -69,9 +66,10 @@ public sealed class MetaTest : BaseExtensionsTest
 
         // act 
         var currentFlag = meta.ReadFlag(bitPosition);
-        var newflags = Meta.WriteFlag(meta.Flags, bitPosition, false);
+        flags = Meta.WriteFlag(meta.Flags, bitPosition, false);
+        meta = new Meta(_fixture.Create<int>(), _fixture.Create<string>(), _fixture.Create<EntityType>(), flags, _fixture.Create<string>());
         var result = meta.ReadFlag(bitPosition);
-        var flagAfterWrite = Meta.WriteFlag(meta.Flags, bitPosition, currentFlag);
+        var flagAfterWrite = Meta.WriteFlag(meta.Flags, bitPosition, false);
 
         // assert
         Assert.False(result);
