@@ -2,6 +2,7 @@
 using Ring.Schema.Extensions;
 using System.Globalization;
 using System.Runtime.CompilerServices;
+using System.Xml.Linq;
 using DbSchema = Ring.Schema.Models.Schema;
 
 namespace Ring.Schema.Builders;
@@ -36,8 +37,7 @@ internal sealed class SchemaBuilder
     {
         var flags = 0L;
         flags = Meta.SetEntityBaseline(flags, true);
-        var meta = new Meta(0, schemaName, EntityType.Schema);
-        return meta;
+        return new(0, (byte)EntityType.Schema, 0, 0, flags, schemaName, null, null, true);
     }
 
 }

@@ -104,9 +104,9 @@ internal readonly struct Meta
         Active = active;
     }
 
-    internal bool IsTable => ObjectType == TableId;
-    internal bool IsSchema => ObjectType == SchemaId;
-    internal bool IsField => ObjectType == FieldId;
+    internal readonly bool IsTable => ObjectType == TableId;
+    internal readonly bool IsSchema => ObjectType == SchemaId;
+    internal readonly bool IsField => ObjectType == FieldId;
     internal bool IsIndex => ObjectType == IndexId;
     internal bool IsRelation => ObjectType == RelationId;
     internal bool IsSequence => ObjectType == SequenceId;

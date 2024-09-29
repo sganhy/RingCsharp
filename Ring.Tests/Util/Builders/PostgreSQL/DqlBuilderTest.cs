@@ -163,9 +163,9 @@ public sealed class DqlBuilderTest : BaseBuilderTest
         var meta = new Meta(_fixture.Create<int>(), "Lateral", EntityType.Table);
         var metaSch = new Meta(_fixture.Create<int>(), "Test", EntityType.Schema);
         //int id, byte objectType, int referenceId, int dataType, long flags, string name, string? description, string? value, bool active
-        var metaField1 = new Meta(_fixture.Create<int>(), (byte)EntityType.Field, meta.Id, 0,0, "CURRENT_TIMESTAMP", null,null,true);
-        var metaField2 = new Meta(_fixture.Create<int>(), (byte)EntityType.Field, meta.Id, 0, 0, "ANALYZE", null, null, true);
-        var metaField3 = new Meta(_fixture.Create<int>(), (byte)EntityType.Field, meta.Id, 0, 0, "@User", null, null, true);
+        var metaField1 = new Meta(12, (byte)EntityType.Field, meta.Id, 0,0, "CURRENT_TIMESTAMP", null,null,true);
+        var metaField2 = new Meta(11, (byte)EntityType.Field, meta.Id, 0, 0, "ANALYZE", null, null, true);
+        var metaField3 = new Meta(10, (byte)EntityType.Field, meta.Id, 0, 0, "@User", null, null, true);
         var schema = Meta.ToSchema((new Meta[] { meta, metaSch, metaField1, metaField2, metaField3 }), DatabaseProvider.PostgreSql);
         var expectedResult = "SELECT \"@User\",\"ANALYZE\",\"CURRENT_TIMESTAMP\" FROM test.t_lateral";
         var tableTest = schema?.GetTable("Lateral");

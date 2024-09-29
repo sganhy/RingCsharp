@@ -1,6 +1,7 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
+using System.ComponentModel.DataAnnotations;
 
 namespace Ring.Schema.Builders;
 
@@ -143,7 +144,11 @@ internal sealed class TableBuilder
                 tableType, physicalType ?? PhysicalType.Table, ddlBuilder.GetPhysicalName(emptyTable, emptySchema)) ?? emptyTable;
     }
 
-    private static Meta GetTable(int id, string name) => new(id, name,EntityType.Table);
+    private static Meta GetTable(int id, string name) {
+        var flags = 0L;
+        flags = Meta.SetEntityBaseline(flags, true);
+        return new(id, (byte)EntityType.Table, 0, 0, flags, name, null, null, true);
+    }
     private static Meta GetSchema(int id, string name) => new(id, name, EntityType.Schema);
     private static Meta GetField(string name, FieldType fieldType, bool notNull)
         => GetField(name, fieldType, 0, notNull);
@@ -160,7 +165,7 @@ internal sealed class TableBuilder
         flags = Meta.SetFieldSize(flags, fieldSize);
         flags = Meta.SetEntityBaseline(flags, true);
         dataType = Meta.SetFieldType(dataType, fieldType);
-        return new Meta(0, name, EntityType.Field,flags,null);
+        return new (0, (byte)EntityType.Field, 0, dataType, flags, name, null, null, true);
     }
     private static Meta GetUniqueIndex(int firstField, List<Meta> lstMeta)
     {
