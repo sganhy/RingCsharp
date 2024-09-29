@@ -87,7 +87,7 @@ internal static class SchemaExtensions
         // load relation
         foreach (var meta in spanMeta)
         {
-            if (meta.IsRelation())
+            if (meta.IsRelation)
             {
                 var fromTable = schema.GetTable(meta.ReferenceId); // get table by id
                 var toTable = schema.GetTable(meta.DataType);
@@ -134,13 +134,13 @@ internal static class SchemaExtensions
     {
         foreach (var meta in schemaItems)
         {
-            if (meta.IsRelation())
+            if (meta.IsRelation)
             {
                 var fromTable = schema.GetTable(meta.ReferenceId); // get table by id
                 if (fromTable != null)
                 {
                     var relation = fromTable.GetRelation(meta.Name);
-                    var invRelation = relation?.ToTable.GetRelation(meta.GetInverseRelation()??string.Empty); 
+                    var invRelation = relation?.ToTable.GetRelation(meta.Value??string.Empty); 
                     if (relation != null && invRelation!=null)  relation.SetInverseRelation(invRelation);
                 }
             }
@@ -162,7 +162,7 @@ internal static class SchemaExtensions
                 {
                     // step 1 - generate physical name
                     var relation = table.Relations[j];
-                    var emptyTable = MetaExtensions.GetEmptyTable(new Meta(relation.GetMtmName()),TableType.Mtm);
+                    var emptyTable = Meta.GetEmptyTable(new Meta(relation.GetMtmName()),TableType.Mtm);
                     var physicalName = ddlBuilder.GetPhysicalName(emptyTable, schema);
                     var inverseRelation = relation.InverseRelation;
 
@@ -198,7 +198,7 @@ internal static class SchemaExtensions
     private static Relation CreateMtmRelation(Relation relation, Table mtmTable)
     {
         var meta = relation.ToMeta(0);
-        return MetaExtensions.ToRelation(meta, mtmTable);
+        return meta.ToRelation(mtmTable);
     }
 
     #endregion 

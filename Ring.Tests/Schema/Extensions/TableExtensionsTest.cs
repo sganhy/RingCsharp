@@ -1,4 +1,5 @@
-﻿using Ring.Schema.Enums;
+﻿using Ring.Schema;
+using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 
 namespace Ring.Tests.Schema.Extensions;
@@ -186,7 +187,7 @@ public class TableExtensionsTest : BaseExtensionsTest
     {
         // arrange 
         var metaList = GetSchema1();
-        var schema = MetaExtensions.ToSchema(metaList, DatabaseProvider.PostgreSql);
+        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
         var table = schema?.GetTable("book");
 
         // act 
@@ -214,7 +215,7 @@ public class TableExtensionsTest : BaseExtensionsTest
     {
         // arrange 
         var metaList = GetSchema1();
-        var schema = MetaExtensions.ToSchema(metaList, DatabaseProvider.PostgreSql);
+        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
         var table = schema?.GetTable("book");
 
         // act 
@@ -231,7 +232,7 @@ public class TableExtensionsTest : BaseExtensionsTest
     {
         // arrange 
         var metaList = GetSchema1();
-        var schema = MetaExtensions.ToSchema(metaList, DatabaseProvider.PostgreSql);
+        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
         var table = schema?.GetTable("domain");
 
         // act 
@@ -248,7 +249,7 @@ public class TableExtensionsTest : BaseExtensionsTest
     {
         // arrange 
         var metaList = GetSchema1();
-        var schema = MetaExtensions.ToSchema(metaList, DatabaseProvider.PostgreSql);
+        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
         var table = schema?.GetTable("deity");
 
         // act 
@@ -266,7 +267,7 @@ public class TableExtensionsTest : BaseExtensionsTest
     {
         // arrange 
         var metaList = GetSchema1();
-        var schema = MetaExtensions.ToSchema(metaList, DatabaseProvider.PostgreSql);
+        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
         var table = schema?.GetTable("class");
 
         // act 
@@ -284,7 +285,7 @@ public class TableExtensionsTest : BaseExtensionsTest
     {
         // arrange 
         var metaList = GetSchema1();
-        var schema = MetaExtensions.ToSchema(metaList, DatabaseProvider.PostgreSql);
+        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
         var table = schema?.GetTable("deity");
 
         // act 

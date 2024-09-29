@@ -1,4 +1,5 @@
 ﻿using AutoFixture;
+using Ring.Schema;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
@@ -90,44 +91,26 @@ public class BaseBuilderTest
     {
         var metaList = new List<Meta>
         {
-            { GetMeta(2,"name", EntityType.Field,16, 10493964L) },
-            { GetMeta(3,"sub_name", EntityType.Field,16, 3932170L) },
-            { GetMeta(4,"is_group", EntityType.Field,23, 6L) },
-            { GetMeta(5,"category", EntityType.Field,16, 1048578L) },
-            { GetMeta(6,"armor_penality", EntityType.Field,3, 6L) },
-            { GetMeta(7,"trained_only", EntityType.Field,23, 6L) },
-            { GetMeta(9,"try_again", EntityType.Field,23, 6L) },
-            { GetMeta(1,"id", EntityType.Field,2, 2L) },
-            { GetMeta(1,"skill2book", EntityType.Relation,1021, 2883600L)}
+            { GetMeta(2,"name", EntityType.Field,16, 10493964L, true, 1061) },
+            { GetMeta(3,"sub_name", EntityType.Field,16, 3932170L, true, 1061) },
+            { GetMeta(4,"is_group", EntityType.Field,23, 6L, true, 1061) },
+            { GetMeta(5,"category", EntityType.Field,16, 1048578L, true, 1061) },
+            { GetMeta(6,"armor_penality", EntityType.Field,3, 6L, true, 1061) },
+            { GetMeta(7,"trained_only", EntityType.Field,23, 6L, true, 1061) },
+            { GetMeta(9,"try_again", EntityType.Field,23, 6L, true, 1061) },
+            { GetMeta(1,"id", EntityType.Field,2, 2L, true, 1061) },
+            { GetMeta(1,"skill2book", EntityType.Relation,1021, 2883600L, true, 1061)}
         };
         // 2,0,2,1011,1021,786448,ability2book,,book2ability,true
         if (addMtmRelationship)
         {
-            metaList.Add(GetMeta(8, "ability2book", EntityType.Relation, 1021, 786448L));
-        }
-        foreach (var meta in metaList)
-        {
-            meta.SetEntityDescription(_fixture.Create<string>());
-            meta.SetEntityActive(true);
-            meta.SetEntityRefId(1061);
+            metaList.Add(GetMeta(8, "ability2book", EntityType.Relation, 1021, 786448L, true, 1061));
         }
 
         return metaList.ToArray();
     }
-    internal Meta GetMeta2Table()
-    {
-        var meta = new Meta
-        {
-            DataType = 0,
-            Flags = 8704
-        };
-        meta.SetEntityId(1061);
-        meta.SetEntityName("skill");
-        meta.SetEntityType(EntityType.Table);
-        meta.SetEntityActive(true);
-        meta.SetEntityDescription(_fixture.Create<string>());
-        return meta;
-    }
+    internal Meta GetMeta2Table() =>
+        new (1061, (byte)EntityType.Table, _fixture.Create<int>(), 0, 8704, "skill", _fixture.Create<string>(), _fixture.Create<string>(), true);
 
     internal Meta[] GetSchema1()
     {
@@ -146,18 +129,8 @@ public class BaseBuilderTest
             {
                 var line = metaLine.Split(',');
                 if (line.Length < 6) continue;
-                var meta = new Meta
-                {
-                    DataType = int.Parse(line[4]),
-                    Flags = long.Parse(line[5]),
-                    Value = line[8]
-                };
-                meta.SetEntityType(byte.Parse(line[2]));
-                meta.SetEntityRefId(int.Parse(line[3]));
-                meta.SetEntityActive(bool.Parse(line[9]));
-                meta.SetEntityId(int.Parse(line[0]));
-                meta.SetEntityName(line[6]);
-                meta.SetEntityDescription(line[7]);
+                Meta meta = new(int.Parse(line[0]), byte.Parse(line[2]), int.Parse(line[3]), int.Parse(line[4]), long.Parse(line[5]), line[6],
+                    line[7], line[8], bool.Parse(line[9]));
                 result.Add(meta);
             }
         }
@@ -166,15 +139,10 @@ public class BaseBuilderTest
         return result.ToArray();
     }
 
-    private static Meta GetMeta(int id, string name, EntityType entityType, int dataType, long flags)
+    private Meta GetMeta(int id, string name, EntityType entityType, int dataType, long flags, bool active, int? referenceId=null)
     {
-        var result = new Meta();
-        result.SetEntityId(id);
-        result.SetEntityName(name);
-        result.SetEntityType(entityType);
-        result.Flags = flags;
-        result.DataType = dataType;
-        return result;
+        return new(id, (byte)entityType, referenceId??_fixture.Create<int>(), dataType, flags,
+            name, _fixture.Create<string>(), _fixture.Create<string>(), active);
     }
 
 }

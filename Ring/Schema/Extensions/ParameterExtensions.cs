@@ -53,18 +53,12 @@ internal static class ParameterExtensions
 
     internal static Meta ToMeta(this Parameter parameter)
     {
-        var meta = new Meta();
-        // first - define Object type
-        meta.SetEntityType(EntityType.Parameter);
-        meta.SetEntityId(parameter.Id);
-        meta.SetEntityName(parameter.Name);
-        meta.SetEntityDescription(parameter.Description);
-        meta.SetEntityRefId(parameter.ReferenceId);
-        meta.SetParameterType(parameter.Type);
-        meta.SetParameterValue(parameter.Value);
-        meta.SetParameterValueType(parameter.ValueType);
-        meta.SetEntityBaseline(parameter.Baseline);
-        meta.SetEntityActive(parameter.Active);
+        var flags = 0L;
+        flags = Meta.SetEntityBaseline(flags, parameter.Baseline);
+        var dataType = 0;
+        dataType = Meta.SetParameterValueType(dataType, parameter.ValueType);
+        var meta = new Meta((int)parameter.Type, (byte)EntityType.Parameter, parameter.ReferenceId, dataType, flags, parameter.Name, parameter.Description,
+            parameter.Value, parameter.Active);
         return meta;
     }
 

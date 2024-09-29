@@ -2,6 +2,7 @@
 using Ring.Schema.Enums;
 using Ring.Schema.Models;
 using Ring.Schema.Extensions;
+using Ring.Schema;
 
 namespace Ring.Tests.Schema.Extensions;
 
@@ -130,7 +131,7 @@ public class ParameterExtensionsTest
 
         // act 
         var value = ParameterExtensions.ToMeta(param); // reverse parameter
-        var paramResult = MetaExtensions.ToParameter(value);
+        var paramResult = value.ToParameter();
 
         // assert
         Assert.NotNull(paramResult);

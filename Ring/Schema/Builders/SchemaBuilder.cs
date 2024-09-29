@@ -1,6 +1,5 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
-using Ring.Schema.Models;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using DbSchema = Ring.Schema.Models.Schema;
@@ -26,7 +25,7 @@ internal sealed class SchemaBuilder
         metaList.AddRange(_tableBuilder.GetMeta(schemaName, provider).ToMeta(0));
         metaList.AddRange(_tableBuilder.GetMetaId(schemaName, provider).ToMeta(0));
         metaList.AddRange(_tableBuilder.GetLog(schemaName, provider).ToMeta(0));
-        var result = metaList.ToArray().ToSchema(provider, type, loadType) ?? MetaExtensions.GetEmptySchema(schemaInfo, provider);
+        var result = Meta.ToSchema(metaList.ToArray(),provider, type, loadType) ?? Meta.GetEmptySchema(schemaInfo, provider);
         // initialise cache for : DmlBuiler & DqlBuiler
         result.DmlBuiler.Init(result);
         result.DqlBuiler.Init(result);
@@ -35,12 +34,9 @@ internal sealed class SchemaBuilder
 
     private static Meta GetMetaWSchemaInfo(string schemaName)
     {
-        var meta = new Meta();
-        meta.SetEntityId(0);
-        meta.SetEntityName(schemaName);
-        meta.SetEntityType(EntityType.Schema);
-        meta.SetEntityBaseline(true);
-        meta.SetEntityActive(true);
+        var flags = 0L;
+        flags = Meta.SetEntityBaseline(flags, true);
+        var meta = new Meta(0, schemaName, EntityType.Schema);
         return meta;
     }
 

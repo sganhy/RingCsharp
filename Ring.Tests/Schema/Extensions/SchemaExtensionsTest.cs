@@ -1,4 +1,5 @@
-﻿using Ring.Schema.Enums;
+﻿using Ring.Schema;
+using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using DbSchema = Ring.Schema.Models.Schema;
@@ -13,8 +14,8 @@ public class SchemaExtensionsTest : BaseExtensionsTest
     {
         var metaList = GetSchema1();
         var meta = new Meta("Test");
-        _schema = MetaExtensions.ToSchema(metaList, DatabaseProvider.PostgreSql) ?? 
-            MetaExtensions.GetEmptySchema(meta, DatabaseProvider.PostgreSql);
+        _schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql) ?? 
+            Meta.GetEmptySchema(meta, DatabaseProvider.PostgreSql);
     }
 
     [Fact]

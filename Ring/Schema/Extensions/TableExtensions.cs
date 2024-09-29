@@ -195,15 +195,11 @@ internal static class TableExtensions
         for (i=0; i < table.Fields.Length; ++i) result.Add(table.Fields[i].ToMeta(table.Id));
         for (i=0; i < table.Relations.Length; ++i) result.Add(table.Relations[i].ToMeta(table.Id));
         for (i=0; i < table.Indexes.Length; ++i) result.Add(table.Indexes[i].ToMeta(table.Id));
-        var meta = new Meta();
+        var flags = 0L;
+        flags = Meta.SetTableCached(flags, table.Cached);
+        flags = Meta.SetTableReadonly(flags, table.Readonly);
+        var meta = new Meta(table.Id, (byte)EntityType.Table, schemaId, 0, flags, table.Name, table.Description, null, table.Active);
         // first - define Object type
-        meta.SetEntityType(EntityType.Table);
-        meta.SetEntityId(table.Id);
-        meta.SetEntityName(table.Name);
-        meta.SetEntityDescription(table.Description);
-        meta.SetEntityRefId(schemaId);
-        meta.SetTableCached(table.Cached);
-        meta.SetTableReadonly(table.Readonly);
         result.Add(meta);
         return result.ToArray(); 
     }

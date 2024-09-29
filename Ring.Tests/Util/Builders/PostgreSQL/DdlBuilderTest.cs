@@ -1,4 +1,5 @@
 ﻿using AutoFixture;
+using Ring.Schema;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
@@ -223,7 +224,7 @@ public class DdlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var metaList = GetSchema1();
-        var schema = metaList.ToSchema(DatabaseProvider.PostgreSql);
+        var schema = Meta.ToSchema(metaList,DatabaseProvider.PostgreSql);
         var table = schema?.GetTable("campaign_setting");
         var expectedResult = "rpg_sheet.t_campaign_setting";
 
@@ -241,7 +242,7 @@ public class DdlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var meta = new Meta("rpg_sheet");
-        var schema = MetaExtensions.GetEmptySchema(meta, DatabaseProvider.PostgreSql);
+        var schema = Meta.GetEmptySchema(meta, DatabaseProvider.PostgreSql);
         var expectedResult = "rpg_sheet";
 
         // act 
@@ -256,7 +257,7 @@ public class DdlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var meta = new Meta("@Test");
-        var schema = MetaExtensions.GetEmptySchema(meta, DatabaseProvider.PostgreSql);
+        var schema = Meta.GetEmptySchema(meta, DatabaseProvider.PostgreSql);
         var expectedResult = "\"@test\"";
 
         // act 
@@ -270,8 +271,8 @@ public class DdlBuilderTest : BaseBuilderTest
     public void GetPhysicalName_MtmTable1_TableName()
     {
         // arrange 
-        var emptyTable = MetaExtensions.GetEmptyTable(new Meta("Test"), TableType.Mtm);
-        var emptySchema = MetaExtensions.GetEmptySchema(new Meta("Where"), DatabaseProvider.MySql);
+        var emptyTable = Meta.GetEmptyTable(new Meta("Test"), TableType.Mtm);
+        var emptySchema = Meta.GetEmptySchema(new Meta("Where"), DatabaseProvider.MySql);
         var ddlBuilder = DatabaseProvider.PostgreSql.GetDdlBuilder();
         var expectedValue = "\"where\".\"@mtm_test\"";
 

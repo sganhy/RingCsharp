@@ -1,8 +1,8 @@
 ﻿using AutoFixture;
+using Ring.Schema;
 using Ring.Schema.Builders;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
-using Ring.Schema.Models;
 using Ring.Util.Builders;
 using Ring.Util.Builders.PostgreSQL;
 using DbSchema = Ring.Schema.Models.Schema;
@@ -20,8 +20,8 @@ public class DmlBuilderTest : BaseBuilderTest
         _fixture = new Fixture();
         var metaList = GetSchema1();
         var meta = new Meta(_fixture.Create<string>());
-        _schema = metaList.ToSchema(DatabaseProvider.PostgreSql) ??
-            MetaExtensions.GetEmptySchema(meta, DatabaseProvider.PostgreSql);
+        _schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql) ??
+            Meta.GetEmptySchema(meta, DatabaseProvider.PostgreSql);
         _sut = new DmlBuilder();
         _sut.Init(_schema);
     }
@@ -67,11 +67,9 @@ public class DmlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var sut = new DmlBuilder();
-        var meta = new Meta("Test");
-        meta.SetEntityType(EntityType.Table);
-        var metaSch = new Meta("Test");
-        metaSch.SetEntityType(EntityType.Schema);
-        var schema = (new Meta[] { meta, metaSch }).ToSchema(DatabaseProvider.PostgreSql);
+        var meta = new Meta(_fixture.Create<int>(), "Test", EntityType.Table);
+        var metaSch = new Meta(_fixture.Create<int>(), "Test", EntityType.Schema);
+        var schema = Meta.ToSchema((new Meta[] { meta, metaSch }), DatabaseProvider.PostgreSql);
         var expectedResult = "INSERT INTO test.t_test () VALUES ()";
         var tableTest = schema?.GetTable("Test");
 
@@ -111,11 +109,10 @@ public class DmlBuilderTest : BaseBuilderTest
         var schemaName = "@Test";
         var table = tblBuilder.GetMeta(schemaName, DatabaseProvider.PostgreSql);
         var metaTbl = table.ToMeta(0);
-        var metaSch = new Meta(schemaName);
-        metaSch.SetEntityType(EntityType.Schema);
+        var metaSch = new Meta(_fixture.Create<int>(), schemaName, EntityType.Schema);
         var metaList = new List<Meta>() { metaSch };
         metaList.AddRange(metaTbl);
-        var schema = metaList.ToArray().ToSchema(DatabaseProvider.PostgreSql);
+        var schema = Meta.ToSchema(metaList.ToArray(), DatabaseProvider.PostgreSql);
         var expectedResult = "INSERT INTO \"@test\".\"@meta\" (id,schema_id,object_type,reference_id,data_type,flags,name,description,value,active) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)";
         table.LoadColumnInformation();
         table.LoadRelationRecordIndex();
@@ -141,11 +138,10 @@ public class DmlBuilderTest : BaseBuilderTest
         var schemaName = "@Test";
         var table = tblBuilder.GetMetaId(schemaName, DatabaseProvider.PostgreSql);
         var metaTbl = table.ToMeta(0);
-        var metaSch = new Meta(schemaName);
-        metaSch.SetEntityType(EntityType.Schema);
+        var metaSch = new Meta(_fixture.Create<int>(), schemaName, EntityType.Schema);
         var metaList = new List<Meta>() { metaSch };
         metaList.AddRange(metaTbl);
-        var schema = metaList.ToArray().ToSchema(DatabaseProvider.PostgreSql);
+        var schema = Meta.ToSchema(metaList.ToArray(), DatabaseProvider.PostgreSql);
         var expectedResult = "INSERT INTO \"@test\".\"@meta_id\" (id,schema_id,object_type,value) VALUES ($1,$2,$3,$4)";
         table.LoadColumnInformation();
         table.LoadRelationRecordIndex();
@@ -207,11 +203,10 @@ public class DmlBuilderTest : BaseBuilderTest
         var schemaName = "@Test";
         var table = tblBuilder.GetMeta(schemaName, DatabaseProvider.PostgreSql);
         var metaTbl = table.ToMeta(0);
-        var metaSch = new Meta(schemaName);
-        metaSch.SetEntityType(EntityType.Schema);
+        var metaSch = new Meta(_fixture.Create<int>(), schemaName, EntityType.Schema);
         var metaList = new List<Meta>() { metaSch };
         metaList.AddRange(metaTbl);
-        var schema = metaList.ToArray().ToSchema(DatabaseProvider.PostgreSql);
+        var schema = Meta.ToSchema(metaList.ToArray(),DatabaseProvider.PostgreSql);
         var expectedResult = "DELETE FROM \"@test\".\"@meta\" WHERE id=$1 AND schema_id=$2 AND object_type=$3 AND reference_id=$4";
 
         // act 
@@ -235,11 +230,10 @@ public class DmlBuilderTest : BaseBuilderTest
         var schemaName = "@Test";
         var table = tblBuilder.GetMetaId(schemaName, DatabaseProvider.PostgreSql);
         var metaTbl = table.ToMeta(0);
-        var metaSch = new Meta(schemaName);
-        metaSch.SetEntityType(EntityType.Schema);
+        var metaSch = new Meta(_fixture.Create<int>(), schemaName, EntityType.Schema);
         var metaList = new List<Meta>() { metaSch };
         metaList.AddRange(metaTbl);
-        var schema = metaList.ToArray().ToSchema(DatabaseProvider.PostgreSql);
+        var schema = Meta.ToSchema(metaList.ToArray(), DatabaseProvider.PostgreSql);
         var expectedResult = "DELETE FROM \"@test\".\"@meta_id\" WHERE id=$1 AND schema_id=$2 AND object_type=$3";
 
         // act 
@@ -280,11 +274,10 @@ public class DmlBuilderTest : BaseBuilderTest
         var schemaName = "@Test";
         var table = tblBuilder.GetMeta(schemaName, DatabaseProvider.PostgreSql);
         var metaTbl = table.ToMeta(0);
-        var metaSch = new Meta(schemaName);
-        metaSch.SetEntityType(EntityType.Schema);
+        var metaSch = new Meta(_fixture.Create<int>(), schemaName, EntityType.Schema);
         var metaList = new List<Meta>() { metaSch };
         metaList.AddRange(metaTbl);
-        var schema = metaList.ToArray().ToSchema(DatabaseProvider.PostgreSql);
+        var schema = Meta.ToSchema(metaList.ToArray(), DatabaseProvider.PostgreSql);
         var expectedResult = "UPDATE \"@test\".\"@meta\" SET {0} WHERE id=$1 AND schema_id=$2 AND object_type=$3 AND reference_id=$4";
 
         // act 
@@ -308,11 +301,10 @@ public class DmlBuilderTest : BaseBuilderTest
         var schemaName = "@Test";
         var table = tblBuilder.GetMetaId(schemaName, DatabaseProvider.PostgreSql);
         var metaTbl = table.ToMeta(0);
-        var metaSch = new Meta(schemaName);
-        metaSch.SetEntityType(EntityType.Schema);
+        var metaSch = new Meta(_fixture.Create<int>(), schemaName, EntityType.Schema);
         var metaList = new List<Meta>() { metaSch };
         metaList.AddRange(metaTbl);
-        var schema = metaList.ToArray().ToSchema(DatabaseProvider.PostgreSql);
+        var schema = Meta.ToSchema(metaList.ToArray(), DatabaseProvider.PostgreSql);
         var expectedResult = "UPDATE \"@test\".\"@meta_id\" SET {0} WHERE id=$1 AND schema_id=$2 AND object_type=$3";
 
         // act 

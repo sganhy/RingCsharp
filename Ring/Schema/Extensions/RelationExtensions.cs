@@ -10,23 +10,16 @@ internal static class RelationExtensions
     private const char MtmSeparator = '_';
     private const char PaddingChar = '0';
 
-    internal static Meta ToMeta(this Relation relation, int fromTableId)
+    internal static Meta ToMeta(this Relation relation, int fromTableId, RelationType? newRelationType=null)
     {
-        var meta = new Meta();
-        meta.SetEntityType(EntityType.Relation);
-        meta.SetEntityId(relation.Id);
-        meta.SetEntityName(relation.Name);
-        meta.SetEntityDescription(relation.Description);
-        meta.SetEntityRefId(fromTableId);
-        meta.SetEntityBaseline(relation.Baseline);
-        meta.SetInverseRelation(relation.InverseRelation.Name);
-        meta.SetEntityActive(relation.Active);
-        meta.SetEntityBaseline(relation.Baseline);
-        meta.SetRelationType(relation.Type);
-        meta.SetRelationConstraint(relation.HasConstraint);
-        meta.SetRelationToTable(relation.ToTable.Type==TableType.Mtm ? 
-            (relation.ToTable.GetRelation(relation.Name)?? relation).ToTable.Id : relation.ToTable.Id);
-        meta.SetRelationdNotNull(relation.NotNull);
+        var flags = 0L;
+        flags = Meta.SetEntityBaseline(flags, relation.Baseline);
+        flags = Meta.SetRelationdNotNull(flags, relation.NotNull);
+        flags = Meta.SetRelationConstraint(flags, relation.HasConstraint);
+        flags = Meta.SetRelationType(flags, newRelationType ?? relation.Type);
+        var meta = new Meta(relation.Id, (byte)EntityType.Relation, fromTableId, relation.ToTable.Type == TableType.Mtm ?
+            (relation.ToTable.GetRelation(relation.Name) ?? relation).ToTable.Id : relation.ToTable.Id, flags, relation.Name, relation.Description, 
+             relation.InverseRelation.Name, relation.Active);
         return meta;
     }
 
@@ -70,8 +63,7 @@ internal static class RelationExtensions
 
     internal static Relation GetRelation(this Relation relation, RelationType relationType)
     {
-        var meta = relation.ToMeta(-1);
-        meta.SetRelationType(relationType);
+        var meta = relation.ToMeta(-1, relationType);
         return meta.ToRelation(relation.ToTable) ?? relation;
     }
 

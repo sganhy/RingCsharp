@@ -10,6 +10,7 @@ using System.Globalization;
 using System.Net.WebSockets;
 using Newtonsoft.Json.Linq;
 using System.Reflection;
+using Ring.Schema;
 
 namespace Ring.Tests.Data;
 
@@ -23,8 +24,8 @@ public sealed class RecordTest : BaseExtensionsTest
         var metaList = GetSchema1();
         _fixture = new Fixture();
         var meta = new Meta("Test");
-        _schema = MetaExtensions.ToSchema(metaList, DatabaseProvider.PostgreSql) ??
-                    MetaExtensions.GetEmptySchema(meta, DatabaseProvider.PostgreSql);
+        _schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql) ??
+                    Meta.GetEmptySchema(meta, DatabaseProvider.PostgreSql);
     }
 
     [Fact]
@@ -603,8 +604,7 @@ public sealed class RecordTest : BaseExtensionsTest
         var logTable = tableBuilder.GetLog("Test", DatabaseProvider.MySql);
         var field = logTable.GetField("entry_time");
         var index = logTable.GetFieldIndex("entry_time");
-        var meta = field?.ToMeta(99);
-        meta?.SetFieldType(FieldType.DateTime);
+        var meta = field?.ToMeta(99, FieldType.DateTime);
         var newField = meta?.ToField();
         logTable.Fields[index] = newField ?? GetAnonymousField();
         var rcd = new Record(logTable, new string?[logTable.RecordSize*3], logTable.RecordSize);
@@ -738,8 +738,7 @@ public sealed class RecordTest : BaseExtensionsTest
         var logTable = tableBuilder.GetLog("Test", DatabaseProvider.MySql);
         var field = logTable.GetField("entry_time");
         var index = logTable.GetFieldIndex("entry_time");
-        var meta = field?.ToMeta(99);
-        meta?.SetFieldType(FieldType.LongDateTime);
+        var meta = field?.ToMeta(99, FieldType.LongDateTime);
         var newField = meta?.ToField();
         logTable.Fields[index] = newField ?? logTable.Fields[0];
         var rcd = new Record(logTable);
@@ -764,8 +763,7 @@ public sealed class RecordTest : BaseExtensionsTest
         var logTable = tableBuilder.GetLog("Test", DatabaseProvider.MySql);
         var field = logTable.GetField("entry_time");
         var index = logTable.GetFieldIndex("entry_time");
-        var meta = field?.ToMeta(99);
-        meta?.SetFieldType(FieldType.LongDateTime);
+        var meta = field?.ToMeta(99, FieldType.LongDateTime);
         var newField = meta?.ToField();
         logTable.Fields[index] = newField ?? logTable.Fields[0];
         var rcd = new Record(logTable);
@@ -788,8 +786,7 @@ public sealed class RecordTest : BaseExtensionsTest
         var logTable = tableBuilder.GetLog("Test", DatabaseProvider.MySql);
         var field = logTable.GetField("entry_time");
         var index = logTable.GetFieldIndex("entry_time");
-        var meta = field?.ToMeta(99);
-        meta?.SetFieldType(FieldType.Float);
+        var meta = field?.ToMeta(99, FieldType.Float);
         var newField = meta?.ToField();
         logTable.Fields[index] = newField ?? GetAnonymousField();
         var rcd = new Record(logTable);
@@ -825,8 +822,7 @@ public sealed class RecordTest : BaseExtensionsTest
         var logTable = tableBuilder.GetLog("Test", DatabaseProvider.MySql);
         var field = logTable.GetField("entry_time");
         var index = logTable.GetFieldIndex("entry_time");
-        var meta = field?.ToMeta(99);
-        meta?.SetFieldType(FieldType.Double);
+        var meta = field?.ToMeta(99, FieldType.Double);
         var newField = meta?.ToField();
         logTable.Fields[index] = newField ?? GetAnonymousField();
         var rcd = new Record(logTable);
@@ -846,8 +842,7 @@ public sealed class RecordTest : BaseExtensionsTest
         var logTable = tableBuilder.GetLog("Test", DatabaseProvider.MySql);
         var field = logTable.GetField("entry_time");
         var index = logTable.GetFieldIndex("entry_time");
-        var meta = field?.ToMeta(99);
-        meta?.SetFieldType(FieldType.Double);
+        var meta = field?.ToMeta(99, FieldType.Double);
         var newField = meta?.ToField();
         logTable.Fields[index] = newField ?? GetAnonymousField();
         var rcd = new Record(logTable);
@@ -869,8 +864,7 @@ public sealed class RecordTest : BaseExtensionsTest
         var logTable = tableBuilder.GetLog("Test", DatabaseProvider.MySql);
         var field = logTable.GetField("entry_time");
         var index = logTable.GetFieldIndex("entry_time");
-        var meta = field?.ToMeta(99);
-        meta?.SetFieldType(FieldType.Double);
+        var meta = field?.ToMeta(99, FieldType.Double);
         var newField = meta?.ToField();
         logTable.Fields[index] = newField ?? GetAnonymousField();
         var rcd = new Record(logTable);
@@ -891,8 +885,7 @@ public sealed class RecordTest : BaseExtensionsTest
         var logTable = tableBuilder.GetLog("Test", DatabaseProvider.MySql);
         var field = logTable.GetField("entry_time");
         var index = logTable.GetFieldIndex("entry_time");
-        var meta = field?.ToMeta(99);
-        meta?.SetFieldType(FieldType.ByteArray);
+        var meta = field?.ToMeta(99, FieldType.ByteArray);
         var newField = meta?.ToField();
         logTable.Fields[index] = newField ?? GetAnonymousField();
         var rcd = new Record(logTable);
@@ -926,8 +919,7 @@ public sealed class RecordTest : BaseExtensionsTest
         var logTable = tableBuilder.GetLog("Test", DatabaseProvider.MySql);
         var field = logTable.GetField("entry_time");
         var index = logTable.GetFieldIndex("entry_time");
-        var meta = field?.ToMeta(99);
-        meta?.SetFieldType(FieldType.ByteArray);
+        var meta = field?.ToMeta(99, FieldType.ByteArray);
         var newField = meta?.ToField();
         logTable.Fields[index] = newField ?? GetAnonymousField();
         var rcd = new Record(logTable);
@@ -948,8 +940,7 @@ public sealed class RecordTest : BaseExtensionsTest
         var logTable = tableBuilder.GetLog("Test", DatabaseProvider.MySql);
         var field = logTable.GetField("entry_time");
         var index = logTable.GetFieldIndex("entry_time");
-        var meta = field?.ToMeta(99);
-        meta?.SetFieldType(FieldType.ByteArray);
+        var meta = field?.ToMeta(99, FieldType.ByteArray);
         var newField = meta?.ToField();
         logTable.Fields[index] = newField ?? GetAnonymousField();
         var rcd = new Record(logTable);
@@ -970,8 +961,7 @@ public sealed class RecordTest : BaseExtensionsTest
         var logTable = tableBuilder.GetLog("Test", DatabaseProvider.MySql);
         var field = logTable.GetField("entry_time");
         var index = logTable.GetFieldIndex("entry_time");
-        var meta = field?.ToMeta(99);
-        meta?.SetFieldType(FieldType.ByteArray);
+        var meta = field?.ToMeta(99, FieldType.ByteArray);
         var newField = meta?.ToField();
         logTable.Fields[index] = newField ?? GetAnonymousField();
         var rcd = new Record(logTable, new string?[logTable.RecordSize*3], logTable.RecordSize); // mutliple record 

@@ -1,4 +1,5 @@
 ﻿using AutoFixture;
+using Ring.Schema;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
@@ -19,8 +20,8 @@ public sealed class DqlBuilderTest : BaseBuilderTest
         _fixture = new Fixture();
         var metaList = GetSchema1();
         var meta = new Meta(_fixture.Create<string>());
-        _schema = metaList.ToSchema(DatabaseProvider.MySql) ??
-            MetaExtensions.GetEmptySchema(meta, DatabaseProvider.MySql);
+        _schema = Meta.ToSchema(metaList,DatabaseProvider.MySql) ??
+            Meta.GetEmptySchema(meta, DatabaseProvider.MySql);
         _sut = new DqlBuilder();
         _sut.Init(_schema);
     }

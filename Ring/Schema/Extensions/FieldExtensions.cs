@@ -1,5 +1,6 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Models;
+using System;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -53,21 +54,17 @@ internal static class FieldExtensions
 		return result.ToString();
 	}
 
-	internal static Meta ToMeta(this Field field, int tableId) 
+	internal static Meta ToMeta(this Field field, int tableId, FieldType? newFieldType=null) 
 	{
-		var meta = new Meta();
-		// first - define Object type
-		meta.SetEntityType(EntityType.Field);
-		meta.SetEntityId(field.Id);
-		meta.SetEntityName(field.Name);
-		meta.SetEntityDescription(field.Description);
-		meta.SetEntityRefId(tableId);
-		meta.SetFieldType(field.Type);
-		meta.SetFieldSize(field.Size);
-		meta.SetFieldNotNull(field.NotNull);
-		meta.SetFieldMultilingual(field.Multilingual);
-		meta.SetEntityBaseline(field.Baseline);
-		meta.SetEntityActive(field.Active);
+		var flags = 0L;
+		flags = Meta.SetEntityBaseline(flags,field.Baseline);
+        flags = Meta.SetFieldNotNull(flags, field.NotNull);
+        flags = Meta.SetFieldMultilingual(flags, field.Multilingual);
+        flags = Meta.SetFieldSize(flags, field.Size);
+        var dataType = 0 ;
+        dataType = Meta.SetFieldType(dataType, newFieldType ?? field.Type);
+        string? value = null;
+        var meta = new Meta(field.Id, (byte)EntityType.Field, tableId, dataType, flags, field.Name, field.Description, value, field.Active);
 		return meta;
 	}
 

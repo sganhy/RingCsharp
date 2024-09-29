@@ -113,22 +113,21 @@ internal sealed class TableBuilder
 #pragma warning restore CA1822, S2325
 
         // add @ prefix to logical name
-        var metaTable = new Meta(SystemTablePrefix + partialTable.Name);
-        metaTable.SetEntityType(EntityType.Table);
-        var metaRelation = new Meta(partialTable.Name);
-        metaRelation.SetEntityType(EntityType.Relation);
+        var metaTable = new Meta(0, SystemTablePrefix + partialTable.Name, EntityType.Table);
+        var metaRelation = new Meta(0, partialTable.Name, EntityType.Relation);
         // add index 
-        var metaIndex = new Meta(partialTable.Name);
-        metaIndex.SetEntityType(EntityType.Index);
-        metaIndex.SetIndexUnique(true);
-        metaIndex.SetIndexedColumns(new string[] { partialTable.Name, partialTable.Name });
+        var flags = 0L;
+        var value = Meta.SetIndexedColumns(new string[] { partialTable.Name, partialTable.Name });
+        flags = Meta.SetIndexUnique(flags, true);
+        var metaIndex = new Meta(0,partialTable.Name,EntityType.Index, flags, value);
         var metaArr = new Meta[] { metaRelation, metaRelation, metaIndex };
         var segMent = new ArraySegment<Meta>(metaArr, 0, 3);
-        var result = MetaExtensions.ToTable(metaTable, segMent, TableType.Mtm, PhysicalType.Table, physicalName) ?? partialTable;
+        var result = metaTable.ToTable(segMent, TableType.Mtm, PhysicalType.Table, physicalName) ?? partialTable;
         result.RecordIndexes[0]=0; // columnMapper 4 Mtm table is always {0,1}
         result.RecordIndexes[1]=1; // columnMapper 4 Mtm table is always {0,1}
         return result;
     }
+
 
     #region private methods 
 
@@ -136,30 +135,16 @@ internal sealed class TableBuilder
         PhysicalType? physicalType=null)
     {
         var ddlBuilder = provider.GetDdlBuilder();
-        var emptyTable = MetaExtensions.GetEmptyTable(metaTable, tableType);
-        var emptySchema = MetaExtensions.GetEmptySchema(GetSchema(0, schemaName), provider);
+        var emptyTable = Meta.GetEmptyTable(metaTable, tableType);
+        var emptySchema = Meta.GetEmptySchema(GetSchema(0, schemaName), provider);
         var spanMeta = metaArray.AsSpan();
-        metaTable.SetEntityBaseline(true);
-        for (var i=0; i< spanMeta.Length; ++i) spanMeta[i].SetEntityId(i);
+        for (var i=0; i< spanMeta.Length; ++i) spanMeta[i] = new Meta(i,spanMeta[i]);
         return metaTable.ToTable(new ArraySegment<Meta>(metaArray, 0, metaArray.Length),
                 tableType, physicalType ?? PhysicalType.Table, ddlBuilder.GetPhysicalName(emptyTable, emptySchema)) ?? emptyTable;
     }
-    private static Meta GetTable(int id, string name) 
-    {
-        var result = new Meta();
-        result.SetEntityId(id);
-        result.SetEntityName(name);
-        result.SetEntityType(EntityType.Table);
-        return result;
-    }
-    private static Meta GetSchema(int id, string name) 
-    {
-        var result = new Meta();
-        result.SetEntityId(id);
-        result.SetEntityName(name);
-        result.SetEntityType(EntityType.Schema);
-        return result;
-    }
+
+    private static Meta GetTable(int id, string name) => new(id, name,EntityType.Table);
+    private static Meta GetSchema(int id, string name) => new(id, name, EntityType.Schema);
     private static Meta GetField(string name, FieldType fieldType, bool notNull)
         => GetField(name, fieldType, 0, notNull);
     private static Meta GetField(string name, FieldType fieldType, int fieldSize)
@@ -168,25 +153,23 @@ internal sealed class TableBuilder
         => GetField(name, fieldType, 0, true);
     private static Meta GetField(string name, FieldType fieldType, int fieldSize, bool notNull)
     {
-        var meta = new Meta();
-        meta.SetEntityType(EntityType.Field);
-        meta.SetEntityName(name);
-        meta.SetFieldCaseSensitive(true);
-        meta.SetFieldNotNull(notNull);
-        meta.SetFieldSize(fieldSize);
-        meta.SetFieldType(fieldType);
-        meta.SetEntityBaseline(true);
-        return meta;
+        var flags = 0L;
+        var dataType = 0;
+        flags = Meta.SetFieldCaseSensitive(flags, true);
+        flags = Meta.SetFieldNotNull(flags, notNull);
+        flags = Meta.SetFieldSize(flags, fieldSize);
+        flags = Meta.SetEntityBaseline(flags, true);
+        dataType = Meta.SetFieldType(dataType, fieldType);
+        return new Meta(0, name, EntityType.Field,flags,null);
     }
     private static Meta GetUniqueIndex(int firstField, List<Meta> lstMeta)
     {
-        var meta = new Meta();
+        
         var fields = new List<string>();
-        for (var i = 0; i < firstField; ++i) fields.Add(lstMeta[i].GetEntityName());
-        meta.SetEntityName(string.Empty);
-        meta.SetEntityType(EntityType.Index);
-        meta.SetIndexUnique(true);
-        meta.SetIndexedColumns(fields.ToArray());
+        for (var i = 0; i < firstField; ++i) fields.Add(lstMeta[i].Name);
+        var flags = 0L;
+        flags = Meta.SetIndexUnique(flags, true);
+        var meta = new Meta(0, string.Empty, EntityType.Index, flags, Meta.SetIndexedColumns(fields.ToArray()));
         return meta;
     }
     private static TableType GetTablType(EntityType entityType)

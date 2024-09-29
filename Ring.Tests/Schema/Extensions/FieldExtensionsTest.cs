@@ -31,16 +31,16 @@ public class FieldExtensionsTest : BaseExtensionsTest
         var meta = FieldExtensions.ToMeta(field, tableId);
 
         // assert
-        Assert.Equal(meta.GetEntityId(), id);
-        Assert.Equal(meta.GetEntityName(), name);
-        Assert.Equal(meta.GetEntityDescription(), description);
+        Assert.Equal(meta.Id, id);
+        Assert.Equal(meta.Name, name);
+        Assert.Equal(meta.Description, description);
         Assert.Equal(meta.GetFieldType(), fieldType);
         Assert.Equal(meta.GetFieldSize(), size);
-        Assert.Equal(meta.GetEntityRefId(), tableId);
+        Assert.Equal(meta.ReferenceId, tableId);
         Assert.True(meta.IsEntityBaseline());
         Assert.True(meta.IsFieldNotNull());
         Assert.True(meta.IsFieldMultilingual());
-        Assert.False(meta.IsEntityActive());
+        Assert.False(meta.Active);
     }
 
     [Fact]
@@ -60,16 +60,16 @@ public class FieldExtensionsTest : BaseExtensionsTest
         var meta = FieldExtensions.ToMeta(field, tableId);
 
         // assert
-        Assert.Equal(meta.GetEntityId(), id);
-        Assert.Equal(meta.GetEntityName(), name);
-        Assert.Equal(meta.GetEntityDescription(), description);
+        Assert.Equal(meta.Id, id);
+        Assert.Equal(meta.Name, name);
+        Assert.Equal(meta.Description, description);
         Assert.Equal(meta.GetFieldType(), fieldType);
         Assert.Equal(meta.GetFieldSize(), size);
-        Assert.Equal(meta.GetEntityRefId(), tableId);
+        Assert.Equal(meta.ReferenceId, tableId);
         Assert.False(meta.IsEntityBaseline());
         Assert.False(meta.IsFieldNotNull());
         Assert.False(meta.IsFieldMultilingual());
-        Assert.True(meta.IsEntityActive());
+        Assert.True(meta.Active);
     }
 
 }

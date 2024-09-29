@@ -1,4 +1,5 @@
-﻿using Ring.Schema.Enums;
+﻿using Ring.Schema;
+using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using Ring.Util.Extensions;
@@ -35,7 +36,7 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
         _tableInsert = Array.Empty<string?>();
         _tableUpdate = Array.Empty<string?>();
         _ddlBuilder = Provider.GetDdlBuilder();
-        _defaultField = MetaExtensions.GetEmptyField(new Meta(string.Empty), FieldType.Int);
+        _defaultField = Meta.GetEmptyField(new Meta(string.Empty), FieldType.Int);
     }
 
     public abstract string VariableNameTemplate { get; }
@@ -139,7 +140,7 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
                     for (var i=0; i<keyCount; ++i, ++variableIndex)
                     {
 #pragma warning disable S2589 // Boolean expressions should not be gratuitous
-                        var field = MetaExtensions.GetEmptyField(new Meta(firstUniqueIndex?.Columns[i]
+                        var field = Meta.GetEmptyField(new Meta(firstUniqueIndex?.Columns[i]
                                         ?? string.Empty), FieldType.Int);
 #pragma warning restore S2589 
                         result.Append(_ddlBuilder.GetPhysicalName(field));
@@ -181,7 +182,7 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
                     for (var i = 0; i < keyCount; ++i, ++variableIndex)
                     {
 #pragma warning disable S2589 // Boolean expressions should not be gratuitous
-                        var field = MetaExtensions.GetEmptyField(new Meta(firstUniqueIndex?.Columns[i]
+                        var field = Meta.GetEmptyField(new Meta(firstUniqueIndex?.Columns[i]
                                         ?? string.Empty), FieldType.Int);
 #pragma warning restore S2589
                         result.Append(_ddlBuilder.GetPhysicalName(field));
