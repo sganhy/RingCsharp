@@ -102,11 +102,11 @@ internal readonly struct Meta
 	internal readonly bool IsTable => ObjectType == TableId;
 	internal readonly bool IsSchema => ObjectType == SchemaId;
 	internal readonly bool IsField => ObjectType == FieldId;
-	internal bool IsIndex => ObjectType == IndexId;
-	internal bool IsRelation => ObjectType == RelationId;
-	internal bool IsSequence => ObjectType == SequenceId;
-	internal bool IsTableSpace => ObjectType == TablespaceId;
-	internal bool IsParameter => ObjectType == ParameterId;
+	internal readonly bool IsIndex => ObjectType == IndexId;
+	internal readonly bool IsRelation => ObjectType == RelationId;
+	internal readonly bool IsSequence => ObjectType == SequenceId;
+	internal readonly bool IsTableSpace => ObjectType == TablespaceId;
+	internal readonly bool IsParameter => ObjectType == ParameterId;
 
 	#region entity methods 
 	internal bool IsEntityBaseline() => ReadFlag(BitPositionEntityBaseline);

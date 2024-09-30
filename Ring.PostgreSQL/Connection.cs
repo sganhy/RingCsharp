@@ -1,8 +1,6 @@
 ﻿using Npgsql;
 using Ring.Data;
-using System.Collections.Concurrent;
 using System.Data;
-using System.Data.Common;
 using System.Globalization;
 
 namespace Ring.PostgreSQL;
@@ -81,13 +79,20 @@ public sealed class Connection : IRingConnection, IDisposable
     public Span<string?> ExecuteSelect(string sql, int columnCount, Span<(string, byte)> parameters)
     {
         var result = new List<string?>();
+        
         using (var cmd = new NpgsqlCommand(sql, _connection))
+        using (var reader = cmd.ExecuteReader())
         {
-            using (var reader = cmd.ExecuteReader())
+            if (!reader.HasRows) return Array.Empty<string?>();
+            int i = 0;
+            while (reader.Read())
             {
-                while (reader.Read())
+                for (i=0; i < columnCount; ++i)
                 {
-                    for (var i=0; i< columnCount; ++i) result.Add(reader.GetValue(i).ToString());
+                    var val = reader.GetValue(i);
+                    if (val is DBNull) result.Add(null);
+                    else if (val is string) result.Add(val as string);
+                    else result.Add(reader.GetValue(i).ToString());
                 }
             }
             cmd.Connection = null;

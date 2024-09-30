@@ -13,7 +13,7 @@ internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
     private string[] _tableIndex;
     private string?[] _tableSelect;
     private string? _catalogTable;
-    private readonly IDdlBuilder _ddlBuilder;
+    protected readonly IDdlBuilder _ddlBuilder;
 
     protected BaseDqlBuilder()
     {
@@ -63,12 +63,13 @@ internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
         var columnCount = table.Columns.Length;
         var i=0;
         result.Append(SqlSelect);
+        // select clause 
         while (i<columnCount)
         {
             var column = table.Columns[i];
             ++i; // just before continue
-            if (column.Type==EntityType.Relation) result.Append(_ddlBuilder.GetPhysicalName((Relation)column));
-            else result.Append(_ddlBuilder.GetPhysicalName((Field)column));
+            if (column.Type==EntityType.Relation) result.Append(GetSelection((Relation)column));
+            else result.Append(GetSelection((Field)column));
             result.Append(ColumnDelimiter);
         }
         --result.Length;
@@ -76,7 +77,11 @@ internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
         result.Append(table.PhysicalName);
         return result.ToString();
     }
-        
+
+    protected abstract string GetSelection(Field field);
+
+    protected abstract string GetSelection(Relation relation);
+
     #endregion
 
 }

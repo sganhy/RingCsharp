@@ -9,6 +9,8 @@ using Ring.Schema.Builders;
 using Ring.Console.Extensions;
 using System.Data;
 using Ring.PostgreSQL;
+using Ring.Schema;
+using System.Drawing;
 
 
 
@@ -19,11 +21,13 @@ var POSTGRE_CONN_STRING1 = "User ID=postgres; Password=sa;Host=localhost;Port=54
 var configuration = new Configuration { ConnectionString = POSTGRE_CONN_STRING1 };
 IRingConnection conn = new Ring.PostgreSQL.Connection(configuration);
 
+var element = System.Runtime.InteropServices.Marshal.SizeOf(typeof(MetaTest));
+
 conn.Open();
 
 var sql = "select id, skill2book, \"name\", sub_name, is_group, category, armor_penality, trained_only, try_again from public.skill";
 
-conn.ExecuteSelect(sql, 9, new (string, byte)[0]);
+var result = conn.ExecuteSelect(sql, 9, new (string, byte)[0]);
 
 int oi = 0;
 ++oi;
