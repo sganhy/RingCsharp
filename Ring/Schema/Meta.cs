@@ -2,11 +2,7 @@
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using Ring.Util.Builders;
-using System;
-using System.ComponentModel.DataAnnotations;
-using System.Dynamic;
 using System.Globalization;
-using System.Runtime.CompilerServices;
 using DbSchema = Ring.Schema.Models.Schema;
 using Index = Ring.Schema.Models.Index;
 
@@ -14,158 +10,157 @@ namespace Ring.Schema;
 
 internal readonly struct Meta
 {
-    #region constants
+	#region constants
 
-    // entity type constants
-    private const byte TableId = (byte)EntityType.Table;
-    private const byte SchemaId = (byte)EntityType.Schema;
-    private const byte FieldId = (byte)EntityType.Field;
-    private const byte IndexId = (byte)EntityType.Index;
-    private const byte RelationId = (byte)EntityType.Relation;
-    private const byte SequenceId = (byte)EntityType.Sequence;
-    private const byte LanguageId = (byte)EntityType.Language;
-    private const byte TablespaceId = (byte)EntityType.Tablespace;
-    private const byte ParameterId = (byte)EntityType.Parameter;
-    private const byte ConstraintId = (byte)EntityType.Constraint;
-    private const byte AliasId = (byte)EntityType.Alias;
-    private const char IndexColumnDelimiter = ';';
+	// entity type constants
+	private const byte TableId = (byte)EntityType.Table;
+	private const byte SchemaId = (byte)EntityType.Schema;
+	private const byte FieldId = (byte)EntityType.Field;
+	private const byte IndexId = (byte)EntityType.Index;
+	private const byte RelationId = (byte)EntityType.Relation;
+	private const byte SequenceId = (byte)EntityType.Sequence;
+	private const byte LanguageId = (byte)EntityType.Language;
+	private const byte TablespaceId = (byte)EntityType.Tablespace;
+	private const byte ParameterId = (byte)EntityType.Parameter;
+	private const byte ConstraintId = (byte)EntityType.Constraint;
+	private const byte AliasId = (byte)EntityType.Alias;
+	private const char IndexColumnDelimiter = ';';
 
-    // relation types constants
-    private const byte RelationTypeOtopId = (byte)RelationType.Otop;
-    private const byte RelationTypeOtmId = (byte)RelationType.Otm;
-    private const byte RelationTypeMtmId = (byte)RelationType.Mtm;
-    private const byte RelationTypeMtoId = (byte)RelationType.Mto;
-    private const byte RelationTypeOtofId = (byte)RelationType.Otof;
+	// relation types constants
+	private const byte RelationTypeOtopId = (byte)RelationType.Otop;
+	private const byte RelationTypeOtmId = (byte)RelationType.Otm;
+	private const byte RelationTypeMtmId = (byte)RelationType.Mtm;
+	private const byte RelationTypeMtoId = (byte)RelationType.Mto;
+	private const byte RelationTypeOtofId = (byte)RelationType.Otof;
 
-    // field types constants
-    private const byte FieldTypeLongId = (byte)FieldType.Long;
-    private const byte FieldTypeIntId = (byte)FieldType.Int;
-    private const byte FieldTypeShortId = (byte)FieldType.Short;
-    private const byte FieldTypeByteId = (byte)FieldType.Byte;
-    private const byte FieldTypeFloatId = (byte)FieldType.Float;
-    private const byte FieldTypeDoubleId = (byte)FieldType.Double;
-    private const byte FieldTypeStringId = (byte)FieldType.String;
-    private const byte FieldTypeShortDateTimeId = (byte)FieldType.ShortDateTime;
-    private const byte FieldTypeDateTimeId = (byte)FieldType.DateTime;
-    private const byte FieldTypeLongDateTimeId = (byte)FieldType.LongDateTime;
+	// field types constants
+	private const byte FieldTypeLongId = (byte)FieldType.Long;
+	private const byte FieldTypeIntId = (byte)FieldType.Int;
+	private const byte FieldTypeShortId = (byte)FieldType.Short;
+	private const byte FieldTypeByteId = (byte)FieldType.Byte;
+	private const byte FieldTypeFloatId = (byte)FieldType.Float;
+	private const byte FieldTypeDoubleId = (byte)FieldType.Double;
+	private const byte FieldTypeStringId = (byte)FieldType.String;
+	private const byte FieldTypeShortDateTimeId = (byte)FieldType.ShortDateTime;
+	private const byte FieldTypeDateTimeId = (byte)FieldType.DateTime;
+	private const byte FieldTypeLongDateTimeId = (byte)FieldType.LongDateTime;
     private const byte FieldTypeByteArrayId = (byte)FieldType.ByteArray;
     private const byte FieldTypeBooleanId = (byte)FieldType.Boolean;
     private const byte FieldTypeLongStringId = (byte)FieldType.LongString;
 
     // flags bit positions
-    private const byte BitPositionFieldCaseSensitive = 2;
-    private const byte BitPositionFieldNotNull = 3;
-    private const byte BitPositionFieldMultilingual = 4;
-    private const byte BitPositionIndexBitmap = 9;
-    private const byte BitPositionIndexUnique = 10;
-    private const byte BitPositionEntityBaseline = 14;
-    private const byte BitPositionFirstPositionSize = 17;
-    private const byte BitPositionFirstPositionRelType = 18;
-    private const byte BitPositionRelationNotNull = 4;
-    private const byte BitPositionRelationConstraint = 5;
-    private const byte BitPositionTableCached = 9;
-    private const byte BitPositionTableReadonly = 10;
-    private const byte BitPositionTablespaceIndex = 11;
-    private const byte BitPositionTablespaceTable = 12;
-    private static readonly string DefaultNumberValue = "0";
-    private static readonly string DefaultBoolValue = false.ToString(CultureInfo.InvariantCulture);
+	private const byte BitPositionFieldCaseSensitive = 2;
+	private const byte BitPositionFieldNotNull = 3;
+	private const byte BitPositionFieldMultilingual = 4;
+	private const byte BitPositionIndexBitmap = 9;
+	private const byte BitPositionIndexUnique = 10;
+	private const byte BitPositionEntityBaseline = 14;
+	private const byte BitPositionFirstPositionSize = 17;
+	private const byte BitPositionFirstPositionRelType = 18;
+	private const byte BitPositionRelationNotNull = 4;
+	private const byte BitPositionRelationConstraint = 5;
+	private const byte BitPositionTableCached = 9;
+	private const byte BitPositionTableReadonly = 10;
+	private const byte BitPositionTablespaceIndex = 11;
+	private const byte BitPositionTablespaceTable = 12;
+	private static readonly string DefaultNumberValue = "0";
+	private static readonly string DefaultBoolValue = false.ToString(CultureInfo.InvariantCulture);
 
-    #endregion 
+	#endregion 
 
-    internal readonly int Id;
-    internal readonly byte ObjectType;
-    internal readonly int ReferenceId;
-    internal readonly int DataType;
-    internal readonly long Flags;
-    internal readonly string Name;          // name of entity
-    internal readonly string? Description;  // late loading 
-    internal readonly string? Value;
-    internal readonly bool Active;
+	internal readonly int Id;
+	internal readonly byte ObjectType;
+	internal readonly int ReferenceId;
+	internal readonly int DataType;
+	internal readonly long Flags;
+	internal readonly string Name;		  // name of entity
+	internal readonly string? Description;  // late loading 
+	internal readonly string? Value;
+	internal readonly bool Active;
 
-    internal Meta(string name) 
-        : this(default, default, default, default, default, name, null, default, true) { }
-    internal Meta(int id, string name, EntityType entityType) 
-        : this(id, (byte)entityType, default, default, default, name, null, default, true) { }
-    internal Meta(int id, string name, EntityType entityType, long flags, string? value) 
-        : this(id,(byte)entityType,default,default,flags,name,null,value,true) {}
-    internal Meta(int id, Meta meta)
-        : this(id, meta.ObjectType, meta.ReferenceId, meta.DataType, meta.Flags, meta.Name, meta.Description, meta.Value, meta.Active) { }
+	internal Meta(string name) 
+		: this(default, default, default, default, default, name, null, default, true) { }
+	internal Meta(int id, string name, EntityType entityType) 
+		: this(id, (byte)entityType, default, default, default, name, null, default, true) { }
+	internal Meta(int id, string name, EntityType entityType, long flags, string? value) 
+		: this(id,(byte)entityType,default,default,flags,name,null,value,true) {}
+	internal Meta(int id, Meta meta)
+		: this(id, meta.ObjectType, meta.ReferenceId, meta.DataType, meta.Flags, meta.Name, meta.Description, meta.Value, meta.Active) { }
+	internal Meta(int id, byte objectType, int referenceId, int dataType, long flags, string name, string? description, string? value, bool active)
+	{
+		Id = id;
+		ObjectType = objectType;
+		ReferenceId = referenceId;
+		DataType = dataType;
+		Flags = flags;
+		Name = name;
+		Description = description;  // late loading 
+		Value = value;
+		Active = active;
+	}
 
-    internal Meta(int id, byte objectType, int referenceId, int dataType, long flags, string name, string? description, string? value, bool active)
-    {
-        Id = id;
-        ObjectType = objectType;
-        ReferenceId = referenceId;
-        DataType = dataType;
-        Flags = flags;
-        Name = name;
-        Description = description;  // late loading 
-        Value = value;
-        Active = active;
-    }
+	internal readonly bool IsTable => ObjectType == TableId;
+	internal readonly bool IsSchema => ObjectType == SchemaId;
+	internal readonly bool IsField => ObjectType == FieldId;
+	internal bool IsIndex => ObjectType == IndexId;
+	internal bool IsRelation => ObjectType == RelationId;
+	internal bool IsSequence => ObjectType == SequenceId;
+	internal bool IsTableSpace => ObjectType == TablespaceId;
+	internal bool IsParameter => ObjectType == ParameterId;
 
-    internal readonly bool IsTable => ObjectType == TableId;
-    internal readonly bool IsSchema => ObjectType == SchemaId;
-    internal readonly bool IsField => ObjectType == FieldId;
-    internal bool IsIndex => ObjectType == IndexId;
-    internal bool IsRelation => ObjectType == RelationId;
-    internal bool IsSequence => ObjectType == SequenceId;
-    internal bool IsTableSpace => ObjectType == TablespaceId;
-    internal bool IsParameter => ObjectType == ParameterId;
+	#region entity methods 
+	internal bool IsEntityBaseline() => ReadFlag(BitPositionEntityBaseline);
+	internal static long SetEntityBaseline(long flags, bool value) => WriteFlag(flags, BitPositionEntityBaseline, value);
+	#endregion
 
-    #region entity methods 
-    internal bool IsEntityBaseline() => ReadFlag(BitPositionEntityBaseline);
-    internal static long SetEntityBaseline(long flags, bool value) => WriteFlag(flags, BitPositionEntityBaseline, value);
-    #endregion
+	#region field methods  
+	internal FieldType GetFieldType() => ToFieldType((byte)(DataType & 127));
+	internal bool IsFieldNotNull() => ReadFlag(BitPositionFieldNotNull);
+	internal int GetFieldSize() => (int)((Flags >> BitPositionFirstPositionSize) & (int.MaxValue));
+	internal string? GetFieldDefaultValue()
+	{
+		if (!string.IsNullOrEmpty(Value)) return Value;
+		if (IsFieldNotNull())
+		{
+			var fieldType = GetFieldType();
+			switch (fieldType)
+			{
+				case FieldType.Int:
+				case FieldType.Long:
+				case FieldType.Byte:
+				case FieldType.Short:
+				case FieldType.Float:
+				case FieldType.Double:
+					return DefaultNumberValue;
+				case FieldType.Boolean:
+					return DefaultBoolValue;
+			}
+		}
+		return null;
+	}
+	internal bool IsFieldCaseSensitive() => ReadFlag(BitPositionFieldCaseSensitive);
+	internal bool IsFieldMultilingual() => ReadFlag(BitPositionFieldMultilingual);
+	// data type 
+	internal static int SetFieldType(int dataType, FieldType fieldType)
+	{
+		dataType &= 0x7FFFFF80; // clear 7 first bits
+		dataType += (int)fieldType;
+		return dataType;
+	}
+	// field flags 
+	internal static long SetFieldNotNull(long flags, bool value) => WriteFlag(flags, BitPositionFieldNotNull, value);
+	internal static long SetFieldCaseSensitive(long flags, bool value) => WriteFlag(flags, BitPositionFieldCaseSensitive, value);
+	internal static long SetFieldMultilingual(long flags, bool value) => WriteFlag(flags, BitPositionFieldMultilingual, value);
+	internal static long SetFieldSize(long flags, int size)
+	{
+		var temp = (long)size;
+		temp <<= BitPositionFirstPositionSize;
+		flags += temp;
+		return flags;
+	}
+	#endregion
 
-    #region field methods  
-    internal FieldType GetFieldType() => ToFieldType((byte)(DataType & 127));
-    internal bool IsFieldNotNull() => ReadFlag(BitPositionFieldNotNull);
-    internal int GetFieldSize() => (int)((Flags >> BitPositionFirstPositionSize) & (int.MaxValue));
-    internal string? GetFieldDefaultValue()
-    {
-        if (!string.IsNullOrEmpty(Value)) return Value;
-        if (IsFieldNotNull())
-        {
-            var fieldType = GetFieldType();
-            switch (fieldType)
-            {
-                case FieldType.Int:
-                case FieldType.Long:
-                case FieldType.Byte:
-                case FieldType.Short:
-                case FieldType.Float:
-                case FieldType.Double:
-                    return DefaultNumberValue;
-                case FieldType.Boolean:
-                    return DefaultBoolValue;
-            }
-        }
-        return null;
-    }
-    internal bool IsFieldCaseSensitive() => ReadFlag(BitPositionFieldCaseSensitive);
-    internal bool IsFieldMultilingual() => ReadFlag(BitPositionFieldMultilingual);
-    // data type 
-    internal static int SetFieldType(int dataType, FieldType fieldType)
-    {
-        dataType &= 0x7FFFFF80; // clear 7 first bits
-        dataType += (int)fieldType;
-        return dataType;
-    }
-    // field flags 
-    internal static long SetFieldNotNull(long flags, bool value) => WriteFlag(flags, BitPositionFieldNotNull, value);
-    internal static long SetFieldCaseSensitive(long flags, bool value) => WriteFlag(flags, BitPositionFieldCaseSensitive, value);
-    internal static long SetFieldMultilingual(long flags, bool value) => WriteFlag(flags, BitPositionFieldMultilingual, value);
-    internal static long SetFieldSize(long flags, int size)
-    {
-        var temp = (long)size;
-        temp <<= BitPositionFirstPositionSize;
-        flags += temp;
-        return flags;
-    }
-    #endregion
-
-    #region relation methods  
+	#region relation methods  
     internal bool IsRelationNotNull() => ReadFlag(BitPositionRelationNotNull);
     internal bool HasRelationConstraint() => ReadFlag(BitPositionRelationConstraint);
     internal RelationType GetRelationType() => ToRelationType((byte)((Flags >> BitPositionFirstPositionRelType) & 127));

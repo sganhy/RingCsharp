@@ -1,7 +1,6 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
-using System.ComponentModel.DataAnnotations;
 
 namespace Ring.Schema.Builders;
 
