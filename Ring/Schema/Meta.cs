@@ -2,7 +2,7 @@
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using Ring.Util.Builders;
-using System.Globalization;
+using System.Runtime.CompilerServices;
 using DbSchema = Ring.Schema.Models.Schema;
 using Index = Ring.Schema.Models.Index;
 
@@ -10,43 +10,18 @@ namespace Ring.Schema;
 
 internal readonly struct Meta
 {
-	#region constants
-
-	// entity type constants
-	private const byte TableId = (byte)EntityType.Table;
-	private const byte SchemaId = (byte)EntityType.Schema;
-	private const byte FieldId = (byte)EntityType.Field;
-	private const byte IndexId = (byte)EntityType.Index;
-	private const byte RelationId = (byte)EntityType.Relation;
-	private const byte SequenceId = (byte)EntityType.Sequence;
-	private const byte LanguageId = (byte)EntityType.Language;
-	private const byte TablespaceId = (byte)EntityType.Tablespace;
-	private const byte ParameterId = (byte)EntityType.Parameter;
-	private const byte ConstraintId = (byte)EntityType.Constraint;
-	private const byte AliasId = (byte)EntityType.Alias;
-	private const char IndexColumnDelimiter = ';';
-
-	// relation types constants
-	private const byte RelationTypeOtopId = (byte)RelationType.Otop;
-	private const byte RelationTypeOtmId = (byte)RelationType.Otm;
-	private const byte RelationTypeMtmId = (byte)RelationType.Mtm;
-	private const byte RelationTypeMtoId = (byte)RelationType.Mto;
-	private const byte RelationTypeOtofId = (byte)RelationType.Otof;
-
-	// field types constants
-	private const byte FieldTypeLongId = (byte)FieldType.Long;
-	private const byte FieldTypeIntId = (byte)FieldType.Int;
-	private const byte FieldTypeShortId = (byte)FieldType.Short;
-	private const byte FieldTypeByteId = (byte)FieldType.Byte;
-	private const byte FieldTypeFloatId = (byte)FieldType.Float;
-	private const byte FieldTypeDoubleId = (byte)FieldType.Double;
-	private const byte FieldTypeStringId = (byte)FieldType.String;
-	private const byte FieldTypeShortDateTimeId = (byte)FieldType.ShortDateTime;
-	private const byte FieldTypeDateTimeId = (byte)FieldType.DateTime;
-	private const byte FieldTypeLongDateTimeId = (byte)FieldType.LongDateTime;
-    private const byte FieldTypeByteArrayId = (byte)FieldType.ByteArray;
-    private const byte FieldTypeBooleanId = (byte)FieldType.Boolean;
-    private const byte FieldTypeLongStringId = (byte)FieldType.LongString;
+    #region constants
+    
+    // entity type constants
+    private const byte TableId = (byte)EntityType.Table;
+    private const byte SchemaId = (byte)EntityType.Schema;
+    private const byte FieldId = (byte)EntityType.Field;
+    private const byte IndexId = (byte)EntityType.Index;
+    private const byte RelationId = (byte)EntityType.Relation;
+    private const byte SequenceId = (byte)EntityType.Sequence;
+    private const byte TablespaceId = (byte)EntityType.Tablespace;
+    private const byte ParameterId = (byte)EntityType.Parameter;
+    private const char IndexColumnDelimiter = ';';
 
     // flags bit positions
 	private const byte BitPositionFieldCaseSensitive = 2;
@@ -63,8 +38,6 @@ internal readonly struct Meta
 	private const byte BitPositionTableReadonly = 10;
 	private const byte BitPositionTablespaceIndex = 11;
 	private const byte BitPositionTablespaceTable = 12;
-	private static readonly string DefaultNumberValue = "0";
-	private static readonly string DefaultBoolValue = false.ToString(CultureInfo.InvariantCulture);
 
 	#endregion 
 
@@ -73,7 +46,7 @@ internal readonly struct Meta
 	internal readonly int ReferenceId;
 	internal readonly int DataType;
 	internal readonly long Flags;
-	internal readonly string Name;		  // name of entity
+	internal readonly string Name;          // name of entity
 	internal readonly string? Description;  // late loading 
 	internal readonly string? Value;
 	internal readonly bool Active;
@@ -97,7 +70,7 @@ internal readonly struct Meta
 		Active = active;
 	}
 
-	internal readonly bool IsTable => ObjectType == TableId;
+    internal readonly bool IsTable => ObjectType == TableId;
 	internal readonly bool IsSchema => ObjectType == SchemaId;
 	internal readonly bool IsField => ObjectType == FieldId;
 	internal readonly bool IsIndex => ObjectType == IndexId;
@@ -112,28 +85,15 @@ internal readonly struct Meta
 	#endregion
 
 	#region field methods  
-	internal FieldType GetFieldType() => ToFieldType((byte)(DataType & 127));
+	internal FieldType GetFieldType() => (DataType & 127).ToFieldType();
 	internal bool IsFieldNotNull() => ReadFlag(BitPositionFieldNotNull);
 	internal int GetFieldSize() => (int)((Flags >> BitPositionFirstPositionSize) & (int.MaxValue));
-	internal string? GetFieldDefaultValue()
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal string? GetFieldDefaultValue()
 	{
 		if (!string.IsNullOrEmpty(Value)) return Value;
-		if (IsFieldNotNull())
-		{
-			var fieldType = GetFieldType();
-			switch (fieldType)
-			{
-				case FieldType.Int:
-				case FieldType.Long:
-				case FieldType.Byte:
-				case FieldType.Short:
-				case FieldType.Float:
-				case FieldType.Double:
-					return DefaultNumberValue;
-				case FieldType.Boolean:
-					return DefaultBoolValue;
-			}
-		}
+		if (IsFieldNotNull()) return GetFieldType().GetDefaultValue();
 		return null;
 	}
 	internal bool IsFieldCaseSensitive() => ReadFlag(BitPositionFieldCaseSensitive);
@@ -161,8 +121,7 @@ internal readonly struct Meta
 	#region relation methods  
     internal bool IsRelationNotNull() => ReadFlag(BitPositionRelationNotNull);
     internal bool HasRelationConstraint() => ReadFlag(BitPositionRelationConstraint);
-    internal RelationType GetRelationType() => ToRelationType((byte)((Flags >> BitPositionFirstPositionRelType) & 127));
-
+    internal RelationType GetRelationType() => ((Flags >> BitPositionFirstPositionRelType) & 127).ToRelationType();
     internal static long SetRelationdNotNull(long flags, bool value) => WriteFlag(flags, BitPositionRelationNotNull, value);
     internal static long SetRelationConstraint(long flags, bool value) => WriteFlag(flags, BitPositionRelationConstraint, value);
     internal static long SetRelationType(long flags, RelationType type)
@@ -195,8 +154,8 @@ internal readonly struct Meta
     #endregion
 
     #region parameter methods
-    internal FieldType GetParameterValueType() => ToFieldType((byte)(DataType & 127));
-    internal ParameterType GetParameterType() => ToParameterType(Id);
+    internal FieldType GetParameterValueType() => (DataType & 127).ToFieldType();
+    internal ParameterType GetParameterType() => Id.ToParameterType();
     internal string GetParameterValue() => Value ?? string.Empty;
     internal static int SetParameterValueType(int dataType, FieldType valueType) => (dataType & 0xFFF8) + ((byte)valueType) & 127;
     #endregion
@@ -226,7 +185,7 @@ internal readonly struct Meta
 
     internal static Table GetEmptyTable(Meta meta) =>
         new(meta.Id, meta.Name, meta.Description, meta.Value, string.Empty,
-             ToTableType(meta.DataType), Array.Empty<Relation>(), Array.Empty<Field>(), Array.Empty<int>(), Array.Empty<IColumn>(),
+             meta.DataType.ToTableType(), Array.Empty<Relation>(), Array.Empty<Field>(), Array.Empty<int>(), Array.Empty<IColumn>(),
              Array.Empty<Index>(), meta.ReferenceId, PhysicalType.Table, meta.IsEntityBaseline(), meta.Active,
              meta.IsTableCached(), meta.IsTableReadonly());
 
@@ -235,32 +194,11 @@ internal readonly struct Meta
             GetEmptyTable(new Meta(0, (byte)EntityType.Table, 0, (int)toTableType, 0L,
                  meta.Name,null, null, false)), -1, false, false, true, true);
 
-
     internal static Field GetEmptyField(Meta meta, FieldType fieldType) =>
         new(meta.Id, meta.Name, meta.Description, fieldType, 0, null, true, false,
             false, false, true);
 
-
-    internal EntityType GetEntityType()
-    {
-        switch (ObjectType)
-        {
-            case TableId: return EntityType.Table;
-            case FieldId: return EntityType.Field;
-            case RelationId: return EntityType.Relation;
-            case IndexId: return EntityType.Index;
-            case SchemaId: return EntityType.Schema;
-            case SequenceId: return EntityType.Sequence;
-            case LanguageId: return EntityType.Language;
-            case TablespaceId: return EntityType.Tablespace;
-            case ParameterId: return EntityType.Parameter;
-            case AliasId: return EntityType.Alias;
-            case ConstraintId: return EntityType.Constraint;
-            default:
-                break;
-        }
-        return EntityType.Undefined;
-    }
+    internal EntityType GetEntityType() => ((int)ObjectType).ToEntityType();
 
     #region convertors 
 
@@ -331,7 +269,7 @@ internal readonly struct Meta
             var fields = GetFieldArray(tableItems);
             var relations = GetRelationArray(tableItems);
             var indexes = GetIndexes(tableItems);
-            var tableType = ToTableType(DataType);
+            var tableType = DataType.ToTableType();
             var columnMapperSize = GetColumnMapperSize(tableItems, tableType, fields.Length);
 
             // sort arrays
@@ -389,47 +327,6 @@ internal readonly struct Meta
         foreach (var meta in schema) if (meta.IsParameter) result.Add(meta.ToParameter());
 #pragma warning restore CS8604 // Possible null reference argument.
         return result.ToArray();
-    }
-
-
-    private static FieldType ToFieldType(byte value)
-    {
-        // avoid boxing operation - add unit test on all field type enum fields
-#pragma warning disable IDE0066 // Convert switch statement to expression
-        switch (value)
-        {
-            case FieldTypeLongId: return FieldType.Long;
-            case FieldTypeIntId: return FieldType.Int;
-            case FieldTypeShortId: return FieldType.Short;
-            case FieldTypeByteId: return FieldType.Byte;
-            case FieldTypeFloatId: return FieldType.Float;
-            case FieldTypeDoubleId: return FieldType.Double;
-            case FieldTypeStringId: return FieldType.String;
-            case FieldTypeShortDateTimeId: return FieldType.ShortDateTime;
-            case FieldTypeDateTimeId: return FieldType.DateTime;
-            case FieldTypeLongDateTimeId: return FieldType.LongDateTime;
-            case FieldTypeByteArrayId: return FieldType.ByteArray;
-            case FieldTypeBooleanId: return FieldType.Boolean;
-            case FieldTypeLongStringId: return FieldType.LongString;
-        }
-#pragma warning restore IDE0066 // Convert switch statement to expression
-        return FieldType.Undefined;
-    }
-
-    private static RelationType ToRelationType(byte value)
-    {
-        // avoid boxing operation
-        switch (value)
-        {
-            case RelationTypeOtopId: return RelationType.Otop;
-            case RelationTypeOtmId: return RelationType.Otm;
-            case RelationTypeMtmId: return RelationType.Mtm;
-            case RelationTypeMtoId: return RelationType.Mto;
-            case RelationTypeOtofId: return RelationType.Otof;
-            default:
-                break;
-        }
-        return RelationType.Undefined;
     }
 
     private static Field[] GetFieldArray(ArraySegment<Meta> items)
@@ -557,13 +454,6 @@ internal readonly struct Meta
         }
         return result;
     }
-
-    // remove boxing operations ==>
-    private static TableType ToTableType(int dataType)
-        => Enum.IsDefined(typeof(TableType), (byte)(dataType&127)) ? (TableType)dataType : TableType.Undefined;
-
-    private static ParameterType ToParameterType(int value)
-        => Enum.IsDefined(typeof(ParameterType), value) ? (ParameterType)value : ParameterType.Undefined;
 
     #endregion
 

@@ -1,9 +1,13 @@
 ﻿using Ring.Schema.Enums;
+using System.Globalization;
 
 namespace Ring.Schema.Extensions;
 
 internal static class FieldTypeExtensions
 {
+    private static readonly string DefaultNumberValue = "0";
+    private static readonly string DefaultBoolValue = false.ToString(CultureInfo.InvariantCulture);
+
     internal static string RecordTypeDisplay(this FieldType fieldType) {
 #pragma warning disable IDE0066 // Convert switch statement to expression
         switch (fieldType)
@@ -17,4 +21,22 @@ internal static class FieldTypeExtensions
         }
 #pragma warning restore IDE0066
     }
+
+    internal static string? GetDefaultValue(this FieldType fieldType)
+    {
+        switch (fieldType)
+        {
+            case FieldType.Int:
+            case FieldType.Long:
+            case FieldType.Byte:
+            case FieldType.Short:
+            case FieldType.Float:
+            case FieldType.Double:
+                return DefaultNumberValue;
+            case FieldType.Boolean:
+                return DefaultBoolValue;
+        }
+        return null;
+    }
+
 }

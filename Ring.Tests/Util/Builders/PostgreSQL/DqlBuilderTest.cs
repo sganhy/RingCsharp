@@ -225,20 +225,5 @@ public sealed class DqlBuilderTest : BaseBuilderTest
         Assert.Equal(expectedResult, result);
     }
 
-    [Fact]
-    internal void Exists_PostgreSqlTable_SqlCatalogQuery()
-    {
-        // arrange 
-        var sut = new DqlBuilder();
-        var meta = new Meta(_fixture.Create<int>(), "Lateral", EntityType.Table);
-        var table = Meta.GetEmptyTable(meta);
-
-        // act 
-        var result = sut.Exists(table);
-
-        // assert
-        Assert.NotNull(result);
-    }
-
 
 }

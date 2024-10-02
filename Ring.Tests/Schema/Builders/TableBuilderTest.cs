@@ -2,7 +2,7 @@
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 
-namespace Ring.Tests.Schema;
+namespace Ring.Tests.Schema.Builders;
 
 public class TableBuilderTest
 {
@@ -19,8 +19,8 @@ public class TableBuilderTest
         var schemaName = "Test";
 
         // act 
-        var metaTable = _sut.GetMeta(schemaName,DatabaseProvider.PostgreSql);
-        metaTable.LoadColumnInformation();
+        var metaTable = _sut.GetMeta(schemaName, DatabaseProvider.PostgreSql);
+        metaTable.LoadColumnMapper();
         metaTable.LoadRelationRecordIndex();
 
         // assert
@@ -59,7 +59,7 @@ public class TableBuilderTest
 
         // act 
         var metaIdTable = _sut.GetMetaId(schemaName, DatabaseProvider.PostgreSql);
-        metaIdTable.LoadColumnInformation();
+        metaIdTable.LoadColumnMapper();
         metaIdTable.LoadRelationRecordIndex();
 
         // assert
@@ -87,7 +87,7 @@ public class TableBuilderTest
         // arrange 
         // act 
         var catalog = _sut.GetCatalog(EntityType.Table, DatabaseProvider.PostgreSql);
-        catalog.LoadColumnInformation();
+        catalog.LoadColumnMapper();
         catalog.LoadRelationRecordIndex();
 
         // assert
@@ -104,7 +104,7 @@ public class TableBuilderTest
         // arrange 
         // act 
         var catalog = _sut.GetCatalog(EntityType.Table, DatabaseProvider.MySql);
-        catalog.LoadColumnInformation();
+        catalog.LoadColumnMapper();
         catalog.LoadRelationRecordIndex();
 
         // assert
@@ -123,7 +123,7 @@ public class TableBuilderTest
 
         // act 
         var logTable = _sut.GetLog(schemaName, DatabaseProvider.PostgreSql);
-        logTable.LoadColumnInformation();
+        logTable.LoadColumnMapper();
         logTable.LoadRelationRecordIndex();
 
         // assert

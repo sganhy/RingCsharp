@@ -48,8 +48,6 @@ internal sealed class TableBuilder
         metaList.Add(GetUniqueIndex(4, metaList));
         var metaTable = GetTable((int)TableType.Meta, TableMetaName, TableType.Meta);
         var result = GetTable(schemaName, provider, metaList.ToArray(), metaTable);
-        result.LoadColumnInformation();
-        result.LoadRelationRecordIndex();
         return result;
     }
 
@@ -65,8 +63,6 @@ internal sealed class TableBuilder
         var metaTable = GetTable((int)TableType.MetaId, TableMetaIdName, TableType.MetaId);
         metaList.Add(GetUniqueIndex(3, metaList));
         var result= GetTable(schemaName, provider, metaList.ToArray(), metaTable);
-        result.LoadColumnInformation();
-        result.LoadRelationRecordIndex();
         return result;
     }
 
@@ -88,8 +84,6 @@ internal sealed class TableBuilder
         };
         var metaTable = GetTable((int)TableType.Log, TableLogName, TableType.Log);
         var result = GetTable(schemaName, provider, metaList.ToArray(), metaTable);
-        result.LoadColumnInformation();
-        result.LoadRelationRecordIndex();
         return result;
     }
 
@@ -102,8 +96,6 @@ internal sealed class TableBuilder
             metaList.Add(GetField(provider.GetEntityFieldName(entityType), FieldType.String));
         var catalog = GetTable((int)tableType, provider.GetCatalogViewName(entityType), tableType);
         var result = GetTable(provider.GetCatalogSchema(), provider, metaList.ToArray(), catalog, PhysicalType.View);
-        result.LoadColumnInformation();
-        result.LoadRelationRecordIndex();
         return result;
     }
 

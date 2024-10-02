@@ -2,15 +2,9 @@
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
-using Ring.Util.Extensions;
-using System.ComponentModel.DataAnnotations;
-using System;
 using System.Reflection;
-using System.Xml.Linq;
 using Index = Ring.Schema.Models.Index;
 using Ring.Schema;
-using Fare;
-using System.Threading.Tasks;
 
 namespace Ring.Tests.Schema.Extensions;
 
@@ -34,7 +28,7 @@ public abstract class BaseExtensionsTest
         var result = new Table(_fixture.Create<int>(), _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<string>(),
             _fixture.Create<string>(), TableType.Business, relations.ToArray(), fields.ToArray(), 
             new int[fields.Count+relations.Count], new IColumn[fields.Count + relations.Count], Array.Empty<Index>(), 12, PhysicalType.Table, true, true, true, true);
-        result.LoadColumnInformation();
+        result.LoadColumnMapper();
         result.LoadRelationRecordIndex();
         return result;
     }

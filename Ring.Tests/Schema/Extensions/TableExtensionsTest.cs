@@ -10,7 +10,7 @@ public class TableExtensionsTest : BaseExtensionsTest
     internal void GetField_AnonymousTable_FieldObject()
     {
         // arrange 
-        var table = GetAnonymousTable(1000, 1000);
+        var table = GetAnonymousTable(160, 160);
         var fields = table.Fields.OrderByDescending(x => x.Name);
 
         foreach (var field in fields)

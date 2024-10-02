@@ -3,6 +3,9 @@ using Index = Ring.Schema.Models.Index;
 
 namespace Ring.Schema.Extensions;
 
+/// <summary>
+/// Casting from Meta.DataType (Int32) to specific Enum
+/// </summary>
 internal static class IndexExtensions
 {
     internal static Meta ToMeta(this Index index, int tableId)

@@ -110,7 +110,7 @@ internal static class SchemaExtensions
     internal static void LoadColumnMappers(this DbSchema schema)
     {
         var span = new Span<Table>(schema.TablesByName);
-        foreach (var tbl in span) tbl.LoadColumnInformation();
+        foreach (var tbl in span) tbl.LoadColumnMapper();
     }
 
     internal static void LoadRecordIndexes(this DbSchema schema)

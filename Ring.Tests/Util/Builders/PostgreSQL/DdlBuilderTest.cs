@@ -59,7 +59,7 @@ public class DdlBuilderTest : BaseBuilderTest
         Assert.NotNull(table2);
         table2.Relations[1] = GetAnonymousRelation(RelationType.Mto, 1, @"skill2book");
         table2.Relations[0] = GetAnonymousRelation(RelationType.Mtm, 8, @"ability2book");
-        table2.LoadColumnInformation();
+        table2.LoadColumnMapper();
         table2.LoadRelationRecordIndex();
         var expectedSql = $"CREATE TABLE {physicalName} (\n" + "    id int2 NOT NULL,\n    skill2book int8,\n" +
                 "    name varchar(80) COLLATE \"C\",\n" + "    sub_name varchar(30) COLLATE \"C\",\n" + "    is_group bool,\n" +
@@ -85,7 +85,7 @@ public class DdlBuilderTest : BaseBuilderTest
         var table3 = metaTable.ToTable(segment, PhysicalType.Table, physicalName);
 #pragma warning disable CS8602
         table3.Relations[0] = GetAnonymousRelation(RelationType.Mto, 11, @"skill2book", true);
-        table3.LoadColumnInformation();
+        table3.LoadColumnMapper();
         table3.LoadRelationRecordIndex();
         var expectedSql = $"CREATE TABLE {physicalName} (\n" + "    id int2 NOT NULL,\n" +
                 "    name varchar(80) COLLATE \"C\" NOT NULL,\n" + "    sub_name varchar(30) COLLATE \"C\",\n" + "    is_group bool NOT NULL,\n" +
@@ -115,7 +115,7 @@ public class DdlBuilderTest : BaseBuilderTest
 
 #pragma warning disable CS8602
         table4.Relations[0] = GetAnonymousRelation(RelationType.Mto, 11, @"skill2book", false);
-        table4.LoadColumnInformation();
+        table4.LoadColumnMapper();
         table4.LoadRelationRecordIndex();
         var expectedSql = $"CREATE TABLE {physicalName} (\n" + "    id int2 NOT NULL,\n" +
                 "    name varchar(80) COLLATE \"C\" NOT NULL,\n" + "    sub_name varchar(30) COLLATE \"C\",\n" + "    is_group bool NOT NULL,\n" +

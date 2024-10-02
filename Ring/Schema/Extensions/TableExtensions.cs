@@ -209,7 +209,7 @@ internal static class TableExtensions
     /// <summary>
     /// Load Table.RecordIndexes[] & Table.Columns[]
     /// </summary>
-    internal static void LoadColumnInformation(this Table table)
+    internal static void LoadColumnMapper(this Table table)
     {
         var fieldCount = table.Fields.Length;
         var relationCount = table.Relations.Length;

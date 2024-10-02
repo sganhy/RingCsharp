@@ -35,7 +35,7 @@ public class BaseBuilderTest
         var result = new Table(_fixture.Create<int>(), _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<string>(),
             _fixture.Create<string>(), TableType.Business, relations.ToArray(), fields.ToArray(), 
             new int[fields.Count+relations.Count], new IColumn[fields.Count + relations.Count], Array.Empty<Index>(), 12, PhysicalType.Table, true, true, true, true);
-        result.LoadColumnInformation();
+        result.LoadColumnMapper();
         result.LoadRelationRecordIndex();
         return result;
     }
@@ -65,7 +65,7 @@ public class BaseBuilderTest
         var toTable = new Table(_fixture.Create<int>(), _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<string>(),
             _fixture.Create<string>(), TableType.Business, Array.Empty<Relation>(), fieldList.ToArray(), 
             new int[fieldList.Count], new IColumn[fieldList.Count], Array.Empty<Index>(), 12, PhysicalType.Table, true, true, true, true);
-        toTable.LoadColumnInformation();
+        toTable.LoadColumnMapper();
         toTable.LoadRelationRecordIndex();
         // generate primary key 
         var result = new Relation(id, relationName, _fixture.Create<string>(), relationType, toTable, -1, notNull, _fixture.Create<bool>(), 
