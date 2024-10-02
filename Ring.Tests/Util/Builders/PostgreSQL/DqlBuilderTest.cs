@@ -23,7 +23,7 @@ public sealed class DqlBuilderTest : BaseBuilderTest
         _schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql) ??
             Meta.GetEmptySchema(meta, DatabaseProvider.PostgreSql);
         _sut = new DqlBuilder();
-        _sut.Init(_schema);
+        _sut.Init(_schema, _schema.GetTableIndex());
     }
 
     [Fact]
@@ -32,6 +32,24 @@ public sealed class DqlBuilderTest : BaseBuilderTest
         // arrange 
         var table = _schema.GetTable("skill");
         var expectedResult = "SELECT id,name,skill2ability,sub_name,is_group,category,armor_penality,trained_only,try_again FROM rpg_sheet.t_skill";
+
+        // act 
+        Assert.NotNull(table);
+        var result1 = _sut.SelectFrom(table);
+        var result2 = _sut.SelectFrom(table); // using cache 
+
+        // assert
+        Assert.Equal(expectedResult, result1);
+        Assert.Equal(expectedResult, result2);
+    }
+
+    [Fact]
+    internal void Select_Table2_SqlQuery()
+    {
+        // arrange 
+        // add test on short date time
+        var table = _schema.GetTable("book");
+        var expectedResult = "SELECT id,title,sub_title,short_name,core_rule,isbn,to_char(creation_time,'yyyy-mm-dd'),book2rule,to_char(update_stamp,'yyyy-mm-dd'),to_char(publish_date,'yyyy-mm-dd'),language,pages FROM rpg_sheet.t_book";
 
         // act 
         Assert.NotNull(table);
@@ -76,7 +94,7 @@ public sealed class DqlBuilderTest : BaseBuilderTest
         // act 
         Assert.NotNull(schema);
         Assert.NotNull(tableTest);
-        sut.Init(schema);
+        sut.Init(schema, schema.GetTableIndex());
         var result = sut.SelectFrom(tableTest);
 
         // assert
@@ -118,7 +136,7 @@ public sealed class DqlBuilderTest : BaseBuilderTest
         // act 
         Assert.NotNull(schema);
         Assert.NotNull(table);
-        sut.Init(schema);
+        sut.Init(schema, schema.GetTableIndex());
         var result1 = sut.SelectFrom(table);
         var result2 = sut.SelectFrom(table); // using cache 
 
@@ -145,7 +163,34 @@ public sealed class DqlBuilderTest : BaseBuilderTest
         // act 
         Assert.NotNull(schema);
         Assert.NotNull(table);
-        sut.Init(schema);
+        sut.Init(schema, schema.GetTableIndex());
+        var result1 = sut.SelectFrom(table);
+        var result2 = sut.SelectFrom(table); // using cache 
+
+        // assert
+        Assert.Equal(expectedResult, result1);
+        Assert.Equal(expectedResult, result2);
+    }
+
+    [Fact]
+    internal void Select_TableLog_SqlQuery()
+    {
+        // arrange 
+        var sut = new DqlBuilder();
+        var tblBuilder = new TableBuilder();
+        var schemaName = "@Test";
+        var table = tblBuilder.GetLog(schemaName, DatabaseProvider.PostgreSql);
+        var metaTbl = table.ToMeta(0);
+        var metaSch = new Meta(_fixture.Create<int>(), schemaName, EntityType.Schema);
+        var metaList = new List<Meta>() { metaSch };
+        metaList.AddRange(metaTbl);
+        var schema = Meta.ToSchema(metaList.ToArray(), DatabaseProvider.PostgreSql);
+        var expectedResult = "SELECT id,to_char(entry_time,'yyyy-mm-dd\"T\"HH24:MI:SS.US\"Z\"'),level_id,schema_id,thread_id,call_site,job_id,method,line_number,message,description FROM \"@test\".\"@log\"";
+
+        // act 
+        Assert.NotNull(schema);
+        Assert.NotNull(table);
+        sut.Init(schema, schema.GetTableIndex());
         var result1 = sut.SelectFrom(table);
         var result2 = sut.SelectFrom(table); // using cache 
 
@@ -173,7 +218,7 @@ public sealed class DqlBuilderTest : BaseBuilderTest
         // act 
         Assert.NotNull(schema);
         Assert.NotNull(tableTest);
-        sut.Init(schema);
+        sut.Init(schema, schema.GetTableIndex());
         var result = sut.SelectFrom(tableTest);
 
         // assert
@@ -186,7 +231,7 @@ public sealed class DqlBuilderTest : BaseBuilderTest
         // arrange 
         var sut = new DqlBuilder();
         var meta = new Meta(_fixture.Create<int>(), "Lateral", EntityType.Table);
-        var table = Meta.GetEmptyTable(meta, TableType.Business);
+        var table = Meta.GetEmptyTable(meta);
 
         // act 
         var result = sut.Exists(table);

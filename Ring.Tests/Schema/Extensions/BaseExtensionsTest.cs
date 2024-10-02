@@ -65,9 +65,10 @@ public abstract class BaseExtensionsTest
             _fixture.Create<bool>(), _fixture.Create<bool>()) ;
         return result;
     }
-    internal Meta GetMeta1Table()
+    internal Meta GetMeta1Table(TableType tableType)
     {
-        return new Meta(1061, (byte)EntityType.Table, _fixture.Create<int>(), 0, 8704, "skill", _fixture.Create<string>(), null, true);
+        return new Meta(1061, (byte)EntityType.Table, _fixture.Create<int>(), (int)tableType, 8704, "skill", 
+            _fixture.Create<string>(), null, true);
     }
 
     internal Meta[] GetMeta1TableItems()
@@ -87,7 +88,7 @@ public abstract class BaseExtensionsTest
         return metaList.ToArray();
     }
 
-    internal Meta GetMeta2Table() => GetMeta1Table();
+    internal Meta GetMeta2Table() => GetMeta1Table(TableType.Mtm);
 
     internal Meta[] GetMeta2TableItems()
     {

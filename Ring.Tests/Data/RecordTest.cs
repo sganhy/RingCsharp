@@ -7,8 +7,6 @@ using Ring.Schema.Models;
 using AutoFixture;
 using Ring.Schema.Builders;
 using System.Globalization;
-using System.Net.WebSockets;
-using Newtonsoft.Json.Linq;
 using System.Reflection;
 using Ring.Schema;
 

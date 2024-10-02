@@ -15,7 +15,7 @@ internal static class Global
     internal static void Start(string schemaName, Type connectionType, string connectionString,DatabaseProvider provider, 
         int maxConnPoolSize=3)
     {
-        _metaSchema = _schemaBuilder.GetMeta(schemaName, provider, maxConnPoolSize, connectionString, connectionType);
+        _metaSchema = _schemaBuilder.GetMeta(schemaName, provider, maxConnPoolSize, connectionString);
         _metaSchema.Connections.Init();
         var tblBuilder = new TableBuilder();
         /*

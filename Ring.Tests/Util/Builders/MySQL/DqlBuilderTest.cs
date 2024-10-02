@@ -2,7 +2,6 @@
 using Ring.Schema;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
-using Ring.Schema.Models;
 using Ring.Util.Builders;
 using Ring.Util.Builders.PostgreSQL;
 using DbSchema = Ring.Schema.Models.Schema;
@@ -23,7 +22,7 @@ public sealed class DqlBuilderTest : BaseBuilderTest
         _schema = Meta.ToSchema(metaList,DatabaseProvider.MySql) ??
             Meta.GetEmptySchema(meta, DatabaseProvider.MySql);
         _sut = new DqlBuilder();
-        _sut.Init(_schema);
+        _sut.Init(_schema, _schema.GetTableIndex());
     }
 
     [Fact]

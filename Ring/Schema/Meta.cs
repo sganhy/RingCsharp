@@ -82,8 +82,6 @@ internal readonly struct Meta
 		: this(default, default, default, default, default, name, null, default, true) { }
 	internal Meta(int id, string name, EntityType entityType) 
 		: this(id, (byte)entityType, default, default, default, name, null, default, true) { }
-	internal Meta(int id, string name, EntityType entityType, long flags, string? value) 
-		: this(id,(byte)entityType,default,default,flags,name,null,value,true) {}
 	internal Meta(int id, Meta meta)
 		: this(id, meta.ObjectType, meta.ReferenceId, meta.DataType, meta.Flags, meta.Name, meta.Description, meta.Value, meta.Active) { }
 	internal Meta(int id, byte objectType, int referenceId, int dataType, long flags, string name, string? description, string? value, bool active)
@@ -226,21 +224,22 @@ internal readonly struct Meta
           Array.Empty<Lexicon>(), SchemaLoadType.Full, SchemaType.Undefined, Array.Empty<Sequence>(), Array.Empty<Table>(),
           Array.Empty<Table>(), Array.Empty<TableSpace>(), provider, meta.Active, meta.IsEntityBaseline());
 
-    internal static Table GetEmptyTable(Meta meta, TableType tableType) =>
+    internal static Table GetEmptyTable(Meta meta) =>
         new(meta.Id, meta.Name, meta.Description, meta.Value, string.Empty,
-             tableType, Array.Empty<Relation>(), Array.Empty<Field>(), Array.Empty<int>(), Array.Empty<IColumn>(),
+             ToTableType(meta.DataType), Array.Empty<Relation>(), Array.Empty<Field>(), Array.Empty<int>(), Array.Empty<IColumn>(),
              Array.Empty<Index>(), meta.ReferenceId, PhysicalType.Table, meta.IsEntityBaseline(), meta.Active,
              meta.IsTableCached(), meta.IsTableReadonly());
 
-    internal static Relation GetEmptyRelation(Meta meta, RelationType relationType, TableType tableType = TableType.Fake) =>
+    internal static Relation GetEmptyRelation(Meta meta, RelationType relationType, TableType toTableType) =>
         new(meta.Id, meta.Name, meta.Description, relationType,
-            GetEmptyTable(new Meta(meta.Name), tableType), -1, false, false, true, true);
+            GetEmptyTable(new Meta(0, (byte)EntityType.Table, 0, (int)toTableType, 0L,
+                 meta.Name,null, null, false)), -1, false, false, true, true);
+
 
     internal static Field GetEmptyField(Meta meta, FieldType fieldType) =>
         new(meta.Id, meta.Name, meta.Description, fieldType, 0, null, true, false,
             false, false, true);
 
-    
 
     internal EntityType GetEntityType()
     {
@@ -325,13 +324,14 @@ internal readonly struct Meta
     /// <param name="tableItems">sorted by name, to improve performance</param>
     /// <param name="tableType">table type is define by schema builder</param>
     /// <param name="physicalName">physical name is define by provider</param>
-    internal Table? ToTable(ArraySegment<Meta> tableItems, TableType tableType, PhysicalType physicalType, string physicalName)
+    internal Table? ToTable(ArraySegment<Meta> tableItems, PhysicalType physicalType, string physicalName)
     {
         if (IsTable)
         {
             var fields = GetFieldArray(tableItems);
             var relations = GetRelationArray(tableItems);
             var indexes = GetIndexes(tableItems);
+            var tableType = ToTableType(DataType);
             var columnMapperSize = GetColumnMapperSize(tableItems, tableType, fields.Length);
 
             // sort arrays
@@ -512,12 +512,12 @@ internal readonly struct Meta
         {
             if (meta.IsTable)
             {
-                var emptyTable = GetEmptyTable(meta, TableType.Fake);
+                var emptyTable = GetEmptyTable(meta);
                 var physicalName = ddlBuilder.GetPhysicalName(emptyTable, emptySchema);
                 var segment = dico.ContainsKey(meta.Id) ?
                     new ArraySegment<Meta>(schema, dico[meta.Id].Item1, dico[meta.Id].Item2) :
                     new ArraySegment<Meta>(schema, 0, 0);
-                var table = meta.ToTable(segment, TableType.Business, PhysicalType.Table, physicalName);
+                var table = meta.ToTable(segment, PhysicalType.Table, physicalName);
 #pragma warning disable CS8604 // Possible null reference argument.
                 result.Add(table);
 #pragma warning restore CS8604
@@ -557,6 +557,10 @@ internal readonly struct Meta
         }
         return result;
     }
+
+    // remove boxing operations ==>
+    private static TableType ToTableType(int dataType)
+        => Enum.IsDefined(typeof(TableType), (byte)(dataType&127)) ? (TableType)dataType : TableType.Undefined;
 
     private static ParameterType ToParameterType(int value)
         => Enum.IsDefined(typeof(ParameterType), value) ? (ParameterType)value : ParameterType.Undefined;

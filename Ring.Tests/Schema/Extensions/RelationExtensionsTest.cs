@@ -153,9 +153,9 @@ public class RelationExtensionsTest : BaseExtensionsTest
         var meta1 = new Meta(_fixture.Create<string>());
         var meta2 = new Meta(_fixture.Create<string>());
         var meta3 = new Meta(_fixture.Create<string>());
-        var relation1 = Meta.GetEmptyRelation(meta1, RelationType.Otm);
-        var relation2 = Meta.GetEmptyRelation(meta2, RelationType.Mtm);
-        var relation3 = Meta.GetEmptyRelation(meta3, RelationType.Mto);
+        var relation1 = Meta.GetEmptyRelation(meta1, RelationType.Otm, TableType.Fake);
+        var relation2 = Meta.GetEmptyRelation(meta2, RelationType.Mtm, TableType.Fake);
+        var relation3 = Meta.GetEmptyRelation(meta3, RelationType.Mto, TableType.Fake);
 
         // act 
         relation1.SetInverseRelation(relation2); // we can only assign once
@@ -172,8 +172,8 @@ public class RelationExtensionsTest : BaseExtensionsTest
         // arrange 
         var meta1 = new Meta(_fixture.Create<string>());
         var meta2 = new Meta(_fixture.Create<string>());
-        var relation1 = Meta.GetEmptyRelation(meta1, RelationType.Otm);
-        var relation2 = Meta.GetEmptyRelation(meta2, RelationType.Mtm);
+        var relation1 = Meta.GetEmptyRelation(meta1, RelationType.Otm, TableType.Fake);
+        var relation2 = Meta.GetEmptyRelation(meta2, RelationType.Mtm, TableType.Fake);
 
         // act 
         relation1.SetInverseRelation(relation2); // we can only assign once
@@ -188,8 +188,8 @@ public class RelationExtensionsTest : BaseExtensionsTest
         // arrange 
         var meta2 = new Meta(_fixture.Create<string>());
         var meta3 = new Meta(_fixture.Create<string>());
-        var relation2 = Meta.GetEmptyRelation(meta2, RelationType.Mtm);
-        var relation3 = Meta.GetEmptyRelation(meta3, RelationType.Mtm);
+        var relation2 = Meta.GetEmptyRelation(meta2, RelationType.Mtm, TableType.Fake);
+        var relation3 = Meta.GetEmptyRelation(meta3, RelationType.Mtm, TableType.Fake);
 
         // act 
         relation2.SetInverseRelation(relation3); // we can only assign once
@@ -205,7 +205,7 @@ public class RelationExtensionsTest : BaseExtensionsTest
         var meta3 = new Meta(_fixture.Create<string>());
         var meta4 = new Meta(_fixture.Create<string>());
         var relation3 = Meta.GetEmptyRelation(meta3, RelationType.Mtm, TableType.Mtm);
-        var relation4 = Meta.GetEmptyRelation(meta4, RelationType.Mtm);
+        var relation4 = Meta.GetEmptyRelation(meta4, RelationType.Mtm, TableType.Fake);
 
         // act 
         relation3.SetInverseRelation(relation4); // we can only assign once
@@ -219,7 +219,7 @@ public class RelationExtensionsTest : BaseExtensionsTest
     {
         // arrange 
         var meta4 = new Meta(_fixture.Create<string>());
-        var relation4 = Meta.GetEmptyRelation(meta4, RelationType.Mtm);
+        var relation4 = Meta.GetEmptyRelation(meta4, RelationType.Mtm, TableType.Fake);
         // act 
         // assert
         Assert.False(relation4.Initialized());

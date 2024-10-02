@@ -79,23 +79,35 @@ public sealed class Connection : IRingConnection, IDisposable
     public Span<string?> ExecuteSelect(string sql, int columnCount, Span<(string, byte)> parameters)
     {
         var result = new List<string?>();
-        
-        using (var cmd = new NpgsqlCommand(sql, _connection))
-        using (var reader = cmd.ExecuteReader())
+        NpgsqlCommand? cmd=null;
+        NpgsqlDataReader? reader = null;
+        try
         {
+#pragma warning disable CA2100 // Review SQL queries for security vulnerabilities
+            cmd = new(sql, _connection);
+#pragma warning restore CA2100
+            reader = cmd.ExecuteReader();
             if (!reader.HasRows) return Array.Empty<string?>();
             int i = 0;
             while (reader.Read())
             {
-                for (i=0; i < columnCount; ++i)
+                for (i = 0; i < columnCount; ++i)
                 {
-                    var val = reader.GetValue(i);
-                    if (val is DBNull) result.Add(null);
-                    else if (val is string) result.Add(val as string);
-                    else result.Add(reader.GetValue(i).ToString());
+                    var v = reader.GetValue(i);
+                    if (v is DBNull) result.Add(null);
+                    else if (v is string) result.Add(v as string);
+                    else result.Add(v.ToString());
                 }
             }
+        }
+        finally 
+        {
+            reader?.Close();
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
             cmd.Connection = null;
+#pragma warning restore CS8602
+            cmd.Dispose();
+            reader?.Dispose();
         }
         return result.ToArray();
     }

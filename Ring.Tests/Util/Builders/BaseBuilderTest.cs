@@ -3,8 +3,6 @@ using Ring.Schema;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.Design.Serialization;
 using System.Reflection;
 using Index = Ring.Schema.Models.Index;
 
@@ -109,8 +107,8 @@ public class BaseBuilderTest
 
         return metaList.ToArray();
     }
-    internal Meta GetMeta2Table() =>
-        new (1061, (byte)EntityType.Table, _fixture.Create<int>(), 0, 8704, "skill", _fixture.Create<string>(), _fixture.Create<string>(), true);
+    internal Meta GetMeta2Table(TableType tableType) =>
+        new (1061, (byte)EntityType.Table, _fixture.Create<int>(), (int)tableType, 8704, "skill", _fixture.Create<string>(), _fixture.Create<string>(), true);
 
     internal Meta[] GetSchema1()
     {

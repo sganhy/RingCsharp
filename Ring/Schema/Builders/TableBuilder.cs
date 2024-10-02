@@ -46,8 +46,8 @@ internal sealed class TableBuilder
             GetField(FieldActive, FieldType.Boolean)
         };
         metaList.Add(GetUniqueIndex(4, metaList));
-        var metaTable = GetTable((int)TableType.Meta, TableMetaName);
-        var result = GetTable(schemaName, provider, metaList.ToArray(), metaTable, TableType.Meta);
+        var metaTable = GetTable((int)TableType.Meta, TableMetaName, TableType.Meta);
+        var result = GetTable(schemaName, provider, metaList.ToArray(), metaTable);
         result.LoadColumnInformation();
         result.LoadRelationRecordIndex();
         return result;
@@ -62,9 +62,9 @@ internal sealed class TableBuilder
             GetField(FieldObjectType, FieldType.Byte),
             GetField(FieldValue, FieldType.Long),
         };
-        var metaTable = GetTable((int)TableType.MetaId, TableMetaIdName);
+        var metaTable = GetTable((int)TableType.MetaId, TableMetaIdName, TableType.MetaId);
         metaList.Add(GetUniqueIndex(3, metaList));
-        var result= GetTable(schemaName, provider, metaList.ToArray(), metaTable, TableType.MetaId);
+        var result= GetTable(schemaName, provider, metaList.ToArray(), metaTable);
         result.LoadColumnInformation();
         result.LoadRelationRecordIndex();
         return result;
@@ -86,8 +86,8 @@ internal sealed class TableBuilder
             GetField(FieldMessage, FieldType.String, 255, false),
             GetField(FieldDescription, FieldType.String, 0, false),
         };
-        var metaTable = GetTable((int)TableType.Log, TableLogName);
-        var result = GetTable(schemaName, provider, metaList.ToArray(), metaTable, TableType.Log);
+        var metaTable = GetTable((int)TableType.Log, TableLogName, TableType.Log);
+        var result = GetTable(schemaName, provider, metaList.ToArray(), metaTable);
         result.LoadColumnInformation();
         result.LoadRelationRecordIndex();
         return result;
@@ -96,57 +96,54 @@ internal sealed class TableBuilder
 #pragma warning disable CA1822, S2325 // Mark members as static
     internal Table GetCatalog(EntityType entityType, DatabaseProvider provider) {
 #pragma warning restore CA1822, S2325
-        var tableType = GetTablType(entityType);
+        var tableType = entityType.ToTableType();
         var metaList = new List<Meta>(){ GetField(provider.GetSchemaFieldName(entityType), FieldType.String) };
         if (entityType != EntityType.Schema)
             metaList.Add(GetField(provider.GetEntityFieldName(entityType), FieldType.String));
-        var catalog = GetTable((int)tableType, provider.GetCatalogViewName(entityType));
-        var result = GetTable(provider.GetCatalogSchema(), provider, metaList.ToArray(), catalog, 
-            tableType,PhysicalType.View);
+        var catalog = GetTable((int)tableType, provider.GetCatalogViewName(entityType), tableType);
+        var result = GetTable(provider.GetCatalogSchema(), provider, metaList.ToArray(), catalog, PhysicalType.View);
         result.LoadColumnInformation();
         result.LoadRelationRecordIndex();
         return result;
     }
 
 #pragma warning disable CA1822, S2325 // Mark members as static
-    internal Table GetMtm(Table partialTable, string physicalName) { 
+    internal Table GetMtm(Table partialTable, string physicalName) {
 #pragma warning restore CA1822, S2325
-
         // add @ prefix to logical name
-        var metaTable = new Meta(0, SystemTablePrefix + partialTable.Name, EntityType.Table);
+        var metaTable = new Meta(0, (byte)EntityType.Table, 0, (int)TableType.Mtm, 0L, 
+            SystemTablePrefix + partialTable.Name, null,null,true);
         var metaRelation = new Meta(0, partialTable.Name, EntityType.Relation);
         // add index 
         var flags = 0L;
         var value = Meta.SetIndexedColumns(new string[] { partialTable.Name, partialTable.Name });
         flags = Meta.SetIndexUnique(flags, true);
-        var metaIndex = new Meta(0,partialTable.Name,EntityType.Index, flags, value);
+        var metaIndex = new Meta(0, (byte)EntityType.Index, 0, 0, flags, partialTable.Name, null, value, true);
         var metaArr = new Meta[] { metaRelation, metaRelation, metaIndex };
         var segMent = new ArraySegment<Meta>(metaArr, 0, 3);
-        var result = metaTable.ToTable(segMent, TableType.Mtm, PhysicalType.Table, physicalName) ?? partialTable;
+        var result = metaTable.ToTable(segMent, PhysicalType.Table, physicalName) ?? partialTable;
         result.RecordIndexes[0]=0; // columnMapper 4 Mtm table is always {0,1}
         result.RecordIndexes[1]=1; // columnMapper 4 Mtm table is always {0,1}
         return result;
     }
 
-
     #region private methods 
 
-    private static Table GetTable(string schemaName, DatabaseProvider provider, Meta[] metaArray, Meta metaTable, TableType tableType, 
-        PhysicalType? physicalType=null)
+    private static Table GetTable(string schemaName, DatabaseProvider provider, Meta[] metaArray, Meta metaTable, PhysicalType? physicalType=null)
     {
         var ddlBuilder = provider.GetDdlBuilder();
-        var emptyTable = Meta.GetEmptyTable(metaTable, tableType);
+        var emptyTable = Meta.GetEmptyTable(metaTable);
         var emptySchema = Meta.GetEmptySchema(GetSchema(0, schemaName), provider);
         var spanMeta = metaArray.AsSpan();
         for (var i=0; i< spanMeta.Length; ++i) spanMeta[i] = new Meta(i,spanMeta[i]);
         return metaTable.ToTable(new ArraySegment<Meta>(metaArray, 0, metaArray.Length),
-                tableType, physicalType ?? PhysicalType.Table, ddlBuilder.GetPhysicalName(emptyTable, emptySchema)) ?? emptyTable;
+                physicalType ?? PhysicalType.Table, ddlBuilder.GetPhysicalName(emptyTable, emptySchema)) ?? emptyTable;
     }
 
-    private static Meta GetTable(int id, string name) {
+    private static Meta GetTable(int id, string name, TableType tableType) {
         var flags = 0L;
         flags = Meta.SetEntityBaseline(flags, true);
-        return new(id, (byte)EntityType.Table, 0, 0, flags, name, null, null, true);
+        return new(id, (byte)EntityType.Table, 0, (int)tableType, flags, name, null, null, true);
     }
     private static Meta GetSchema(int id, string name) => new(id, name, EntityType.Schema);
     private static Meta GetField(string name, FieldType fieldType, bool notNull)
@@ -168,35 +165,13 @@ internal sealed class TableBuilder
     }
     private static Meta GetUniqueIndex(int firstField, List<Meta> lstMeta)
     {
-        
         var fields = new List<string>();
         for (var i = 0; i < firstField; ++i) fields.Add(lstMeta[i].Name);
         var flags = 0L;
         flags = Meta.SetIndexUnique(flags, true);
-        var meta = new Meta(0, string.Empty, EntityType.Index, flags, Meta.SetIndexedColumns(fields.ToArray()));
+        var meta = new Meta(0, (byte)EntityType.Index, 0, 0, flags, string.Empty, null, 
+            Meta.SetIndexedColumns(fields.ToArray()), true);
         return meta;
-    }
-    private static TableType GetTablType(EntityType entityType)
-    {
-        TableType result;
-#pragma warning disable IDE0066 // Convert switch statement to expression
-        switch (entityType)
-        {
-            case EntityType.Table:
-                result = TableType.TableCatalog;
-                break;
-            case EntityType.Schema:
-                result = TableType.SchemaCatalog;
-                break;
-            case EntityType.Tablespace:
-                result = TableType.TableCatalog;
-                break;
-            default:
-                result = TableType.Logical;
-                break;
-        }
-#pragma warning restore IDE0066
-        return result;
     }
 
     #endregion

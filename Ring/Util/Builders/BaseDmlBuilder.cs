@@ -41,11 +41,11 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 
     public abstract string VariableNameTemplate { get; }
 
-    public void Init(DbSchema schema)
+    public void Init(DbSchema schema, string[] tableIndex)
     {
         var mtmCount = schema.GetMtmTableCount();
         var tableCount = schema.TablesById.Length;
-        _tableIndex = GetTableIndex(schema);
+        _tableIndex = tableIndex;
         _tableDelete = new string?[mtmCount + tableCount];
         _tableInsert = new string?[mtmCount + tableCount];
         _tableUpdate = new string?[mtmCount + tableCount];

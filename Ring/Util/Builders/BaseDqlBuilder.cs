@@ -11,7 +11,7 @@ namespace Ring.Util.Builders;
 internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
 {
     private string[] _tableIndex;
-    private string?[] _tableSelect;
+    private string[] _tableSelect;
     private string? _catalogTable;
     protected readonly IDdlBuilder _ddlBuilder;
 
@@ -22,26 +22,14 @@ internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
         _ddlBuilder = Provider.GetDdlBuilder();
     }
 
-    public void Init(DbSchema schema)
+    public void Init(DbSchema schema, string[] tableIndex)
     {
-        var mtmCount = schema.GetMtmTableCount();
-        var tableCount = schema.TablesById.Length;
-        _tableSelect = new string?[mtmCount + tableCount];
-        _tableIndex = GetTableIndex(schema);
+        _tableIndex = tableIndex;
+        _tableSelect = GetTableSelect(schema);   // pre load selection for all tables
     }
 
-    public string SelectFrom(Table table)
-    {
-        var index = _tableIndex.GetIndex(table.Name);
-        var result = _tableSelect[index];
-        if (result==null)
-        {
-            result = BuildSelect(table);
-            _tableSelect[index] = result;
-        }
-        return result;
-    }
-
+    public string SelectFrom(Table table) => _tableSelect[_tableIndex.GetIndex(table.Name)];
+    
     public string Exists(Table table)
     {
         if (_catalogTable==null)
@@ -54,6 +42,9 @@ internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
         }
         return _catalogTable;
     }
+    protected abstract string GetSelection(Field field);
+
+    protected abstract string GetSelection(Relation relation);
 
     #region private methods 
 
@@ -78,9 +69,29 @@ internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
         return result.ToString();
     }
 
-    protected abstract string GetSelection(Field field);
+    private string[] GetTableSelect(DbSchema schema)
+    {
+        var mtmCount = schema.GetMtmTableCount();
+        var tableCount = schema.TablesById.Length;
+        var result = new string[mtmCount + tableCount];
+        var tableSpan = new ReadOnlySpan<Table>(schema.TablesById);
 
-    protected abstract string GetSelection(Relation relation);
+        foreach (var table in tableSpan)
+        {
+            var index = _tableIndex.GetIndex(table.Name);
+            result[index] = BuildSelect(table);
+            for (var i=table.Relations.Length-1; i>=0; --i)
+            {
+                var relation = table.Relations[i];
+                if (relation.Type==RelationType.Mtm)
+                {
+                    index = _tableIndex.GetIndex(relation.ToTable.Name);
+                    result[index] = BuildSelect(relation.ToTable);
+                }
+            }
+        }
+        return result;
+    }
 
     #endregion
 

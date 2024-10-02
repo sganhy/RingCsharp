@@ -36,7 +36,8 @@ public sealed class MetaTest : BaseExtensionsTest
     internal void ReadFlag_Input_OnlyOneTrueFlag(long flags, byte bitPosition, bool expectedValue)
     {
         // arrange 
-        var meta = new Meta(_fixture.Create<int>(), _fixture.Create<string>(), _fixture.Create<EntityType>(), flags, _fixture.Create<string>());
+        var meta  = new Meta(_fixture.Create<int>(), (byte)_fixture.Create<EntityType>(), _fixture.Create<int>(), _fixture.Create<int>(), 
+            flags, _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<bool>());
 
         // act 
         var result = meta.ReadFlag(bitPosition);
@@ -62,12 +63,14 @@ public sealed class MetaTest : BaseExtensionsTest
     internal void WriteFlag_Input_TrueFlag(long flags, byte bitPosition)
     {
         // arrange 
-        var meta = new Meta(_fixture.Create<int>(), _fixture.Create<string>(), _fixture.Create<EntityType>(), flags, _fixture.Create<string>());
+        var meta = new Meta(_fixture.Create<int>(), (byte)_fixture.Create<EntityType>(), _fixture.Create<int>(), _fixture.Create<int>(),
+            flags, _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<bool>());
 
         // act 
         var currentFlag = meta.ReadFlag(bitPosition);
         flags = Meta.WriteFlag(meta.Flags, bitPosition, false);
-        meta = new Meta(_fixture.Create<int>(), _fixture.Create<string>(), _fixture.Create<EntityType>(), flags, _fixture.Create<string>());
+        meta = new Meta(_fixture.Create<int>(), (byte)_fixture.Create<EntityType>(), _fixture.Create<int>(), _fixture.Create<int>(),
+            flags, _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<bool>());
         var result = meta.ReadFlag(bitPosition);
         var flagAfterWrite = Meta.WriteFlag(meta.Flags, bitPosition, false);
 
@@ -518,13 +521,13 @@ public sealed class MetaTest : BaseExtensionsTest
     internal void ToTable_Meta1_TableObject()
     {
         // arrange 
-        var metaTable = GetMeta1Table();
+        var metaTable = GetMeta1Table(TableType.Logical);
         var metaItems = GetMeta1TableItems();
         var physicalName = _fixture.Create<string>();
         var segment = new ArraySegment<Meta>(metaItems, 0, metaItems.Length);
 
         // act 
-        var table = metaTable.ToTable(segment, TableType.Fake, PhysicalType.Table, physicalName);
+        var table = metaTable.ToTable(segment, PhysicalType.Table, physicalName);
         var field = table?.GetField("name");
         var fieldPk = table?.GetField("id");
 
@@ -535,7 +538,7 @@ public sealed class MetaTest : BaseExtensionsTest
         Assert.Equal(table.Id, metaTable.Id);
         Assert.Equal(table.Description, metaTable.Description);
         Assert.Equal(table.Name, metaTable.Name);
-        Assert.Equal(TableType.Fake, table.Type);
+        Assert.Equal(TableType.Logical, table.Type);
         Assert.True(table.Baseline);
         Assert.True(table.Readonly);
         Assert.Single(table.Relations);
@@ -560,7 +563,7 @@ public sealed class MetaTest : BaseExtensionsTest
         var segment = new ArraySegment<Meta>(metaItems, 0, metaItems.Length);
 
         // act 
-        var table = metaTable.ToTable(segment, TableType.Mtm, PhysicalType.Table, physicalName);
+        var table = metaTable.ToTable(segment, PhysicalType.Table, physicalName);
         var fieldPk = table?.GetField("id");
 
         // assert
@@ -644,10 +647,11 @@ public sealed class MetaTest : BaseExtensionsTest
     internal void GetEmptyRelation_Meta_RelationObject()
     {
         // arrange 
-        var meta = new Meta(_fixture.Create<string>());
+        var meta = new Meta(0, (byte)EntityType.Undefined, 0, (int)TableType.Fake, 0L, 
+            _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<string>(), false);
 
         // act 
-        var relation = Meta.GetEmptyRelation(meta, RelationType.Otm);
+        var relation = Meta.GetEmptyRelation(meta, RelationType.Otm, TableType.Fake);
 
         // assert
         Assert.Equal(relation.Name, meta.Name);

@@ -129,6 +129,33 @@ internal static class SchemaExtensions
         return result >> 1;
     }
 
+    /// <summary>
+    /// Get sorted list of logical table name
+    /// TODO improve performance
+    /// </summary>
+    internal static string[] GetTableIndex(this DbSchema schema)
+    {
+        var mtmCount = schema.GetMtmTableCount();
+        var tableCount = schema.TablesById.Length;
+        var mtmTaleDico = new HashSet<string>();
+        var mtmIndex = 0;
+        var result = new string[tableCount + mtmCount]; // reduce re-allocations
+        for (var i = 0; i < tableCount; ++i) result[i] = schema.TablesById[i].Name;
+        for (var i = 0; i < tableCount; ++i)
+            for (var j = schema.TablesById[i].Relations.Length - 1; j >= 0; --j)
+            {
+                var relation = schema.TablesById[i].Relations[j];
+                if (relation.Type == RelationType.Mtm && !mtmTaleDico.Contains(relation.ToTable.Name))
+                {
+                    result[mtmIndex + tableCount] = relation.ToTable.Name;
+                    mtmTaleDico.Add(relation.ToTable.Name);
+                    ++mtmIndex;
+                }
+            }
+        Array.Sort(result, (x, y) => string.CompareOrdinal(x, y));
+        return result;
+    }
+
     #region private methods 
     private static void LoadInverseRelations(this DbSchema schema, Span<Meta> schemaItems)
     {
@@ -162,7 +189,9 @@ internal static class SchemaExtensions
                 {
                     // step 1 - generate physical name
                     var relation = table.Relations[j];
-                    var emptyTable = Meta.GetEmptyTable(new Meta(relation.GetMtmName()),TableType.Mtm);
+                    var metaTable = new Meta(0,(byte)EntityType.Relation,0,(int)TableType.Mtm,0L, relation.GetMtmName(), 
+                        null,null,true);
+                    var emptyTable = Meta.GetEmptyTable(metaTable);
                     var physicalName = ddlBuilder.GetPhysicalName(emptyTable, schema);
                     var inverseRelation = relation.InverseRelation;
 

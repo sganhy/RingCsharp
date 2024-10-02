@@ -2,7 +2,6 @@
 using Ring.Schema.Builders;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
-using System.Data.Common;
 
 namespace Ring.Tests.Schema.Builders;
 
@@ -24,8 +23,8 @@ public sealed class SchemaBuilderTest
         var maxPoolSize = 20; 
 
         // act 
-        var metaSchema = _sut.GetMeta(schemaName, DatabaseProvider.PostgreSql,20, _fixture.Create<string>(), typeof(DbConnection));
-        var metaTable = metaSchema.GetTable(3);
+        var metaSchema = _sut.GetMeta(schemaName, DatabaseProvider.PostgreSql,20, _fixture.Create<string>());
+        var metaTable = metaSchema.GetTable(13);
         var metaLog = metaSchema.GetTable("@log");
         var metaId = metaSchema.GetTable("@meta_id");
 

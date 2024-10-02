@@ -23,7 +23,7 @@ public class DmlBuilderTest : BaseBuilderTest
         _schema = Meta.ToSchema(metaList,DatabaseProvider.MySql) ??
             Meta.GetEmptySchema(meta, DatabaseProvider.MySql);
         _sut = new DmlBuilder();
-        _sut.Init(_schema);
+        _sut.Init(_schema, _schema.GetTableIndex());
     }
 
     [Fact]
@@ -67,16 +67,18 @@ public class DmlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var sut = new DmlBuilder();
-        var meta = new Meta(_fixture.Create<int>(),"Test", EntityType.Table);
-        var metaSch = new Meta(_fixture.Create<int>(), "Test", EntityType.Schema);
-        var schema = Meta.ToSchema(new Meta[] { meta, metaSch }, DatabaseProvider.MySql);
+        var schemaId = _fixture.Create<int>();
+        var testTable= new Meta(_fixture.Create<int>(), (byte)EntityType.Table, schemaId, (int)TableType.Business
+            , 0L, "Test", null, null, true);
+        var testSchema = new Meta(schemaId, "Test", EntityType.Schema);
+        var schema = Meta.ToSchema(new Meta[] { testTable, testSchema }, DatabaseProvider.MySql);
         var expectedResult = "INSERT INTO test.t_test () VALUES ()";
         var tableTest = schema?.GetTable("Test");
 
         // act 
         Assert.NotNull(schema);
         Assert.NotNull(tableTest);
-        sut.Init(schema);
+        sut.Init(schema, schema.GetTableIndex());
         var result = sut.Insert(tableTest);
 
         // assert
@@ -92,12 +94,10 @@ public class DmlBuilderTest : BaseBuilderTest
 
         // act 
         Assert.NotNull(table);
-        var result1 = _sut.Insert(table);
-        var result2 = _sut.Insert(table); // using cache 
+        var result = _sut.Insert(table);
 
         // assert
-        Assert.Equal(expectedResult, result1);
-        Assert.Equal(expectedResult, result2);
+        Assert.Equal(expectedResult, result);
     }
 
     [Fact]
@@ -109,12 +109,10 @@ public class DmlBuilderTest : BaseBuilderTest
 
         // act 
         Assert.NotNull(table);
-        var result1 = _sut.Delete(table);
-        var result2 = _sut.Delete(table); // using cache 
+        var result = _sut.Delete(table);
 
         // assert
-        Assert.Equal(expectedResult, result1);
-        Assert.Equal(expectedResult, result2);
+        Assert.Equal(expectedResult, result);
     }
 
     [Fact]
@@ -141,26 +139,20 @@ public class DmlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var sut = new DmlBuilder();
-        var tblBuilder = new TableBuilder();
+        var schBuilder = new SchemaBuilder();
         var schemaName = "@Test";
-        var table = tblBuilder.GetMeta(schemaName, DatabaseProvider.MySql);
-        var metaTbl = table.ToMeta(0);
-        var metaSch = new Meta(_fixture.Create<int>(),schemaName, EntityType.Schema);
-        var metaList = new List<Meta>() { metaSch };
-        metaList.AddRange(metaTbl);
-        var schema = Meta.ToSchema(metaList.ToArray(), DatabaseProvider.MySql);
+        var schema = schBuilder.GetMeta(schemaName, DatabaseProvider.MySql, 2, string.Empty);
+        var table = schema.GetTable("@meta");
         var expectedResult = "DELETE FROM `@test`.`@meta` WHERE id=:a1 AND schema_id=:a2 AND object_type=:a3 AND reference_id=:a4";
 
         // act 
         Assert.NotNull(schema);
         Assert.NotNull(table);
-        sut.Init(schema);
-        var result1 = sut.Delete(table);
-        var result2 = sut.Delete(table); // using cache 
+        sut.Init(schema, schema.GetTableIndex());
+        var result = sut.Delete(table);
 
         // assert
-        Assert.Equal(expectedResult, result1);
-        Assert.Equal(expectedResult, result2);
+        Assert.Equal(expectedResult, result);
     }
 
     [Fact]
@@ -168,26 +160,20 @@ public class DmlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var sut = new DmlBuilder();
-        var tblBuilder = new TableBuilder();
-        var schemaName = "@Test";
-        var table = tblBuilder.GetMetaId(schemaName, DatabaseProvider.MySql);
-        var metaTbl = table.ToMeta(0);
-        var metaSch = new Meta(_fixture.Create<int>(), schemaName, EntityType.Schema);
-        var metaList = new List<Meta>() { metaSch };
-        metaList.AddRange(metaTbl);
-        var schema = Meta.ToSchema(metaList.ToArray(), DatabaseProvider.MySql);
+        var schBuilder = new SchemaBuilder();
+        var schemaName = "@test";
+        var schema = schBuilder.GetMeta(schemaName, DatabaseProvider.MySql, 2, string.Empty);
+        var table = schema.GetTable("@meta_id");
         var expectedResult = "DELETE FROM `@test`.`@meta_id` WHERE id=:a1 AND schema_id=:a2 AND object_type=:a3";
 
         // act 
         Assert.NotNull(schema);
         Assert.NotNull(table);
-        sut.Init(schema);
-        var result1 = sut.Delete(table);
-        var result2 = sut.Delete(table); // using cache 
+        sut.Init(schema, schema.GetTableIndex());
+        var result = sut.Delete(table);
 
         // assert
-        Assert.Equal(expectedResult, result1);
-        Assert.Equal(expectedResult, result2);
+        Assert.Equal(expectedResult, result);
     }
 
     [Fact]
@@ -199,12 +185,10 @@ public class DmlBuilderTest : BaseBuilderTest
 
         // act 
         Assert.NotNull(table);
-        var result1 = _sut.Update(table);
-        var result2 = _sut.Update(table); // using cache 
+        var result = _sut.Update(table);
 
         // assert
-        Assert.Equal(expectedResult, result1);
-        Assert.Equal(expectedResult, result2);
+        Assert.Equal(expectedResult, result);
     }
 
     [Fact]
@@ -212,26 +196,20 @@ public class DmlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var sut = new DmlBuilder();
-        var tblBuilder = new TableBuilder();
+        var schBuilder = new SchemaBuilder();
         var schemaName = "@Test";
-        var table = tblBuilder.GetMeta(schemaName, DatabaseProvider.MySql);
-        var metaTbl = table.ToMeta(0);
-        var metaSch = new Meta(_fixture.Create<int>(), schemaName, EntityType.Schema);
-        var metaList = new List<Meta>() { metaSch };
-        metaList.AddRange(metaTbl);
-        var schema = Meta.ToSchema(metaList.ToArray(), DatabaseProvider.PostgreSql);
+        var schema = schBuilder.GetMeta(schemaName, DatabaseProvider.MySql, 8, string.Empty);
+        var table = schema.GetTable("@meta");
         var expectedResult = "UPDATE `@test`.`@meta` SET {0} WHERE id=:a1 AND schema_id=:a2 AND object_type=:a3 AND reference_id=:a4";
 
         // act 
         Assert.NotNull(schema);
         Assert.NotNull(table);
-        sut.Init(schema);
-        var result1 = sut.Update(table);
-        var result2 = sut.Update(table); // using cache 
+        sut.Init(schema, schema.GetTableIndex());
+        var result = sut.Update(table);
 
         // assert
-        Assert.Equal(expectedResult, result1);
-        Assert.Equal(expectedResult, result2);
+        Assert.Equal(expectedResult, result);
     }
 
     [Fact]
@@ -239,26 +217,20 @@ public class DmlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var sut = new DmlBuilder();
-        var tblBuilder = new TableBuilder();
+        var schBuilder = new SchemaBuilder();
         var schemaName = "@Test";
-        var table = tblBuilder.GetMetaId(schemaName, DatabaseProvider.MySql);
-        var metaTbl = table.ToMeta(0);
-        var metaSch = new Meta(_fixture.Create<int>(), schemaName, EntityType.Schema);
-        var metaList = new List<Meta>() { metaSch };
-        metaList.AddRange(metaTbl);
-        var schema = Meta.ToSchema(metaList.ToArray(), DatabaseProvider.PostgreSql);
+        var schema = schBuilder.GetMeta(schemaName, DatabaseProvider.MySql, 8, string.Empty);
+        var table = schema.GetTable("@meta_id");
         var expectedResult = "UPDATE `@test`.`@meta_id` SET {0} WHERE id=:a1 AND schema_id=:a2 AND object_type=:a3";
 
         // act 
         Assert.NotNull(schema);
         Assert.NotNull(table);
-        sut.Init(schema);
-        var result1 = sut.Update(table);
-        var result2 = sut.Update(table); // using cache 
+        sut.Init(schema, schema.GetTableIndex());
+        var result = sut.Update(table);
 
         // assert
-        Assert.Equal(expectedResult, result1);
-        Assert.Equal(expectedResult, result2);
+        Assert.Equal(expectedResult, result);
     }
 
 }

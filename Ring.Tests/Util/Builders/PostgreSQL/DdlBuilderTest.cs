@@ -51,11 +51,11 @@ public class DdlBuilderTest : BaseBuilderTest
     public void Create_Table2_DdlQuery()
     {
         // arrange 
-        var metaTable = GetMeta2Table();
+        var metaTable = GetMeta2Table(TableType.Business);
         var metaItems = GetMeta2TableItems(true);
         var physicalName = _fixture.Create<string>();
         var segment = new ArraySegment<Meta>(metaItems, 0, metaItems.Length);
-        var table2 = metaTable.ToTable(segment, TableType.Business, PhysicalType.Table, physicalName);
+        var table2 = metaTable.ToTable(segment, PhysicalType.Table, physicalName);
         Assert.NotNull(table2);
         table2.Relations[1] = GetAnonymousRelation(RelationType.Mto, 1, @"skill2book");
         table2.Relations[0] = GetAnonymousRelation(RelationType.Mtm, 8, @"ability2book");
@@ -78,11 +78,11 @@ public class DdlBuilderTest : BaseBuilderTest
     public void Create_Table3_DdlQuery()
     {
         // arrange 
-        var metaTable = GetMeta2Table();
+        var metaTable = GetMeta2Table(TableType.Lexicon);
         var metaItems = GetMeta2TableItems(false);
         var physicalName = _fixture.Create<string>();
         var segment = new ArraySegment<Meta>(metaItems, 0, metaItems.Length);
-        var table3 = metaTable.ToTable(segment, TableType.Meta, PhysicalType.Table, physicalName);
+        var table3 = metaTable.ToTable(segment, PhysicalType.Table, physicalName);
 #pragma warning disable CS8602
         table3.Relations[0] = GetAnonymousRelation(RelationType.Mto, 11, @"skill2book", true);
         table3.LoadColumnInformation();
@@ -105,13 +105,13 @@ public class DdlBuilderTest : BaseBuilderTest
     public void Create_Table4_DdlQuery()
     {
         // arrange 
-        var metaTable = GetMeta2Table();
+        var metaTable = GetMeta2Table(TableType.Log);
         var tablespaceName = _fixture.Create<string>();
         var tablespace = GetAnonymousTableSpace(tablespaceName);
         var metaItems = GetMeta2TableItems(false);
         var physicalName = _fixture.Create<string>();
         var segment = new ArraySegment<Meta>(metaItems, 0, metaItems.Length);
-        var table4 = metaTable.ToTable(segment, TableType.Fake, PhysicalType.Table, physicalName);
+        var table4 = metaTable.ToTable(segment, PhysicalType.Table, physicalName);
 
 #pragma warning disable CS8602
         table4.Relations[0] = GetAnonymousRelation(RelationType.Mto, 11, @"skill2book", false);
@@ -271,7 +271,9 @@ public class DdlBuilderTest : BaseBuilderTest
     public void GetPhysicalName_MtmTable1_TableName()
     {
         // arrange 
-        var emptyTable = Meta.GetEmptyTable(new Meta("Test"), TableType.Mtm);
+        var metaTable = new Meta(_fixture.Create<int>(), (byte)EntityType.Table, 0, (int)TableType.Mtm
+            , 0L, "Test", null, null, true);
+        var emptyTable = Meta.GetEmptyTable(metaTable);
         var emptySchema = Meta.GetEmptySchema(new Meta("Where"), DatabaseProvider.MySql);
         var ddlBuilder = DatabaseProvider.PostgreSql.GetDdlBuilder();
         var expectedValue = "\"where\".\"@mtm_test\"";
