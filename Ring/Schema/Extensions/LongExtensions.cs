@@ -8,28 +8,28 @@ namespace Ring.Schema.Extensions;
 /// </summary>
 internal static class LongExtensions
 {
-    // cache of Ring.Schema.Enums.RelationType
-    private static readonly Dictionary<long, RelationType> RelationTypeEnumsId = GetRelationTypeId();
+    // relation types constants
+    private const long RelationTypeOtopId = (long)RelationType.Otop;
+    private const long RelationTypeOtmId = (long)RelationType.Otm;
+    private const long RelationTypeMtmId = (long)RelationType.Mtm;
+    private const long RelationTypeMtoId = (long)RelationType.Mto;
+    private const long RelationTypeOtofId = (long)RelationType.Otof;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static RelationType ToRelationType(this long flags) =>
-        RelationTypeEnumsId.ContainsKey(flags) ? RelationTypeEnumsId[flags] : RelationType.Undefined;
-
-    #region private methods
-
-    private static Dictionary<long, RelationType> GetRelationTypeId()
+    public static RelationType ToRelationType(this long flags) 
     {
-        var tableTypes = Enum.GetValues<RelationType>();
-        var result = new Dictionary<long, RelationType>(tableTypes.Length * 4); // multiply by four bucket size to reduce collisions
-        for (var i = 0; i < tableTypes.Length; ++i)
+        // avoid boxing operation
+        switch (flags)
         {
-            var tableType = tableTypes[i];
-            var tableTypeId = (long)tableType;
-            if (!result.ContainsKey(tableTypeId)) result.Add(tableTypeId, tableType);
+            case RelationTypeOtopId: return RelationType.Otop;
+            case RelationTypeOtmId: return RelationType.Otm;
+            case RelationTypeMtmId: return RelationType.Mtm;
+            case RelationTypeMtoId: return RelationType.Mto;
+            case RelationTypeOtofId: return RelationType.Otof;
+            default:
+                break;
         }
-        return result;
+        return RelationType.Undefined;
     }
-
-    #endregion
 
 }
