@@ -3,8 +3,8 @@
 internal enum TableType : byte
 {
 	Business = 1,
-    BusinessLog = 2,
-    Meta = 13,
+	BusinessLog = 2,
+	Meta = 13,
 	MetaId = 14,
 	Fake = 15,
 	Mtm = 16,
@@ -16,5 +16,5 @@ internal enum TableType : byte
 	TableSpaceCatalog = 35,
 	Logical = 37,
 	// 124 reserved for unit tests
-    Undefined = 127
+	Undefined = 127
 }
