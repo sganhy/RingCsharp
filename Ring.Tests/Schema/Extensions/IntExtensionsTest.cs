@@ -1,6 +1,7 @@
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
-using Ring.Tests.Schema.Extensions;
+
+namespace Ring.Tests.Schema.Extensions;
 
 public sealed class IntExtensionsTest : BaseExtensionsTest
 {
