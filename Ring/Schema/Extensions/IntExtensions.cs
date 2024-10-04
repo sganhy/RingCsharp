@@ -36,7 +36,14 @@ internal static class IntExtensions
     private const int TableTypeTableCatalogId = (int)TableType.TableCatalog;
     private const int TableTypeTableSpaceCatalogId = (int)TableType.TableSpaceCatalog;
     private const int TableTypeLogicalId = (int)TableType.Logical;
-    
+
+    // relation types constants
+    private const int RelationTypeOtopId = (int)RelationType.Otop;
+    private const int RelationTypeOtmId = (int)RelationType.Otm;
+    private const int RelationTypeMtmId = (int)RelationType.Mtm;
+    private const int RelationTypeMtoId = (int)RelationType.Mto;
+    private const int RelationTypeOtofId = (int)RelationType.Otof;
+
     #endregion 
 
     static IntExtensions()
@@ -94,8 +101,25 @@ internal static class IntExtensions
             case FieldTypeByteArrayId: return FieldType.ByteArray;
             case FieldTypeBooleanId: return FieldType.Boolean;
             case FieldTypeLongStringId: return FieldType.LongString;
+            default: break;
         }
         return FieldType.Undefined;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static RelationType ToRelationType(this int flags)
+    {
+        // avoid boxing operation
+        switch (flags)
+        {
+            case RelationTypeOtopId: return RelationType.Otop;
+            case RelationTypeOtmId: return RelationType.Otm;
+            case RelationTypeMtmId: return RelationType.Mtm;
+            case RelationTypeMtoId: return RelationType.Mto;
+            case RelationTypeOtofId: return RelationType.Otof;
+            default: break;
+        }
+        return RelationType.Undefined;
     }
 
     internal static ParameterType ToParameterType(this int id) =>
@@ -112,7 +136,7 @@ internal static class IntExtensions
     private static Dictionary<int, ParameterType> GetParameterTypeId()
     {
         var parameterTypes = Enum.GetValues<ParameterType>();
-        var result = new Dictionary<int, ParameterType>(parameterTypes.Length * 2); // multiply by four bucket size to reduce collisions
+        var result = new Dictionary<int, ParameterType>(parameterTypes.Length * 2); // multiply by two, the bucket size to reduce collisions
         for (var i = 0; i < parameterTypes.Length; ++i)
         {
             var parameterType = parameterTypes[i];
@@ -125,7 +149,7 @@ internal static class IntExtensions
     private static Dictionary<int, EntityType> GetEntityTypeId()
     {
         var entityTypes = Enum.GetValues<EntityType>();
-        var result = new Dictionary<int, EntityType>(entityTypes.Length * 2); // multiply by four bucket size to reduce collisions
+        var result = new Dictionary<int, EntityType>(entityTypes.Length * 4); // multiply by four, the bucket size to reduce collisions
         for (var i = 0; i < entityTypes.Length; ++i)
         {
             var entityType = entityTypes[i];

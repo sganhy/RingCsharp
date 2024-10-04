@@ -121,7 +121,7 @@ internal readonly struct Meta
 	#region relation methods  
     internal bool IsRelationNotNull() => ReadFlag(BitPositionRelationNotNull);
     internal bool HasRelationConstraint() => ReadFlag(BitPositionRelationConstraint);
-    internal RelationType GetRelationType() => ((Flags >> BitPositionFirstPositionRelType) & 127).ToRelationType();
+    internal RelationType GetRelationType() => ((int)((Flags>>BitPositionFirstPositionRelType) & 127)).ToRelationType();
     internal static long SetRelationdNotNull(long flags, bool value) => WriteFlag(flags, BitPositionRelationNotNull, value);
     internal static long SetRelationConstraint(long flags, bool value) => WriteFlag(flags, BitPositionRelationConstraint, value);
     internal static long SetRelationType(long flags, RelationType type)
@@ -258,10 +258,6 @@ internal readonly struct Meta
     /// <summary>
     /// Create a instance of table, relation assigned later by schema creation
     /// </summary>
-    /// <param name="meta">meta talbe</param>
-    /// <param name="tableItems">sorted by name, to improve performance</param>
-    /// <param name="tableType">table type is define by schema builder</param>
-    /// <param name="physicalName">physical name is define by provider</param>
     internal Table? ToTable(ArraySegment<Meta> tableItems, PhysicalType physicalType, string physicalName)
     {
         if (IsTable)
