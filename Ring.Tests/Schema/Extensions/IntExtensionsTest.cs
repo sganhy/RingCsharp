@@ -6,7 +6,7 @@ namespace Ring.Tests.Schema.Extensions;
 public sealed class IntExtensionsTest : BaseExtensionsTest
 {
     [Fact]
-    public void ToRelationType_ExistingEnumId_Enum()
+    public void ToRelationType_AllExistingEnumId_Enum()
     {
         // arrange 
         var relationTypes = Enum.GetValues<RelationType>();
@@ -30,7 +30,7 @@ public sealed class IntExtensionsTest : BaseExtensionsTest
     }
 
     [Fact]
-    public void ToFieldType_ExistingEnumId_Enum()
+    public void ToFieldType_AllExistingEnumId_Enum()
     {
         // arrange 
         var fieldTypes = Enum.GetValues<FieldType>();
@@ -54,7 +54,7 @@ public sealed class IntExtensionsTest : BaseExtensionsTest
     }
 
     [Fact]
-    public void ToTableType_ExistingEnumId_Enum()
+    public void ToTableType_AllExistingEnumId_Enum()
     {
         // arrange 
         var tableTypes = Enum.GetValues<TableType>();
@@ -76,5 +76,35 @@ public sealed class IntExtensionsTest : BaseExtensionsTest
         // assert 
         Assert.Equal(TableType.Undefined, tableTypeResult);
     }
+
+
+    [Fact]
+    public void ToEntityType_AllExistingEnumId_Enum()
+    {
+        // arrange 
+        var entityTypes = Enum.GetValues<EntityType>();
+        foreach (var tableType in entityTypes)
+        {
+            // act 
+            var entityTypeResult = IntExtensions.ToEntityType((int)tableType);
+            // assert 
+            Assert.Equal(tableType, entityTypeResult);
+        }
+    }
+
+    [Fact]
+    public void ToParameterType_AllExistingEnumId_Enum()
+    {
+        // arrange 
+        var parameterTypes = Enum.GetValues<ParameterType>();
+        foreach (var tableType in parameterTypes)
+        {
+            // act 
+            var parameterTypeResult = IntExtensions.ToParameterType((int)tableType);
+            // assert 
+            Assert.Equal(tableType, parameterTypeResult);
+        }
+    }
+
 
 }
