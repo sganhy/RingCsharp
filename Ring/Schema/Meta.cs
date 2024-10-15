@@ -84,18 +84,19 @@ internal readonly struct Meta
 
 	#region field methods  
 	internal FieldType GetFieldType() => (DataType & 127).ToFieldType();
-	internal bool IsFieldNotNull() => ReadFlag(BitPositionFieldNotNull);
-	internal int GetFieldSize() => (int)((Flags >> BitPositionFirstPositionSize) & (int.MaxValue));
+	internal bool IsFieldNotNull => ReadFlag(BitPositionFieldNotNull);
+    internal bool IsFieldCaseSensitive => ReadFlag(BitPositionFieldCaseSensitive);
+    internal bool IsFieldMultilingual => ReadFlag(BitPositionFieldMultilingual);
+    internal int GetFieldSize() => (int)((Flags >> BitPositionFirstPositionSize) & (int.MaxValue));
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal string? GetFieldDefaultValue()
 	{
 		if (!string.IsNullOrEmpty(Value)) return Value;
-		if (IsFieldNotNull()) return GetFieldType().GetDefaultValue();
+		if (IsFieldNotNull) return GetFieldType().GetDefaultValue();
 		return null;
 	}
-	internal bool IsFieldCaseSensitive() => ReadFlag(BitPositionFieldCaseSensitive);
-	internal bool IsFieldMultilingual() => ReadFlag(BitPositionFieldMultilingual);
+	
 	// data type 
 	internal static int SetFieldType(int dataType, FieldType fieldType)
 	{
@@ -117,8 +118,8 @@ internal readonly struct Meta
 	#endregion
 
 	#region relation methods  
-    internal bool IsRelationNotNull() => ReadFlag(BitPositionRelationNotNull);
-    internal bool HasRelationConstraint() => ReadFlag(BitPositionRelationConstraint);
+    internal bool IsRelationNotNull => ReadFlag(BitPositionRelationNotNull);
+    internal bool HasRelationConstraint => ReadFlag(BitPositionRelationConstraint);
     internal RelationType GetRelationType() => ((int)((Flags>>BitPositionFirstPositionRelType) & 127)).ToRelationType();
     internal static long SetRelationdNotNull(long flags, bool value) => WriteFlag(flags, BitPositionRelationNotNull, value);
     internal static long SetRelationConstraint(long flags, bool value) => WriteFlag(flags, BitPositionRelationConstraint, value);
@@ -134,8 +135,8 @@ internal readonly struct Meta
     #endregion
 
     #region index methods
-    internal bool IsIndexBitmap() => ReadFlag(BitPositionIndexBitmap);
-    internal bool IsIndexUnique() => ReadFlag(BitPositionIndexUnique);
+    internal bool IsIndexBitmap => ReadFlag(BitPositionIndexBitmap);
+    internal bool IsIndexUnique => ReadFlag(BitPositionIndexUnique);
     internal string[] GetIndexedColumns() => Value != null ? Value.Split(IndexColumnDelimiter) : Array.Empty<string>();
     // index value 
     internal static string? SetIndexedColumns(string[] columns) => string.Join(IndexColumnDelimiter, columns);
@@ -147,8 +148,8 @@ internal readonly struct Meta
     #region table methods  
     internal static long SetTableReadonly(long flags, bool readonlyValue) => WriteFlag(flags, BitPositionTableReadonly, readonlyValue);
     internal static long SetTableCached(long flags, bool cached) => WriteFlag(flags, BitPositionTableCached, cached);
-    internal bool IsTableReadonly() => ReadFlag(BitPositionTableReadonly);
-    internal bool IsTableCached() => ReadFlag(BitPositionTableCached);
+    internal bool IsTableReadonly => ReadFlag(BitPositionTableReadonly);
+    internal bool IsTableCached => ReadFlag(BitPositionTableCached);
     #endregion
 
     #region parameter methods
@@ -172,7 +173,7 @@ internal readonly struct Meta
         new(meta.Id, meta.Name, meta.Description, meta.Value, string.Empty,
              meta.DataType.ToTableType(), Array.Empty<Relation>(), Array.Empty<Field>(), Array.Empty<int>(), Array.Empty<IColumn>(),
              Array.Empty<Index>(), meta.ReferenceId, PhysicalType.Table, meta.IsEntityBaseline, meta.Active,
-             meta.IsTableCached(), meta.IsTableReadonly());
+             meta.IsTableCached, meta.IsTableReadonly);
 
     internal static Relation GetEmptyRelation(Meta meta, RelationType relationType, TableType toTableType) =>
         new(meta.Id, meta.Name, meta.Description, relationType,
@@ -189,11 +190,11 @@ internal readonly struct Meta
 
     internal Relation? ToRelation(Table to)
          => IsRelation ? new Relation(Id, Name, Description, GetRelationType(), to, -1,
-               IsRelationNotNull(), HasRelationConstraint(), IsEntityBaseline, Active) : null;
+               IsRelationNotNull, HasRelationConstraint, IsEntityBaseline, Active) : null;
     
     internal Field? ToField()
         => IsField ? new Field(Id, Name, Description, GetFieldType(), GetFieldSize(), GetFieldDefaultValue(), IsEntityBaseline,
-           IsFieldNotNull(), IsFieldCaseSensitive(), IsFieldMultilingual(), Active) : null;
+           IsFieldNotNull, IsFieldCaseSensitive, IsFieldMultilingual, Active) : null;
 
     internal static DbSchema? ToSchema(Meta[] schema, DatabaseProvider provider,
        SchemaType type = SchemaType.Static, SchemaLoadType loadType = SchemaLoadType.Full)
@@ -238,7 +239,7 @@ internal readonly struct Meta
                IsEntityBaseline, Active) : null;
     }
     internal Index? ToIndex() => IsIndex ? new Index(Id, Name, Description, GetIndexedColumns(),
-               IsIndexUnique(), IsIndexBitmap(), Active, IsEntityBaseline) : null;
+               IsIndexUnique, IsIndexBitmap, Active, IsEntityBaseline) : null;
 
     /// <summary>
     /// Create a instance of table, relation assigned later by schema creation
@@ -259,7 +260,7 @@ internal readonly struct Meta
 
             var result = new Table(Id, Name, Description, Value, physicalName,
                 tableType, relations, fields, new int[columnMapperSize], new IColumn[columnMapperSize], indexes, ReferenceId,
-                physicalType, IsEntityBaseline, Active, IsTableCached(), IsTableReadonly());
+                physicalType, IsEntityBaseline, Active, IsTableCached, IsTableReadonly);
 
             return result;
         }
