@@ -12,18 +12,18 @@ internal readonly struct Meta
 {
     #region constants
     
-    // entity type constants
-    private const byte TableId = (byte)EntityType.Table;
-    private const byte SchemaId = (byte)EntityType.Schema;
-    private const byte FieldId = (byte)EntityType.Field;
-    private const byte IndexId = (byte)EntityType.Index;
-    private const byte RelationId = (byte)EntityType.Relation;
-    private const byte SequenceId = (byte)EntityType.Sequence;
-    private const byte TablespaceId = (byte)EntityType.Tablespace;
-    private const byte ParameterId = (byte)EntityType.Parameter;
-    private const char IndexColumnDelimiter = ';';
+	// entity type constants
+	private const byte TableId = (byte)EntityType.Table;
+	private const byte SchemaId = (byte)EntityType.Schema;
+	private const byte FieldId = (byte)EntityType.Field;
+	private const byte IndexId = (byte)EntityType.Index;
+	private const byte RelationId = (byte)EntityType.Relation;
+	private const byte SequenceId = (byte)EntityType.Sequence;
+	private const byte TablespaceId = (byte)EntityType.Tablespace;
+	private const byte ParameterId = (byte)EntityType.Parameter;
+	private const char IndexColumnDelimiter = ';';
 
-    // flags bit positions
+	// flags bit positions
 	private const byte BitPositionFieldCaseSensitive = 2;
 	private const byte BitPositionFieldNotNull = 3;
 	private const byte BitPositionFieldMultilingual = 4;
@@ -68,7 +68,7 @@ internal readonly struct Meta
 		Active = active;
 	}
 
-    internal readonly bool IsTable => ObjectType == TableId;
+	internal readonly bool IsTable => ObjectType == TableId;
 	internal readonly bool IsSchema => ObjectType == SchemaId;
 	internal readonly bool IsField => ObjectType == FieldId;
 	internal readonly bool IsIndex => ObjectType == IndexId;
@@ -85,12 +85,12 @@ internal readonly struct Meta
 	#region field methods  
 	internal FieldType GetFieldType() => (DataType & 127).ToFieldType();
 	internal bool IsFieldNotNull => ReadFlag(BitPositionFieldNotNull);
-    internal bool IsFieldCaseSensitive => ReadFlag(BitPositionFieldCaseSensitive);
-    internal bool IsFieldMultilingual => ReadFlag(BitPositionFieldMultilingual);
-    internal int GetFieldSize() => (int)((Flags >> BitPositionFirstPositionSize) & (int.MaxValue));
+	internal bool IsFieldCaseSensitive => ReadFlag(BitPositionFieldCaseSensitive);
+	internal bool IsFieldMultilingual => ReadFlag(BitPositionFieldMultilingual);
+	internal int GetFieldSize() => (int)((Flags >> BitPositionFirstPositionSize) & (int.MaxValue));
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal string? GetFieldDefaultValue()
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal string? GetFieldDefaultValue()
 	{
 		if (!string.IsNullOrEmpty(Value)) return Value;
 		if (IsFieldNotNull) return GetFieldType().GetDefaultValue();
