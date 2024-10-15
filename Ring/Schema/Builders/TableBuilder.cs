@@ -105,7 +105,7 @@ internal sealed class TableBuilder
         // add @ prefix to logical name
         var metaTable = new Meta(0, (byte)EntityType.Table, 0, (int)TableType.Mtm, 0L, 
             SystemTablePrefix + partialTable.Name, null,null,true);
-        var metaRelation = new Meta(0, partialTable.Name, EntityType.Relation);
+        var metaRelation = new Meta(0, (byte)EntityType.Relation, 0, 0, 0L, partialTable.Name, null, null, true);
         // add index 
         var flags = 0L;
         var value = Meta.SetIndexedColumns(new string[] { partialTable.Name, partialTable.Name });
@@ -137,7 +137,7 @@ internal sealed class TableBuilder
         flags = Meta.SetEntityBaseline(flags, true);
         return new(id, (byte)EntityType.Table, 0, (int)tableType, flags, name, null, null, true);
     }
-    private static Meta GetSchema(int id, string name) => new(id, name, EntityType.Schema);
+    private static Meta GetSchema(int id, string name) => new(id, (byte)EntityType.Schema, 0, 0, 0L, name, null, null, true);
     private static Meta GetField(string name, FieldType fieldType, bool notNull)
         => GetField(name, fieldType, 0, notNull);
     private static Meta GetField(string name, FieldType fieldType, int fieldSize)

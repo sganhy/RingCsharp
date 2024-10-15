@@ -7,6 +7,19 @@ internal static class IntExtensions
 {
     #region constants
 
+    // entity type constants
+    private const int TableId = (int)EntityType.Table;
+    private const int FieldId = (int)EntityType.Field;
+    private const int RelationId = (int)EntityType.Relation;
+    private const int IndexId = (int)EntityType.Index;
+    private const int SchemaId = (int)EntityType.Schema;
+    private const int SequenceId = (int)EntityType.Sequence;
+    private const int LanguageId = (int)EntityType.Language;
+    private const int TablespaceId = (int)EntityType.Tablespace;
+    private const int ParameterId = (int)EntityType.Parameter;
+    private const int AliasId = (int)EntityType.Alias;
+    private const int ConstraintId = (int)EntityType.Constraint;
+
     // field types constants
     private const int FieldTypeLongId = (int)FieldType.Long;
     private const int FieldTypeIntId = (int)FieldType.Int;
@@ -53,8 +66,6 @@ internal static class IntExtensions
 
     // cache of Ring.Schema.Enums.ParameterType
     private static readonly Dictionary<int, ParameterType> ParameterTypeEnumsId = GetParameterTypeId();
-    // cache of Ring.Schema.Enums.FieldType
-    private static readonly Dictionary<int, EntityType> EntityTypeEnumsId = GetEntityTypeId();
 
     /// <summary>
     /// Casting from int to TableType
@@ -82,7 +93,7 @@ internal static class IntExtensions
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static FieldType ToFieldType(this int dataType) 
+    internal static FieldType ToFieldType(this int dataType)
     {
         // high performance ! 
         // avoid boxing operation - add unit test on all field type enum fields
@@ -107,7 +118,7 @@ internal static class IntExtensions
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static RelationType ToRelationType(this int flags)
+    internal static RelationType ToRelationType(this int flags)
     {
         // avoid boxing operation
         switch (flags)
@@ -122,14 +133,31 @@ internal static class IntExtensions
         return RelationType.Undefined;
     }
 
-    internal static ParameterType ToParameterType(this int id) =>
-        ParameterTypeEnumsId.ContainsKey(id)? ParameterTypeEnumsId[id] : ParameterType.Undefined;
-
     /// <summary>
     /// Low performance !
     /// </summary>
-    internal static EntityType ToEntityType(this int objectType) =>
-        EntityTypeEnumsId.ContainsKey(objectType) ? EntityTypeEnumsId[objectType] : EntityType.Undefined;
+    internal static ParameterType ToParameterType(this int id) =>
+        ParameterTypeEnumsId.ContainsKey(id) ? ParameterTypeEnumsId[id] : ParameterType.Undefined;
+
+    internal static EntityType ToEntityType(this int entityType) {
+        // avoid boxing operation
+        switch (entityType)
+        {
+            case TableId: return EntityType.Table;
+            case FieldId: return EntityType.Field;
+            case RelationId: return EntityType.Relation;
+            case IndexId: return EntityType.Index;
+            case SchemaId: return EntityType.Schema;
+            case SequenceId: return EntityType.Sequence;
+            case LanguageId: return EntityType.Language;
+            case TablespaceId: return EntityType.Tablespace;
+            case ParameterId: return EntityType.Parameter;
+            case AliasId: return EntityType.Alias;
+            case ConstraintId: return EntityType.Constraint;
+            default: break;
+        }
+        return EntityType.Undefined;
+    }
 
     #region private methods
 
@@ -142,19 +170,6 @@ internal static class IntExtensions
             var parameterType = parameterTypes[i];
             var parameterTypeId = (int)parameterType;
             if (!result.ContainsKey(parameterTypeId)) result.Add(parameterTypeId, parameterType);
-        }
-        return result;
-    }
-
-    private static Dictionary<int, EntityType> GetEntityTypeId()
-    {
-        var entityTypes = Enum.GetValues<EntityType>();
-        var result = new Dictionary<int, EntityType>(entityTypes.Length * 4); // multiply by four, the bucket size to reduce collisions
-        for (var i = 0; i < entityTypes.Length; ++i)
-        {
-            var entityType = entityTypes[i];
-            var entityTypeId = (int)entityType;
-            if (!result.ContainsKey(entityTypeId)) result.Add(entityTypeId, entityType);
         }
         return result;
     }

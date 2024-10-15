@@ -53,8 +53,6 @@ internal readonly struct Meta
 
 	internal Meta(string name) 
 		: this(default, default, default, default, default, name, null, default, true) { }
-	internal Meta(int id, string name, EntityType entityType) 
-		: this(id, (byte)entityType, default, default, default, name, null, default, true) { }
 	internal Meta(int id, Meta meta)
 		: this(id, meta.ObjectType, meta.ReferenceId, meta.DataType, meta.Flags, meta.Name, meta.Description, meta.Value, meta.Active) { }
 	internal Meta(int id, byte objectType, int referenceId, int dataType, long flags, string name, string? description, string? value, bool active)
@@ -80,7 +78,7 @@ internal readonly struct Meta
 	internal readonly bool IsParameter => ObjectType == ParameterId;
 
 	#region entity methods 
-	internal bool IsEntityBaseline() => ReadFlag(BitPositionEntityBaseline);
+	internal bool IsEntityBaseline => ReadFlag(BitPositionEntityBaseline);
 	internal static long SetEntityBaseline(long flags, bool value) => WriteFlag(flags, BitPositionEntityBaseline, value);
 	#endregion
 
@@ -165,28 +163,15 @@ internal readonly struct Meta
     internal bool IsTablespaceIndex() => ReadFlag(BitPositionTablespaceIndex);
     #endregion
 
-    internal bool ReadFlag(byte bitPosition) => ((Flags >> (bitPosition - 1)) & 1) > 0;
-    internal static long WriteFlag(long flags, byte bitPosition, bool value)
-    {
-        if (bitPosition < 65)
-        {
-            var mask = 1L;
-            mask <<= bitPosition - 1;
-            if (value) flags |= mask;
-            else flags &= ~mask;
-        }
-        return flags;
-    }
-
     internal static DbSchema GetEmptySchema(Meta meta, DatabaseProvider provider) =>
      new(meta.Id, meta.Name, meta.Description, Array.Empty<Parameter>(),
           Array.Empty<Lexicon>(), SchemaLoadType.Full, SchemaType.Undefined, Array.Empty<Sequence>(), Array.Empty<Table>(),
-          Array.Empty<Table>(), Array.Empty<TableSpace>(), provider, meta.Active, meta.IsEntityBaseline());
+          Array.Empty<Table>(), Array.Empty<TableSpace>(), provider, meta.Active, meta.IsEntityBaseline);
 
     internal static Table GetEmptyTable(Meta meta) =>
         new(meta.Id, meta.Name, meta.Description, meta.Value, string.Empty,
              meta.DataType.ToTableType(), Array.Empty<Relation>(), Array.Empty<Field>(), Array.Empty<int>(), Array.Empty<IColumn>(),
-             Array.Empty<Index>(), meta.ReferenceId, PhysicalType.Table, meta.IsEntityBaseline(), meta.Active,
+             Array.Empty<Index>(), meta.ReferenceId, PhysicalType.Table, meta.IsEntityBaseline, meta.Active,
              meta.IsTableCached(), meta.IsTableReadonly());
 
     internal static Relation GetEmptyRelation(Meta meta, RelationType relationType, TableType toTableType) =>
@@ -204,10 +189,10 @@ internal readonly struct Meta
 
     internal Relation? ToRelation(Table to)
          => IsRelation ? new Relation(Id, Name, Description, GetRelationType(), to, -1,
-               IsRelationNotNull(), HasRelationConstraint(), IsEntityBaseline(), Active) : null;
+               IsRelationNotNull(), HasRelationConstraint(), IsEntityBaseline, Active) : null;
     
     internal Field? ToField()
-        => IsField ? new Field(Id, Name, Description, GetFieldType(), GetFieldSize(), GetFieldDefaultValue(), IsEntityBaseline(),
+        => IsField ? new Field(Id, Name, Description, GetFieldType(), GetFieldSize(), GetFieldDefaultValue(), IsEntityBaseline,
            IsFieldNotNull(), IsFieldCaseSensitive(), IsFieldMultilingual(), Active) : null;
 
     internal static DbSchema? ToSchema(Meta[] schema, DatabaseProvider provider,
@@ -233,7 +218,7 @@ internal readonly struct Meta
 
             var result = new DbSchema(meta.Value.Id, metaValue.Name, metaValue.Description, parameters,
                 lexicons.ToArray(), loadType, type, sequences.ToArray(), tableById.ToArray(), tableByName.ToArray(), tableSpaces.ToArray(),
-                provider, metaValue.Active, metaValue.IsEntityBaseline());
+                provider, metaValue.Active, metaValue.IsEntityBaseline);
 
             result.LoadRelations(schema);
             result.LoadColumnMappers(); // load column mapper on tables
@@ -244,16 +229,16 @@ internal readonly struct Meta
         return null;
     }
     internal TableSpace? ToTableSpace() => IsTableSpace ? new TableSpace(Id, Name, Description, IsTablespaceIndex(), IsTablespaceTable(),
-                false, string.Empty, Value ?? string.Empty, Active, IsEntityBaseline()) : null;
+                false, string.Empty, Value ?? string.Empty, Active, IsEntityBaseline) : null;
     internal Parameter? ToParameter()
     {
         var parameterType = GetParameterType();
         return IsParameter ? new Parameter(Id, Name, Description, parameterType,
                GetParameterValueType(), GetParameterValue(), parameterType.GetDefaultValue(), ReferenceId,
-               IsEntityBaseline(), Active) : null;
+               IsEntityBaseline, Active) : null;
     }
     internal Index? ToIndex() => IsIndex ? new Index(Id, Name, Description, GetIndexedColumns(),
-               IsIndexUnique(), IsIndexBitmap(), Active, IsEntityBaseline()) : null;
+               IsIndexUnique(), IsIndexBitmap(), Active, IsEntityBaseline) : null;
 
     /// <summary>
     /// Create a instance of table, relation assigned later by schema creation
@@ -274,7 +259,7 @@ internal readonly struct Meta
 
             var result = new Table(Id, Name, Description, Value, physicalName,
                 tableType, relations, fields, new int[columnMapperSize], new IColumn[columnMapperSize], indexes, ReferenceId,
-                physicalType, IsEntityBaseline(), Active, IsTableCached(), IsTableReadonly());
+                physicalType, IsEntityBaseline, Active, IsTableCached(), IsTableReadonly());
 
             return result;
         }
@@ -283,6 +268,21 @@ internal readonly struct Meta
     #endregion
 
     #region private methods 
+
+    private static long WriteFlag(long flags, byte bitPosition, bool value)
+    {
+        if (bitPosition < 65)
+        {
+            var mask = 1L;
+            mask <<= bitPosition - 1;
+            if (value) flags |= mask;
+            else flags &= ~mask;
+        }
+        return flags;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private bool ReadFlag(byte bitPosition) => ((Flags >> (bitPosition - 1)) & 1) > 0;
 
     private static Index[] GetIndexes(ArraySegment<Meta> items)
     {

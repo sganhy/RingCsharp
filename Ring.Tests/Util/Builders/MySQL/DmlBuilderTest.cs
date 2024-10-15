@@ -70,7 +70,7 @@ public class DmlBuilderTest : BaseBuilderTest
         var schemaId = _fixture.Create<int>();
         var testTable= new Meta(_fixture.Create<int>(), (byte)EntityType.Table, schemaId, (int)TableType.Business
             , 0L, "Test", null, null, true);
-        var testSchema = new Meta(schemaId, "Test", EntityType.Schema);
+        var testSchema= new Meta(schemaId, (byte)EntityType.Schema, schemaId, 0, 0L, "Test", null, null, true);
         var schema = Meta.ToSchema(new Meta[] { testTable, testSchema }, DatabaseProvider.MySql);
         var expectedResult = "INSERT INTO test.t_test () VALUES ()";
         var tableTest = schema?.GetTable("Test");

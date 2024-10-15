@@ -5,10 +5,6 @@ using AutoFixture;
 using System.Reflection;
 using Ring.Schema;
 using Ring.Tests.Schema.Extensions;
-using System.ComponentModel.DataAnnotations;
-using System.Xml.Linq;
-using System;
-using Fare;
 
 namespace Ring.Tests.Schema;
 
@@ -38,13 +34,14 @@ public sealed class MetaTest : BaseExtensionsTest
         // arrange 
         var meta  = new Meta(_fixture.Create<int>(), (byte)_fixture.Create<EntityType>(), _fixture.Create<int>(), _fixture.Create<int>(), 
             flags, _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<bool>());
+        var readFlagMethod = meta.GetType().GetMethod("ReadFlag", BindingFlags.NonPublic | BindingFlags.Instance);
 
         // act 
-        var result = meta.ReadFlag(bitPosition);
-        var result08Position = meta.ReadFlag(8);
-        var result11Position = meta.ReadFlag(11);
-        var result28Position = meta.ReadFlag(28);
-        var result42Position = meta.ReadFlag(42);
+        var result = (bool?)readFlagMethod?.Invoke(meta,new object[] { bitPosition });
+        var result08Position = (bool?)readFlagMethod?.Invoke(meta, new object[] { (byte)8 });
+        var result11Position = (bool?)readFlagMethod?.Invoke(meta, new object[] { (byte)11 });
+        var result28Position = (bool?)readFlagMethod?.Invoke(meta, new object[] { (byte)28 });
+        var result42Position = (bool?)readFlagMethod?.Invoke(meta, new object[] { (byte)42 });
 
         // assert
         Assert.Equal(result, expectedValue);
@@ -65,14 +62,17 @@ public sealed class MetaTest : BaseExtensionsTest
         // arrange 
         var meta = new Meta(_fixture.Create<int>(), (byte)_fixture.Create<EntityType>(), _fixture.Create<int>(), _fixture.Create<int>(),
             flags, _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<bool>());
+        var readFlagMethod = meta.GetType().GetMethod("ReadFlag", BindingFlags.NonPublic | BindingFlags.Instance);
+        var writeFlagMethod = meta.GetType().GetMethod("WriteFlag", BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
 
         // act 
-        var currentFlag = meta.ReadFlag(bitPosition);
-        flags = Meta.WriteFlag(meta.Flags, bitPosition, false);
+#pragma warning disable CS8605,CS8602  
+        flags = (long)writeFlagMethod.Invoke(meta, new object[] { meta.Flags, bitPosition, false });
         meta = new Meta(_fixture.Create<int>(), (byte)_fixture.Create<EntityType>(), _fixture.Create<int>(), _fixture.Create<int>(),
             flags, _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<bool>());
-        var result = meta.ReadFlag(bitPosition);
-        var flagAfterWrite = Meta.WriteFlag(meta.Flags, bitPosition, false);
+        var result = (bool?)readFlagMethod?.Invoke(meta, new object[] { bitPosition });
+        var flagAfterWrite = (long)writeFlagMethod.Invoke(meta, new object[] { meta.Flags, bitPosition, false });
+#pragma warning restore CS8602, CS8605 
 
         // assert
         Assert.False(result);
@@ -129,7 +129,7 @@ public sealed class MetaTest : BaseExtensionsTest
             _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<string>(), false);
 
         // act 
-        var result = meta.IsEntityBaseline();
+        var result = meta.IsEntityBaseline;
 
         // assert
         Assert.Equal(expectedResult, result);

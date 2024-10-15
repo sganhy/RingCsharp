@@ -28,6 +28,7 @@ internal enum ParameterType
 	[ParameterType("@DbConnectionType", "DataBase connectioon type", FieldType.Int, EntityType.Schema)]
 	DbConnectionType = 22,
 
-	[ParameterType(FieldType.Undefined, EntityType.Undefined)]
+    // [int.MaxValue-3, int.MaxValue-1] reserved for unit tests
+    [ParameterType(FieldType.Undefined, EntityType.Undefined)]
 	Undefined = int.MaxValue
 }

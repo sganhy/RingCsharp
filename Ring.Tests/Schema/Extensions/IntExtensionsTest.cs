@@ -93,6 +93,16 @@ public sealed class IntExtensionsTest : BaseExtensionsTest
     }
 
     [Fact]
+    public void ToEntityType_125_Undefined()
+    {
+        // arrange 
+        // act 
+        var entityTypeResult = IntExtensions.ToEntityType(125);
+        // assert 
+        Assert.Equal(EntityType.Undefined, entityTypeResult);
+    }
+
+    [Fact]
     public void ToParameterType_AllExistingEnumId_Enum()
     {
         // arrange 
@@ -106,5 +116,14 @@ public sealed class IntExtensionsTest : BaseExtensionsTest
         }
     }
 
+    [Fact]
+    public void ToParameterType_2147483645_Undefined()
+    {
+        // arrange 
+        // act 
+        var parameterTypeResult = IntExtensions.ToParameterType(int.MaxValue-2);
+        // assert 
+        Assert.Equal(ParameterType.Undefined, parameterTypeResult);
+    }
 
 }
