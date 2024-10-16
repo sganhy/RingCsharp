@@ -10,7 +10,7 @@ namespace Ring.Schema;
 
 internal readonly struct Meta
 {
-    #region constants
+	#region constants
     
 	// entity type constants
 	private const byte TableId = (byte)EntityType.Table;
@@ -118,12 +118,12 @@ internal readonly struct Meta
 	#endregion
 
 	#region relation methods  
-    internal bool IsRelationNotNull => ReadFlag(BitPositionRelationNotNull);
-    internal bool HasRelationConstraint => ReadFlag(BitPositionRelationConstraint);
-    internal RelationType GetRelationType() => ((int)((Flags>>BitPositionFirstPositionRelType) & 127)).ToRelationType();
-    internal static long SetRelationdNotNull(long flags, bool value) => WriteFlag(flags, BitPositionRelationNotNull, value);
-    internal static long SetRelationConstraint(long flags, bool value) => WriteFlag(flags, BitPositionRelationConstraint, value);
-    internal static long SetRelationType(long flags, RelationType type)
+	internal bool IsRelationNotNull => ReadFlag(BitPositionRelationNotNull);
+	internal bool HasRelationConstraint => ReadFlag(BitPositionRelationConstraint);
+	internal RelationType GetRelationType() => ((int)((Flags>>BitPositionFirstPositionRelType) & 127)).ToRelationType();
+	internal static long SetRelationdNotNull(long flags, bool value) => WriteFlag(flags, BitPositionRelationNotNull, value);
+	internal static long SetRelationConstraint(long flags, bool value) => WriteFlag(flags, BitPositionRelationConstraint, value);
+	internal static long SetRelationType(long flags, RelationType type)
     {
         var temp = (long)type & 127L;
         // maxInt32 & size << ()
@@ -131,26 +131,26 @@ internal readonly struct Meta
         temp <<= BitPositionFirstPositionRelType;
         flags += temp;
         return flags;
-    }
-    #endregion
+	}
+	#endregion
 
-    #region index methods
-    internal bool IsIndexBitmap => ReadFlag(BitPositionIndexBitmap);
-    internal bool IsIndexUnique => ReadFlag(BitPositionIndexUnique);
-    internal string[] GetIndexedColumns() => Value != null ? Value.Split(IndexColumnDelimiter) : Array.Empty<string>();
-    // index value 
-    internal static string? SetIndexedColumns(string[] columns) => string.Join(IndexColumnDelimiter, columns);
-    // index flags 
-    internal static long SetIndexUnique(long flags, bool value) => WriteFlag(flags, BitPositionIndexUnique, value);
-    internal static long SetIndexBitmap(long flags, bool value) => WriteFlag(flags, BitPositionIndexBitmap, value);
-    #endregion
+	#region index methods
+	internal bool IsIndexBitmap => ReadFlag(BitPositionIndexBitmap);
+	internal bool IsIndexUnique => ReadFlag(BitPositionIndexUnique);
+	internal string[] GetIndexedColumns() => Value != null ? Value.Split(IndexColumnDelimiter) : Array.Empty<string>();
+	// index value 
+	internal static string? SetIndexedColumns(string[] columns) => string.Join(IndexColumnDelimiter, columns);
+	// index flags 
+	internal static long SetIndexUnique(long flags, bool value) => WriteFlag(flags, BitPositionIndexUnique, value);
+	internal static long SetIndexBitmap(long flags, bool value) => WriteFlag(flags, BitPositionIndexBitmap, value);
+	#endregion
 
-    #region table methods  
-    internal static long SetTableReadonly(long flags, bool readonlyValue) => WriteFlag(flags, BitPositionTableReadonly, readonlyValue);
-    internal static long SetTableCached(long flags, bool cached) => WriteFlag(flags, BitPositionTableCached, cached);
-    internal bool IsTableReadonly => ReadFlag(BitPositionTableReadonly);
-    internal bool IsTableCached => ReadFlag(BitPositionTableCached);
-    #endregion
+	#region table methods  
+	internal static long SetTableReadonly(long flags, bool readonlyValue) => WriteFlag(flags, BitPositionTableReadonly, readonlyValue);
+	internal static long SetTableCached(long flags, bool cached) => WriteFlag(flags, BitPositionTableCached, cached);
+	internal bool IsTableReadonly => ReadFlag(BitPositionTableReadonly);
+	internal bool IsTableCached => ReadFlag(BitPositionTableCached);
+	#endregion
 
     #region parameter methods
     internal FieldType GetParameterValueType() => (DataType & 127).ToFieldType();
