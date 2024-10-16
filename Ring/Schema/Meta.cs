@@ -124,13 +124,13 @@ internal readonly struct Meta
 	internal static long SetRelationdNotNull(long flags, bool value) => WriteFlag(flags, BitPositionRelationNotNull, value);
 	internal static long SetRelationConstraint(long flags, bool value) => WriteFlag(flags, BitPositionRelationConstraint, value);
 	internal static long SetRelationType(long flags, RelationType type)
-    {
-        var temp = (long)type & 127L;
-        // maxInt32 & size << ()
-        flags &= 0x7FFFFFFFFF00FFFF;
-        temp <<= BitPositionFirstPositionRelType;
-        flags += temp;
-        return flags;
+	{
+		var temp = (long)type & 127L;
+		// maxInt32 & size << ()
+		flags &= 0x7FFFFFFFFF00FFFF;
+		temp <<= BitPositionFirstPositionRelType;
+		flags += temp;
+		return flags;
 	}
 	#endregion
 
@@ -152,17 +152,17 @@ internal readonly struct Meta
 	internal bool IsTableCached => ReadFlag(BitPositionTableCached);
 	#endregion
 
-    #region parameter methods
-    internal FieldType GetParameterValueType() => (DataType & 127).ToFieldType();
-    internal ParameterType GetParameterType() => Id.ToParameterType();
-    internal string GetParameterValue() => Value ?? string.Empty;
-    internal static int SetParameterValueType(int dataType, FieldType valueType) => (dataType & 0xFFF8) + ((byte)valueType) & 127;
-    #endregion
+	#region parameter methods
+	internal FieldType GetParameterValueType() => (DataType & 127).ToFieldType();
+	internal ParameterType GetParameterType() => Id.ToParameterType();
+	internal string GetParameterValue() => Value ?? string.Empty;
+	internal static int SetParameterValueType(int dataType, FieldType valueType) => (dataType & 0xFFF8) + ((byte)valueType) & 127;
+	#endregion
 
-    #region tablespace methods  
-    internal bool IsTablespaceTable() => ReadFlag(BitPositionTablespaceTable);
-    internal bool IsTablespaceIndex() => ReadFlag(BitPositionTablespaceIndex);
-    #endregion
+	#region tablespace methods  
+	internal bool IsTablespaceTable() => ReadFlag(BitPositionTablespaceTable);
+	internal bool IsTablespaceIndex() => ReadFlag(BitPositionTablespaceIndex);
+	#endregion
 
     internal static DbSchema GetEmptySchema(Meta meta, DatabaseProvider provider) =>
      new(meta.Id, meta.Name, meta.Description, Array.Empty<Parameter>(),
