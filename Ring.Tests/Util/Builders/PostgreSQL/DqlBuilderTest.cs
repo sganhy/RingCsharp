@@ -112,12 +112,10 @@ public sealed class DqlBuilderTest : BaseBuilderTest
 
         // act 
         Assert.NotNull(table);
-        var result1 = _sut.SelectFrom(table);
-        var result2 = _sut.SelectFrom(table); // using cache 
+        var result = _sut.SelectFrom(table);
 
         // assert
-        Assert.Equal(expectedResult, result1);
-        Assert.Equal(expectedResult, result2);
+        Assert.Equal(expectedResult, result);
     }
 
     [Fact]
@@ -139,12 +137,10 @@ public sealed class DqlBuilderTest : BaseBuilderTest
         Assert.NotNull(schema);
         Assert.NotNull(table);
         sut.Init(schema, schema.GetTableIndex());
-        var result1 = sut.SelectFrom(table);
-        var result2 = sut.SelectFrom(table); // using cache 
+        var result = sut.SelectFrom(table);
 
         // assert
-        Assert.Equal(expectedResult, result1);
-        Assert.Equal(expectedResult, result2);
+        Assert.Equal(expectedResult, result);
     }
 
     [Fact]

@@ -139,12 +139,12 @@ internal static class SchemaExtensions
         var tableCount = schema.TablesById.Length;
         var mtmTaleDico = new HashSet<string>();
         var mtmIndex = 0;
+        var span = schema.TablesById;
         var result = new string[tableCount + mtmCount]; // reduce re-allocations
-        for (var i = 0; i < tableCount; ++i) result[i] = schema.TablesById[i].Name;
+        for (var i = 0; i < tableCount; ++i) result[i] = span[i].Name;
         for (var i = 0; i < tableCount; ++i)
-            for (var j = schema.TablesById[i].Relations.Length - 1; j >= 0; --j)
+            foreach (var relation in span[i].Relations)
             {
-                var relation = schema.TablesById[i].Relations[j];
                 if (relation.Type == RelationType.Mtm && !mtmTaleDico.Contains(relation.ToTable.Name))
                 {
                     result[mtmIndex + tableCount] = relation.ToTable.Name;
