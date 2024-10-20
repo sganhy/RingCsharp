@@ -2,7 +2,7 @@
 
 namespace Ring.Data.Extensions;
 
-internal static class OperationTypeExtensions
+internal static class OperatorExtensions
 {
     internal static string ToSql(this Operator GetStringOperation, DatabaseProvider provider, string? value)
     {

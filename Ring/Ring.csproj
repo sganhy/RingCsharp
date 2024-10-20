@@ -7,8 +7,8 @@
     <LangVersion>10.0</LangVersion>
     <Platforms>x64</Platforms>
     <AnalysisLevel>6.0-all</AnalysisLevel>
-    <AssemblyVersion>1.0.1.97</AssemblyVersion>
-    <FileVersion>1.0.1.97</FileVersion>
+    <AssemblyVersion>1.0.1.129</AssemblyVersion>
+    <FileVersion>1.0.1.129</FileVersion>
     <RepositoryType>https://github.com/sganhy/RingCsharp.git</RepositoryType>
     <RepositoryUrl>https://github.com/sganhy/RingCsharp</RepositoryUrl>
     <Description>Ring</Description>

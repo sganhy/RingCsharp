@@ -11,6 +11,7 @@ using System.Data;
 using Ring.PostgreSQL;
 using Ring.Schema;
 using System.Drawing;
+using Ring.Data.Models;
 
 
 (var tes1, var test2) =   GetTest();
@@ -25,8 +26,10 @@ var element = System.Runtime.InteropServices.Marshal.SizeOf(typeof(MetaTest));
 conn.Open();
 
 var sql = "select id, skill2book, \"name\", sub_name, is_group, category, armor_penality, trained_only, try_again from public.skill";
+var query = new RetrieveQuery();
+query.Page = new PageInfo(12,54);
 
-var result = conn.ExecuteSelect(sql, 9, new (string, byte)[0]);
+var result = conn.Execute(query);
 
 int oi = 0;
 ++oi;

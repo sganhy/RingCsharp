@@ -1,6 +1,6 @@
 ﻿namespace Ring.Data.Enums;
 
-internal enum BulkSaveQueryType : byte
+internal enum SaveQueryType : byte
 {
 	DeleteRecord = 0,
 	InsertRecord = 1,

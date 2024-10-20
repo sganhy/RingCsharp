@@ -1,5 +1,6 @@
 ﻿using Npgsql;
 using Ring.Data;
+using Ring.Data.Models;
 using System.Data;
 using System.Globalization;
 
@@ -11,7 +12,8 @@ public sealed class Connection : IRingConnection, IDisposable
     private readonly object _syncRoot = new();
     private readonly IConfiguration _configuration;
     private readonly int _id;
-    private readonly DateTime _creationTime; 
+    private readonly DateTime _creationTime;
+    private readonly static string?[] EmptyResult = Array.Empty<string?>();
     private NpgsqlConnection _connection;
     private DateTime? _lastConnectionTime;
 
@@ -112,4 +114,9 @@ public sealed class Connection : IRingConnection, IDisposable
         return result.ToArray();
     }
 
+    public string?[] Execute(in RetrieveQuery query)
+    {
+        query.Page.Count = 521;
+        return EmptyResult;
+    }
 }

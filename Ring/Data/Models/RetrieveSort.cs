@@ -2,13 +2,13 @@
 
 namespace Ring.Data.Models;
 
-internal sealed class BulkSort
+internal sealed class RetrieveSort
 {
     internal readonly Field Field;
     internal readonly SortOrder Type;
-    internal BulkSort? Next;
+    internal RetrieveSort? Next;
 
-    public BulkSort(Field field, SortOrder type)
+    public RetrieveSort(Field field, SortOrder type)
     {
         Field = field;
         Type = type;

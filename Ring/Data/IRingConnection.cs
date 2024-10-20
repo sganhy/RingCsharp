@@ -1,4 +1,5 @@
-﻿using System.Data;
+﻿using Ring.Data.Models;
+using System.Data;
 
 namespace Ring.Data;
 
@@ -14,5 +15,5 @@ public interface IRingConnection: IDisposable
     void Close();
     Task CloseAsync(CancellationToken cancellationToken);
     IRingConnection CreateNewInstance();
-    Span<string?> ExecuteSelect(string sql, int columnCount,Span<(string, byte)> parameters);
+    string?[] Execute(in RetrieveQuery query);
 }

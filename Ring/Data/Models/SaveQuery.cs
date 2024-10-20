@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Ring.Data.Models;
 
-public struct BulkSaveQuery
+public struct SaveQuery
 {
     internal readonly Table Table;
     internal readonly Table Type;

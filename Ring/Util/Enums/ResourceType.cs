@@ -11,6 +11,11 @@ internal enum ResourceType : short
 	SQLiteReservedKeyWord = 49,
 
     /// <summary>
+    /// Bulk alter/ retrieve / save ressources
+    /// </summary>
+    BulkAlterInvalidTableName = 71,
+
+    /// <summary>
     /// Record ressources
     /// </summary>
     RecordWrongRelationType = 99,

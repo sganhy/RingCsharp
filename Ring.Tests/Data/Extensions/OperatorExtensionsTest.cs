@@ -4,7 +4,7 @@ using Ring.Schema.Enums;
 
 namespace Ring.Tests.Data.Extensions;
 
-public sealed class OperationTypeExtensionsTest
+public sealed class OperatorExtensionsTest
 {
     [Theory]
     [InlineData(Operator.Equal,"=", DatabaseProvider.PostgreSql)]
@@ -16,7 +16,7 @@ public sealed class OperationTypeExtensionsTest
     {
         // arrange 
         // act 
-        var result = OperationTypeExtensions.ToSql(operatorType, databaseProvider, "TEST");
+        var result = OperatorExtensions.ToSql(operatorType, databaseProvider, "TEST");
 
         // assert
         Assert.Equal(result, expectedValue,true);

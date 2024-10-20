@@ -7,36 +7,40 @@ using System.Runtime.InteropServices;
 namespace Ring.Data.Models;
 
 #pragma warning disable CA1815 // Override equals and operator equals on value types
-public struct BulkRetrieveQuery
+public struct RetrieveQuery
 #pragma warning restore CA1815
 {
+    // 56 bytes
     internal readonly Table Table;
-    internal readonly BulkRetrieveQueryType Type;
+    internal readonly RetrieveQueryType Type;
     internal readonly IDqlBuilder Builder;
     internal readonly int ParentQueryId;
-    internal BulkSort? Sorts;
-    internal readonly List<BulkRetrieveFilter> Filters;
+    internal readonly List<RetrieveFilter> Filters;
+    internal RetrieveSort? Sorts;
+    internal PageInfo? Page;
 
     /// <summary>
     /// Ctor
     /// </summary>
-    public BulkRetrieveQuery()
+    public RetrieveQuery()
     {
         Table = Meta.GetEmptyTable(new Meta());
-        Type = BulkRetrieveQueryType.Undefined;
+        Type = RetrieveQueryType.Undefined;
         Builder = new Ring.Util.Builders.PostgreSQL.DqlBuilder();
         ParentQueryId = 0;
         Sorts = null;
-        Filters = new List<BulkRetrieveFilter>();
+        Filters = new List<RetrieveFilter>();
+        Page = null;
     }
-    internal BulkRetrieveQuery(Table table, BulkRetrieveQueryType type, IDqlBuilder builder, int parentQueryId)
+    internal RetrieveQuery(Table table, RetrieveQueryType type, IDqlBuilder builder, int parentQueryId)
     {
         Table = table;
         Type = type;
         Builder = builder;
         ParentQueryId = parentQueryId;
         Sorts = null;
-        Filters = new List<BulkRetrieveFilter>();
+        Filters = new List<RetrieveFilter>();
+        Page = null;
     }
 
 }

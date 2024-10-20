@@ -201,7 +201,7 @@ public sealed class RecordTest : BaseExtensionsTest
     }
     
     [Fact]
-    public void SetField_AnonymousValue_RecordUnkownRecordType()
+    public void SetField_AnonymousValue_ThrowRecordUnkownRecordType()
     {
         // arrange 
         var rcd = new Record();

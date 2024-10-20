@@ -2,7 +2,7 @@
 
 namespace Ring.Data.Models;
 
-internal struct BulkRetrieveFilter
+internal struct RetrieveFilter
 {
     internal readonly Field Field;
     internal readonly Operator Operator;
@@ -10,7 +10,7 @@ internal struct BulkRetrieveFilter
     internal string[]? Operands;
     internal readonly bool CaseSensitiveSearch; // case sensitif search ??
 
-    public BulkRetrieveFilter(Field field, Operator operation, bool caseSensitiveSearch=false)
+    public RetrieveFilter(Field field, Operator operation, bool caseSensitiveSearch=false)
     {
         Field = field;
         Operator = operation;

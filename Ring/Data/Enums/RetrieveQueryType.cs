@@ -1,6 +1,6 @@
 ﻿namespace Ring.Data.Enums;
 
-internal enum BulkRetrieveQueryType : byte
+internal enum RetrieveQueryType : byte
 {
 	SimpleQuery = 1,
 	SetRoot = 2,
