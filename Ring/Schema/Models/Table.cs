@@ -10,8 +10,8 @@ internal sealed class Table : BaseEntity
 	internal readonly Index[] Indexes;
 	internal readonly int[] RecordIndexes;    // [tableId] <= position into Fields & Relations sorted by Column.Id
 	internal readonly int RecordSize;
-	internal readonly IColumn[] Columns;      // columns 
-	internal readonly string PhysicalName;
+	internal readonly IColumn[] Columns;      // columns[n].id should be unique
+    internal readonly string PhysicalName;
 	internal readonly PhysicalType PhysicalType;
 	internal readonly int SchemaId;
 	internal readonly string? Subject;

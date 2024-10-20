@@ -1,11 +1,13 @@
 ﻿namespace Ring.Data;
 
+//Warnings: 
 // Enums should have zero value
 // Mark enums with FlagsAttribute
 // Enum Storage should be Int32
-#pragma warning disable CA1008, CA1027, CA1028
-public enum OperatorType : byte
-#pragma warning restore CA1028, CA1027, CA1008
+// Identifiers should not match keywords
+#pragma warning disable CA1716, CA1008, CA1027, CA1028
+public enum Operator : byte
+#pragma warning restore CA1028, CA1027, CA1008, CA1716
 {
     Equal = 1,
     NotEqual = 2,

@@ -7,11 +7,11 @@ namespace Ring.Tests.Data.Extensions;
 public sealed class OperationTypeExtensionsTest
 {
     [Theory]
-    [InlineData(OperatorType.Equal,"=", DatabaseProvider.PostgreSql)]
-    [InlineData(OperatorType.NotEqual, "<>", DatabaseProvider.PostgreSql)]
-    [InlineData(OperatorType.NotEqual, "!=", DatabaseProvider.Oracle)]
-    [InlineData(OperatorType.Like, " like ", DatabaseProvider.Oracle)]
-    internal void ToSql_InputTestValue_OnlyOneTrueFlag(OperatorType operatorType, string expectedValue, 
+    [InlineData(Operator.Equal,"=", DatabaseProvider.PostgreSql)]
+    [InlineData(Operator.NotEqual, "<>", DatabaseProvider.PostgreSql)]
+    [InlineData(Operator.NotEqual, "!=", DatabaseProvider.Oracle)]
+    [InlineData(Operator.Like, " like ", DatabaseProvider.Oracle)]
+    internal void ToSql_InputTestValue_OnlyOneTrueFlag(Operator operatorType, string expectedValue, 
         DatabaseProvider databaseProvider)
     {
         // arrange 

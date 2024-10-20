@@ -31,7 +31,7 @@ internal abstract class BaseSqlBuilder : ISqlBuilder
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #pragma warning disable CA1822 // Mark members as static
-    public void AppendFilter(int index, Field field, OperatorType operatorType, StringBuilder selectFrom)
+    public void AppendFilter(int index, Field field, Operator operatorType, StringBuilder selectFrom)
 #pragma warning restore CA1822 // Mark members as static
     {
         if (index == 0) selectFrom.Append(SqlWhere);

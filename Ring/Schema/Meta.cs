@@ -3,11 +3,13 @@ using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using Ring.Util.Builders;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using DbSchema = Ring.Schema.Models.Schema;
 using Index = Ring.Schema.Models.Index;
 
 namespace Ring.Schema;
 
+//[StructLayout(LayoutKind.Sequential)]
 internal readonly struct Meta
 {
 	#region constants
@@ -84,16 +86,16 @@ internal readonly struct Meta
 
 	#region field methods  
 	internal FieldType GetFieldType() => (DataType & 127).ToFieldType();
-	internal bool IsFieldNotNull => ReadFlag(BitPositionFieldNotNull);
-	internal bool IsFieldCaseSensitive => ReadFlag(BitPositionFieldCaseSensitive);
-	internal bool IsFieldMultilingual => ReadFlag(BitPositionFieldMultilingual);
+	internal bool IsFieldNotNull() => ReadFlag(BitPositionFieldNotNull);
+	internal bool IsFieldCaseSensitive() => ReadFlag(BitPositionFieldCaseSensitive);
+	internal bool IsFieldMultilingual() => ReadFlag(BitPositionFieldMultilingual);
 	internal int GetFieldSize() => (int)((Flags >> BitPositionFirstPositionSize) & (int.MaxValue));
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal string? GetFieldDefaultValue()
 	{
 		if (!string.IsNullOrEmpty(Value)) return Value;
-		if (IsFieldNotNull) return GetFieldType().GetDefaultValue();
+		if (IsFieldNotNull()) return GetFieldType().GetDefaultValue();
 		return null;
 	}
 	
@@ -194,7 +196,7 @@ internal readonly struct Meta
     
     internal Field? ToField()
         => IsField ? new Field(Id, Name, Description, GetFieldType(), GetFieldSize(), GetFieldDefaultValue(), IsEntityBaseline,
-           IsFieldNotNull, IsFieldCaseSensitive, IsFieldMultilingual, Active) : null;
+           IsFieldNotNull(), IsFieldCaseSensitive(), IsFieldMultilingual(), Active) : null;
 
     internal static DbSchema? ToSchema(Meta[] schema, DatabaseProvider provider,
        SchemaType type = SchemaType.Static, SchemaLoadType loadType = SchemaLoadType.Full)

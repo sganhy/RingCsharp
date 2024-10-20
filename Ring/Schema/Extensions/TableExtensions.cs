@@ -1,6 +1,8 @@
-﻿using Ring.Schema.Enums;
-using Ring.Schema.Models;
+﻿using System;
+using System.Xml.Linq;
 using System.Runtime.CompilerServices;
+using Ring.Schema.Enums;
+using Ring.Schema.Models;
 using Index = Ring.Schema.Models.Index;
 
 namespace Ring.Schema.Extensions;
@@ -39,10 +41,8 @@ internal static class TableExtensions
     /// <returns>Field object</returns>
     internal static Field? GetField(this Table table, string name, StringComparison comparisonType)
     {
-        // no need span here! not efficient method
-        for (var i = table.Fields.Length - 1; i >= 0; --i)
-            if (table.Fields[i] != null && string.Equals(name, table.Fields[i].Name, comparisonType))
-                return table.Fields[i];
+        var span = new ReadOnlySpan<Field>(table.Fields);
+        foreach (var field in span) if (string.Equals(name, field.Name, comparisonType)) return field;
         return null;
     }
 
@@ -55,7 +55,8 @@ internal static class TableExtensions
         var fieldCount=table.Fields.Length;
         while (i<fieldCount)
         {
-            if (table.Fields[i].Id == id) return table.Fields[i];
+            var field = table.Fields[i];
+            if (field.Id==id) return field;
             ++i;
         }
         return null;
@@ -117,7 +118,10 @@ internal static class TableExtensions
     internal static Relation? GetRelation(this Table table, string name, StringComparison comparisonType)
     {
         for (var i = table.Relations.Length - 1; i >= 0; --i)
-            if (string.Equals(name, table.Relations[i].Name, comparisonType)) return table.Relations[i];
+        {
+            var relation = table.Relations[i];
+            if (string.Equals(name, relation.Name, comparisonType)) return relation;
+        }
         return null;
     }
 
@@ -127,8 +131,8 @@ internal static class TableExtensions
     /// <returns>Relation object</returns>
     internal static Relation? GetRelation(this Table table, int id)
     {
-        for (var i=table.Relations.Length - 1; i >= 0; --i)
-            if (id==table.Relations[i].Id) return table.Relations[i];
+        var span = new ReadOnlySpan<Relation>(table.Relations);
+        foreach (var relation in span) if (id==relation.Id) return relation;
         return null;
     }
 
@@ -204,7 +208,6 @@ internal static class TableExtensions
         result.Add(meta);
         return result.ToArray(); 
     }
-
 
     /// <summary>
     /// Load Table.RecordIndexes[] & Table.Columns[]

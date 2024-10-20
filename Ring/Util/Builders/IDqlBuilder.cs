@@ -10,5 +10,5 @@ internal interface IDqlBuilder : ISqlBuilder
     void Init(DbSchema schema, string[] tableIndex);
     string SelectFrom(Table table);
     string Exists(Table table);
-    void AppendFilter(int index, Field field, OperatorType operatorType, StringBuilder selectFrom);
+    void AppendFilter(int index, Field field, Operator operatorType, StringBuilder selectFrom);
 }

@@ -13,7 +13,6 @@ using Ring.Schema;
 using System.Drawing;
 
 
-
 (var tes1, var test2) =   GetTest();
 
 var POSTGRE_CONN_STRING1 = "User ID=postgres; Password=sa;Host=localhost;Port=5432;Database=postgres; Pooling=false;";

@@ -14,5 +14,5 @@ public interface IRingConnection: IDisposable
     void Close();
     Task CloseAsync(CancellationToken cancellationToken);
     IRingConnection CreateNewInstance();
-    Span<string?> ExecuteSelect(string sql, int columnCount, Span<(string, byte)> parameters);
+    Span<string?> ExecuteSelect(string sql, int columnCount,Span<(string, byte)> parameters);
 }
