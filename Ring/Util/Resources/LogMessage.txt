@@ -67,7 +67,7 @@ File not found#File '{0}' not found.
 
 
 
-
+Column name '{0}' does not exist for object type '{1}'.
 Object type '{0}' does not exist.
 
 

@@ -30,23 +30,32 @@ internal sealed class BulkAlter
         AppendQuery(AlterQueryType.CreateTable, table);
     }
 
-    internal void AlterTableAdd(string tableName, string fieldName)
+    internal void AlterTableAdd(string tableName, string columnName)
     {
         var table = _schema.GetTable(tableName);
         if (table == null) ThrowInvalidObjectType(tableName);
-        AppendQuery(AlterQueryType.AlterTableAddColumn, table);
+        IColumn? field = table.GetField(columnName);
+        IColumn? relation = table.GetRelation(columnName);
+        if (field==null && relation==null) ThrowInvalidFieldName(tableName, columnName);
+        AppendQuery(AlterQueryType.AlterTableAddColumn, table, field??relation);
     }
 
     #region private methods
 
-    private void AppendQuery(AlterQueryType type, Table table) => _queries.Add(new AlterQuery(table, type, _schema.DdlBuiler));
-
+    private void AppendQuery(AlterQueryType type, Table table, IColumn? column=null) 
+        => _queries.Add(new AlterQuery(table, type, _schema.DdlBuiler, column));
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     [DoesNotReturn]
     private static void ThrowInvalidObjectType(string objectType) =>
         throw new ArgumentException(string.Format(DefaultCulture,
                   ResourceHelper.GetErrorMessage(ResourceType.BulkAlterInvalidTableName), objectType));
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    [DoesNotReturn]
+    private static void ThrowInvalidFieldName(string objectType, string fieldName) =>
+        throw new ArgumentException(string.Format(DefaultCulture,
+                  ResourceHelper.GetErrorMessage(ResourceType.BulkAlterInvalidFieldName), fieldName, objectType));
 
     #endregion 
 }

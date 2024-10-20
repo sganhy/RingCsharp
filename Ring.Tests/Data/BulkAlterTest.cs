@@ -30,4 +30,21 @@ public sealed class BulkAlterTest
         // assert
         Assert.Equal("Object type 'Test' does not exist.", ex.Message);
     }
+
+
+    [Fact]
+    public void AlterTableAdd_TestValue_ThrowInvalidFieldName()
+    {
+        // arrange 
+        var builder = new SchemaBuilder();
+        var schema = builder.GetMeta(_fixture.Create<string>(), DatabaseProvider.SqlServer, 20, _fixture.Create<string>());
+        var bulk = new BulkAlter(schema);
+
+        // act 
+        var ex = Assert.Throws<ArgumentException>(() => bulk.AlterTableAdd("@meta", "Test"));
+
+        // assert
+        Assert.Equal("Column name 'Test' does not exist for object type '@meta'.", ex.Message);
+    }
+
 }

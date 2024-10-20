@@ -13,6 +13,7 @@ internal enum ResourceType : short
     /// <summary>
     /// Bulk alter/ retrieve / save ressources
     /// </summary>
+    BulkAlterInvalidFieldName = 70,
     BulkAlterInvalidTableName = 71,
 
     /// <summary>
