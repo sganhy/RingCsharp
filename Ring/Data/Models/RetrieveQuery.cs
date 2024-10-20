@@ -2,14 +2,14 @@
 using Ring.Schema.Models;
 using Ring.Data.Enums;
 using Ring.Util.Builders;
-using System.Runtime.InteropServices;
 
 namespace Ring.Data.Models;
 
 #pragma warning disable CA1815 // Override equals and operator equals on value types
 public struct RetrieveQuery
-#pragma warning restore CA1815
 {
+#pragma warning restore CA1815
+
     // 56 bytes
     internal readonly Table Table;
     internal readonly RetrieveQueryType Type;
@@ -26,7 +26,7 @@ public struct RetrieveQuery
     {
         Table = Meta.GetEmptyTable(new Meta());
         Type = RetrieveQueryType.Undefined;
-        Builder = new Ring.Util.Builders.PostgreSQL.DqlBuilder();
+        Builder = new Util.Builders.PostgreSQL.DqlBuilder();
         ParentQueryId = 0;
         Sorts = null;
         Filters = new List<RetrieveFilter>();

@@ -13,6 +13,8 @@
     <RepositoryUrl>https://github.com/sganhy/RingCsharp</RepositoryUrl>
     <Description>Ring</Description>
     <Title>Ring</Title>
+    <Version>1.0.1-beta</Version>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <NoWarn>CA1307;CA1802;S3267</NoWarn>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <SignAssembly>True</SignAssembly>

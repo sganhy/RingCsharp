@@ -119,4 +119,9 @@ public sealed class Connection : IRingConnection, IDisposable
         query.Page.Count = 521;
         return EmptyResult;
     }
+
+    public int Execute(in AlterQuery query)
+    {
+        throw new NotImplementedException();
+    }
 }
