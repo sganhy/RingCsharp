@@ -1,17 +1,11 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
-using AutoFixture;
-using Npgsql;
-using Ring;
 using Ring.Console;
 using Ring.Data;
-using Ring.Schema.Builders;
-using Ring.Console.Extensions;
-using System.Data;
 using Ring.PostgreSQL;
-using Ring.Schema;
-using System.Drawing;
 using Ring.Data.Models;
+using Ring.Schema.Builders;
+using Ring.Schema.Extensions;
 
 
 (var tes1, var test2) =   GetTest();
@@ -25,11 +19,15 @@ var element = System.Runtime.InteropServices.Marshal.SizeOf(typeof(MetaTest));
 
 conn.Open();
 
-var sql = "select id, skill2book, \"name\", sub_name, is_group, category, armor_penality, trained_only, try_again from public.skill";
-var query = new RetrieveQuery();
-query.Page = new PageInfo(12,54);
+var builder = new SchemaBuilder();
+var schema = builder.GetMeta("public", Ring.Schema.Enums.DatabaseProvider.PostgreSql, 1, POSTGRE_CONN_STRING1);
+var metaTable = schema.GetTable("@meta");
+var metaIdTable = schema.GetTable("@meta_id");
+var query1 = new AlterQuery(metaTable, Ring.Data.Enums.AlterQueryType.CreateTable, schema.DdlBuiler);
+var query2 = new AlterQuery(metaIdTable, Ring.Data.Enums.AlterQueryType.CreateTable, schema.DdlBuiler);
 
-var result = conn.Execute(query);
+var result = conn.Execute(query1);
+result = conn.Execute(query2);
 
 int oi = 0;
 ++oi;

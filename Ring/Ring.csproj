@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-	<TargetFramework>net8.0</TargetFramework>
+	<TargetFrameworks>net8.0;net7.0</TargetFrameworks>
 	<ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <LangVersion>10.0</LangVersion>
@@ -61,6 +61,10 @@
     <InternalsVisibleTo Include="Ring.PostgreSQL" PublicKey="00240000048000009400000006020000002400005253413100040000010001002532ba33b2b62a5bcca4b4a6e962f7e2c0c8c62578fbdb542e9817244c11154592886f437a60a77ef3e68b25e18b126dff1fe209ec45a4aa005c675d8cbda5ca179491e6f301eb32ff272881a5478aca54de800cfdb7ee9b84fb91d5b20e4e2a9d29e36d30a84f61d13cd6ac077111432a22e09b1f2ebbde713804fe70bb8cb8" />
     <InternalsVisibleTo Include="Ring.Sqlite" PublicKey="00240000048000009400000006020000002400005253413100040000010001008182000142c89dc7602f6c6b5bf6a71dc8aeede223f28697ed7284e08ef8468d8a7ae4adca8b08aa1d777317818f7600da80567a4788925069b6a2b0e3025c6dc19a98eb9ea1482ea000eb173259a08c4cd234264a74fdcc400ef6dfc65335dba6faee0171c88375470ff25f02dce4ac5b0969fe9cc05ae12adfd947f727dceb" />
     <InternalsVisibleTo Include="Ring.SqlServer" PublicKey="002400000480000094000000060200000024000052534131000400000100010031501fd36b0b163374269f77a56863029c925d8519abb6fffb36ce9240945f7c853766deaa45415a6c6ff99d7ae4e8f802f5a4a53d71d0245a88408c921cbb6c9a793d4e8511cd800b86c0846220c5c093d3350503fbf9dce31dc4258c17215ee626bfb04acb0116c9e435d54ddce43ce6c9db14c3570ca543939fb0cd62f8c6" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.2" />
   </ItemGroup>
 
   <ItemGroup>

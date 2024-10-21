@@ -14,6 +14,8 @@
 		<RepositoryUrl>https://github.com/sganhy/RingCsharp</RepositoryUrl>
 		<Description>Ring.PostgreSQL</Description>
 		<Title>Ring.PostgreSQL</Title>
+		<Version>1.0.1-beta</Version>
+		<IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
 		<NoWarn>CA1307;CA1802</NoWarn>
 		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 		<SignAssembly>True</SignAssembly>
@@ -32,7 +34,7 @@
 	</PropertyGroup>
 	
 	<ItemGroup>
-	  <PackageReference Include="Npgsql" Version="8.0.4" />
+	  <PackageReference Include="Npgsql" Version="8.0.5" />
 	</ItemGroup>
 	
 	<ItemGroup>

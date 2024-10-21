@@ -1,5 +1,7 @@
-﻿using Npgsql;
+﻿using Microsoft.Extensions.Logging;
+using Npgsql;
 using Ring.Data;
+using Ring.Data.Enums;
 using Ring.Data.Models;
 using System.Data;
 using System.Globalization;
@@ -11,15 +13,19 @@ public sealed class Connection : IRingConnection, IDisposable
     private readonly static Dictionary<string, int> _connectionCounts = new(); // <connectionString.ToUpper(), connectionCount>
     private readonly object _syncRoot = new();
     private readonly IConfiguration _configuration;
+    private readonly ILogger _logger;
     private readonly int _id;
     private readonly DateTime _creationTime;
     private readonly static string?[] EmptyResult = Array.Empty<string?>();
+    private readonly bool _informationEnabled; // logging level information enabled ?
     private NpgsqlConnection _connection;
     private DateTime? _lastConnectionTime;
 
     public Connection(IConfiguration configuration)
     {
         _configuration = configuration;
+        _logger = _configuration.Logger;
+        _informationEnabled = _configuration.Logger.IsEnabled(Microsoft.Extensions.Logging.LogLevel.Information);
         _connection = new NpgsqlConnection(_configuration.ConnectionString);
         var key = _configuration.ConnectionString?.ToUpper(CultureInfo.InvariantCulture) ?? string.Empty;
         lock (_syncRoot)
@@ -102,7 +108,7 @@ public sealed class Connection : IRingConnection, IDisposable
                 }
             }
         }
-        finally 
+        finally
         {
             reader?.Close();
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
@@ -120,7 +126,49 @@ public sealed class Connection : IRingConnection, IDisposable
         return EmptyResult;
     }
 
+
     public int Execute(in AlterQuery query)
+    {
+        int returnValue;
+        string? sql = query.Type switch
+        {
+            AlterQueryType.CreateTable => query.Builder.Create(query.Table),
+            _ => null
+        };
+
+        if (sql==null)
+        {
+            LoggerExtensions.LogError(_logger, "Not supported AlterQueryType #{}", (int)query.Type);
+            return 0;
+        }
+
+        NpgsqlCommand? cmd = null;
+        try
+        {
+#pragma warning disable CA2100 // Review SQL queries for security vulnerabilities
+            cmd = new(sql, _connection);
+            cmd.ExecuteNonQuery();
+#pragma warning restore CA2100
+            returnValue = 1;
+        }
+        // Do not catch general exception types
+#pragma warning disable CA1031
+        catch (Exception ex)
+        {
+            LoggerExtensions.LogError(_logger, ex, sql);
+            returnValue = 0;
+        }
+#pragma warning restore CA1031 
+
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+        cmd.Connection = null;
+#pragma warning restore CS8602
+        cmd.Dispose();
+        
+        return returnValue;
+    }
+
+    public int Execute(in SaveQuery query)
     {
         throw new NotImplementedException();
     }
