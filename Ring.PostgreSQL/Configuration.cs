@@ -6,6 +6,6 @@ namespace Ring.PostgreSQL;
 public sealed class Configuration : IConfiguration
 {
     public string? ConnectionString { get ; set; }
-    public ILogger Logger { get; set; } = new DefaultLogger();
+    public ILoggerFactory LoggerFactory { get; set; } = new DefaultLoggerFactory();
     public ILogger? SqlLogger { get; set; }
 }

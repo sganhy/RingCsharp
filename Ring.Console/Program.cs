@@ -1,21 +1,45 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
-using Ring.Console;
 using Ring.Data;
-using Ring.PostgreSQL;
 using Ring.Data.Models;
+using Ring.PostgreSQL;
 using Ring.Schema.Builders;
 using Ring.Schema.Extensions;
+using Serilog;
+using Serilog.Events;
+using Serilog.Extensions.Logging;
+using Serilog.Formatting.Json;
 
 
-(var tes1, var test2) =   GetTest();
+var logger = new LoggerConfiguration()
+                          // add console as logging target
+                          .WriteTo.Console(outputTemplate: "{Timestamp:HH:mm:ss} [{Level}] [{SourceContext}] {Message}{NewLine}{Exception}")
+                          // add a logging target for warnings and higher severity  logs
+                          // structured in JSON format
+                          .WriteTo.File(new JsonFormatter(), "important.json")
+                          // add a rolling file for all logs
+                          .WriteTo.File("all.logs",
+                                        restrictedToMinimumLevel: LogEventLevel.Warning,
+                                        rollingInterval: RollingInterval.Day)
+                          // set default minimum level
+                          .MinimumLevel.Debug()
+                          .CreateLogger();
+
+var microsoftLoggerFactory = new SerilogLoggerFactory(logger);
+
+// logging
+Log.Verbose("Some verbose log");
+Log.Debug("Some debug log");
+Log.Information("Person1: {@person}");
+Log.Information("Car2: {@car}");
+Log.Warning("Warning accrued at {now}", DateTime.Now);
+Log.Error("Error accrued at {now}", DateTime.Now);
+Log.Fatal("Problem with car car accrued at {now}", DateTime.Now);
 
 var POSTGRE_CONN_STRING1 = "User ID=postgres; Password=sa;Host=localhost;Port=5432;Database=postgres; Pooling=false;";
 
-var configuration = new Configuration { ConnectionString = POSTGRE_CONN_STRING1 };
+var configuration = new Configuration { ConnectionString = POSTGRE_CONN_STRING1, LoggerFactory = microsoftLoggerFactory };
 IRingConnection conn = new Ring.PostgreSQL.Connection(configuration);
-
-var element = System.Runtime.InteropServices.Marshal.SizeOf(typeof(MetaTest));
 
 conn.Open();
 
@@ -28,66 +52,3 @@ var query2 = new AlterQuery(metaIdTable, Ring.Data.Enums.AlterQueryType.CreateTa
 
 var result = conn.Execute(query1);
 result = conn.Execute(query2);
-
-int oi = 0;
-++oi;
-
-
-/*
-
-
-
-{
-    var ee = new TestRecord(11, true);
-    ee.Id = 445;
-    Record rcd22 = new Record();
-    rcd22.ClearData();
-}
-
-var val = true;
-int ok = 19;
-float opop = 0.4f;
-TimeZone localZone = TimeZone.CurrentTimeZone;
-var myDateTime = DateTime.Now;
-//TableBuilder builder = new ();
-
-Initialize.Start(typeof(NpgsqlConnection), POSTGRE_CONN_STRING1);
-
-var connection = new NpgsqlConnection(POSTGRE_CONN_STRING1);
-connection.Open();
-using var command = new NpgsqlCommand();
-command.Connection = connection;
-//command.CommandText = "select table_schema, table_name from information_schema.tables";
-command.CommandText = "SELECT table_schema, table_name FROM information_schema.tables";
-command.CommandType = CommandType.Text;
-var param1 = new NpgsqlParameter("B1", NpgsqlTypes.NpgsqlDbType.Smallint);
-param1.NpgsqlValue = (short)3;
-command.Parameters.Add(param1);
-//command.Parameters.Clear();
-var dt = DateTime.Now;
-using var reader = command.ExecuteReader();
-int count = 0; 
-while (reader.Read())
-{
-    ++count;
-}
-var ts = DateTime.Now - dt;
-connection.Close();
-Console.WriteLine(ts);
-//char[] chars = new char[5];
-//var testu = new string(chars);
-//testu.SetBitValue(44);
-
-var rcd = new Record();
-
-int oi = 0;
-++oi;
-
-*/
-
-
-(int , string ) GetTest ()
-
-{
-    return (0, "Test");
-}

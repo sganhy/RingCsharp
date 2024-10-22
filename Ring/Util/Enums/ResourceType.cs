@@ -34,5 +34,12 @@ internal enum ResourceType : short
     UnRepresentableDateTime = 107,
 	NotSupportedInputDateTime = 108,
 	InvalidBase64String = 109,
-	FieldIsMandatory = 110
+	FieldIsMandatory = 110,
+
+    /// <summary>
+    /// IRingConnection messages 
+    /// </summary>
+    UnsuportedOperation = 200,
+    DdlException = 201,
+    DdlTableCreated = 202
 }

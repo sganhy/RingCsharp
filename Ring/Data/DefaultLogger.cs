@@ -2,12 +2,14 @@
 
 namespace Ring.Data;
 
-internal sealed class DefaultLogger : ILogger
+internal sealed class DefaultLoggerFactory : ILoggerFactory
 {
-    public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
-    public bool IsEnabled(LogLevel logLevel) => false;
-    public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+    public void AddProvider(ILoggerProvider provider) {}
+
+    public ILogger CreateLogger(string categoryName)
     {
-        // do nothing
+        return null;
     }
+
+    public void Dispose() {}
 }

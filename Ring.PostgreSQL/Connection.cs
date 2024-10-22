@@ -1,10 +1,11 @@
 ﻿using Microsoft.Extensions.Logging;
 using Npgsql;
 using Ring.Data;
-using Ring.Data.Enums;
+using Ring.Data.Extensions;
 using Ring.Data.Models;
 using System.Data;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 
 namespace Ring.PostgreSQL;
 
@@ -13,19 +14,30 @@ public sealed class Connection : IRingConnection, IDisposable
     private readonly static Dictionary<string, int> _connectionCounts = new(); // <connectionString.ToUpper(), connectionCount>
     private readonly object _syncRoot = new();
     private readonly IConfiguration _configuration;
-    private readonly ILogger _logger;
+    private readonly ILogger<Connection> _logger;
     private readonly int _id;
     private readonly DateTime _creationTime;
     private readonly static string?[] EmptyResult = Array.Empty<string?>();
     private readonly bool _informationEnabled; // logging level information enabled ?
     private NpgsqlConnection _connection;
-    private DateTime? _lastConnectionTime;
+    private DateTime _lastConnectionTime = DateTime.MinValue;
+    private DateTime _lastExecutionTime = DateTime.MinValue;
+
+
+    // ============ L O G S =======
+    // ddl: 
+    private static readonly Action<ILogger, string, Exception?> _logDdlException =
+                LoggerMessage.Define<string>(LogLevel.Error, new EventId(117, nameof(LogDdlException)), "{Message}");
+    private static readonly Action<ILogger, string, Exception?> _logUnsupportedOperation =
+                LoggerMessage.Define<string>(LogLevel.Error, new EventId(131, nameof(LogUnSupportedOperation)), "{Message}");
+    private static readonly Action<ILogger, string, Exception?> _logOperationPerformed =
+                LoggerMessage.Define<string>(LogLevel.Information, new EventId(1, nameof(LogOperationPerformed)), "{Message}");
 
     public Connection(IConfiguration configuration)
     {
         _configuration = configuration;
-        _logger = _configuration.Logger;
-        _informationEnabled = _configuration.Logger.IsEnabled(Microsoft.Extensions.Logging.LogLevel.Information);
+        _logger = _configuration.LoggerFactory.CreateLogger<Connection>();
+        _informationEnabled = _logger.IsEnabled(LogLevel.Information);
         _connection = new NpgsqlConnection(_configuration.ConnectionString);
         var key = _configuration.ConnectionString?.ToUpper(CultureInfo.InvariantCulture) ?? string.Empty;
         lock (_syncRoot)
@@ -35,7 +47,6 @@ public sealed class Connection : IRingConnection, IDisposable
             _id = _connectionCounts[key];
         }
         _creationTime = DateTime.Now;
-        _lastConnectionTime = null;
     }
 
     public string ConnectionString => _configuration.ConnectionString;
@@ -129,42 +140,36 @@ public sealed class Connection : IRingConnection, IDisposable
 
     public int Execute(in AlterQuery query)
     {
+        if (_informationEnabled) _lastExecutionTime = DateTime.Now;
         int returnValue;
-        string? sql = query.Type switch
-        {
-            AlterQueryType.CreateTable => query.Builder.Create(query.Table),
-            _ => null
-        };
-
+        var sql = query.ToSql();
         if (sql==null)
         {
-            LoggerExtensions.LogError(_logger, "Not supported AlterQueryType #{}", (int)query.Type);
+            LogUnSupportedOperation(query);
             return 0;
         }
 
-        NpgsqlCommand? cmd = null;
+        // Review SQL queries for security vulnerabilities
+        // Do not catch general exception types
+#pragma warning disable CA2100, CA1031
+        var cmd = new NpgsqlCommand(sql, _connection);
         try
         {
-#pragma warning disable CA2100 // Review SQL queries for security vulnerabilities
-            cmd = new(sql, _connection);
             cmd.ExecuteNonQuery();
-#pragma warning restore CA2100
             returnValue = 1;
         }
-        // Do not catch general exception types
-#pragma warning disable CA1031
         catch (Exception ex)
         {
-            LoggerExtensions.LogError(_logger, ex, sql);
+            LogDdlException(ex, query);
             returnValue = 0;
         }
-#pragma warning restore CA1031 
-
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
+#pragma warning restore CA1031, CA2100
         cmd.Connection = null;
-#pragma warning restore CS8602
         cmd.Dispose();
-        
+
+        if (returnValue>0 && _informationEnabled) 
+            LogOperationPerformed(query,DateTime.Now-_lastExecutionTime);
+
         return returnValue;
     }
 
@@ -172,4 +177,16 @@ public sealed class Connection : IRingConnection, IDisposable
     {
         throw new NotImplementedException();
     }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private void LogDdlException(Exception ex, AlterQuery query) => 
+        _logDdlException(_logger, query.ToLogMessage(ex), ex);
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private void LogUnSupportedOperation(AlterQuery query) =>
+        _logUnsupportedOperation(_logger, query.ToLogUnsupportedOperation(), null);
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private void LogOperationPerformed(AlterQuery query, TimeSpan ts) =>
+        _logOperationPerformed(_logger, query.ToLogOperationPerformed(ts), null);
 }
