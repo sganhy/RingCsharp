@@ -3,7 +3,6 @@ using Ring.Data.Models;
 using Ring.Util.Enums;
 using Ring.Util.Helpers;
 using System.Globalization;
-using System.Security.Cryptography;
 
 namespace Ring.Data.Extensions;
 
