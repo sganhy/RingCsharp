@@ -16,6 +16,8 @@
 		<Version>1.0.1-beta</Version>
 		<IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
 		<NoWarn>CA1307;CA1802;S3267</NoWarn>
+		<PublishTrimmed>True</PublishTrimmed>
+		<PublishAot>True</PublishAot>
 		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 		<SignAssembly>True</SignAssembly>
 		<AssemblyOriginatorKeyFile>Ring.snk</AssemblyOriginatorKeyFile>
@@ -65,9 +67,8 @@
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.2" />
-	</ItemGroup>
-
-	<ItemGroup>
+		<PackageReference Include="Microsoft.DotNet.ILCompiler" Version="8.0.10" />
+		<PackageReference Include="Microsoft.NET.ILLink.Tasks" Version="8.0.10" />
 		<PackageReference Update="SonarAnalyzer.CSharp" Version="9.32.0.97167">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

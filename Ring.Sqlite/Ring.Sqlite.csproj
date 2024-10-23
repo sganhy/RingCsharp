@@ -15,6 +15,8 @@
 	  <Description>Ring.Sqlite</Description>
 	  <Title>Ring.Sqlite</Title>
 	  <NoWarn>CA1307;CA1802</NoWarn>
+	  <PublishTrimmed>True</PublishTrimmed>
+	  <PublishAot>True</PublishAot>
 	  <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 	  <SignAssembly>True</SignAssembly>
 	  <AssemblyOriginatorKeyFile>Ring.Sqlite.snk</AssemblyOriginatorKeyFile>
@@ -36,10 +38,12 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <PackageReference Update="SonarAnalyzer.CSharp" Version="9.32.0.97167">
-	    <PrivateAssets>all</PrivateAssets>
-	    <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-	  </PackageReference>
+		<PackageReference Include="Microsoft.DotNet.ILCompiler" Version="8.0.10" />
+		<PackageReference Include="Microsoft.NET.ILLink.Tasks" Version="8.0.10" />
+		<PackageReference Update="SonarAnalyzer.CSharp" Version="9.32.0.97167">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
 	</ItemGroup>
 
 </Project>

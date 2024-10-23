@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-	  <TargetFramework>net8.0</TargetFramework>
+	  <TargetFrameworks>net8.0;net7.0</TargetFrameworks>
 	  <ImplicitUsings>enable</ImplicitUsings>
 	  <Nullable>enable</Nullable>
 	  <LangVersion>10.0</LangVersion>
@@ -21,25 +21,21 @@
   </PropertyGroup>
 	
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-      <IsAotCompatible>True</IsAotCompatible>
       <DebugType>full</DebugType>
       <WarningLevel>6</WarningLevel>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-      <IsAotCompatible>True</IsAotCompatible>
       <WarningLevel>6</WarningLevel>
   </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Ring\Ring.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Update="SonarAnalyzer.CSharp" Version="9.32.0.97167">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
+	<ItemGroup>
+		<PackageReference Include="Microsoft.NET.ILLink.Tasks" Version="8.0.10" />
+		<PackageReference Include="Microsoft.DotNet.ILCompiler" Version="8.0.10" />
+		<PackageReference Update="SonarAnalyzer.CSharp" Version="9.32.0.97167">
+		  <PrivateAssets>all</PrivateAssets>
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
   </ItemGroup>
 	
 </Project>
