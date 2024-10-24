@@ -23,7 +23,7 @@ internal static class AlterQueryExtensions
     }
 
     // error message for ddl exceptions
-    internal static string ToLogMessage(this AlterQuery query, Exception _)
+    internal static string ToErrorMessage(this AlterQuery query, Exception _)
     {
 #pragma warning disable IDE0066 // Convert switch statement to expression
         switch (query.Type)
@@ -63,8 +63,5 @@ internal static class AlterQueryExtensions
 
         return string.Empty;
     }
-
-
-
 
 }

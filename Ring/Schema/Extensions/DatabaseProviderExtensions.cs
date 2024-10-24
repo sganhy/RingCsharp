@@ -1,20 +1,19 @@
 ﻿using Ring.Schema.Enums;
-using Ring.Util.Extensions;
-using Ring.Util.Helpers;
 using System.Globalization;
 using Ring.Util.Builders;
 using Ring.Schema.Models;
+using Ring.Util.Helpers;
 
 namespace Ring.Schema.Extensions;
 
 internal static class DatabaseProviderExtensions
 {
     // reserved key words 
-    private readonly static string[] _oracleWords = ResourceHelper.GetReservedWords(DatabaseProvider.Oracle);
-    private readonly static string[] _postgreSqlWords = ResourceHelper.GetReservedWords(DatabaseProvider.PostgreSql);
-    private readonly static string[] _mySqlWords = ResourceHelper.GetReservedWords(DatabaseProvider.MySql);
-    private readonly static string[] _sqlServerWords = ResourceHelper.GetReservedWords(DatabaseProvider.SqlServer);
-    private readonly static string[] _sqlLiteWords = ResourceHelper.GetReservedWords(DatabaseProvider.SqlLite);
+    private readonly static HashSet<string> _oracleWords = ResourceHelper.GetReservedWords(DatabaseProvider.Oracle);
+    private readonly static HashSet<string> _postgreSqlWords = ResourceHelper.GetReservedWords(DatabaseProvider.PostgreSql);
+    private readonly static HashSet<string> _mySqlWords = ResourceHelper.GetReservedWords(DatabaseProvider.MySql);
+    private readonly static HashSet<string> _sqlServerWords = ResourceHelper.GetReservedWords(DatabaseProvider.SqlServer);
+    private readonly static HashSet<string> _sqlLiteWords = ResourceHelper.GetReservedWords(DatabaseProvider.SqlLite);
 
     // catalogs
     private static readonly Dictionary<EntityType, Catalog> _postreSqlCatalog = new() {
@@ -63,11 +62,11 @@ internal static class DatabaseProviderExtensions
     {
         switch (provider)
         {
-            case DatabaseProvider.Oracle: return _oracleWords.Exists(word.ToUpper(CultureInfo.InvariantCulture));
-            case DatabaseProvider.PostgreSql: return _postgreSqlWords.Exists(word.ToUpper(CultureInfo.InvariantCulture));
-            case DatabaseProvider.MySql: return _mySqlWords.Exists(word.ToUpper(CultureInfo.InvariantCulture));
-            case DatabaseProvider.SqlServer: return _sqlServerWords.Exists(word.ToUpper(CultureInfo.InvariantCulture));
-            case DatabaseProvider.SqlLite: return _sqlLiteWords.Exists(word.ToUpper(CultureInfo.InvariantCulture));
+            case DatabaseProvider.Oracle: return _oracleWords.Contains(word.ToUpper(CultureInfo.InvariantCulture));
+            case DatabaseProvider.PostgreSql: return _postgreSqlWords.Contains(word.ToUpper(CultureInfo.InvariantCulture));
+            case DatabaseProvider.MySql: return _mySqlWords.Contains(word.ToUpper(CultureInfo.InvariantCulture));
+            case DatabaseProvider.SqlServer: return _sqlServerWords.Contains(word.ToUpper(CultureInfo.InvariantCulture));
+            case DatabaseProvider.SqlLite: return _sqlLiteWords.Contains(word.ToUpper(CultureInfo.InvariantCulture));
         }
         throw new NotImplementedException();
     }

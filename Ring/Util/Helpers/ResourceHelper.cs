@@ -1,5 +1,6 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Util.Enums;
+using Ring.Util.Extensions;
 using System.Globalization;
 using System.IO.Compression;
 using System.Reflection;
@@ -13,8 +14,8 @@ internal sealed class ResourceHelper
     private static readonly string CompressedRessourceSuffix = @".gz";
     private static readonly string ResourceCrLf = @"|||";
     private static readonly string ResourceNameSpace = @"Ring.Util.Resources.";
+    private static readonly string MessageDescSplitChar = "#$";
     private static readonly char ResourceEndOfLine = '\n';
-    private static readonly char MessageDescSplitChar = '#';
     private static bool _ressourcesLoaded;
     private static string?[] _logMessages = Array.Empty<string?>();
     private static string?[] _logDescriptions = Array.Empty<string?>();
@@ -39,25 +40,29 @@ internal sealed class ResourceHelper
     internal string? GetDescription(LogType logType)
         => ((int)logType <= _logDescriptions.Length) ? _logDescriptions[(int)logType - 1] : string.Empty;
 
-
-    internal static string[] GetReservedWords(DatabaseProvider databaseProvider)
+    internal static HashSet<string> GetReservedWords(DatabaseProvider databaseProvider)
     {
 #pragma warning disable IDE0066 // Convert switch statement to expression
         switch (databaseProvider)
         {
             case DatabaseProvider.Oracle:
-                return GetCompressedResource(ResourceType.OracleReservedKeyWord.ToString() + CompressedRessourceSuffix, true, true);
+                return GetCompressedResource(ResourceType.OracleReservedKeyWord.ToString() 
+                    + CompressedRessourceSuffix, true).ToHashSet();
             case DatabaseProvider.PostgreSql:
-                return GetCompressedResource(ResourceType.PostgreSQLReservedKeyWord.ToString() + CompressedRessourceSuffix, true, true);
+                return GetCompressedResource(ResourceType.PostgreSQLReservedKeyWord.ToString()
+                    + CompressedRessourceSuffix, true).ToHashSet();
             case DatabaseProvider.MySql:
-                return GetCompressedResource(ResourceType.MySQLReservedKeyWord.ToString() + CompressedRessourceSuffix, true, true);
+                return GetCompressedResource(ResourceType.MySQLReservedKeyWord.ToString()
+                    + CompressedRessourceSuffix, true).ToHashSet();
             case DatabaseProvider.SqlServer:
-                return GetCompressedResource(ResourceType.SQLServerReservedKeyWord.ToString() + CompressedRessourceSuffix, true, true);
+                return GetCompressedResource(ResourceType.SQLServerReservedKeyWord.ToString()
+                    + CompressedRessourceSuffix, true).ToHashSet();
             case DatabaseProvider.SqlLite:
-                return GetCompressedResource(ResourceType.SQLiteReservedKeyWord.ToString() + CompressedRessourceSuffix, true, true);
+                return GetCompressedResource(ResourceType.SQLiteReservedKeyWord.ToString()
+                    + CompressedRessourceSuffix, true).ToHashSet();
         }
 #pragma warning restore IDE0066
-        return Array.Empty<string>();
+        return new HashSet<string>();
     }
 
 #pragma warning restore S2325 // Methods and properties that don't access instance data should be static
@@ -94,34 +99,31 @@ internal sealed class ResourceHelper
         if (resultMessage.Length > 0)
         {
             resultDesc = new string[resultMessage.Length];
-            for (var i = 0; i < resultMessage.Length; ++i)
+            for (var i=0; i < resultMessage.Length; ++i)
             {
-                if (string.IsNullOrEmpty(resultMessage[i]))
+                var message = resultMessage[i];
+                resultMessage[i] = null;
+                resultDesc[i] = null;
+                if (!string.IsNullOrEmpty(message))
                 {
-                    resultMessage[i] = null;
-                    resultDesc[i] = null;
-                }
-                else 
-                {
-                    var message = resultMessage[i];
-                    if (!string.IsNullOrEmpty(message))
+                    var index = message.IndexOf(MessageDescSplitChar, StringComparison.Ordinal);
+                    if (index >= 0)
                     {
-                        var index = message.IndexOf(MessageDescSplitChar);
-                        if (index >= 0)
-                        {
-                            resultMessage[i] = message.Substring(0, index);
-                            resultDesc[i] = message.Substring(index + 1);
-                            continue;
-                        }
+                        resultMessage[i] = message[..index];
+                        resultDesc[i] = message[(index + 1)..];
                     }
-                    resultDesc[i] = message;
+                    else
+                    {
+                        resultMessage[i] = message;
+                        resultDesc[i] = null;
+                    }
                 }
             }
         }
         return (resultMessage, resultDesc);
     }
 
-    private static string[] GetCompressedResource(string fileName, bool sortResult, bool toUpper)
+    private static string?[] GetCompressedResource(string fileName, bool toUpper)
     {
         var resource = ResourceNameSpace + fileName;
         var assembly = Assembly.GetExecutingAssembly();
@@ -135,8 +137,7 @@ internal sealed class ResourceHelper
                 reader.ReadToEnd().ToUpper(CultureInfo.InvariantCulture).Split(ResourceEndOfLine) :
                 reader.ReadToEnd().Split(ResourceEndOfLine);
         }
-        // sort result 
-        if (sortResult) Array.Sort(result);
+
         return result;
     }
 

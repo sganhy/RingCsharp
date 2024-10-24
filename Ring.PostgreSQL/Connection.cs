@@ -180,7 +180,7 @@ public sealed class Connection : IRingConnection, IDisposable
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     private void LogDdlException(Exception ex, AlterQuery query) => 
-        _logDdlException(_logger, query.ToLogMessage(ex), ex);
+        _logDdlException(_logger, query.ToErrorMessage(ex), ex);
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     private void LogUnSupportedOperation(AlterQuery query) =>
