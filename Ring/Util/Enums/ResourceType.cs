@@ -37,6 +37,12 @@ internal enum ResourceType : short
 	FieldIsMandatory = 110,
 
     /// <summary>
+    /// Sql operations description
+    /// </summary>
+    CreateTableNotOk = 151,
+    CreateTableOk = 152,
+
+    /// <summary>
     /// IRingConnection messages 
     /// </summary>
     UnsuportedOperation = 200,

@@ -148,6 +148,8 @@ Object type '{1}': '{0}' Field cannot be null!
 
 
 
+create table
+Table '{0}' created
 
 
 
@@ -195,8 +197,6 @@ Object type '{1}': '{0}' Field cannot be null!
 
 
 
-
-
-Operation AlterQueryType.{0} #{1} is not supported.
-Failed to create table '{0}'.
-Table '{0}' created | time={1}ms.
+Operation {0}.{1} #{2} is not supported.
+Failed to {0} '{1}'.
+{0} | time={1}ms.

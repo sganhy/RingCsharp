@@ -1,4 +1,6 @@
-﻿using Ring.Util.Enums;
+﻿using Ring.Data.Enums;
+using Ring.Data.Models;
+using Ring.Util.Enums;
 using Ring.Util.Extensions;
 using Ring.Util.Helpers;
 using Ring.Util.Models;
@@ -10,7 +12,13 @@ namespace Ring.Util.Builders;
 
 internal sealed class LogBuilder
 {
-    private readonly ResourceHelper _resourceHelper = new ();
+    private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
+    private static readonly Dictionary<AlterQueryType, ResourceType[]> AlterOperationMapping = new()
+        {{ AlterQueryType.CreateTable, new [] { ResourceType.CreateTableNotOk, ResourceType.CreateTableOk }}
+    };
+    private static readonly string DefaultExecutionTime = "0";
+    private readonly ResourceHelper _resourceHelper = new();
+
     internal long? JobId { set; get; }
     internal int SchemaId { set; get; }
 
@@ -29,7 +37,42 @@ internal sealed class LogBuilder
     [MethodImpl(MethodImplOptions.NoInlining)]
     internal Log GetDebug(LogType logType, params object?[] args) => GetInstance(logType, LogLevel.Debug, args);
 
+    internal string GetMessage(EventType eventType, int operationId, string operationType, string operationDescription)
+    {
+        switch (eventType)
+        {
+            case EventType.UnsupportedOperation: 
+                    return string.Format(DefaultCulture, _resourceHelper.GetMessage(ResourceType.UnsuportedOperation),
+                            operationType, operationDescription, operationId);
+        }
+        return string.Empty;
+    }
+
+    internal string GetMessage(AlterQuery query,EventType eventType, TimeSpan? executionTime=null)
+    {
+        switch (eventType)
+        {
+            case EventType.QueryPerformed:
+                {
+                    var displayMillisecond = executionTime.HasValue ? 
+                        Math.Max(executionTime.Value.TotalMilliseconds, 1).ToString(DefaultCulture) : DefaultExecutionTime;
+                    return string.Format(DefaultCulture, _resourceHelper.GetMessage(ResourceType.DdlException),
+                        string.Format(DefaultCulture, GetOperationDescription(query,1), query.Table.PhysicalName), 
+                        displayMillisecond);
+                }
+            case EventType.DdlException:
+                return string.Format(DefaultCulture, _resourceHelper.GetMessage(ResourceType.DdlException), 
+                    GetOperationDescription(query,0), query.Table.PhysicalName);
+        }
+        return string.Empty;
+    }
+
     #region private methods
+
+    private string GetOperationDescription(AlterQuery query, int statusId) 
+        => AlterOperationMapping.ContainsKey(query.Type) ? _resourceHelper.GetMessage(AlterOperationMapping[query.Type][statusId]) 
+            : string.Empty;
+
     [MethodImpl(MethodImplOptions.NoInlining)]
     private Log GetInstance(LogType logType, LogLevel level, params object?[] args)
     {

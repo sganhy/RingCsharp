@@ -1,37 +1,44 @@
-﻿using Microsoft.Extensions.Logging;
-using Npgsql;
+﻿using Npgsql;
+using Microsoft.Extensions.Logging;
 using Ring.Data;
 using Ring.Data.Extensions;
 using Ring.Data.Models;
+using Ring.Util.Builders;
 using System.Data;
 using System.Globalization;
 using System.Runtime.CompilerServices;
+using Ring.Util.Enums;
+using LogLevel = Microsoft.Extensions.Logging.LogLevel;
+using Ring.Data.Enums;
 
 namespace Ring.PostgreSQL;
 
 public sealed class Connection : IRingConnection, IDisposable
 {
     private readonly static Dictionary<string, int> _connectionCounts = new(); // <connectionString.ToUpper(), connectionCount>
-    private readonly object _syncRoot = new();
+    private readonly static string ActionMessage = "{Message}";
+    private readonly static LogBuilder _logBuilder = new();
+    private readonly static string?[] EmptyResult = Array.Empty<string?>();
+    private readonly static object _syncRoot = new();
+    private readonly static string _ddlOperationType = nameof(AlterQueryType);
+
     private readonly IConfiguration _configuration;
     private readonly ILogger<Connection> _logger;
     private readonly int _id;
     private readonly DateTime _creationTime;
-    private readonly static string?[] EmptyResult = Array.Empty<string?>();
     private readonly bool _informationEnabled; // logging level information enabled ?
     private NpgsqlConnection _connection;
     private DateTime _lastConnectionTime = DateTime.MinValue;
     private DateTime _lastExecutionTime = DateTime.MinValue;
 
-
     // ============ L O G S =======
     // ddl: 
     private static readonly Action<ILogger, string, Exception?> _logDdlException =
-                LoggerMessage.Define<string>(LogLevel.Error, new EventId(117, nameof(LogDdlException)), "{Message}");
-    private static readonly Action<ILogger, string, Exception?> _logUnsupportedOperation =
-                LoggerMessage.Define<string>(LogLevel.Error, new EventId(131, nameof(LogUnSupportedOperation)), "{Message}");
+                LoggerMessage.Define<string>(LogLevel.Error, new EventId((int)EventType.DdlException, 
+                    nameof(LogDdlException)), ActionMessage);
     private static readonly Action<ILogger, string, Exception?> _logOperationPerformed =
-                LoggerMessage.Define<string>(LogLevel.Information, new EventId(1, nameof(LogOperationPerformed)), "{Message}");
+                LoggerMessage.Define<string>(LogLevel.Information, new EventId((int)EventType.QueryPerformed, 
+                    nameof(LogOperationPerformed)), ActionMessage);
 
     public Connection(IConfiguration configuration)
     {
@@ -167,8 +174,7 @@ public sealed class Connection : IRingConnection, IDisposable
         cmd.Connection = null;
         cmd.Dispose();
 
-        if (returnValue>0 && _informationEnabled) 
-            LogOperationPerformed(query,DateTime.Now-_lastExecutionTime);
+        if (returnValue>0 && _informationEnabled) LogOperationPerformed(query,DateTime.Now-_lastExecutionTime);
 
         return returnValue;
     }
@@ -178,15 +184,16 @@ public sealed class Connection : IRingConnection, IDisposable
         throw new NotImplementedException();
     }
 
-    [MethodImpl(MethodImplOptions.NoInlining)]
     private void LogDdlException(Exception ex, AlterQuery query) => 
-        _logDdlException(_logger, query.ToErrorMessage(ex), ex);
+        _logDdlException(_logger, _logBuilder.GetMessage(query, EventType.DdlException), ex);
 
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    private void LogUnSupportedOperation(AlterQuery query) =>
-        _logUnsupportedOperation(_logger, query.ToLogUnsupportedOperation(), null);
+    private void LogUnSupportedOperation(AlterQuery query) {
+        var message = _logBuilder.GetMessage(EventType.UnsupportedOperation,
+            (int)query.Type, _ddlOperationType, query.Type.ToString());
+        var ex = new ArgumentException(message);
+        LogDdlException(ex, query);
+    }
 
-    [MethodImpl(MethodImplOptions.NoInlining)]
     private void LogOperationPerformed(AlterQuery query, TimeSpan ts) =>
-        _logOperationPerformed(_logger, query.ToLogOperationPerformed(ts), null);
+        _logOperationPerformed(_logger, string.Empty, null);
 }

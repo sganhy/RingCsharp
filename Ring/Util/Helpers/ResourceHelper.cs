@@ -32,13 +32,14 @@ internal sealed class ResourceHelper
         return message.Replace(ResourceCrLf, ResourceEndOfLine.ToString());
     }
 
-#pragma warning disable CA1822
-#pragma warning disable S2325 // Methods and properties that don't access instance data should be static
-
+#pragma warning disable CA1822 // Mark members as static
+    internal string GetMessage(ResourceType resourceType)
+        => ((int)resourceType <= _logMessages.Length) ? _logMessages[(int)resourceType - 1] : null;
     internal string? GetMessage(LogType logType)
-        => ((int)logType <= _logMessages.Length) ? _logMessages[(int)logType - 1] : string.Empty;
+        => ((int)logType <= _logMessages.Length) ? _logMessages[(int)logType - 1] : null;
     internal string? GetDescription(LogType logType)
-        => ((int)logType <= _logDescriptions.Length) ? _logDescriptions[(int)logType - 1] : string.Empty;
+        => ((int)logType <= _logDescriptions.Length) ? _logDescriptions[(int)logType - 1] : null;
+#pragma warning restore CA1822 // Mark members as static
 
     internal static HashSet<string> GetReservedWords(DatabaseProvider databaseProvider)
     {
@@ -64,9 +65,6 @@ internal sealed class ResourceHelper
 #pragma warning restore IDE0066
         return new HashSet<string>();
     }
-
-#pragma warning restore S2325 // Methods and properties that don't access instance data should be static
-#pragma warning restore CA1822
 
     #region private methods
 
