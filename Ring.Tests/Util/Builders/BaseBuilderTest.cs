@@ -68,8 +68,8 @@ public class BaseBuilderTest
         toTable.LoadColumnMapper();
         toTable.LoadRelationRecordIndex();
         // generate primary key 
-        var result = new Relation(id, relationName, _fixture.Create<string>(), relationType, toTable, -1, notNull, _fixture.Create<bool>(), 
-            _fixture.Create<bool>(), _fixture.Create<bool>());
+        var result = new Relation(id, relationName, _fixture.Create<string>(), relationType, toTable, -1, primaryKey.Type, 
+            notNull, _fixture.Create<bool>(), _fixture.Create<bool>(), _fixture.Create<bool>());
 
         return result;
     }

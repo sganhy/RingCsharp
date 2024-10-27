@@ -45,10 +45,9 @@ conn.Open();
 
 var builder = new SchemaBuilder();
 var schema = builder.GetMeta("public", Ring.Schema.Enums.DatabaseProvider.PostgreSql, 1, POSTGRE_CONN_STRING1);
-var metaTable = schema.GetTable("@meta");
-var metaIdTable = schema.GetTable("@meta_id");
-var query1 = new AlterQuery(metaTable, Ring.Data.Enums.AlterQueryType.Undefined, schema.DdlBuiler);
-var query2 = new AlterQuery(metaIdTable, Ring.Data.Enums.AlterQueryType.CreateTable, schema.DdlBuiler);
 
-var result = conn.Execute(query1);
-result = conn.Execute(query2);
+BulkAlter ba = new(schema);
+ba.CreateTable("@meta");
+ba.CreateTable("@meta_id");
+ba.Apply();
+

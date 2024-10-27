@@ -14,6 +14,7 @@ public readonly struct AlterQuery
     internal readonly AlterQueryType Type;
     internal readonly IDdlBuilder Builder;
     internal readonly IColumn? Column;
+    internal readonly Constraint? Constraint;
 
     /// <summary>
     /// Ctor
@@ -24,13 +25,15 @@ public readonly struct AlterQuery
         Type = AlterQueryType.Undefined;
         Builder = new Util.Builders.PostgreSQL.DdlBuilder();
         Column = null;
+        Constraint = null;
     }
 
-    internal AlterQuery(Table table, AlterQueryType type, IDdlBuilder builder, IColumn? column=null)
+    internal AlterQuery(Table table, AlterQueryType type, IDdlBuilder builder, IColumn? column, Constraint? constraint)
     {
         Table = table;
         Type = type;
         Builder = builder;
         Column = column;
+        Constraint = constraint;
     }
 }

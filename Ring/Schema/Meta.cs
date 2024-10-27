@@ -179,7 +179,7 @@ internal readonly struct Meta
     internal static Relation GetEmptyRelation(Meta meta, RelationType relationType, TableType toTableType) =>
         new(meta.Id, meta.Name, meta.Description, relationType,
             GetEmptyTable(new Meta(0, (byte)EntityType.Table, 0, (int)toTableType, 0L,
-                 meta.Name,null, null, false)), -1, false, false, true, true);
+                 meta.Name,null, null, false)), -1, FieldType.Undefined, false, false, true, true);
 
     internal static Field GetEmptyField(Meta meta, FieldType fieldType) =>
         new(meta.Id, meta.Name, meta.Description, fieldType, 0, null, true, false,
@@ -190,8 +190,17 @@ internal readonly struct Meta
     #region convertors 
 
     internal Relation? ToRelation(Table to)
-         => IsRelation ? new Relation(Id, Name, Description, GetRelationType(), to, -1,
-               IsRelationNotNull, HasRelationConstraint, IsEntityBaseline, Active) : null;
+    {
+        if (IsRelation)
+        {
+            var fieldType = FieldType.Undefined;
+            if (to.Type == TableType.Business || to.Type == TableType.Lexicon)
+                fieldType = to.Fields[to.RecordIndexes[0]].Type;
+            return new Relation(Id, Name, Description, GetRelationType(), to, -1, fieldType,
+               IsRelationNotNull, HasRelationConstraint, IsEntityBaseline, Active);
+        }
+        return null;
+    }
     
     internal Field? ToField()
         => IsField ? new Field(Id, Name, Description, GetFieldType(), GetFieldSize(), GetFieldDefaultValue(), IsEntityBaseline,

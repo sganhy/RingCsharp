@@ -4,11 +4,14 @@ using System.Runtime.CompilerServices;
 using Ring.Schema.Enums;
 using Ring.Schema.Models;
 using Index = Ring.Schema.Models.Index;
+using System.Collections.Generic;
+using System.Reflection.Metadata.Ecma335;
 
 namespace Ring.Schema.Extensions;
 
 internal static class TableExtensions
 {
+
     /// <summary>
     /// Get field by name, case sensitive search ==> O(log n) complexity
     /// </summary>
@@ -19,7 +22,7 @@ internal static class TableExtensions
     internal static Field? GetField(this Table table, string name)
     {
         var span = new ReadOnlySpan<Field>(table.Fields);
-        int indexerLeft = 0, indexerRigth = span.Length-1, indexerMiddle, indexerCompare;
+        int indexerLeft = 0, indexerRigth = span.Length - 1, indexerMiddle, indexerCompare;
         while (indexerLeft <= indexerRigth)
         {
             indexerMiddle = indexerLeft + indexerRigth;
@@ -51,12 +54,12 @@ internal static class TableExtensions
     /// </summary>
     internal static Field? GetField(this Table table, int id)
     {
-        var i=0;
-        var fieldCount=table.Fields.Length;
-        while (i<fieldCount)
+        var i = 0;
+        var fieldCount = table.Fields.Length;
+        while (i < fieldCount)
         {
             var field = table.Fields[i];
-            if (field.Id==id) return field;
+            if (field.Id == id) return field;
             ++i;
         }
         return null;
@@ -101,8 +104,8 @@ internal static class TableExtensions
             indexerMiddle = indexerLeft + indexerRigth;
             indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
             indexerCompare = string.CompareOrdinal(name, span[indexerMiddle].Name);
-            if (indexerCompare==0) return span[indexerMiddle];
-            if (indexerCompare>0) indexerLeft = indexerMiddle + 1;
+            if (indexerCompare == 0) return span[indexerMiddle];
+            if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
             else indexerRigth = indexerMiddle - 1;
         }
         return null;
@@ -132,7 +135,7 @@ internal static class TableExtensions
     internal static Relation? GetRelation(this Table table, int id)
     {
         var span = new ReadOnlySpan<Relation>(table.Relations);
-        foreach (var relation in span) if (id==relation.Id) return relation;
+        foreach (var relation in span) if (id == relation.Id) return relation;
         return null;
     }
 
@@ -178,20 +181,22 @@ internal static class TableExtensions
         return null;
     }
 
-    internal static Field? GetPrimaryKey(this Table table) =>
-        (table.Fields.Length > 0 && (table.Type == TableType.Business || table.Type == TableType.Lexicon)) ?
-        table.Fields[table.RecordIndexes[0]] : null;
-
-    /// <summary>
-    /// Get first unique index
-    /// </summary>
-    internal static Index? GetFirstKey(this Table table)
+    internal static List<IColumn> GetPrimaryKey(this Table table)
     {
-        if (table.Indexes != null && table.Indexes.Length > 0)
-            for (var i = 0; i < table.Indexes.Length; ++i)
-                if (table.Indexes[i].Unique) return table.Indexes[i];
-        return null;
+        var result = new List<IColumn>();
+        if (table.Type == TableType.Business || table.Type == TableType.Lexicon) result.Add(table.Fields[table.RecordIndexes[0]]);
+        else 
+        {
+#pragma warning disable CS8604 // Possible null reference argument.
+            var index = table.GetFirstUniqueIndex();
+            if (index != null) 
+                foreach(string column in index.Columns)
+                    result.Add(TableExtensions.GetColumn(table, column));
+#pragma warning restore CS8604
+        }
+        return result;
     }
+
 
     internal static Meta[] ToMeta(this Table table, int schemaId) {
         var result = new List<Meta>(table.Fields.Length+table.Relations.Length+table.Indexes.Length+1);
@@ -274,5 +279,26 @@ internal static class TableExtensions
             ++i;
         }
     }
-    
+
+    #region private methods 
+
+    /// <summary>
+    /// Get first unique index
+    /// </summary>
+    private static Index? GetFirstUniqueIndex(this Table table)
+    {
+        if (table.Indexes.Length > 0)
+            for (var i = 0; i < table.Indexes.Length; ++i)
+                if (table.Indexes[i].Unique) return table.Indexes[i];
+        return null;
+    }
+
+    private static IColumn GetColumn(this Table table, string name)
+    {
+        var col = table.GetField(name??string.Empty);
+        if (col != null) return col;
+        return table.GetRelation(name??string.Empty);
+    }
+
+    #endregion 
 }

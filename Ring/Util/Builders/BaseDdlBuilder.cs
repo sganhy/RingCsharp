@@ -5,6 +5,8 @@ using System.Text;
 using Index = Ring.Schema.Models.Index;
 using DbSchema = Ring.Schema.Models.Schema;
 using System.Runtime.CompilerServices;
+using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.Metrics;
 
 namespace Ring.Util.Builders;
 
@@ -18,6 +20,8 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
     protected static readonly string DdlSequence = @"SEQUENCE";
     protected static readonly string DdlTableSpace = @"TABLESPACE ";
     protected static readonly string DdlSchema = @"SCHEMA ";
+    protected static readonly string DdlPrimaryKey = @"PRIMARY KEY ";
+
 
     // options
     protected static readonly string DdlUnique = @"UNIQUE";
@@ -39,6 +43,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 
     // prefixes 
     protected static readonly string DefaultTablePrefix = @"t_";
+    protected static readonly string DefaultPrimaryKeyPrefix = @"pk_";
 
     // conventions
     protected readonly static char SpecialEntityPrefix = '@';
@@ -173,7 +178,22 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
         }
         return result.ToString();
     }
-  
+
+    public string GetPhysicalName(Constraint constraint)
+    {
+        var result = new StringBuilder(31); // constraint name max length(30)
+        switch (constraint.Type)
+        {
+            case ConstraintType.PrimaryKey:
+                result.Append(DefaultPrimaryKeyPrefix);
+                // apply short version of prefix 'pk'
+                if (constraint.ToTable.Name.Length > 27) result.Length--;
+                result.Append(constraint.ToTable.Name);
+                break;
+        }
+        return result.ToString();
+    }
+
     protected abstract string MtmPrefix { get; }
     protected string GetDataType(Field field) =>
             GetDataType(DataType[field.Type], field.Type, field.Size, VarcharMaxSize,
@@ -181,8 +201,8 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
                 StringCollateInformation : null);
     protected string GetDataType(Relation relation)
     {
-        var pk = relation.ToTable.GetPrimaryKey();
-        if (pk != null) return GetDataType(DataType[pk.Type], FieldType.Long, 0, 0);
+        if (relation.FieldType != FieldType.Undefined) 
+            return GetDataType(DataType[relation.FieldType], FieldType.Long, 0, 0);
         return string.Empty;
     }
     protected abstract string GetPhysicalName(TableSpace tablespace);
@@ -200,7 +220,25 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
     }
     public string Create(Constraint constraint, TableSpace? tablespace = null)
     {
-        throw new NotImplementedException();
+        // ALTER TABLE Persons ADD PRIMARY KEY(ID);
+        var result = new StringBuilder();
+        result.Append(DdlAlter)
+                    .Append(DdlTable)
+                    .Append(constraint.ToTable.PhysicalName);
+        switch (constraint.Type)
+        {
+             case ConstraintType.PrimaryKey:
+                result.Append(SqlSpace)
+                      .Append(DdlAdd)
+                      .Append(DdlPrimaryKey)
+                      .Append(String.Join(",", constraint.ToTable.GetPrimaryKey().ConvertAll<string>(delegate (IColumn column)
+                      {
+                          return column.Name;
+                      })
+                      .ToArray()));
+             break; 
+        }
+        return result.ToString();
     }
     public string Create(DbSchema schema)
     {
@@ -238,6 +276,8 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
         }
         return result.ToString();
     }
+
+
 
     #region private methods 
     private static string GetSizeInfo(int size) => $"({size})";
@@ -282,7 +322,9 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
         return result.ToString();
     }
 
-    #endregion 
+    
+
+    #endregion
 
 }
 

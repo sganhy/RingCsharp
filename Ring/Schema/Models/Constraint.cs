@@ -4,16 +4,14 @@ namespace Ring.Schema.Models;
 
 internal sealed class Constraint
 {
-    internal readonly ConstraintType Type;
-    internal readonly Table ToTable;
-    internal readonly Field ToField;
-    internal readonly Relation ToRelation;
+	internal readonly ConstraintType Type;
+	internal readonly Table ToTable;
+	internal readonly List<IColumn> columns;
 
-    internal Constraint(ConstraintType type, Table table, Field field, Relation relation)
-    {
-        Type = type;
-        ToField = field; 
-        ToTable = table;
-        ToRelation = relation;
+	internal Constraint(ConstraintType type, Table table)
+	{
+		Type = type;
+		ToTable = table;
+		columns = new List<IColumn>();
     }
 }

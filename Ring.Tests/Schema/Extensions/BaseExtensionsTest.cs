@@ -55,7 +55,7 @@ public abstract class BaseExtensionsTest
             _fixture.Create<string>(), TableType.Business, Array.Empty<Relation>(), Array.Empty<Field>(), Array.Empty<int>(), Array.Empty<IColumn>(),
             Array.Empty<Index>(), 12, PhysicalType.Table, true, true, true, true);
         var result = new Relation(_fixture.Create<int>(), name??_fixture.Create<string>(), _fixture.Create<string>(),
-            _fixture.Create<RelationType>(), toTable, -1, _fixture.Create<bool>(), _fixture.Create<bool>(),
+            _fixture.Create<RelationType>(), toTable, -1, FieldType.Long, _fixture.Create<bool>(), _fixture.Create<bool>(),
             _fixture.Create<bool>(), _fixture.Create<bool>()) ;
         return result;
     }

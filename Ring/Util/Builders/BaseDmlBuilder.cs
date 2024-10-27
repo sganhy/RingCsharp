@@ -122,38 +122,28 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
         result.Append(DmlDelete);
         result.Append(table.PhysicalName);
         result.Append(DmlWhere);
-        switch (table.Type)
+        if (table.Type == TableType.Business || table.Type == TableType.Lexicon)
         {
-            case TableType.Business:
-            case TableType.Lexicon:
-                result.Append(_ddlBuilder.GetPhysicalName(table.GetPrimaryKey()??_defaultField));
+            result.Append(_ddlBuilder.GetPhysicalName(table.Fields[table.RecordIndexes[0]] ?? _defaultField));
+            result.Append(DmlEqual);
+            result.AppendFormat(CultureInfo.InvariantCulture, VariableNameTemplate, FirstParameter);
+        }
+        else
+        {
+            var variableIndex = 1;
+            var pk = table.GetPrimaryKey(); // cannot be null here 
+            if (pk.Count<=0) throw new NotImplementedException();
+            var keyCount = pk.Count;
+            for (var i=0; i<keyCount; ++i, ++variableIndex)
+            {
+                var column = Meta.GetEmptyField(new Meta(pk[i].Name),FieldType.Int);
+                result.Append(_ddlBuilder.GetPhysicalName(column));
                 result.Append(DmlEqual);
-                result.AppendFormat(CultureInfo.InvariantCulture, VariableNameTemplate, FirstParameter);
-                break;
-            case TableType.Mtm:
-            case TableType.Meta:
-            case TableType.MetaId:
-                {
-                    var variableIndex = 1;
-                    var firstUniqueIndex = table.GetFirstKey(); // cannot be null here 
-                    var keyCount = firstUniqueIndex?.Columns.Length??0;
-                    for (var i=0; i<keyCount; ++i, ++variableIndex)
-                    {
-#pragma warning disable S2589 // Boolean expressions should not be gratuitous
-                        var field = Meta.GetEmptyField(new Meta(firstUniqueIndex?.Columns[i]
-                                        ?? string.Empty), FieldType.Int);
-#pragma warning restore S2589 
-                        result.Append(_ddlBuilder.GetPhysicalName(field));
-                        result.Append(DmlEqual);
-                        result.AppendFormat(CultureInfo.InvariantCulture, VariableNameTemplate, 
-                            variableIndex.ToString(CultureInfo.InvariantCulture));
-                        // last element?
-                        if (i< keyCount-1) result.Append(DmlAnd);
-                    }
-                }
-                break;
-            default:
-                throw new NotImplementedException();
+                result.AppendFormat(CultureInfo.InvariantCulture, VariableNameTemplate, 
+                    variableIndex.ToString(CultureInfo.InvariantCulture));
+                // last element?
+                if (i< keyCount-1) result.Append(DmlAnd);
+            }
         }
         return result.ToString();
     }
@@ -165,37 +155,28 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
         result.Append(table.PhysicalName);
         result.Append(DmlSet);
         result.Append(DmlWhere);
-        switch (table.Type)
+
+        if (table.Type == TableType.Business || table.Type == TableType.Lexicon)
         {
-            case TableType.Business:
-            case TableType.Lexicon:
-                result.Append(_ddlBuilder.GetPhysicalName(table.GetPrimaryKey() ?? _defaultField));
+            result.Append(_ddlBuilder.GetPhysicalName(table.Fields[table.RecordIndexes[0]]));
+            result.Append(DmlEqual);
+            result.AppendFormat(CultureInfo.InvariantCulture, VariableNameTemplate, FirstParameter);
+        }
+        else 
+        { 
+            var variableIndex = 1;
+            var pk = table.GetPrimaryKey(); // cannot be null here 
+            var keyCount = pk.Count;
+            for (var i = 0; i < keyCount; ++i, ++variableIndex)
+            {
+                var column = Meta.GetEmptyField(new Meta(pk[i].Name), FieldType.Int);
+                result.Append(_ddlBuilder.GetPhysicalName(column));
                 result.Append(DmlEqual);
-                result.AppendFormat(CultureInfo.InvariantCulture, VariableNameTemplate, FirstParameter);
-                break;
-            case TableType.Meta:
-            case TableType.MetaId:
-                {
-                    var variableIndex = 1;
-                    var firstUniqueIndex = table.GetFirstKey(); // cannot be null here 
-                    var keyCount = firstUniqueIndex?.Columns.Length ?? 0;
-                    for (var i = 0; i < keyCount; ++i, ++variableIndex)
-                    {
-#pragma warning disable S2589 // Boolean expressions should not be gratuitous
-                        var field = Meta.GetEmptyField(new Meta(firstUniqueIndex?.Columns[i]
-                                        ?? string.Empty), FieldType.Int);
-#pragma warning restore S2589
-                        result.Append(_ddlBuilder.GetPhysicalName(field));
-                        result.Append(DmlEqual);
-                        result.AppendFormat(CultureInfo.InvariantCulture, VariableNameTemplate, 
-                            variableIndex.ToString(CultureInfo.InvariantCulture));
-                        // last element?
-                        if (i < keyCount - 1) result.Append(DmlAnd);
-                    }
-                }
-                break;
-            default: // mtm not supported !!!
-                throw new NotImplementedException();
+                result.AppendFormat(CultureInfo.InvariantCulture, VariableNameTemplate, 
+                    variableIndex.ToString(CultureInfo.InvariantCulture));
+                // last element?
+                if (i < keyCount - 1) result.Append(DmlAnd);
+            }
         }
         return result.ToString();
     }

@@ -160,7 +160,7 @@ public class DmlBuilderTest : BaseBuilderTest
         Assert.Equal(expectedResult, result1);
         Assert.Equal(expectedResult, result2);
     }
-
+  
     [Fact]
     internal void Delete_MtmTable_DeleteSql()
     {

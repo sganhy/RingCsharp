@@ -11,11 +11,10 @@ namespace Ring.Tests.Schema;
 public sealed class MetaTest : BaseExtensionsTest
 {
     private readonly IFixture _fixture;
-    private readonly Table _anonymousTable;
+
     public MetaTest()
     {
         _fixture = new Fixture();
-        _anonymousTable = GetAnonymousTable();
     }
 
     [Theory]
@@ -415,7 +414,7 @@ public sealed class MetaTest : BaseExtensionsTest
         var exepectedRelType = RelationType.Mtm;
 
         // act 
-        var relation = meta.ToRelation(_anonymousTable);
+        var relation = meta.ToRelation(GetAnonymousTable(1,0));
 
         // assert
         Assert.NotNull(relation);

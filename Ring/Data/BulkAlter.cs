@@ -27,7 +27,8 @@ internal sealed class BulkAlter
     {
         var table = _schema.GetTable(tableName);
         if (table == null) ThrowInvalidObjectType(tableName);
-        AppendQuery(AlterQueryType.CreateTable, table);
+        AppendDdlCommand(AlterQueryType.CreateTable, table);
+        AppendDdlCommand(AlterQueryType.CreatePrimaryKey, table);
     }
 
     internal void AlterTableAdd(string tableName, string columnName)
@@ -37,13 +38,23 @@ internal sealed class BulkAlter
         IColumn? field = table.GetField(columnName);
         IColumn? relation = table.GetRelation(columnName);
         if (field==null && relation==null) ThrowInvalidFieldName(tableName, columnName);
-        AppendQuery(AlterQueryType.AlterTableAddColumn, table, field??relation);
+        AppendDdlCommand(AlterQueryType.AlterTableAddColumn, table, field??relation);
+    }
+
+    internal void Apply()
+    {
+        // sort by Type
+        _queries.Sort(delegate (AlterQuery q1, AlterQuery q2)
+         {
+             return q1.Type.CompareTo(q2.Type);
+         });
+
     }
 
     #region private methods
 
-    private void AppendQuery(AlterQueryType type, Table table, IColumn? column=null) 
-        => _queries.Add(new AlterQuery(table, type, _schema.DdlBuiler, column));
+    private void AppendDdlCommand(AlterQueryType type, Table table, IColumn? column=null) 
+        => _queries.Add(new AlterQuery(table, type, _schema.DdlBuiler, column, null));
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     [DoesNotReturn]

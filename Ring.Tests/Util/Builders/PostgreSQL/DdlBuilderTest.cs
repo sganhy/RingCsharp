@@ -285,4 +285,23 @@ public class DdlBuilderTest : BaseBuilderTest
         Assert.Equal(expectedValue, physicalName);
     }
 
+    [Fact]
+    public void GetPhysicalName_PkConstraint1_TableName()
+    {
+        // arrange 
+        var metaList = GetSchema1();
+        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
+        var table = schema?.GetTable("feat");
+        var ddlBuilder = DatabaseProvider.PostgreSql.GetDdlBuilder();
+        var expectedResult = "pk_feat";
+#pragma warning disable CS8604 // Possible null reference argument.
+        var constraint = new Constraint(ConstraintType.PrimaryKey, table);
+#pragma warning restore CS8604 // Possible null reference argument.
+
+        // act 
+        var physicalName = ddlBuilder.GetPhysicalName(constraint);
+
+        // assert
+        Assert.Equal(expectedResult, physicalName);
+    }
 }
