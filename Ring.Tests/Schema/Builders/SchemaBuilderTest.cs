@@ -1,4 +1,5 @@
 ﻿using AutoFixture;
+using Ring.Data;
 using Ring.Schema.Builders;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
@@ -20,10 +21,11 @@ public sealed class SchemaBuilderTest
     {
         // arrange 
         var schemaName = "Test";
-        var maxPoolSize = 20; 
+        var maxPoolSize = 20;
+        var config = new Configuration() { MetaSchemaName = schemaName, MaxConnectionPoolSize = 20 };
 
         // act 
-        var metaSchema = _sut.GetMeta(schemaName, DatabaseProvider.PostgreSql,20, _fixture.Create<string>());
+        var metaSchema = _sut.GetMeta(DatabaseProvider.PostgreSql, config);
         var metaTable = metaSchema.GetTable(13);
         var metaLog = metaSchema.GetTable("@log");
         var metaId = metaSchema.GetTable("@meta_id");

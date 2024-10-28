@@ -8,7 +8,6 @@ using Index = Ring.Schema.Models.Index;
 
 namespace Ring.Schema;
 
-//[StructLayout(LayoutKind.Sequential)]
 internal readonly struct Meta
 {
 	#region constants
@@ -240,7 +239,7 @@ internal readonly struct Meta
         return null;
     }
     internal TableSpace? ToTableSpace() => IsTableSpace ? new TableSpace(Id, Name, Description, IsTablespaceIndex(), IsTablespaceTable(),
-                false, string.Empty, Value ?? string.Empty, Active, IsEntityBaseline) : null;
+                false, Array.Empty<string>(), Value ?? string.Empty, Active, IsEntityBaseline) : null;
     internal Parameter? ToParameter()
     {
         var parameterType = GetParameterType();

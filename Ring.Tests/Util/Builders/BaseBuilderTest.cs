@@ -43,7 +43,7 @@ public class BaseBuilderTest
     internal TableSpace GetAnonymousTableSpace(string name)
     {
         var result = new TableSpace(_fixture.Create<int>(), name, _fixture.Create<string>(), _fixture.Create<bool>(), _fixture.Create<bool>(),
-            _fixture.Create<bool>(), _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<bool>(), _fixture.Create<bool>());
+            _fixture.Create<bool>(), _fixture.CreateMany<string>().ToArray(), _fixture.Create<string>(), _fixture.Create<bool>(), _fixture.Create<bool>());
         return result;
     }
 

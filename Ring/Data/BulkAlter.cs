@@ -18,11 +18,13 @@ internal sealed class BulkAlter
     private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
     private readonly List<AlterQuery> _queries;
     private readonly Database _schema;
+    private readonly Dictionary<EntityType, Dictionary<string, TableSpace>> _tablespaces; // <entityType, <tableName or default>, TableSpaceInfo>
 
     internal BulkAlter(Database schema)
     {
         _queries = new List<AlterQuery>();
         _schema = schema;
+        _tablespaces = GetTableSpaceDictionary(schema);
     }
 
     internal void CreateTable(string tableName)
@@ -58,9 +60,17 @@ internal sealed class BulkAlter
 
     private void AppendDdlCommand(AlterQueryType type, Table table, IColumn? column = null)
     {
-        if (type == AlterQueryType.CreatePrimaryKey)
-            _queries.Add(new AlterQuery(table, type, _schema.DdlBuiler, column, new Constraint(type.ToConstraintType(), table)));
-        else _queries.Add(new AlterQuery(table, type, _schema.DdlBuiler, column, null));
+        switch (type)
+        {
+            case AlterQueryType.CreatePrimaryKey:
+                _queries.Add(new AlterQuery(table.Id, table, type, _schema.DdlBuiler, null, 
+                    new Constraint(type.ToConstraintType(), table), null, GetTableSpace(table, EntityType.Constraint)));
+                break;
+            case AlterQueryType.CreateTable:
+                _queries.Add(new AlterQuery(table.Id, table, type, _schema.DdlBuiler, null, 
+                    null, null, GetTableSpace(table, EntityType.Table)));
+                break;
+        }
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
@@ -75,5 +85,45 @@ internal sealed class BulkAlter
         throw new ArgumentException(string.Format(DefaultCulture,
                   ResourceHelper.GetErrorMessage(ResourceType.BulkAlterInvalidFieldName), fieldName, objectType));
 
-    #endregion 
+    private TableSpace? GetTableSpace(Table table, EntityType entityType)
+    {
+        if (_tablespaces.ContainsKey(entityType))
+        {
+            var subDico = _tablespaces[entityType];
+            var key = table.Name;
+            if (subDico.ContainsKey(key)) return subDico[key];
+            // find default tablespace: not connected to a specific table
+            key = string.Empty;
+            if (subDico.ContainsKey(key)) return subDico[key];
+        }
+        return null;
+    }
+
+    private static Dictionary<EntityType, Dictionary<string, TableSpace>> GetTableSpaceDictionary(Database schema)
+    {
+        var myEnumMemberCount = Enum.GetNames<EntityType>().Length;
+        var result = new Dictionary<EntityType, Dictionary<string, TableSpace>>(myEnumMemberCount*4); // reduce collisions
+        var span = new ReadOnlySpan<TableSpace>(schema.TableSpaces);
+        // constraint is consider as index for the moment, can be modified in the future
+        foreach (var tablespace in span)
+        {
+            var entityType = tablespace.Index || tablespace.Constraint ? EntityType.Index : 
+                tablespace.Table ? EntityType.Table :  EntityType.Undefined;
+            if (!result.ContainsKey(entityType)) result.Add(entityType, new Dictionary<string, TableSpace>());
+            // if TableName.Length == 0 then it's a default tablespace 
+            if (tablespace.TableName.Length == 0)
+            {
+                if (!result[entityType].ContainsKey(string.Empty)) result[entityType].Add(string.Empty, tablespace);
+            }
+            else 
+            {
+                var spanTables = new ReadOnlySpan<string>(tablespace.TableName);
+                foreach (var table in spanTables)
+                    if (!result[entityType].ContainsKey(table)) result[entityType].Add(table, tablespace);
+            }
+        }
+        return result;
+    }
+
+    #endregion
 }

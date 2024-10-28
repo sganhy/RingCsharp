@@ -1,10 +1,8 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
 using Ring.Data;
-using Ring.Data.Models;
 using Ring.PostgreSQL;
 using Ring.Schema.Builders;
-using Ring.Schema.Extensions;
 using Serilog;
 using Serilog.Events;
 using Serilog.Extensions.Logging;
@@ -44,10 +42,14 @@ IRingConnection conn = new Ring.PostgreSQL.Connection(configuration);
 conn.Open();
 
 var builder = new SchemaBuilder();
-var schema = builder.GetMeta("public", Ring.Schema.Enums.DatabaseProvider.PostgreSql, 1, POSTGRE_CONN_STRING1);
+var config = new Configuration();
+config.ConnectionString = POSTGRE_CONN_STRING1;
+config.MetaSchemaName = "public";
+var schema = builder.GetMeta(Ring.Schema.Enums.DatabaseProvider.PostgreSql, config);
 
 BulkAlter ba = new(schema);
 ba.CreateTable("@meta");
 ba.CreateTable("@meta_id");
+ba.CreateTable("@log");
 ba.Apply(conn);
 

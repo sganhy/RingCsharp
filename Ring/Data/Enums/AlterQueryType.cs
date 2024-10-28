@@ -6,5 +6,6 @@ internal enum AlterQueryType: int
 	CreateTable = 1,
 	AlterTableAddColumn = 2,
 	CreatePrimaryKey = 3,
-	Undefined = int.MaxValue
+    CreateIndex = 103,
+    Undefined = int.MaxValue
 }

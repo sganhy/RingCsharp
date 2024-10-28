@@ -7,4 +7,7 @@ public interface IConfiguration
     string? ConnectionString { get; }
     ILoggerFactory LoggerFactory { get; }
     ILogger? SqlLogger { get; }
+    int MinConnectionPoolSize { get; }
+    int MaxConnectionPoolSize { get; }
+    string MetaSchemaName { get; }
 }

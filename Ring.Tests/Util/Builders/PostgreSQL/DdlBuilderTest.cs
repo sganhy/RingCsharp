@@ -1,4 +1,5 @@
 ﻿using AutoFixture;
+using Ring.Data;
 using Ring.Schema;
 using Ring.Schema.Builders;
 using Ring.Schema.Enums;
@@ -138,7 +139,8 @@ public class DdlBuilderTest : BaseBuilderTest
         // arrange 
         var fileName = _fixture.Create<string>();
         var tablespaceName = _fixture.Create<string>();
-        var tablespace = new TableSpace(_fixture.Create<int>(), tablespaceName, _fixture.Create<string?>(), true, true, true, string.Empty,
+        var tablespace = new TableSpace(_fixture.Create<int>(), tablespaceName, _fixture.Create<string?>(), true, true, true, 
+            _fixture.CreateMany<string>().ToArray(),
             fileName, true, true);
         var expectedSql = $"CREATE TABLESPACE {tablespaceName} LOCATION '{fileName}'";
 
@@ -155,7 +157,8 @@ public class DdlBuilderTest : BaseBuilderTest
         // arrange 
         var schBuilder = new SchemaBuilder();
         var schemaName = "@Test";
-        var schema = schBuilder.GetMeta(schemaName, DatabaseProvider.PostgreSql, 2, string.Empty);
+        var config = new Configuration() { MetaSchemaName = schemaName, MaxConnectionPoolSize = 2 };
+        var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
         var table = schema.GetTable("@meta");
         var pk = new Constraint(ConstraintType.PrimaryKey, table!);
         var expectedSql = "ALTER TABLE \"@test\".\"@meta\" ADD CONSTRAINT \"pk_@meta\" PRIMARY KEY (id,schema_id,object_type,reference_id)";
@@ -173,7 +176,8 @@ public class DdlBuilderTest : BaseBuilderTest
         // arrange 
         var schBuilder = new SchemaBuilder();
         var schemaName = "@Test";
-        var schema = schBuilder.GetMeta(schemaName, DatabaseProvider.PostgreSql, 2, string.Empty);
+        var config = new Configuration() { MetaSchemaName = schemaName, MaxConnectionPoolSize = 2 };
+        var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
         var table = schema.GetTable("@meta_id");
         var pk = new Constraint(ConstraintType.PrimaryKey, table!);
         var expectedSql = "ALTER TABLE \"@test\".\"@meta_id\" ADD CONSTRAINT \"pk_@meta_id\" PRIMARY KEY (id,schema_id,object_type)";
