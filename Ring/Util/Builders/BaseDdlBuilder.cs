@@ -15,13 +15,12 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
     // entity
     protected static readonly string DdlView = @"VIEW";
     protected static readonly string DdlTable = @"TABLE ";  // final space character needed !
-    protected static readonly string DdlConstraint = @"CONSTRAINT";
+    protected static readonly string DdlConstraint = @"CONSTRAINT ";
     protected static readonly string DdlIndex = @"INDEX";
     protected static readonly string DdlSequence = @"SEQUENCE";
     protected static readonly string DdlTableSpace = @"TABLESPACE ";
     protected static readonly string DdlSchema = @"SCHEMA ";
     protected static readonly string DdlPrimaryKey = @"PRIMARY KEY ";
-
 
     // options
     protected static readonly string DdlUnique = @"UNIQUE";
@@ -36,7 +35,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
     protected static readonly string DdlAdd = @"ADD ";
     protected static readonly string DdlColumn = @"COLUMN ";
     protected static readonly string DdlTruncate = @"TRUNCATE ";
-    protected static readonly string DdlnotNull = @"NOT NULL";
+    protected static readonly string DdlNotNull = @"NOT NULL";
 
     // format
     protected static readonly string Indent = @"    ";
@@ -184,11 +183,13 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
         var result = new StringBuilder(31); // constraint name max length(30)
         switch (constraint.Type)
         {
+            //name:  pk_{table_name}
             case ConstraintType.PrimaryKey:
-                result.Append(DefaultPrimaryKeyPrefix);
                 // apply short version of prefix 'pk'
-                if (constraint.ToTable.Name.Length > 27) result.Length--;
-                result.Append(constraint.ToTable.Name);
+                var prefix = constraint.ToTable.Name.Length > 27 ? DefaultPrimaryKeyPrefix[^1..] : DefaultPrimaryKeyPrefix;
+                if (constraint.ToTable.Name.StartsWith(SpecialEntityPrefix))
+                    result.Append(string.Join(null, StartPhysicalNameDelimiter, prefix, constraint.ToTable.Name, EndPhysicalNameDelimiter));
+                else result.Append(string.Join(null, prefix, constraint.ToTable.Name));
                 break;
         }
         return result.ToString();
@@ -220,22 +221,26 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
     }
     public string Create(Constraint constraint, TableSpace? tablespace = null)
     {
-        // ALTER TABLE Persons ADD PRIMARY KEY(ID);
         var result = new StringBuilder();
         result.Append(DdlAlter)
                     .Append(DdlTable)
-                    .Append(constraint.ToTable.PhysicalName);
+                    .Append(constraint.ToTable.PhysicalName)
+                    .Append(SqlSpace)
+                    .Append(DdlAdd)
+                    .Append(DdlConstraint)
+                    .Append(GetPhysicalName(constraint))
+                    .Append(SqlSpace);
         switch (constraint.Type)
         {
              case ConstraintType.PrimaryKey:
-                result.Append(SqlSpace)
-                      .Append(DdlAdd)
-                      .Append(DdlPrimaryKey)
-                      .Append(String.Join(",", constraint.ToTable.GetPrimaryKey().ConvertAll<string>(delegate (IColumn column)
+                result.Append(DdlPrimaryKey)
+                      .Append('(')
+                      .Append(String.Join(',', constraint.ToTable.GetPrimaryKey().ConvertAll<string>(delegate (IColumn column)
                       {
                           return column.Name;
                       })
-                      .ToArray()));
+                      .ToArray()))
+                      .Append(')');
              break; 
         }
         return result.ToString();
@@ -277,12 +282,9 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
         return result.ToString();
     }
 
-
-
     #region private methods 
     private static string GetSizeInfo(int size) => $"({size})";
 
-    [MethodImpl(MethodImplOptions.NoInlining)]
     private void Create(StringBuilder stringBuilder, Table table, Field field)
     {
         stringBuilder.Append(Indent);
@@ -292,7 +294,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
         if (field.IsPrimaryKey() || table.Type != TableType.Business && field.NotNull)
         {
             stringBuilder.Append(SqlSpace);
-            stringBuilder.Append(DdlnotNull);
+            stringBuilder.Append(DdlNotNull);
         }
         stringBuilder.Append(',');
         stringBuilder.Append(SqlLineFeed);
@@ -306,7 +308,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
         if (table.Type != TableType.Business && relation.NotNull)
         {
             stringBuilder.Append(SqlSpace)
-                .Append(DdlnotNull);
+                .Append(DdlNotNull);
         }
         stringBuilder.Append(',')
             .Append(SqlLineFeed);
@@ -321,8 +323,6 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
             result.Append(SqlSpace).Append(collateInformation);
         return result.ToString();
     }
-
-    
 
     #endregion
 

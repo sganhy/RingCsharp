@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Xml.Linq;
 using System.Runtime.CompilerServices;
 using Ring.Schema.Enums;
 using Ring.Schema.Models;
 using Index = Ring.Schema.Models.Index;
 using System.Collections.Generic;
-using System.Reflection.Metadata.Ecma335;
 
 namespace Ring.Schema.Extensions;
 
@@ -22,15 +20,15 @@ internal static class TableExtensions
     internal static Field? GetField(this Table table, string name)
     {
         var span = new ReadOnlySpan<Field>(table.Fields);
-        int indexerLeft = 0, indexerRigth = span.Length - 1, indexerMiddle, indexerCompare;
-        while (indexerLeft <= indexerRigth)
+        int indexerLeft = 0, indexerRight = span.Length - 1, indexerMiddle, indexerCompare;
+        while (indexerLeft <= indexerRight)
         {
-            indexerMiddle = indexerLeft + indexerRigth;
+            indexerMiddle = indexerLeft + indexerRight;
             indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
             indexerCompare = string.CompareOrdinal(name, span[indexerMiddle].Name);
             if (indexerCompare == 0) return span[indexerMiddle];
             if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
-            else indexerRigth = indexerMiddle - 1;
+            else indexerRight = indexerMiddle - 1;
         }
         return null;
     }
@@ -75,15 +73,15 @@ internal static class TableExtensions
     internal static int GetFieldIndex(this Table table, string name)
     {
         var span = new ReadOnlySpan<Field>(table.Fields);
-        int indexerLeft = 0, indexerRigth = span.Length - 1, indexerMiddle, indexerCompare;
-        while (indexerLeft <= indexerRigth)
+        int indexerLeft = 0, indexerRight = span.Length - 1, indexerMiddle, indexerCompare;
+        while (indexerLeft <= indexerRight)
         {
-            indexerMiddle = indexerLeft + indexerRigth;
+            indexerMiddle = indexerLeft + indexerRight;
             indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
             indexerCompare = string.CompareOrdinal(name, span[indexerMiddle].Name);
             if (indexerCompare == 0) return indexerMiddle;
             if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
-            else indexerRigth = indexerMiddle - 1;
+            else indexerRight = indexerMiddle - 1;
         }
         return -1;
     }
@@ -98,15 +96,15 @@ internal static class TableExtensions
     internal static Relation? GetRelation(this Table table, string name)
     {
         var span = new ReadOnlySpan<Relation>(table.Relations);
-        int indexerLeft = 0, indexerRigth = span.Length - 1, indexerMiddle, indexerCompare;
-        while (indexerLeft <= indexerRigth)
+        int indexerLeft = 0, indexerRight = span.Length - 1, indexerMiddle, indexerCompare;
+        while (indexerLeft <= indexerRight)
         {
-            indexerMiddle = indexerLeft + indexerRigth;
+            indexerMiddle = indexerLeft + indexerRight;
             indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
             indexerCompare = string.CompareOrdinal(name, span[indexerMiddle].Name);
             if (indexerCompare == 0) return span[indexerMiddle];
             if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
-            else indexerRigth = indexerMiddle - 1;
+            else indexerRight = indexerMiddle - 1;
         }
         return null;
     }
@@ -148,15 +146,15 @@ internal static class TableExtensions
     internal static int GetRelationIndex(this Table table, string name)
     {
         var span = new ReadOnlySpan<Relation>(table.Relations);
-        int indexerLeft = 0, indexerRigth = span.Length - 1, indexerMiddle, indexerCompare;
-        while (indexerLeft <= indexerRigth)
+        int indexerLeft = 0, indexerRight = span.Length - 1, indexerMiddle, indexerCompare;
+        while (indexerLeft <= indexerRight)
         {
-            indexerMiddle = indexerLeft + indexerRigth;
+            indexerMiddle = indexerLeft + indexerRight;
             indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
             indexerCompare = string.CompareOrdinal(name, span[indexerMiddle].Name);
             if (indexerCompare == 0) return indexerMiddle;
             if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
-            else indexerRigth = indexerMiddle - 1;
+            else indexerRight = indexerMiddle - 1;
         }
         return -1;
     }
@@ -168,15 +166,15 @@ internal static class TableExtensions
     internal static Index? GetIndex(this Table table, string name)
     {
         var span = new ReadOnlySpan<Index>(table.Indexes);
-        int indexerLeft = 0, indexerRigth = span.Length - 1, indexerMiddle, indexerCompare;
-        while (indexerLeft <= indexerRigth)
+        int indexerLeft = 0, indexerRight = span.Length - 1, indexerMiddle, indexerCompare;
+        while (indexerLeft <= indexerRight)
         {
-            indexerMiddle = indexerLeft + indexerRigth;
+            indexerMiddle = indexerLeft + indexerRight;
             indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
             indexerCompare = string.CompareOrdinal(name, span[indexerMiddle].Name);
             if (indexerCompare == 0) return span[indexerMiddle];
             if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
-            else indexerRigth = indexerMiddle - 1;
+            else indexerRight = indexerMiddle - 1;
         }
         return null;
     }
@@ -197,6 +195,7 @@ internal static class TableExtensions
         return result;
     }
 
+    internal static bool HasPrimaryKey(this Table table) => GetPrimaryKey(table).Count > 0;
 
     internal static Meta[] ToMeta(this Table table, int schemaId) {
         var result = new List<Meta>(table.Fields.Length+table.Relations.Length+table.Indexes.Length+1);

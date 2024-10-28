@@ -49,5 +49,5 @@ var schema = builder.GetMeta("public", Ring.Schema.Enums.DatabaseProvider.Postgr
 BulkAlter ba = new(schema);
 ba.CreateTable("@meta");
 ba.CreateTable("@meta_id");
-ba.Apply();
+ba.Apply(conn);
 

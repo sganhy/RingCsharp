@@ -1,5 +1,6 @@
 ﻿using AutoFixture;
 using Ring.Schema;
+using Ring.Schema.Builders;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
@@ -134,15 +135,51 @@ public class DdlBuilderTest : BaseBuilderTest
     [Fact]
     public void Create_TableSpace1_DdlQuery()
     {
+        // arrange 
         var fileName = _fixture.Create<string>();
         var tablespaceName = _fixture.Create<string>();
-        // arrange 
         var tablespace = new TableSpace(_fixture.Create<int>(), tablespaceName, _fixture.Create<string?>(), true, true, true, string.Empty,
             fileName, true, true);
         var expectedSql = $"CREATE TABLESPACE {tablespaceName} LOCATION '{fileName}'";
 
         // act 
         var dql = _sut.Create(tablespace);
+
+        // assert
+        Assert.Equal(expectedSql, dql);
+    }
+
+    [Fact]
+    public void Create_PkConstraintMeta_DdlQuery()
+    {
+        // arrange 
+        var schBuilder = new SchemaBuilder();
+        var schemaName = "@Test";
+        var schema = schBuilder.GetMeta(schemaName, DatabaseProvider.PostgreSql, 2, string.Empty);
+        var table = schema.GetTable("@meta");
+        var pk = new Constraint(ConstraintType.PrimaryKey, table!);
+        var expectedSql = "ALTER TABLE \"@test\".\"@meta\" ADD CONSTRAINT \"pk_@meta\" PRIMARY KEY (id,schema_id,object_type,reference_id)";
+
+        // act 
+        var dql = _sut.Create(pk);
+
+        // assert
+        Assert.Equal(expectedSql, dql);
+    }
+
+    [Fact]
+    public void Create_PkConstraintMetaId_DdlQuery()
+    {
+        // arrange 
+        var schBuilder = new SchemaBuilder();
+        var schemaName = "@Test";
+        var schema = schBuilder.GetMeta(schemaName, DatabaseProvider.PostgreSql, 2, string.Empty);
+        var table = schema.GetTable("@meta_id");
+        var pk = new Constraint(ConstraintType.PrimaryKey, table!);
+        var expectedSql = "ALTER TABLE \"@test\".\"@meta_id\" ADD CONSTRAINT \"pk_@meta_id\" PRIMARY KEY (id,schema_id,object_type)";
+
+        // act 
+        var dql = _sut.Create(pk);
 
         // assert
         Assert.Equal(expectedSql, dql);
