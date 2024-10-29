@@ -17,7 +17,7 @@ public struct Record : IEquatable<Record>
 	private static readonly string NullField = "^^";
 	private static readonly string NullString = "Null";
 	private static readonly string DefaultPrimaryKeyValue = "0";
-	private static readonly char HashFieldDelimiter = (char)3; // end of text character
+	private static readonly char HashFieldDelimiter = (char)3;// end of text character
 	private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
 	private static readonly NumberStyles DefaultNumberStyle = NumberStyles.Integer;
 	private static readonly NumberStyles DefaultFloatStyle = NumberStyles.AllowDecimalPoint | NumberStyles.Float;
@@ -34,7 +34,7 @@ public struct Record : IEquatable<Record>
 	// _data.Lenght should be > _type.Fields.Length
 	private string?[]? _data;
 	private Table? _type;
-	private readonly int _offset; 
+	private readonly int _offset;
 
 	/// <summary>
 	///	 Ctor
@@ -43,13 +43,13 @@ public struct Record : IEquatable<Record>
 	{
 		_type = null;
 		_data = null;
-		_offset = 0; 
-    }
+		_offset = 0;
+	}
 	internal Record(Table type)
 	{
 		_type = type;
 		_data = new string?[type.RecordSize];
-		_offset = 0; 
+		_offset = 0;
 	}
 	internal Record(Table type, string?[] data, int offset)
 	{
@@ -63,7 +63,6 @@ public struct Record : IEquatable<Record>
 	{
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		readonly get => _data[i + _offset];
-
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		set => _data[i + _offset] = value;
 	}
@@ -71,13 +70,13 @@ public struct Record : IEquatable<Record>
 	public readonly bool IsDirty => _data != null && _data[_type.RecordSize-1+_offset] != null;
 
 #pragma warning restore CS8602
-	
+
 	internal readonly Table? Table => _type;
 	internal void ClearData()
 	{
 		var span = _data.AsSpan();
 		var lastIndex = _type?.RecordSize + _offset;
-		for (var i= _offset; i< lastIndex; ++i) span[i] = null;
+		for (var i= _offset;i< lastIndex;++i) span[i] = null;
 	}
 
 	/// <summary>
@@ -193,18 +192,18 @@ public struct Record : IEquatable<Record>
 		var type = _type.Fields[fieldId].Type;
 		switch (type)
 		{
-			case FieldType.String: SetStringField(_type.Fields[fieldId].Size, fieldId, value); break;
+			case FieldType.String: SetStringField(_type.Fields[fieldId].Size, fieldId, value);break;
 			case FieldType.Byte:
 			case FieldType.Short:
 			case FieldType.Int:
-			case FieldType.Long: SetIntegerField(fieldId, type, value); break;
+			case FieldType.Long: SetIntegerField(fieldId, type, value);break;
 			case FieldType.Float:
-			case FieldType.Double: SetFloatField(type, fieldId, value); break;
+			case FieldType.Double: SetFloatField(type, fieldId, value);break;
 			case FieldType.ShortDateTime:
 			case FieldType.DateTime:
-			case FieldType.LongDateTime: SetDateTimeField(fieldId, type, value); break;
-			case FieldType.Boolean: SetBooleanField(fieldId, value); break;
-			case FieldType.ByteArray: SetByteArrayField(fieldId, value); break;
+			case FieldType.LongDateTime: SetDateTimeField(fieldId, type, value);break;
+			case FieldType.Boolean: SetBooleanField(fieldId, value);break;
+			case FieldType.ByteArray: SetByteArrayField(fieldId, value);break;
 		}
 	}
 
@@ -262,8 +261,8 @@ public struct Record : IEquatable<Record>
 	public void SetField(string name, DateTime value)
 	{
 		if (_type == null) ThrowRecordUnkownRecordType();
-        var fieldId = _type.GetFieldIndex(name);
-        if (fieldId == -1) ThrowRecordUnkownFieldName(name);
+		var fieldId = _type.GetFieldIndex(name);
+		if (fieldId == -1) ThrowRecordUnkownFieldName(name);
 		SetDateTimeField(fieldId, _type.Fields[fieldId].Type, value, null);
 	}
 	public void SetField(string name, DateTimeOffset value)
@@ -304,56 +303,56 @@ public struct Record : IEquatable<Record>
 	public static bool operator !=(Record left, Record right) => !(left == right);
 	public readonly bool Equals(Record other)
 	{
-        if (ReferenceEquals(_type, other._type))
-        {
-            if (_data != null)
-            {
-                var i = 0;
+		if (ReferenceEquals(_type, other._type))
+		{
+			if (_data != null)
+			{
+				var i = 0;
 				var offset1 = _offset;
-                var offset2 = other._offset;
+				var offset2 = other._offset;
 #pragma warning disable CS8602 // Dereference of a possibly null reference. --> other._data cannot be null here
-				var count = _type.RecordSize-1; 
-                while (i < count)
-                {
-                    if (!string.Equals(_data[i+offset1], other._data[i+offset2], StringComparison.Ordinal)) return false;
+				var count = _type.RecordSize-1;
+				while (i < count)
+				{
+					if (!string.Equals(_data[i+offset1], other._data[i+offset2], StringComparison.Ordinal)) return false;
 #pragma warning restore CS8602
-                    ++i;
-                }
-            }
-            return true;
-        }
-        return false;
-    }
+					++i;
+				}
+			}
+			return true;
+		}
+		return false;
+	}
 	public override readonly bool Equals(object? obj) => obj is Record record && Equals(record);
 	public override readonly int GetHashCode()
 	{
-        var result = new StringBuilder();
+		var result = new StringBuilder();
 
-        if (_type != null) result.Append(_type.PhysicalName);
-        if (_data != null)
-        {
-            var i = _offset;
-            var columnCount = _type?.RecordSize - 1 ?? 0;
+		if (_type != null) result.Append(_type.PhysicalName);
+		if (_data != null)
+		{
+			var i = _offset;
+			var columnCount = _type?.RecordSize - 1 ?? 0;
 			columnCount += i;
-            while (i < columnCount)
-            {
-                result.Append(_data[i] ?? NullField);
-                result.Append(HashFieldDelimiter);
-                ++i;
-            }
-        }
-        return HashHelper.Djb2X(result.ToString());
-    }
+			while (i < columnCount)
+			{
+				result.Append(_data[i] ?? NullField);
+				result.Append(HashFieldDelimiter);
+				++i;
+			}
+		}
+		return HashHelper.Djb2X(result.ToString());
+	}
 
 	internal readonly bool IsFieldChanged(string name)
 	{
 		if (_type == null) ThrowRecordUnkownRecordType();
-        var index = _type.GetFieldIndex(name);
+		var index = _type.GetFieldIndex(name);
 		var trackerIndex = _offset + _type.RecordSize - 1;
 #pragma warning disable CS8604, CS8602 // Dereference of a possibly null reference. _type cannot be null here 
-        if (index != -1) return _data[trackerIndex] != null && IsColumnChanged(index, trackerIndex);
+		if (index != -1) return _data[trackerIndex] != null && IsColumnChanged(index, trackerIndex);
 #pragma warning restore CS8602, CS8604
-        ThrowRecordUnkownFieldName(name);
+		ThrowRecordUnkownFieldName(name);
 		return false;
 	}
 
@@ -362,14 +361,14 @@ public struct Record : IEquatable<Record>
 	internal readonly bool IsRelationChanged(string name)
 	{
 		if (_type == null) ThrowRecordUnkownRecordType();
-        var relation = _type.GetRelation(name);
-        var trackerIndex = _offset + _type.RecordSize - 1;
-        if (relation == null) ThrowRecordUnkownRelationName(name);
+		var relation = _type.GetRelation(name);
+		var trackerIndex = _offset + _type.RecordSize - 1;
+		if (relation == null) ThrowRecordUnkownRelationName(name);
 #pragma warning disable CS8604, CS8602, S2259 // Dereference of a possibly null reference. _type cannot be null here 
-        var index = relation.RecordIndex;
-        if (index >= 0) return _data[trackerIndex] != null && IsColumnChanged(index, trackerIndex);
+		var index = relation.RecordIndex;
+		if (index >= 0) return _data[trackerIndex] != null && IsColumnChanged(index, trackerIndex);
 #pragma warning restore S2259, CS8602, CS8604
-        return false;
+		return false;
 	}
 
 	internal readonly bool IsRelationExist(string name) => _type != null && _type.GetRelationIndex(name) != -1;
@@ -378,38 +377,38 @@ public struct Record : IEquatable<Record>
 	///	 Return relation ID value by name
 	/// </summary>
 	/// <param name="name">Name of the relation</param>
-	/// <returns>relation ID value; if not defined return null</returns>
+	/// <returns>relation ID value;if not defined return null</returns>
 	internal readonly long? GetRelation(string name)
 	{
 		if (_type == null) ThrowRecordUnkownRecordType();
-        var relation = _type.GetRelation(name);
+		var relation = _type.GetRelation(name);
 		if (relation == null) ThrowRecordUnkownRelationName(name);
 #pragma warning disable CS8604, CS8602, S2259 // Dereference of a possibly null reference. _type cannot be null here 
-        var index = relation.RecordIndex + _offset;
+		var index = relation.RecordIndex + _offset;
 		if (index >= 0 && _data[index] != null) return long.Parse(_data[index], CultureInfo.InvariantCulture);
 		else ThrowRecordWrongRelationType(name);
 #pragma warning restore S2259, CS8602, CS8604
-        return null;
+		return null;
 	}
 
 	internal void SetRelation(string name, long? value)
 	{
 		if (_type == null) ThrowRecordUnkownRecordType();
-        var relation = _type.GetRelation(name);
+		var relation = _type.GetRelation(name);
 		if (relation == null) ThrowRecordUnkownRelationName(name);
-        var index = relation.RecordIndex;
+		var index = relation.RecordIndex;
 		if (index >= 0) SetData(index, value?.ToString(DefaultCulture));
 		else ThrowRecordWrongRelationType(name);
-    }
+	}
 
-    #region private methods 
+	#region private methods 
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private void SetStringField(int fieldSize, int fieldId, string? value)
 	{
 		if (value==null) SetData(fieldId, null);
 		else if (value.Length <= fieldSize) SetData(fieldId, value);
-		else SetData(fieldId, value.Truncate(fieldSize)); // truncate or exception ??
+		else SetData(fieldId, value.Truncate(fieldSize));// truncate or exception ??
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -469,7 +468,7 @@ public struct Record : IEquatable<Record>
 		{
 			SetData(fieldId, null);
 		}
-    }
+	}
 
 	private void SetDateTimeField(int fieldId, FieldType fieldType, DateTime value, TimeSpan? offset)
 	{
@@ -487,88 +486,88 @@ public struct Record : IEquatable<Record>
 	}
 
 #pragma warning disable CS8602 // Dereference of a possibly null reference. - _type cannot be null here !!!
-    private void InitializeTracking(int trackerIndex) => _data[trackerIndex] = new string(new char[(_type.Fields.Length >> 4) + 1]);
+	private void InitializeTracking(int trackerIndex) => _data[trackerIndex] = new string(new char[(_type.Fields.Length >> 4) + 1]);
 #pragma warning restore CS8602
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void SetData(int fieldId, string? value)
-    {
-        var fieldIndex = fieldId + _offset;
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private void SetData(int fieldId, string? value)
+	{
+		var fieldIndex = fieldId + _offset;
 #pragma warning disable CS8602, CS8604 // Dereference of a possibly null reference. - _data cannot be null here !!!
-        var trackerIndex = _type.RecordSize -1 +_offset;
-        if (string.CompareOrdinal(_data[fieldIndex], value) == 0) return; // detect no change
-        if (value == null && _type.Fields[fieldId].NotNull) MandatoryField(fieldId); // manage mandatory fields !!
-        if (_data[trackerIndex] == null) InitializeTracking(trackerIndex);
-        _data[trackerIndex].SetBitValue(fieldId);
+		var trackerIndex = _type.RecordSize -1 +_offset;
+		if (string.CompareOrdinal(_data[fieldIndex], value) == 0) return;// detect no change
+		if (value == null && _type.Fields[fieldId].NotNull) MandatoryField(fieldId);// manage mandatory fields !!
+		if (_data[trackerIndex] == null) InitializeTracking(trackerIndex);
+		_data[trackerIndex].SetBitValue(fieldId);
 #pragma warning restore CS8604, CS8602 // Possible null reference argument.
-        _data[fieldIndex] = value;
-    }
+		_data[fieldIndex] = value;
+	}
 
-    // Dereference of a possibly null reference. - _data cannot be null here !!!
-    // Possible null reference argument. 
+	// Dereference of a possibly null reference. - _data cannot be null here !!!
+	// Possible null reference argument. 
 #pragma warning disable CS8602, CS8604
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private readonly bool IsColumnChanged(int fieldId, int trackerIndex) => _data[trackerIndex].GetBitValue(fieldId);
 #pragma warning restore CS8604, CS8602
 
-    // exceptions 
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    [DoesNotReturn]
-    private readonly void ThrowRecordUnkownFieldName(string fieldName) => 
+	// exceptions 
+	[MethodImpl(MethodImplOptions.NoInlining)]
+	[DoesNotReturn]
+	private readonly void ThrowRecordUnkownFieldName(string fieldName) => 
 		throw new ArgumentException(string.Format(DefaultCulture,
-				  ResourceHelper.GetErrorMessage(ResourceType.RecordUnkownFieldName), fieldName, _type?.Name));
+			ResourceHelper.GetErrorMessage(ResourceType.RecordUnkownFieldName), fieldName, _type?.Name));
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
-    [DoesNotReturn]
-    private readonly void ThrowRecordWrongRelationType(string relationName) =>
+	[DoesNotReturn]
+	private readonly void ThrowRecordWrongRelationType(string relationName) =>
 		throw new ArgumentException(string.Format(DefaultCulture,
-				  ResourceHelper.GetErrorMessage(ResourceType.RecordWrongRelationType), relationName, _type?.Name));
+			ResourceHelper.GetErrorMessage(ResourceType.RecordWrongRelationType), relationName, _type?.Name));
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
-    [DoesNotReturn]
-    private readonly void ThrowRecordUnkownRelationName(string relationName) =>
+	[DoesNotReturn]
+	private readonly void ThrowRecordUnkownRelationName(string relationName) =>
 		throw new ArgumentException(string.Format(DefaultCulture,
-				  ResourceHelper.GetErrorMessage(ResourceType.RecordUnkownRelationName), relationName, _type?.Name));
+			ResourceHelper.GetErrorMessage(ResourceType.RecordUnkownRelationName), relationName, _type?.Name));
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
-    [DoesNotReturn]
-    private readonly void ThrowMandatoryFieldCannotBeNull(string fieldName) =>
+	[DoesNotReturn]
+	private readonly void ThrowMandatoryFieldCannotBeNull(string fieldName) =>
 		throw new ArgumentException(string.Format(DefaultCulture,
 			ResourceHelper.GetErrorMessage(ResourceType.FieldIsMandatory), _type?.Name, fieldName));
 
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    [DoesNotReturn]
-    private static void ThrowRecordUnkownRecordType() =>
+	[MethodImpl(MethodImplOptions.NoInlining)]
+	[DoesNotReturn]
+	private static void ThrowRecordUnkownRecordType() =>
 		throw new ArgumentException(ResourceHelper.GetErrorMessage(ResourceType.RecordUnkownRecordType));
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
-    [DoesNotReturn]
-    private static void ThrowWrongStringFormat() =>
+	[DoesNotReturn]
+	private static void ThrowWrongStringFormat() =>
 		throw new FormatException(ResourceHelper.GetErrorMessage(ResourceType.RecordWrongStringFormat));
 
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    [DoesNotReturn]
-    private static void ThrowValueTooLarge(FieldType fieldType) =>
+	[MethodImpl(MethodImplOptions.NoInlining)]
+	[DoesNotReturn]
+	private static void ThrowValueTooLarge(FieldType fieldType) =>
 		throw new OverflowException(string.Format(DefaultCulture, 
 			ResourceHelper.GetErrorMessage(ResourceType.RecordValueTooLarge), fieldType.RecordTypeDisplay()));
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
-    [DoesNotReturn]
-    private static void ThrowWrongBooleanValue(string? value) =>
+	[DoesNotReturn]
+	private static void ThrowWrongBooleanValue(string? value) =>
 		throw new FormatException(string.Format(DefaultCulture,
 			ResourceHelper.GetErrorMessage(ResourceType.RecordWrongBooleanValue), value?? NullString));
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
-    [DoesNotReturn]
-    private static void ThrowImpossibleConversion(FieldType fieldTypeSource, FieldType fieldTypeDestination) =>
+	[DoesNotReturn]
+	private static void ThrowImpossibleConversion(FieldType fieldTypeSource, FieldType fieldTypeDestination) =>
 		throw new ArgumentException(string.Format(DefaultCulture,
 			ResourceHelper.GetErrorMessage(ResourceType.RecordCannotConvert), 
 			fieldTypeSource.RecordTypeDisplay() ?? NullString,
 			fieldTypeDestination.RecordTypeDisplay() ?? NullString));
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
-    [DoesNotReturn]
-    private static void ThrowInvalidBase64String() =>
+	[DoesNotReturn]
+	private static void ThrowInvalidBase64String() =>
 		throw new FormatException(ResourceHelper.GetErrorMessage(ResourceType.InvalidBase64String));
 
 	#endregion
