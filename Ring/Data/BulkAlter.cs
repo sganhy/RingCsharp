@@ -50,6 +50,7 @@ internal sealed class BulkAlter
         // sort by Type
         _queries.Sort(delegate (AlterQuery q1, AlterQuery q2)
          {
+             if (q1.Type == q2.Type) return q1.Id.CompareTo(q2.Id);
              return q1.Type.CompareTo(q2.Type);
          });
         var count = _queries.Count;
