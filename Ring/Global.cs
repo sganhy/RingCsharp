@@ -1,7 +1,6 @@
 ﻿using Ring.Schema.Builders;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
-using System.Data;
 using DbSchema = Ring.Schema.Models.Schema;
 
 namespace Ring;

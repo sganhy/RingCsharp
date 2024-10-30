@@ -25,15 +25,15 @@ static internal class ArrayExtensions
     internal static int GetIndex(this string[] elements, string value)
     {
         var span = new ReadOnlySpan<string>(elements);
-        int indexerLeft = 0, indexerRigth = span.Length - 1, indexerMiddle;
-        while (indexerLeft <= indexerRigth)
+        int indexerLeft = 0, indexerRight = span.Length - 1, indexerMiddle;
+        while (indexerLeft <= indexerRight)
         {
-            indexerMiddle = indexerLeft + indexerRigth;
+            indexerMiddle = indexerLeft + indexerRight;
             indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
             var indexerCompare = string.CompareOrdinal(value, span[indexerMiddle]);
             if (indexerCompare == 0) return indexerMiddle;
             if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
-            else indexerRigth = indexerMiddle - 1;
+            else indexerRight = indexerMiddle - 1;
         }
         return -1;
     }

@@ -24,7 +24,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
     protected static readonly string DdlPrimaryKey = @"PRIMARY KEY ";
 
     // options
-    protected static readonly string DdlUnique = @"UNIQUE";
+    protected static readonly string DdlUnique = @"UNIQUE ";
     protected static readonly string DdlBitmap = @"BITMAP";
     protected static readonly string DdlHash = @"HASH";
     protected static readonly string DdlUsing = @"USING ";
@@ -244,11 +244,12 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
     protected abstract string TablePrefix { get; }
     protected abstract string StartPhysicalNameDelimiter { get; }
     protected abstract string EndPhysicalNameDelimiter { get; }
-    public string Create(Index index, Table table, TableSpace? tablespace = null)
+    public virtual string Create(Index index, Table table, TableSpace? tablespace = null)
     {
         // CREATE INDEX title_idx ON films (title) WITH (deduplicate_items = off);
         var result = new StringBuilder();
         result.Append(DdlCreate);
+        if (index.Unique) result.Append(DdlUnique);
         result.Append(DdlIndex);
         result.Append(GetPhysicalName(index, table));
         result.Append(SqlSpace);
@@ -256,7 +257,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
         result.Append(table.PhysicalName);
         result.Append(SqlSpace);
         result.Append('(');
-        for (var i = 0; i < index.Columns.Length; ++i)
+        for (var i = 0; i<index.Columns.Length; ++i)
         {
             var meta = new Meta(index.Columns[i]);
             result.Append(GetPhysicalName(Meta.GetEmptyField(meta, FieldType.String)));
@@ -264,7 +265,12 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
         }
         result.Length--;
         result.Append(')');
-        // add tablespace ...
+        if (tablespace != null)
+        {
+            result.Append(SqlSpace);
+            result.Append(DdlTableSpace);
+            result.Append(tablespace.Name);
+        }
         return result.ToString();
     }
     public string Create(Constraint constraint, TableSpace? tablespace = null)

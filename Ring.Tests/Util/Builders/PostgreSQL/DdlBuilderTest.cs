@@ -155,18 +155,60 @@ public class DdlBuilderTest : BaseBuilderTest
     public void Create_Index1_DdlQuery()
     {
         // arrange 
-        var fileName = _fixture.Create<string>();
-        var tablespaceName = _fixture.Create<string>();
-        var tablespace = new TableSpace(_fixture.Create<int>(), tablespaceName, _fixture.Create<string?>(), true, true, true,
-            _fixture.CreateMany<string>().ToArray(),
-            fileName, true, true);
-        var expectedSql = $"CREATE TABLESPACE {tablespaceName} LOCATION '{fileName}'";
+        var metaList = GetSchema1();
+        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
+        var table = schema?.GetTable("book");
+        var expectedResult = "CREATE INDEX idx_1021_2 ON rpg_sheet.t_book (title)";
 
         // act 
-        var dql = _sut.Create(tablespace);
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+        var dql = _sut.Create(table.Indexes[1], table);
+#pragma warning restore CS8602
 
         // assert
-        Assert.Equal(expectedSql, dql);
+        Assert.Equal(expectedResult, dql);
+    }
+
+    [Fact]
+    public void Create_IndexMeta_DdlQuery()
+    {
+        // arrange 
+        var schBuilder = new SchemaBuilder();
+        var schemaName = "@Test";
+        var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
+        var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
+        var table = schema.GetTable("@meta");
+        var expectedResult = "CREATE UNIQUE INDEX \"idx_@meta_10\" ON \"@test\".\"@meta\" (id,schema_id,object_type,reference_id)";
+
+        // act 
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+        var dql = _sut.Create(table.Indexes[0], table);
+#pragma warning restore CS8602
+
+        // assert
+        Assert.Equal(expectedResult, dql);
+    }
+
+    [Fact]
+    public void Create_IndexWithTablespace_DdlQuery()
+    {
+        // arrange 
+        var schBuilder = new SchemaBuilder();
+        var schemaName = "@Test";
+        var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2, 
+            DefaultIndexStorage = "tblSpc_test" };
+        var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
+        var tablespace = schema.TableSpaces[0];
+        var table = schema.GetTable("@meta");
+        var expectedResult = "CREATE UNIQUE INDEX \"idx_@meta_10\" ON \"@test\".\"@meta\" (id,schema_id,object_type,reference_id) TABLESPACE tblSpc_test";
+
+        // act 
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+        var dql = _sut.Create(table.Indexes[0], table, tablespace);
+#pragma warning restore CS8602
+
+        // assert
+        Assert.Equal(expectedResult, dql);
     }
 
     [Fact]

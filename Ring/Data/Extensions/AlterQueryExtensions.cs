@@ -13,6 +13,7 @@ internal static class AlterQueryExtensions
         {
             case AlterQueryType.CreateTable: return builder.Create(query.Table, query.TableSpace);
             case AlterQueryType.CreatePrimaryKey: return builder.Create(query.Constraint!, query.TableSpace);
+            case AlterQueryType.CreateIndex: return builder.Create(query.Index!, query.Table, query.TableSpace);
         }
 #pragma warning restore IDE0066
         return null;

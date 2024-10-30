@@ -18,15 +18,15 @@ internal static class SchemaExtensions
     internal static Sequence? GetSequence(this DbSchema schema, string name)
     {
         var span = new ReadOnlySpan<Sequence>(schema.Sequences);
-        int indexerLeft = 0, indexerRigth = span.Length - 1;
-        while (indexerLeft <= indexerRigth)
+        int indexerLeft = 0, indexerRight = span.Length - 1;
+        while (indexerLeft <= indexerRight)
         {
-            var indexerMiddle = indexerLeft + indexerRigth;
+            var indexerMiddle = indexerLeft + indexerRight;
             indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
             var indexerCompare = string.CompareOrdinal(name, span[indexerMiddle].Name);
             if (indexerCompare == 0) return span[indexerMiddle];
             if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
-            else indexerRigth = indexerMiddle - 1;
+            else indexerRight = indexerMiddle - 1;
         }
         return null;
     }
@@ -38,15 +38,15 @@ internal static class SchemaExtensions
     internal static Table? GetTable(this DbSchema schema, int id)
     {
         var span = new ReadOnlySpan<Table>(schema.TablesById);
-        int indexerLeft = 0, indexerRigth = span.Length - 1, indexerMiddle, indexerCompare;
-        while (indexerLeft <= indexerRigth)
+        int indexerLeft = 0, indexerRight = span.Length - 1, indexerMiddle, indexerCompare;
+        while (indexerLeft <= indexerRight)
         {
-            indexerMiddle = indexerLeft + indexerRigth;
+            indexerMiddle = indexerLeft + indexerRight;
             indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
             indexerCompare = id - span[indexerMiddle].Id;
             if (indexerCompare == 0L) return span[indexerMiddle];
             if (indexerCompare > 0L) indexerLeft = indexerMiddle + 1;
-            else indexerRigth = indexerMiddle - 1;
+            else indexerRight = indexerMiddle - 1;
         }
         return null;
     }
@@ -58,15 +58,15 @@ internal static class SchemaExtensions
     internal static Table? GetTable(this DbSchema schema, string name)
     {
         var span = new ReadOnlySpan<Table>(schema.TablesByName);
-        int indexerLeft = 0, indexerRigth = span.Length - 1, indexerMiddle, indexerCompare;
-        while (indexerLeft <= indexerRigth)
+        int indexerLeft = 0, indexerRight = span.Length - 1, indexerMiddle, indexerCompare;
+        while (indexerLeft <= indexerRight)
         {
-            indexerMiddle = indexerLeft + indexerRigth;
+            indexerMiddle = indexerLeft + indexerRight;
             indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
             indexerCompare = string.CompareOrdinal(name, span[indexerMiddle].Name); 
             if (indexerCompare == 0) return span[indexerMiddle];
             if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
-            else indexerRigth = indexerMiddle - 1;
+            else indexerRight = indexerMiddle - 1;
         }
         return null;
     }

@@ -1,9 +1,7 @@
-﻿using System;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using Ring.Schema.Enums;
 using Ring.Schema.Models;
 using Index = Ring.Schema.Models.Index;
-using System.Collections.Generic;
 
 namespace Ring.Schema.Extensions;
 
@@ -189,7 +187,7 @@ internal static class TableExtensions
             var index = table.GetFirstUniqueIndex();
             if (index != null) 
                 foreach(string column in index.Columns)
-                    result.Add(TableExtensions.GetColumn(table, column));
+                    result.Add(GetColumn(table, column));
 #pragma warning restore CS8604
         }
         return result;

@@ -10,6 +10,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using Database = Ring.Schema.Models.Schema;
+using Index = Ring.Schema.Models.Index;
 
 namespace Ring.Data;
 
@@ -27,12 +28,24 @@ internal sealed class BulkAlter
         _tablespaces = GetTableSpaceDictionary(schema);
     }
 
+    internal List<AlterQuery> Queries => _queries;
+
     internal void CreateTable(string tableName)
     {
         var table = _schema.GetTable(tableName);
         if (table == null) ThrowInvalidObjectType(tableName);
         AppendDdlCommand(AlterQueryType.CreateTable, table);
         if (table.HasPrimaryKey()) AppendDdlCommand(AlterQueryType.CreatePrimaryKey, table);
+        foreach (var index in table.Indexes) AppendDdlCommand(AlterQueryType.CreateIndex, table, index);
+    }
+
+    internal void CreateIndex(string tableName, string indexName)
+    {
+        var table = _schema.GetTable(tableName);
+        if (table == null) ThrowInvalidObjectType(tableName);
+        // TODO throw exception if null 
+        var index = table.GetIndex(indexName);
+        AppendDdlCommand(AlterQueryType.CreateIndex, table, index);
     }
 
     internal void AlterTableAdd(string tableName, string columnName)
@@ -70,6 +83,18 @@ internal sealed class BulkAlter
             case AlterQueryType.CreateTable:
                 _queries.Add(new AlterQuery(table.Id, table, type, _schema.DdlBuiler, null, 
                     null, null, GetTableSpace(table, EntityType.Table)));
+                break;
+        }
+    }
+
+    private void AppendDdlCommand(AlterQueryType type, Table table, Index? index)
+    {
+        switch (type)
+        {
+            case AlterQueryType.CreateIndex:
+                if (table.Type != TableType.Business && index?.Unique==true && index.IsPrimaryKey(table)) break; 
+                _queries.Add(new AlterQuery(table.Id, table, type, _schema.DdlBuiler, null,null, index, 
+                    GetTableSpace(table, EntityType.Index)));
                 break;
         }
     }

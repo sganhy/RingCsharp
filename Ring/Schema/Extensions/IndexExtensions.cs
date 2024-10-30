@@ -1,4 +1,6 @@
 ﻿using Ring.Schema.Enums;
+using Ring.Schema.Models;
+using System.Text;
 using Index = Ring.Schema.Models.Index;
 
 namespace Ring.Schema.Extensions;
@@ -19,4 +21,24 @@ internal static class IndexExtensions
         var meta = new Meta(index.Id, (byte)EntityType.Index, tableId, 0, flags, index.Name, index.Description, value, index.Active);
         return meta;
     }
+
+    internal static bool IsPrimaryKey(this Index index, Table table)
+    {
+        var result = false;
+        if (index.Unique)
+        {
+            var pk = table.GetPrimaryKey();
+            var key = new StringBuilder();
+            foreach (var idx in pk)
+            {
+                key.Append(idx.Name);
+                key.Append(',');
+            }
+            key.Length--;
+            var indexKey = string.Join(',', index.Columns);
+            result = indexKey == key.ToString();
+        }
+        return result;
+    }
+
 }

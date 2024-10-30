@@ -13,16 +13,16 @@ internal static class ParameterExtensions
     /// </summary>
     internal static Parameter? GetParameter(this Parameter[] parameters, long hash)
     {
-        int indexerLeft = 0, indexerRigth = parameters.Length - 1, indexerMiddle, indexerCompare;
+        int indexerLeft = 0, indexerRight = parameters.Length - 1, indexerMiddle, indexerCompare;
 
-        while (indexerLeft <= indexerRigth)
+        while (indexerLeft <= indexerRight)
         {
-            indexerMiddle = indexerLeft + indexerRigth;
+            indexerMiddle = indexerLeft + indexerRight;
             indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
             indexerCompare = hash.CompareTo(parameters[indexerMiddle].Hash);
             if (indexerCompare == 0) return parameters[indexerMiddle];
             if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
-            else indexerRigth = indexerMiddle - 1;
+            else indexerRight = indexerMiddle - 1;
         }
 
         return null;
