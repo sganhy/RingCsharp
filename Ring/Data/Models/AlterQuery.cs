@@ -3,6 +3,7 @@ using Ring.Schema;
 using Ring.Schema.Models;
 using Index = Ring.Schema.Models.Index;
 using Ring.Util.Builders;
+using System.Xml.Linq;
 
 namespace Ring.Data.Models;
 
@@ -47,4 +48,10 @@ public readonly struct AlterQuery
         Index = index;
         TableSpace = tableSpace;
     }
+
+#if DEBUG
+    public override string ToString() => $"{Id} - {Type}";
+#endif
+
+
 }

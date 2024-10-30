@@ -21,7 +21,7 @@ public sealed class BulkAlterTest
     {
         // arrange 
         var builder = new SchemaBuilder();
-        var config = new Configuration() { MetaSchemaName = _fixture.Create<string>(), MaxConnectionPoolSize = 20 };
+        var config = new Configuration() { DefaultSchema = _fixture.Create<string>(), MaxConnectionPoolSize = 20 };
         var schema = builder.GetMeta(DatabaseProvider.SqlServer, config);
         var bulk = new BulkAlter(schema);
 
@@ -38,7 +38,7 @@ public sealed class BulkAlterTest
     {
         // arrange 
         var builder = new SchemaBuilder();
-        var config = new Configuration() { MetaSchemaName = _fixture.Create<string>(), MaxConnectionPoolSize = 20 };
+        var config = new Configuration() { DefaultSchema = _fixture.Create<string>(), MaxConnectionPoolSize = 20 };
         var schema = builder.GetMeta(DatabaseProvider.SqlServer, config);
         var bulk = new BulkAlter(schema);
 

@@ -110,7 +110,7 @@ public class DmlBuilderTest : BaseBuilderTest
         var sut = new DmlBuilder();
         var schBuilder = new SchemaBuilder();
         var schemaName = "@Test";
-        var config = new Configuration() { MetaSchemaName = schemaName, MaxConnectionPoolSize = 2 };
+        var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
         var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
         var table = schema.GetTable("@meta");
         var expectedResult = "INSERT INTO \"@test\".\"@meta\" (id,schema_id,object_type,reference_id,data_type,flags,name,description,value,active) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)";
@@ -132,7 +132,7 @@ public class DmlBuilderTest : BaseBuilderTest
         var sut = new DmlBuilder();
         var schBuilder = new SchemaBuilder();
         var schemaName = "@Test";
-        var config = new Configuration() { MetaSchemaName = schemaName, MaxConnectionPoolSize = 2 };
+        var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
         var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
         var table = schema.GetTable("@meta_id"); 
         var expectedResult = "INSERT INTO \"@test\".\"@meta_id\" (id,schema_id,object_type,value) VALUES ($1,$2,$3,$4)";
@@ -190,7 +190,7 @@ public class DmlBuilderTest : BaseBuilderTest
         var sut = new DmlBuilder();
         var schBuilder = new SchemaBuilder();
         var schemaName = "@Test";
-        var config = new Configuration() { MetaSchemaName = schemaName, MaxConnectionPoolSize = 2 };
+        var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
         var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
         var table = schema.GetTable("@meta");
         var expectedResult = "DELETE FROM \"@test\".\"@meta\" WHERE id=$1 AND schema_id=$2 AND object_type=$3 AND reference_id=$4";
@@ -212,7 +212,7 @@ public class DmlBuilderTest : BaseBuilderTest
         var sut = new DmlBuilder();
         var schBuilder = new SchemaBuilder();
         var schemaName = "@Test";
-        var config = new Configuration() { MetaSchemaName = schemaName, MaxConnectionPoolSize = 2 };
+        var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
         var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
         var table = schema.GetTable("@meta_id");
         var expectedResult = "DELETE FROM \"@test\".\"@meta_id\" WHERE id=$1 AND schema_id=$2 AND object_type=$3";
@@ -251,7 +251,7 @@ public class DmlBuilderTest : BaseBuilderTest
         var sut = new DmlBuilder();
         var schBuilder = new SchemaBuilder();
         var schemaName = "@Test";
-        var config = new Configuration() { MetaSchemaName = schemaName, MaxConnectionPoolSize = 2 };
+        var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
         var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
         var table = schema.GetTable("@meta");
         var expectedResult = "UPDATE \"@test\".\"@meta\" SET {0} WHERE id=$1 AND schema_id=$2 AND object_type=$3 AND reference_id=$4";
@@ -273,7 +273,7 @@ public class DmlBuilderTest : BaseBuilderTest
         var sut = new DmlBuilder();
         var schBuilder = new SchemaBuilder();
         var schemaName = "@Test";
-        var config = new Configuration() { MetaSchemaName = schemaName, MaxConnectionPoolSize = 2 };
+        var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
         var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
         var table = schema.GetTable("@meta_id");
         var expectedResult = "UPDATE \"@test\".\"@meta_id\" SET {0} WHERE id=$1 AND schema_id=$2 AND object_type=$3";

@@ -4,19 +4,20 @@ using Ring.Schema.Models;
 using System.Text;
 using Index = Ring.Schema.Models.Index;
 using DbSchema = Ring.Schema.Models.Schema;
-using System.Runtime.CompilerServices;
-using System.ComponentModel.DataAnnotations;
-using System.Diagnostics.Metrics;
+using System.Globalization;
+using Ring.Schema;
 
 namespace Ring.Util.Builders;
 
 internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 {
+    protected static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
+
     // entity
     protected static readonly string DdlView = @"VIEW";
     protected static readonly string DdlTable = @"TABLE ";  // final space character needed !
     protected static readonly string DdlConstraint = @"CONSTRAINT ";
-    protected static readonly string DdlIndex = @"INDEX";
+    protected static readonly string DdlIndex = @"INDEX ";
     protected static readonly string DdlSequence = @"SEQUENCE";
     protected static readonly string DdlTableSpace = @"TABLESPACE ";
     protected static readonly string DdlSchema = @"SCHEMA ";
@@ -26,6 +27,8 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
     protected static readonly string DdlUnique = @"UNIQUE";
     protected static readonly string DdlBitmap = @"BITMAP";
     protected static readonly string DdlHash = @"HASH";
+    protected static readonly string DdlUsing = @"USING ";
+    protected static readonly string DdlOn = @"ON ";
 
     // commands
     protected static readonly string DdlReference = @"REFERENCES";
@@ -43,6 +46,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
     // prefixes 
     protected static readonly string DefaultTablePrefix = @"t_";
     protected static readonly string DefaultPrimaryKeyPrefix = @"pk_";
+    protected static readonly string DefaultIndexPrefix = @"idx_";
 
     // conventions
     protected readonly static char SpecialEntityPrefix = '@';
@@ -139,6 +143,31 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
     public string GetPhysicalName(Relation relation) =>
         Provider.IsReservedWord(relation.Name) ?
         string.Join(null, StartPhysicalNameDelimiter, relation.Name, EndPhysicalNameDelimiter) : relation.Name;
+    public string GetPhysicalName(Index index, Table table)
+    {
+        var result = new StringBuilder(33); 
+        switch (table.Type)
+        {
+            //name:  idx_{table_id}_{index_id}
+            case TableType.Business:
+                result.Append(DefaultIndexPrefix).Append(table.Id).Append('_').Append(index.Id);
+                break;
+            //name:  idx_{from_table_id}_{to_table_id}_{from_relation_id}
+            case TableType.Mtm:
+                //TODO
+                break;
+            //name:  idx_{table_name}_{index_id}
+            default:
+                result.Append(StartPhysicalNameDelimiter)
+                    .Append(DefaultIndexPrefix)
+                    .Append(table.Name)
+                    .Append('_')
+                    .Append(index.Id)
+                    .Append(EndPhysicalNameDelimiter);
+                break;
+        }
+        return result.ToString();
+    }
     public string GetPhysicalName(Table table, DbSchema schema)
     {
         var result = new StringBuilder(63); // schema name max length(30)  + table name max length(30) + 1 '.' + 2 '"'
@@ -217,7 +246,26 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
     protected abstract string EndPhysicalNameDelimiter { get; }
     public string Create(Index index, Table table, TableSpace? tablespace = null)
     {
-        throw new NotImplementedException();
+        // CREATE INDEX title_idx ON films (title) WITH (deduplicate_items = off);
+        var result = new StringBuilder();
+        result.Append(DdlCreate);
+        result.Append(DdlIndex);
+        result.Append(GetPhysicalName(index, table));
+        result.Append(SqlSpace);
+        result.Append(DdlOn);
+        result.Append(table.PhysicalName);
+        result.Append(SqlSpace);
+        result.Append('(');
+        for (var i = 0; i < index.Columns.Length; ++i)
+        {
+            var meta = new Meta(index.Columns[i]);
+            result.Append(GetPhysicalName(Meta.GetEmptyField(meta, FieldType.String)));
+            result.Append(',');
+        }
+        result.Length--;
+        result.Append(')');
+        // add tablespace ...
+        return result.ToString();
     }
     public string Create(Constraint constraint, TableSpace? tablespace = null)
     {
@@ -235,13 +283,23 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
              case ConstraintType.PrimaryKey:
                 result.Append(DdlPrimaryKey)
                       .Append('(')
-                      .Append(String.Join(',', constraint.ToTable.GetPrimaryKey().ConvertAll<string>(delegate (IColumn column)
+                      .Append(string.Join(',', constraint.ToTable.GetPrimaryKey().ConvertAll(delegate (IColumn column)
                       {
                           return column.Name;
                       })
                       .ToArray()))
                       .Append(')');
              break; 
+        }
+        if (tablespace != null)
+        {
+            result
+                .Append(SqlSpace)
+                .Append(DdlUsing)
+                .Append(DdlIndex)
+                .Append(SqlSpace)
+                .Append(DdlTableSpace)
+                .Append(tablespace.Name);
         }
         return result.ToString();
     }

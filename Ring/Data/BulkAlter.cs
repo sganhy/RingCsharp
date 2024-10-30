@@ -102,29 +102,45 @@ internal sealed class BulkAlter
 
     private static Dictionary<EntityType, Dictionary<string, TableSpace>> GetTableSpaceDictionary(Database schema)
     {
-        var myEnumMemberCount = Enum.GetNames<EntityType>().Length;
-        var result = new Dictionary<EntityType, Dictionary<string, TableSpace>>(myEnumMemberCount*4); // reduce collisions
+        var result = new Dictionary<EntityType, Dictionary<string, TableSpace>>()
+        { 
+            { EntityType.Index, new Dictionary<string, TableSpace>()},
+            { EntityType.Table, new Dictionary<string, TableSpace>()},
+            { EntityType.Constraint, new Dictionary<string, TableSpace>()}
+        }; 
         var span = new ReadOnlySpan<TableSpace>(schema.TableSpaces);
+
         // constraint is consider as index for the moment, can be modified in the future
         foreach (var tablespace in span)
         {
-            var entityType = tablespace.Index || tablespace.Constraint ? EntityType.Index : 
-                tablespace.Table ? EntityType.Table :  EntityType.Undefined;
-            if (!result.ContainsKey(entityType)) result.Add(entityType, new Dictionary<string, TableSpace>());
             // if TableName.Length == 0 then it's a default tablespace 
-            if (tablespace.TableName.Length == 0)
-            {
-                if (!result[entityType].ContainsKey(string.Empty)) result[entityType].Add(string.Empty, tablespace);
-            }
+            if (tablespace.TableName.Length == 0) AddTableSpace(result, tablespace, string.Empty);
             else 
             {
                 var spanTables = new ReadOnlySpan<string>(tablespace.TableName);
-                foreach (var table in spanTables)
-                    if (!result[entityType].ContainsKey(table)) result[entityType].Add(table, tablespace);
+                foreach (var table in spanTables) AddTableSpace(result, tablespace, table);
             }
         }
+
+        // no tablespace for contrainst use the index one
+        if (!result[EntityType.Constraint].ContainsKey(string.Empty) &&
+            result[EntityType.Index].ContainsKey(string.Empty))
+            result[EntityType.Constraint].Add(string.Empty, result[EntityType.Index][string.Empty]);
+
         return result;
     }
 
+    private static void AddTableSpace(Dictionary<EntityType, Dictionary<string, TableSpace>> dico, TableSpace tablespace, 
+        string tableName)
+    {
+        if (tablespace.Index && !dico[EntityType.Index].ContainsKey(tableName))
+            dico[EntityType.Index].Add(tableName, tablespace);
+        if (tablespace.Table && !dico[EntityType.Table].ContainsKey(tableName))
+            dico[EntityType.Table].Add(tableName, tablespace);
+        if (tablespace.Constraint && !dico[EntityType.Constraint].ContainsKey(tableName))
+            dico[EntityType.Constraint].Add(tableName, tablespace);
+    }
+
     #endregion
+
 }

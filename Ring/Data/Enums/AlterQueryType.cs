@@ -3,9 +3,10 @@
 // using enum value to order ddl execution
 internal enum AlterQueryType: int
 {
-	CreateTable = 1,
-	AlterTableAddColumn = 2,
-	CreatePrimaryKey = 3,
+    CreateSchema = 1,
+    CreateTable = 10,
+	AlterTableAddColumn = 12,
+	CreatePrimaryKey = 13,
     CreateIndex = 103,
     Undefined = int.MaxValue
 }

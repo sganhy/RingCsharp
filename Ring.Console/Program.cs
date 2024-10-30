@@ -42,9 +42,16 @@ IRingConnection conn = new Ring.PostgreSQL.Connection(configuration);
 conn.Open();
 
 var builder = new SchemaBuilder();
-var config = new Configuration();
-config.ConnectionString = POSTGRE_CONN_STRING1;
-config.MetaSchemaName = "public";
+var config = new Configuration
+{
+    ConnectionString = POSTGRE_CONN_STRING1,
+    DefaultSchema = "public",
+    MinConnectionPoolSize = 1,
+    MaxConnectionPoolSize = 4,
+    DefaultTableStorage = "ring_data",
+    DefaultIndexStorage = "ring_index"
+};
+
 var schema = builder.GetMeta(Ring.Schema.Enums.DatabaseProvider.PostgreSql, config);
 
 BulkAlter ba = new(schema);

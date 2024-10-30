@@ -22,5 +22,5 @@ internal interface IDdlBuilder : ISqlBuilder
     string GetPhysicalName(Field field);
     string GetPhysicalName(Relation relation);
     string GetPhysicalName(Constraint constraint);
-
+    string GetPhysicalName(Index index, Table table);
 }

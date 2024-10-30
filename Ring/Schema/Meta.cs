@@ -157,10 +157,12 @@ internal readonly struct Meta
 	internal ParameterType GetParameterType() => Id.ToParameterType();
 	internal string GetParameterValue() => Value ?? string.Empty;
 	internal static int SetParameterValueType(int dataType, FieldType valueType) => (dataType & 0xFFF8) + ((byte)valueType) & 127;
-	#endregion
+    #endregion
 
-	#region tablespace methods  
-	internal bool IsTablespaceTable() => ReadFlag(BitPositionTablespaceTable);
+    #region tablespace methods  
+    internal static long SetTablespaceTable(long flags, bool isTablespaceTable) => WriteFlag(flags, BitPositionTablespaceTable, isTablespaceTable);
+    internal static long SetTablespaceIndex(long flags, bool isTablespaceIndex) => WriteFlag(flags, BitPositionTablespaceIndex, isTablespaceIndex);
+    internal bool IsTablespaceTable() => ReadFlag(BitPositionTablespaceTable);
 	internal bool IsTablespaceIndex() => ReadFlag(BitPositionTablespaceIndex);
 	#endregion
 

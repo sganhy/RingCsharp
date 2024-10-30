@@ -142,7 +142,7 @@ public class DmlBuilderTest : BaseBuilderTest
         var sut = new DmlBuilder();
         var schBuilder = new SchemaBuilder();
         var schemaName = "@Test";
-        var config = new Configuration() { MetaSchemaName = schemaName, MaxConnectionPoolSize = 2 };
+        var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
         var schema = schBuilder.GetMeta(DatabaseProvider.MySql, config);
         var table = schema.GetTable("@meta");
         var expectedResult = "DELETE FROM `@test`.`@meta` WHERE id=:a1 AND schema_id=:a2 AND object_type=:a3 AND reference_id=:a4";
@@ -164,7 +164,7 @@ public class DmlBuilderTest : BaseBuilderTest
         var sut = new DmlBuilder();
         var schBuilder = new SchemaBuilder();
         var schemaName = "@test";
-        var config = new Configuration() { MetaSchemaName = schemaName, MaxConnectionPoolSize = 2 };
+        var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
         var schema = schBuilder.GetMeta(DatabaseProvider.MySql, config);
         var table = schema.GetTable("@meta_id");
         var expectedResult = "DELETE FROM `@test`.`@meta_id` WHERE id=:a1 AND schema_id=:a2 AND object_type=:a3";
@@ -201,7 +201,7 @@ public class DmlBuilderTest : BaseBuilderTest
         var sut = new DmlBuilder();
         var schBuilder = new SchemaBuilder();
         var schemaName = "@Test";
-        var config = new Configuration() { MetaSchemaName = schemaName, MaxConnectionPoolSize = 8 };
+        var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 8 };
         var schema = schBuilder.GetMeta(DatabaseProvider.MySql, config);
         var table = schema.GetTable("@meta");
         var expectedResult = "UPDATE `@test`.`@meta` SET {0} WHERE id=:a1 AND schema_id=:a2 AND object_type=:a3 AND reference_id=:a4";
@@ -223,7 +223,7 @@ public class DmlBuilderTest : BaseBuilderTest
         var sut = new DmlBuilder();
         var schBuilder = new SchemaBuilder();
         var schemaName = "@Test";
-        var config = new Configuration() { MetaSchemaName = schemaName, MaxConnectionPoolSize = 8 };
+        var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 8 };
         var schema = schBuilder.GetMeta(DatabaseProvider.MySql, config);
         var table = schema.GetTable("@meta_id");
         var expectedResult = "UPDATE `@test`.`@meta_id` SET {0} WHERE id=:a1 AND schema_id=:a2 AND object_type=:a3";

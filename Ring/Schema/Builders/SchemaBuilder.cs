@@ -1,7 +1,6 @@
 ﻿using Ring.Data;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
-using Ring.Schema.Models;
 using System.Globalization;
 using DbSchema = Ring.Schema.Models.Schema;
 
@@ -17,20 +16,29 @@ internal sealed class SchemaBuilder
         var metaList = new List<Meta>();
         var type = SchemaType.Static;
         var loadType = SchemaLoadType.Full;
-        var schemaInfo = GetMetaWSchemaInfo(configuration.MetaSchemaName);
+        var schemaInfo = GetMetaWSchemaInfo(configuration.DefaultSchema);
+        var minConnectionPoolSize = int.Max(configuration.MinConnectionPoolSize,1);
+        var maxConnectionPoolSize = int.Max(configuration.MaxConnectionPoolSize,1);
+
+        if (minConnectionPoolSize > maxConnectionPoolSize) maxConnectionPoolSize = minConnectionPoolSize;
 
         metaList.Add(schemaInfo);
         metaList.Add(_parameterBuilder.GetParameter(ParameterType.MinPoolSize,
-            configuration.MinConnectionPoolSize.ToString(CultureInfo.InvariantCulture), 0).ToMeta());
+            minConnectionPoolSize.ToString(CultureInfo.InvariantCulture), 0).ToMeta());
         metaList.Add(_parameterBuilder.GetParameter(ParameterType.MaxPoolSize,
-            configuration.MaxConnectionPoolSize.ToString(CultureInfo.InvariantCulture),0).ToMeta());
+            maxConnectionPoolSize.ToString(CultureInfo.InvariantCulture),0).ToMeta());
         metaList.Add(_parameterBuilder.GetParameter(ParameterType.DbConnectionString, 
             configuration.ConnectionString, 0).ToMeta());
-        //metaList.Add(_parameterBuilder.GetParameter(ParameterType.DbConnectionType, typeof(SchemaBuilder), 0).ToMeta());
 
-        metaList.AddRange(_tableBuilder.GetMeta(configuration.MetaSchemaName, provider).ToMeta(0));
-        metaList.AddRange(_tableBuilder.GetMetaId(configuration.MetaSchemaName, provider).ToMeta(0));
-        metaList.AddRange(_tableBuilder.GetLog(configuration.MetaSchemaName, provider).ToMeta(0));
+        metaList.AddRange(_tableBuilder.GetMeta(configuration.DefaultSchema, provider).ToMeta(0));
+        metaList.AddRange(_tableBuilder.GetMetaId(configuration.DefaultSchema, provider).ToMeta(0));
+        metaList.AddRange(_tableBuilder.GetLog(configuration.DefaultSchema, provider).ToMeta(0));
+
+        // load tablespace info
+        if (!string.IsNullOrWhiteSpace(configuration.DefaultTableStorage))
+            metaList.Add(GetStorage(configuration.DefaultTableStorage, false, true));
+        if (!string.IsNullOrWhiteSpace(configuration.DefaultIndexStorage))
+            metaList.Add(GetStorage(configuration.DefaultIndexStorage, true, false));
 
         var result = Meta.ToSchema(metaList.ToArray(),provider, type, loadType) ?? Meta.GetEmptySchema(schemaInfo, provider);
         // initialise cache for : DmlBuiler & DqlBuiler
@@ -45,6 +53,15 @@ internal sealed class SchemaBuilder
         var flags = 0L;
         flags = Meta.SetEntityBaseline(flags, true);
         return new(0, (byte)EntityType.Schema, 0, 0, flags, schemaName, null, null, true);
+    }
+
+    private static Meta GetStorage(string name, bool index, bool table)
+    {
+        var flags = 0L;
+        flags = Meta.SetEntityBaseline(flags, true);
+        flags = Meta.SetTablespaceIndex(flags, index);
+        flags = Meta.SetTablespaceTable(flags, table);
+        return new(table?1:2, (byte)EntityType.Tablespace, 0, 0, flags, name, null, null, true);
     }
 
 }

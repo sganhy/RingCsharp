@@ -1,6 +1,5 @@
 ﻿using Ring.Data.Enums;
 using Ring.Data.Models;
-using Ring.Schema.Enums;
 
 namespace Ring.Data.Extensions;
 
@@ -12,8 +11,8 @@ internal static class AlterQueryExtensions
 #pragma warning disable IDE0066 // Convert switch statement to expression
         switch (query.Type)
         {
-            case AlterQueryType.CreateTable: return builder.Create(query.Table);
-            case AlterQueryType.CreatePrimaryKey: return builder.Create(query.Constraint!);
+            case AlterQueryType.CreateTable: return builder.Create(query.Table, query.TableSpace);
+            case AlterQueryType.CreatePrimaryKey: return builder.Create(query.Constraint!, query.TableSpace);
         }
 #pragma warning restore IDE0066
         return null;

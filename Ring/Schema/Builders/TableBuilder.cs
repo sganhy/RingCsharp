@@ -45,7 +45,7 @@ internal sealed class TableBuilder
             GetField(FieldValue, FieldType.String,false),
             GetField(FieldActive, FieldType.Boolean)
         };
-        metaList.Add(GetUniqueIndex(4, metaList));
+        metaList.Add(GetIndex(true, new [] { metaList[0], metaList[1], metaList[2], metaList[3] }));
         var metaTable = GetTable((int)TableType.Meta, TableMetaName, TableType.Meta);
         var result = GetTable(schemaName, provider, metaList.ToArray(), metaTable);
         return result;
@@ -61,7 +61,7 @@ internal sealed class TableBuilder
             GetField(FieldValue, FieldType.Long),
         };
         var metaTable = GetTable((int)TableType.MetaId, TableMetaIdName, TableType.MetaId);
-        metaList.Add(GetUniqueIndex(3, metaList));
+        metaList.Add(GetIndex(true, new[] { metaList[0], metaList[1], metaList[2] }));
         var result= GetTable(schemaName, provider, metaList.ToArray(), metaTable);
         return result;
     }
@@ -83,6 +83,7 @@ internal sealed class TableBuilder
             GetField(FieldDescription, FieldType.String, 0, false),
         };
         var metaTable = GetTable((int)TableType.Log, TableLogName, TableType.Log);
+        metaList.Add(GetIndex(false, new[] { metaList[1] }));
         var result = GetTable(schemaName, provider, metaList.ToArray(), metaTable);
         return result;
     }
@@ -155,12 +156,13 @@ internal sealed class TableBuilder
         dataType = Meta.SetFieldType(dataType, fieldType);
         return new (0, (byte)EntityType.Field, 0, dataType, flags, name, null, null, true);
     }
-    private static Meta GetUniqueIndex(int firstField, List<Meta> lstMeta)
+    private static Meta GetIndex(bool unique, Meta[] lstMeta)
     {
         var fields = new List<string>();
-        for (var i = 0; i < firstField; ++i) fields.Add(lstMeta[i].Name);
+        for (var i = 0; i < lstMeta.Length; ++i) fields.Add(lstMeta[i].Name);
         var flags = 0L;
-        flags = Meta.SetIndexUnique(flags, true);
+        flags = Meta.SetEntityBaseline(flags, true);
+        flags = Meta.SetIndexUnique(flags, unique);
         var meta = new Meta(0, (byte)EntityType.Index, 0, 0, flags, string.Empty, null, 
             Meta.SetIndexedColumns(fields.ToArray()), true);
         return meta;

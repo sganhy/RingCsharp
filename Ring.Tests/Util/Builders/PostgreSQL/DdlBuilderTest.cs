@@ -152,12 +152,30 @@ public class DdlBuilderTest : BaseBuilderTest
     }
 
     [Fact]
+    public void Create_Index1_DdlQuery()
+    {
+        // arrange 
+        var fileName = _fixture.Create<string>();
+        var tablespaceName = _fixture.Create<string>();
+        var tablespace = new TableSpace(_fixture.Create<int>(), tablespaceName, _fixture.Create<string?>(), true, true, true,
+            _fixture.CreateMany<string>().ToArray(),
+            fileName, true, true);
+        var expectedSql = $"CREATE TABLESPACE {tablespaceName} LOCATION '{fileName}'";
+
+        // act 
+        var dql = _sut.Create(tablespace);
+
+        // assert
+        Assert.Equal(expectedSql, dql);
+    }
+
+    [Fact]
     public void Create_PkConstraintMeta_DdlQuery()
     {
         // arrange 
         var schBuilder = new SchemaBuilder();
         var schemaName = "@Test";
-        var config = new Configuration() { MetaSchemaName = schemaName, MaxConnectionPoolSize = 2 };
+        var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
         var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
         var table = schema.GetTable("@meta");
         var pk = new Constraint(ConstraintType.PrimaryKey, table!);
@@ -176,7 +194,7 @@ public class DdlBuilderTest : BaseBuilderTest
         // arrange 
         var schBuilder = new SchemaBuilder();
         var schemaName = "@Test";
-        var config = new Configuration() { MetaSchemaName = schemaName, MaxConnectionPoolSize = 2 };
+        var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
         var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
         var table = schema.GetTable("@meta_id");
         var pk = new Constraint(ConstraintType.PrimaryKey, table!);
@@ -327,7 +345,7 @@ public class DdlBuilderTest : BaseBuilderTest
     }
 
     [Fact]
-    public void GetPhysicalName_PkConstraint1_TableName()
+    public void GetPhysicalName_PkConstraint1_ConstraintName()
     {
         // arrange 
         var metaList = GetSchema1();
@@ -345,4 +363,44 @@ public class DdlBuilderTest : BaseBuilderTest
         // assert
         Assert.Equal(expectedResult, physicalName);
     }
+
+    [Fact]
+    public void GetPhysicalName_Index0DeityTable_IndexName()
+    {
+        // arrange 
+        var metaList = GetSchema1();
+        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
+        var table = schema?.GetTable("deity");
+        var ddlBuilder = DatabaseProvider.PostgreSql.GetDdlBuilder();
+        var expectedResult = "idx_1037_1";
+
+        // act 
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+        var physicalName = ddlBuilder.GetPhysicalName(table.Indexes[0], table);
+#pragma warning restore CS8602
+
+        // assert
+        Assert.Equal(expectedResult, physicalName);
+    }
+
+    [Fact]
+    public void GetPhysicalName_Index0LogTable_IndexName()
+    {
+        // arrange 
+        var schBuilder = new SchemaBuilder();
+        var config = new Configuration() { DefaultSchema = "public", MaxConnectionPoolSize = 2 };
+        var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
+        var table = schema.GetTable("@log");
+        var ddlBuilder = DatabaseProvider.PostgreSql.GetDdlBuilder();
+        var expectedResult = "\"idx_@log_11\"";
+
+        // act 
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+        var physicalName = ddlBuilder.GetPhysicalName(table.Indexes[0], table);
+#pragma warning restore CS8602
+
+        // assert
+        Assert.Equal(expectedResult, physicalName);
+    }
+
 }
