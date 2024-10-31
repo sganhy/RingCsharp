@@ -1,4 +1,6 @@
-﻿using Ring.Schema;
+﻿using Ring.Data;
+using Ring.Schema;
+using Ring.Schema.Builders;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 
@@ -297,5 +299,45 @@ public class TableExtensionsTest : BaseExtensionsTest
         Assert.Null(index);
     }
 
+    [Fact]
+    internal void HasPrimaryKey_LogTable_False()
+    {
+        // arrange 
+        var schemaName = "@Test";
+        var schBuilder = new SchemaBuilder();
+        var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
+        var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
+        var logTable = schema.GetTable("@log");
+
+        // act 
+        Assert.NotNull(schema);
+        Assert.NotNull(logTable);
+        var result = logTable.HasPrimaryKey();
+
+        // assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    internal void GetPrimaryKey_MetaIdTable_IColumnList()
+    {
+        // arrange 
+        var schemaName = "@Test2";
+        var schBuilder = new SchemaBuilder();
+        var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
+        var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
+        var metaTable = schema.GetTable("@meta_id");
+
+        // act 
+        Assert.NotNull(schema);
+        Assert.NotNull(metaTable);
+        var result = metaTable.GetPrimaryKey();
+
+        // assert
+        Assert.Equal(3, result.Count);
+        Assert.Equal("id", result[0].Name);
+        Assert.Equal("schema_id", result[1].Name);
+        Assert.Equal("object_type", result[2].Name);
+    }
 
 }

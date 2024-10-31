@@ -177,23 +177,21 @@ internal static class TableExtensions
         return null;
     }
 
-    internal static List<IColumn> GetPrimaryKey(this Table table)
-    {
-        var result = new List<IColumn>();
-        if (table.Type == TableType.Business || table.Type == TableType.Lexicon) result.Add(table.Fields[table.RecordIndexes[0]]);
-        else 
-        {
-#pragma warning disable CS8604 // Possible null reference argument.
-            var index = table.GetFirstUniqueIndex();
-            if (index != null) 
-                foreach(string column in index.Columns)
-                    result.Add(GetColumn(table, column));
-#pragma warning restore CS8604
-        }
-        return result;
-    }
+	internal static List<IColumn> GetPrimaryKey(this Table table)
+	{
+		var result = new List<IColumn>();
+		if (table.Type == TableType.Business || table.Type == TableType.Lexicon) 
+			result.Add(table.Fields[table.RecordIndexes[0]]);
+		else 
+		{
+			var index = table.GetFirstUniqueIndex();
+			if (index != null) 
+				foreach(string column in index.Columns) result.Add(GetColumn(table, column));
+		}
+		return result;
+	}
 
-    internal static bool HasPrimaryKey(this Table table) => GetPrimaryKey(table).Count > 0;
+	internal static bool HasPrimaryKey(this Table table) => GetPrimaryKey(table).Count > 0;
 
     internal static Meta[] ToMeta(this Table table, int schemaId) {
         var result = new List<Meta>(table.Fields.Length+table.Relations.Length+table.Indexes.Length+1);
