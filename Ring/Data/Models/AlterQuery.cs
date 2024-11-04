@@ -19,7 +19,6 @@ public readonly struct AlterQuery
     internal readonly Index? Index;
     internal readonly TableSpace? TableSpace;
 
-
     /// <summary>
     /// Ctor
     /// </summary>
@@ -51,6 +50,5 @@ public readonly struct AlterQuery
 #if DEBUG
     public override string ToString() => $"{Id} - {Type}";
 #endif
-
 
 }

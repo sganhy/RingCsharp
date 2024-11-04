@@ -30,8 +30,8 @@ public struct Record : IEquatable<Record>
 	private static readonly decimal MaxByteValue = sbyte.MaxValue;
 	private static readonly decimal MinByteValue = sbyte.MinValue;
 
-	// should be instanciate when record type is defined
-	// _data.Lenght should be > _type.Fields.Length
+	// should be instantiate when record type is defined
+	// _data.Length should be > _type.Fields.Length
 	private string?[]? _data;
 	private Table? _type;
 	private readonly int _offset;

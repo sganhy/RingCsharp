@@ -216,7 +216,7 @@ internal static class TableExtensions
     {
         var fieldCount = table.Fields.Length;
         var relationCount = table.Relations.Length;
-        var columnCount = fieldCount + relationCount; // potentatial column count
+        var columnCount = fieldCount + relationCount; // potential max column count
         var index = 0;
         var colPosition = 0;
         var relationIndex = fieldCount;

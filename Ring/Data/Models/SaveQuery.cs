@@ -14,7 +14,7 @@ public readonly struct SaveQuery
     internal readonly Table Table;
     internal readonly SaveQueryType Type;
     internal readonly IDmlBuilder Builder;
-    internal readonly string?[]? Data;
+    internal readonly string[]? Data;
     internal readonly int Offset;
 
     /// <summary>
@@ -28,7 +28,8 @@ public readonly struct SaveQuery
         Data = null;
         Offset =-1;
     }
-    internal SaveQuery(Table table, SaveQueryType type, IDmlBuilder builder, string?[]? data, int offset)
+
+    internal SaveQuery(Table table, SaveQueryType type, IDmlBuilder builder, string[]? data, int offset)
     {
         Table = table;
         Type = type;

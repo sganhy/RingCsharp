@@ -2,6 +2,7 @@
 
 using Ring.Data;
 using Ring.PostgreSQL;
+using Ring.Schema;
 using Ring.Schema.Builders;
 using Serilog;
 using Serilog.Events;
@@ -34,10 +35,28 @@ Log.Warning("Warning accrued at {now}", DateTime.Now);
 Log.Error("Error accrued at {now}", DateTime.Now);
 Log.Fatal("Problem with car car accrued at {now}", DateTime.Now);
 
+SpanList<Meta> testlst = new SpanList<Meta>();
+testlst.Add(new Meta("1"));
+testlst.Add(new Meta("2"));
+testlst.Add(new Meta("3"));
+testlst.Add(new Meta("4"));
+testlst.Add(new Meta("5"));
+testlst.Add(new Meta("6"));
+testlst.Add(new Meta("7"));
+testlst.Add(new Meta("8"));
+testlst.Add(new Meta("9"));
+
+List<int> testh= new List<int>();
+testh.Sort();
+
+
+
 var POSTGRE_CONN_STRING1 = "User ID=postgres; Password=sa;Host=localhost;Port=5432;Database=postgres; Pooling=false;";
 
 var configuration = new Configuration { ConnectionString = POSTGRE_CONN_STRING1, LoggerFactory = microsoftLoggerFactory };
 IRingConnection conn = new Ring.PostgreSQL.Connection(configuration);
+
+
 
 conn.Open();
 

@@ -14,21 +14,23 @@ using Index = Ring.Schema.Models.Index;
 
 namespace Ring.Data;
 
-internal sealed class BulkAlter
+#pragma warning disable IDE0250 // Make struct 'readonly'
+internal ref struct BulkAlter
 {
+#pragma warning restore IDE0250
     private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
-    private readonly List<AlterQuery> _queries;
+    private readonly SpanList<AlterQuery> _queries;
     private readonly Database _schema;
     private readonly Dictionary<EntityType, Dictionary<string, TableSpace>> _tablespaces; // <entityType, <tableName or default>, TableSpaceInfo>
 
     internal BulkAlter(Database schema)
     {
-        _queries = new List<AlterQuery>();
+        _queries = new SpanList<AlterQuery>();
         _schema = schema;
         _tablespaces = GetTableSpaceDictionary(schema);
     }
 
-    internal List<AlterQuery> Queries => _queries;
+    internal SpanList<AlterQuery> Queries => _queries;
 
     internal void CreateTable(string tableName)
     {
@@ -147,7 +149,7 @@ internal sealed class BulkAlter
             }
         }
 
-        // no tablespace for contrainst use the index one
+        // no tablespace for constraints use the index one
         if (!result[EntityType.Constraint].ContainsKey(string.Empty) &&
             result[EntityType.Index].ContainsKey(string.Empty))
             result[EntityType.Constraint].Add(string.Empty, result[EntityType.Index][string.Empty]);
