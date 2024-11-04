@@ -1,57 +1,101 @@
-﻿using System.Diagnostics.Metrics;
-using System.Runtime.CompilerServices;
-using System;
-using System.Collections;
+﻿using System.Runtime.CompilerServices;
 
 namespace Ring.Data;
 
 internal ref struct SpanList<T> where T : struct
 {
-
-#pragma warning disable IDE0044 // Add readonly modifier
-    
     private Span<T> _buffer;
     private int _count;
-
-#pragma warning restore IDE0044 
+    private readonly int _initBucketSize;
 
     public SpanList()
     {
+        _initBucketSize = 4;
         _buffer = new Span<T>(Array.Empty<T>());
         _count = 0;
     }
 
-    public readonly int Count => _count;
+    public SpanList(int initSize)
+    {
+        _initBucketSize = int.Max(2,initSize);// min 2 
+        _buffer = new Span<T>(Array.Empty<T>());
+        _count = 0;
+    }
+
+    internal readonly int Count => _count;
 
     /// <summary>
     /// Indexer of TypedSpanList
     /// </summary>
-    internal readonly T this[int index] => _buffer[index];
-
+    internal readonly ref T this[int index]
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get { return ref _buffer[index]; }
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void Add(in T value)
     {
         var count = _count;
-        if (_count >= _buffer.Length) ReDim();
+        if (count >= _buffer.Length) ReDim();
         _buffer[_count] = value;
         ++count; 
         _count = count;
     }
 
-#pragma warning disable IDE0251 // Make member 'readonly'
-    internal void Sort(Comparison<T> comparison)
-    {
-        if (_count > 1) _buffer.Sort(comparison);
-    }
-#pragma warning restore IDE0251
+    internal void Clear() => _count = 0;
 
+    public Enumerator GetEnumerator() => new(this);
+
+    #region subclasses
+
+    public ref struct Enumerator
+    {
+        private readonly SpanList<T> _span;
+        private int _index;
+
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal Enumerator(SpanList<T> spanList)
+        {
+            _span = spanList;
+            _index = -1;
+        }
+
+        /// <summary>Advances the enumerator to the next element of the span.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool MoveNext()
+        {
+            var index = _index + 1;
+            if (index < _span._count)
+            {
+                _index = index;
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>Gets the element at the current position of the enumerator.</summary>
+        public ref T Current
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => ref _span[_index];
+        }
+    }
+
+    #endregion
+
+#pragma warning disable IDE0251 // Make member 'readonly'
+
+    internal void Sort(Comparison<T> comparison) => _buffer.Sort(comparison);
+    
+#pragma warning restore IDE0251
 
     #region private methods 
 
     private void ReDim()
     {
-        var newSize = int.Max(_count, 4) << 1; // min 8 
+        var newSize = int.Max(_count<<1, _initBucketSize); 
         var buffer = new Span<T>(new T[newSize]);
         _buffer.CopyTo(buffer);
         _buffer = buffer;

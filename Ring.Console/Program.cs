@@ -35,7 +35,7 @@ Log.Warning("Warning accrued at {now}", DateTime.Now);
 Log.Error("Error accrued at {now}", DateTime.Now);
 Log.Fatal("Problem with car car accrued at {now}", DateTime.Now);
 
-SpanList<Meta> testlst = new SpanList<Meta>();
+SpanList<Meta> testlst = new SpanList<Meta>(3);
 testlst.Add(new Meta("1"));
 testlst.Add(new Meta("2"));
 testlst.Add(new Meta("3"));

@@ -157,51 +157,51 @@ internal readonly struct Meta
 	internal ParameterType GetParameterType() => Id.ToParameterType();
 	internal string GetParameterValue() => Value ?? string.Empty;
 	internal static int SetParameterValueType(int dataType, FieldType valueType) => (dataType & 0xFFF8) + ((byte)valueType) & 127;
-    #endregion
+	#endregion
 
-    #region tablespace methods  
-    internal static long SetTablespaceTable(long flags, bool isTablespaceTable) => WriteFlag(flags, BitPositionTablespaceTable, isTablespaceTable);
-    internal static long SetTablespaceIndex(long flags, bool isTablespaceIndex) => WriteFlag(flags, BitPositionTablespaceIndex, isTablespaceIndex);
-    internal bool IsTablespaceTable() => ReadFlag(BitPositionTablespaceTable);
+	#region tablespace methods  
+	internal static long SetTablespaceTable(long flags, bool isTablespaceTable) => WriteFlag(flags, BitPositionTablespaceTable, isTablespaceTable);
+	internal static long SetTablespaceIndex(long flags, bool isTablespaceIndex) => WriteFlag(flags, BitPositionTablespaceIndex, isTablespaceIndex);
+	internal bool IsTablespaceTable() => ReadFlag(BitPositionTablespaceTable);
 	internal bool IsTablespaceIndex() => ReadFlag(BitPositionTablespaceIndex);
 	#endregion
 
-    internal static DbSchema GetEmptySchema(Meta meta, DatabaseProvider provider) =>
-     new(meta.Id, meta.Name, meta.Description, Array.Empty<Parameter>(),
-          Array.Empty<Lexicon>(), SchemaLoadType.Full, SchemaType.Undefined, Array.Empty<Sequence>(), Array.Empty<Table>(),
-          Array.Empty<Table>(), Array.Empty<TableSpace>(), provider, meta.Active, meta.IsEntityBaseline);
+	internal static DbSchema GetEmptySchema(Meta meta, DatabaseProvider provider) =>
+		new(meta.Id, meta.Name, meta.Description, Array.Empty<Parameter>(),
+			Array.Empty<Lexicon>(), SchemaLoadType.Full, SchemaType.Undefined, Array.Empty<Sequence>(), Array.Empty<Table>(),
+			Array.Empty<Table>(), Array.Empty<TableSpace>(), provider, meta.Active, meta.IsEntityBaseline);
 
-    internal static Table GetEmptyTable(Meta meta) =>
-        new(meta.Id, meta.Name, meta.Description, meta.Value, string.Empty,
-             meta.DataType.ToTableType(), Array.Empty<Relation>(), Array.Empty<Field>(), Array.Empty<int>(), Array.Empty<IColumn>(),
-             Array.Empty<Index>(), meta.ReferenceId, PhysicalType.Table, meta.IsEntityBaseline, meta.Active,
-             meta.IsTableCached, meta.IsTableReadonly);
+	internal static Table GetEmptyTable(Meta meta) =>
+		new(meta.Id, meta.Name, meta.Description, meta.Value, string.Empty,
+			meta.DataType.ToTableType(), Array.Empty<Relation>(), Array.Empty<Field>(), Array.Empty<int>(), Array.Empty<IColumn>(),
+			Array.Empty<Index>(), meta.ReferenceId, PhysicalType.Table, meta.IsEntityBaseline, meta.Active,
+			meta.IsTableCached, meta.IsTableReadonly);
 
-    internal static Relation GetEmptyRelation(Meta meta, RelationType relationType, TableType toTableType) =>
-        new(meta.Id, meta.Name, meta.Description, relationType,
-            GetEmptyTable(new Meta(0, (byte)EntityType.Table, 0, (int)toTableType, 0L,
-                 meta.Name,null, null, false)), -1, FieldType.Undefined, false, false, true, true);
+	internal static Relation GetEmptyRelation(Meta meta, RelationType relationType, TableType toTableType) =>
+		new(meta.Id, meta.Name, meta.Description, relationType,
+			GetEmptyTable(new Meta(0, (byte)EntityType.Table, 0, (int)toTableType, 0L,
+			meta.Name,null, null, false)), -1, FieldType.Undefined, false, false, true, true);
 
-    internal static Field GetEmptyField(Meta meta, FieldType fieldType) =>
-        new(meta.Id, meta.Name, meta.Description, fieldType, 0, null, true, false,
-            false, false, true);
+	internal static Field GetEmptyField(Meta meta, FieldType fieldType) =>
+		new(meta.Id, meta.Name, meta.Description, fieldType, 0, null, true, false,
+			false, false, true);
 
-    internal EntityType GetEntityType() => ((int)ObjectType).ToEntityType();
+	internal EntityType GetEntityType() => ((int)ObjectType).ToEntityType();
 
-    #region convertors 
+	#region convertors 
 
-    internal Relation? ToRelation(Table to)
-    {
-        if (IsRelation)
-        {
-            var fieldType = FieldType.Undefined;
-            if (to.Type == TableType.Business || to.Type == TableType.Lexicon)
-                fieldType = to.Fields[to.RecordIndexes[0]].Type;
-            return new Relation(Id, Name, Description, GetRelationType(), to, -1, fieldType,
-               IsRelationNotNull, HasRelationConstraint, IsEntityBaseline, Active);
-        }
-        return null;
-    }
+	internal Relation? ToRelation(Table to)
+	{
+		if (IsRelation)
+		{
+			var fieldType = FieldType.Undefined;
+			if (to.Type == TableType.Business || to.Type == TableType.Lexicon)
+				fieldType = to.Fields[to.RecordIndexes[0]].Type;
+			return new Relation(Id, Name, Description, GetRelationType(), to, -1, fieldType,
+				IsRelationNotNull, HasRelationConstraint, IsEntityBaseline, Active);
+		}
+		return null;
+	}
     
     internal Field? ToField()
         => IsField ? new Field(Id, Name, Description, GetFieldType(), GetFieldSize(), GetFieldDefaultValue(), IsEntityBaseline,
@@ -279,21 +279,25 @@ internal readonly struct Meta
     }
     #endregion
 
-    #region private methods 
+#if DEBUG
+	public override string ToString() => string.IsNullOrEmpty(Name) ? string.Empty : $"{Id} - {Name}";
+#endif
 
-    private static long WriteFlag(long flags, byte bitPosition, bool value)
-    {
-        if (bitPosition < 65)
-        {
-            var mask = 1L;
-            mask <<= bitPosition - 1;
-            if (value) flags |= mask;
-            else flags &= ~mask;
-        }
-        return flags;
-    }
+	#region private methods 
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static long WriteFlag(long flags, byte bitPosition, bool value)
+	{
+		if (bitPosition < 65)
+		{
+			var mask = 1L;
+			mask <<= bitPosition - 1;
+			if (value) flags |= mask;
+			else flags &= ~mask;
+		}
+		return flags;
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool ReadFlag(byte bitPosition) => ((Flags >> (bitPosition - 1)) & 1) > 0;
 
     private static Index[] GetIndexes(ArraySegment<Meta> items)
@@ -368,27 +372,27 @@ internal readonly struct Meta
         return result;
     }
 
-    private static Relation[] GetRelationArray(ArraySegment<Meta> items)
-    {
-        // count element
-        var relationCount = 0;
-        var span = items.AsSpan();
-        foreach (var item in span) if (item.IsRelation) ++relationCount;
-        // relation are assigned later
-        return relationCount > 0 ? new Relation[relationCount] : Array.Empty<Relation>();
-    }
+	private static Relation[] GetRelationArray(ArraySegment<Meta> items)
+	{
+		// count element
+		var relationCount = 0;
+		var span = items.AsSpan();
+		foreach (var item in span) if (item.IsRelation) ++relationCount;
+		// relation are assigned later
+		return relationCount > 0 ? new Relation[relationCount] : Array.Empty<Relation>();
+	}
 
-    private static Meta? GetSchema(Span<Meta> schema)
-    {
-        var i = 0;
-        var count = schema.Length;
-        while (i < count)
-        {
-            if (schema[i].IsSchema) return schema[i];
-            ++i;
-        }
-        return null;
-    }
+	private static Meta? GetSchema(Span<Meta> schema)
+	{
+		var i = 0;
+		var count = schema.Length;
+		while (i < count)
+		{
+			if (schema[i].IsSchema) return schema[i];
+			++i;
+		}
+		return null;
+	}
    
     private static Table[] GetTables(Meta[] schema, IDdlBuilder ddlBuilder, Meta metaSchema, DatabaseProvider provider)
     {
@@ -431,20 +435,20 @@ internal readonly struct Meta
         return result.ToArray();
     }
 
-    private static Table[] ShallowCopy(Span<Table> tables)
-    {
-        var result = new Table[tables.Length]; //Modify start & length as required
-        tables.CopyTo(result.AsSpan());
-        return result;
-    }
+	private static Table[] ShallowCopy(Span<Table> tables)
+	{
+		var result = new Table[tables.Length]; //Modify start & length as required
+		tables.CopyTo(result.AsSpan());
+		return result;
+	}
 
-    private static int MetaSchemaComparer(Meta meta1, Meta meta2)
-    {
-        // sort ASC by reference_id, name
-        var result = meta1.ReferenceId.CompareTo(meta2.ReferenceId);
-        if (result != 0) return result;
-        return string.CompareOrdinal(meta1.Name, meta2.Name);
-    }
+	private static int MetaSchemaComparer(Meta meta1, Meta meta2)
+	{
+		// sort ASC by reference_id, name
+		var result = meta1.ReferenceId.CompareTo(meta2.ReferenceId);
+		if (result != 0) return result;
+		return string.CompareOrdinal(meta1.Name, meta2.Name);
+	}
 
     private static int GetColumnMapperSize(ArraySegment<Meta> items, TableType tableType, int fieldCount)
     {
