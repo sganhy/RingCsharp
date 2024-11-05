@@ -49,8 +49,6 @@ testlst.Add(new Meta("9"));
 List<int> testh= new List<int>();
 testh.Sort();
 
-
-
 var POSTGRE_CONN_STRING1 = "User ID=postgres; Password=sa;Host=localhost;Port=5432;Database=postgres; Pooling=false;";
 
 var configuration = new Configuration { ConnectionString = POSTGRE_CONN_STRING1, LoggerFactory = microsoftLoggerFactory };

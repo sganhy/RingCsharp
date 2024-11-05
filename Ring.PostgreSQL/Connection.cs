@@ -6,7 +6,6 @@ using Ring.Data.Models;
 using Ring.Util.Builders;
 using System.Data;
 using System.Globalization;
-using System.Runtime.CompilerServices;
 using Ring.Util.Enums;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 using Ring.Data.Enums;
@@ -179,6 +178,46 @@ public sealed class Connection : IRingConnection, IDisposable
         return returnValue;
     }
 
+    public ValueTask<int> ExecuteAsync(in AlterQuery query, CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.IsCancellationRequested) return new(Task.FromCanceled<int>(cancellationToken));
+        
+        if (_informationEnabled) _lastExecutionTime = DateTime.Now;
+        int returnValue;
+        var sql = query.ToSql();
+        if (sql == null)
+        {
+            LogUnSupportedOperation(query);
+            return new(Task.FromResult(0));
+        }
+#pragma warning disable CA2100, CA1031
+
+        var cmd = new NpgsqlCommand(sql, _connection);
+        try
+        {
+            cmd.ExecuteNonQuery();
+            returnValue = 1;
+        }
+        catch (OperationCanceledException e)
+        {
+            // warn cancelled 
+            cmd.Connection = null;
+            cmd.Dispose();
+            return new(Task.FromCanceled<int>(e.CancellationToken));
+        }
+        catch (Exception ex)
+        {
+            LogDdlException(ex, query);
+            returnValue = 0;
+        }
+#pragma warning restore CA1031, CA2100
+        cmd.Connection = null;
+        cmd.Dispose();
+
+        if (returnValue > 0 && _informationEnabled) LogOperationPerformed(query, DateTime.Now - _lastExecutionTime);
+        return new(Task.FromResult(returnValue));
+    }
+
     public int Execute(in SaveQuery query)
     {
         throw new NotImplementedException();
@@ -196,4 +235,6 @@ public sealed class Connection : IRingConnection, IDisposable
 
     private void LogOperationPerformed(AlterQuery query, TimeSpan ts) =>
         _logOperationPerformed(_logger, string.Empty, null);
+
+    
 }

@@ -11,7 +11,7 @@ namespace Ring.Schema;
 internal readonly struct Meta
 {
 	#region constants
-    
+
 	// entity type constants
 	private const byte TableId = (byte)EntityType.Table;
 	private const byte SchemaId = (byte)EntityType.Schema;
@@ -203,81 +203,83 @@ internal readonly struct Meta
 		return null;
 	}
     
-    internal Field? ToField()
-        => IsField ? new Field(Id, Name, Description, GetFieldType(), GetFieldSize(), GetFieldDefaultValue(), IsEntityBaseline,
-           IsFieldNotNull(), IsFieldCaseSensitive(), IsFieldMultilingual(), Active) : null;
+	internal Field? ToField()
+		=> IsField ? new Field(Id, Name, Description, GetFieldType(), GetFieldSize(), GetFieldDefaultValue(), IsEntityBaseline,
+			IsFieldNotNull(), IsFieldCaseSensitive(), IsFieldMultilingual(), Active) : null;
 
-    internal static DbSchema? ToSchema(Meta[] schema, DatabaseProvider provider,
-       SchemaType type = SchemaType.Static, SchemaLoadType loadType = SchemaLoadType.Full)
-    {
-        // sort ASC by reference_id, name
-        Array.Sort(schema, (x, y) => MetaSchemaComparer(x, y));
-        var meta = GetSchema(schema);
-        if (meta != null)
-        {
-            var metaValue = meta.Value;
-            var ddlBuilder = provider.GetDdlBuilder();
-            var parameters = GetParameters(schema);
-            var lexicons = new List<Lexicon>();
-            var sequences = new List<Sequence>();
-            var tableByName = GetTables(schema, ddlBuilder, metaValue, provider);
-            var tableById = ShallowCopy(tableByName);
-            var tableSpaces = GetTableSpaces(schema);
+	internal static DbSchema? ToSchema(Meta[] schema, DatabaseProvider provider,
+		SchemaType type = SchemaType.Static, SchemaLoadType loadType = SchemaLoadType.Full)
+	{
+		// sort ASC by reference_id, name
+		Array.Sort(schema, (x, y) => MetaSchemaComparer(x, y));
+		var meta = GetSchema(schema);
+		if (meta != null)
+		{
+			var metaValue = meta.Value;
+			var ddlBuilder = provider.GetDdlBuilder();
+			var parameters = GetParameters(schema);
+			var lexicons = new List<Lexicon>();
+			var sequences = new List<Sequence>();
+			var tableByName = GetTables(schema, ddlBuilder, metaValue, provider);
+			var tableById = ShallowCopy(tableByName);
+			var tableSpaces = GetTableSpaces(schema);
 
-            // sort arrays - already sorted by name
-            Array.Sort(parameters, (x, y) => x.Id.CompareTo(y.Id));
-            Array.Sort(tableById, (x, y) => x.Id.CompareTo(y.Id));
+			// sort arrays - already sorted by name
+			Array.Sort(parameters, (x, y) => x.Id.CompareTo(y.Id));
+			Array.Sort(tableById, (x, y) => x.Id.CompareTo(y.Id));
 
-            var result = new DbSchema(meta.Value.Id, metaValue.Name, metaValue.Description, parameters,
-                lexicons.ToArray(), loadType, type, sequences.ToArray(), tableById.ToArray(), tableByName.ToArray(), tableSpaces.ToArray(),
-                provider, metaValue.Active, metaValue.IsEntityBaseline);
+			var result = new DbSchema(meta.Value.Id, metaValue.Name, metaValue.Description, parameters,
+				lexicons.ToArray(), loadType, type, sequences.ToArray(), tableById.ToArray(), tableByName.ToArray(), tableSpaces.ToArray(),
+				provider, metaValue.Active, metaValue.IsEntityBaseline);
 
-            result.LoadRelations(schema);
-            result.LoadColumnMappers(); // load column mapper on tables
-            result.LoadRecordIndexes(); // load record indexes on relations
+			result.LoadRelations(schema);
+			result.LoadColumnMappers(); // load column mapper on tables
+			result.LoadRecordIndexes(); // load record indexes on relations
 
-            return result;
-        }
-        return null;
-    }
-    internal TableSpace? ToTableSpace() => IsTableSpace ? new TableSpace(Id, Name, Description, IsTablespaceIndex(), IsTablespaceTable(),
-                false, Array.Empty<string>(), Value ?? string.Empty, Active, IsEntityBaseline) : null;
-    internal Parameter? ToParameter()
-    {
-        var parameterType = GetParameterType();
-        return IsParameter ? new Parameter(Id, Name, Description, parameterType,
-               GetParameterValueType(), GetParameterValue(), parameterType.GetDefaultValue(), ReferenceId,
-               IsEntityBaseline, Active) : null;
-    }
-    internal Index? ToIndex() => IsIndex ? new Index(Id, Name, Description, GetIndexedColumns(),
-               IsIndexUnique, IsIndexBitmap, Active, IsEntityBaseline) : null;
+			return result;
+		}
+		return null;
+	}
+	internal TableSpace? ToTableSpace() => IsTableSpace ? new TableSpace(Id, Name, Description, IsTablespaceIndex(), IsTablespaceTable(),
+			false, Array.Empty<string>(), Value ?? string.Empty, Active, IsEntityBaseline) : null;
+			
+	internal Parameter? ToParameter()
+	{
+		var parameterType = GetParameterType();
+		return IsParameter ? new Parameter(Id, Name, Description, parameterType,
+			GetParameterValueType(), GetParameterValue(), parameterType.GetDefaultValue(), ReferenceId,
+				IsEntityBaseline, Active) : null;
+	}
+	
+	internal Index? ToIndex() => IsIndex ? new Index(Id, Name, Description, GetIndexedColumns(),
+		IsIndexUnique, IsIndexBitmap, Active, IsEntityBaseline) : null;
 
-    /// <summary>
-    /// Create a instance of table, relation assigned later by schema creation
-    /// </summary>
-    internal Table? ToTable(ArraySegment<Meta> tableItems, PhysicalType physicalType, string physicalName)
-    {
-        if (IsTable)
-        {
-            var fields = GetFieldArray(tableItems);
-            var relations = GetRelationArray(tableItems);
-            var indexes = GetIndexes(tableItems);
-            var tableType = DataType.ToTableType();
-            var columnMapperSize = GetColumnMapperSize(tableItems, tableType, fields.Length);
+	/// <summary>
+	/// Create a instance of table, relation assigned later by schema creation
+	/// </summary>
+	internal Table? ToTable(ArraySegment<Meta> tableItems, PhysicalType physicalType, string physicalName)
+	{
+		if (IsTable)
+		{
+			var fields = GetFieldArray(tableItems);
+			var relations = GetRelationArray(tableItems);
+			var indexes = GetIndexes(tableItems);
+			var tableType = DataType.ToTableType();
+			var columnMapperSize = GetColumnMapperSize(tableItems, tableType, fields.Length);
 
-            // sort arrays
-            Array.Sort(fields, (x, y) => string.CompareOrdinal(x.Name, y.Name));
-            Array.Sort(indexes, (x, y) => string.CompareOrdinal(x.Name, y.Name));
+			// sort arrays
+			Array.Sort(fields, (x, y) => string.CompareOrdinal(x.Name, y.Name));
+			Array.Sort(indexes, (x, y) => string.CompareOrdinal(x.Name, y.Name));
 
-            var result = new Table(Id, Name, Description, Value, physicalName,
-                tableType, relations, fields, new int[columnMapperSize], new IColumn[columnMapperSize], indexes, ReferenceId,
-                physicalType, IsEntityBaseline, Active, IsTableCached, IsTableReadonly);
+			var result = new Table(Id, Name, Description, Value, physicalName,
+				tableType, relations, fields, new int[columnMapperSize], new IColumn[columnMapperSize], indexes, ReferenceId,
+				physicalType, IsEntityBaseline, Active, IsTableCached, IsTableReadonly);
 
-            return result;
-        }
-        return null;
-    }
-    #endregion
+			return result;
+		}
+		return null;
+	}
+	#endregion
 
 #if DEBUG
 	public override string ToString() => string.IsNullOrEmpty(Name) ? string.Empty : $"{Id} - {Name}";
@@ -298,79 +300,79 @@ internal readonly struct Meta
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private bool ReadFlag(byte bitPosition) => ((Flags >> (bitPosition - 1)) & 1) > 0;
+	private bool ReadFlag(byte bitPosition) => ((Flags >> (bitPosition - 1)) & 1) > 0;
 
-    private static Index[] GetIndexes(ArraySegment<Meta> items)
-    {
-        // count element
-        var indexCount = 0;
-        var span = items.AsSpan();
-        foreach (var item in span) if (item.IsIndex) ++indexCount;
-        if (indexCount <= 0) return Array.Empty<Index>();
-        var result = new Index[indexCount];
-        var fieldIndex = 0;
-        foreach (var item in span)
-        {
-            if (item.IsIndex)
-            {
-                // cannot be null here 
+	private static Index[] GetIndexes(ArraySegment<Meta> items)
+	{
+		// count element
+		var indexCount = 0;
+		var span = items.AsSpan();
+		foreach (var item in span) if (item.IsIndex) ++indexCount;
+		if (indexCount <= 0) return Array.Empty<Index>();
+		var result = new Index[indexCount];
+		var fieldIndex = 0;
+		foreach (var item in span)
+		{
+			if (item.IsIndex)
+			{
+				// cannot be null here 
 #pragma warning disable CS8601 // Possible null reference assignment.
-                result[fieldIndex] = item.ToIndex();
+				result[fieldIndex] = item.ToIndex();
 #pragma warning restore CS8601
-                ++fieldIndex;
-            }
-        }
-        return result;
-    }
+				++fieldIndex;
+			}
+		}
+		return result;
+	}
 
-    private static TableSpace[] GetTableSpaces(Span<Meta> schema)
-    {
-        var result = new List<TableSpace>();
+	private static TableSpace[] GetTableSpaces(Span<Meta> schema)
+	{
+		var result = new List<TableSpace>();
 #pragma warning disable CS8604
-        foreach (var meta in schema) if (meta.IsTableSpace) result.Add(meta.ToTableSpace());
+		foreach (var meta in schema) if (meta.IsTableSpace) result.Add(meta.ToTableSpace());
 #pragma warning restore CS8604 // Possible null reference argument.
-        return result.ToArray();
-    }
+		return result.ToArray();
+	}
 
-    private static Parameter[] GetParameters(Span<Meta> schema)
-    {
-        var result = new List<Parameter>();
+	private static Parameter[] GetParameters(Span<Meta> schema)
+	{
+		var result = new List<Parameter>();
 #pragma warning disable CS8604
-        foreach (var meta in schema) if (meta.IsParameter) result.Add(meta.ToParameter());
+		foreach (var meta in schema) if (meta.IsParameter) result.Add(meta.ToParameter());
 #pragma warning restore CS8604 // Possible null reference argument.
-        return result.ToArray();
-    }
+		return result.ToArray();
+	}
 
-    private static Field[] GetFieldArray(ArraySegment<Meta> items)
-    {
-        // count element
-        int fieldCount = 0;
-        var primaryKey = FieldExtensions.GetDefaultPrimaryKey(null, FieldType.Int);
-        var span = items.AsSpan();
-        foreach (var item in span)
-        {
-            if (item.IsField)
-            {
-                ++fieldCount;
-                if (string.Equals(primaryKey?.Name, item.Name, StringComparison.OrdinalIgnoreCase))
-                    primaryKey = primaryKey.GetDefaultPrimaryKey(item.GetFieldType());
-            }
-        }
-        var result = new Field[fieldCount]; // allow once
-        var fieldIndex = 0;
-        foreach (var item in span)
-        {
-            if (item.IsField)
-            {
+	private static Field[] GetFieldArray(ArraySegment<Meta> items)
+	{
+		// count element
+		int fieldCount = 0;
+		var primaryKey = FieldExtensions.GetDefaultPrimaryKey(null, FieldType.Int);
+		var span = items.AsSpan();
+		foreach (var item in span)
+		{
+			if (item.IsField)
+			{
+				++fieldCount;
+				if (string.Equals(primaryKey?.Name, item.Name, StringComparison.OrdinalIgnoreCase))
+					primaryKey = primaryKey.GetDefaultPrimaryKey(item.GetFieldType());
+			}
+		}
+		var result = new Field[fieldCount]; // allow once
+		var fieldIndex = 0;
+		foreach (var item in span)
+		{
+			if (item.IsField)
+			{
 #pragma warning disable CS8601 // Possible null reference assignment.
-                result[fieldIndex] = string.Equals(primaryKey?.Name, item.Name, StringComparison.OrdinalIgnoreCase) ?
-                    primaryKey : item.ToField();
+				result[fieldIndex] = string.Equals(primaryKey?.Name, item.Name, StringComparison.OrdinalIgnoreCase) ?
+					primaryKey : item.ToField();
 #pragma warning restore CS8601
-                ++fieldIndex;
-            }
-        }
-        return result;
-    }
+				++fieldIndex;
+			}
+		}
+		return result;
+	}
 
 	private static Relation[] GetRelationArray(ArraySegment<Meta> items)
 	{
@@ -394,46 +396,46 @@ internal readonly struct Meta
 		return null;
 	}
    
-    private static Table[] GetTables(Meta[] schema, IDdlBuilder ddlBuilder, Meta metaSchema, DatabaseProvider provider)
-    {
-        int startIndex, count, i = 0;
-        var metaCount = schema.Length;
-        var tableCount = metaCount > 400 ? metaCount / 4 : 100;
-        var dico = new Dictionary<int, (int, int)>(tableCount); // table_id, start index , count
-        var emptySchema = GetEmptySchema(metaSchema, provider);
-        var schemaSpan = new ReadOnlySpan<Meta>(schema);
+	private static Table[] GetTables(Meta[] schema, IDdlBuilder ddlBuilder, Meta metaSchema, DatabaseProvider provider)
+	{
+		int startIndex, count, i = 0;
+		var metaCount = schema.Length;
+		var tableCount = metaCount > 400 ? metaCount / 4 : 100;
+		var dico = new Dictionary<int, (int, int)>(tableCount); // table_id, start index , count
+		var emptySchema = GetEmptySchema(metaSchema, provider);
+		var schemaSpan = new ReadOnlySpan<Meta>(schema);
 
-        //pass 1: build dico
-        foreach (var meta in schemaSpan)
-        {
-            if (meta.IsField || meta.IsRelation || meta.IsIndex)
-            {
-                if (!dico.ContainsKey(meta.ReferenceId)) dico.Add(meta.ReferenceId, (i, 0));
-                (startIndex, count) = dico[meta.ReferenceId];
-                dico[meta.ReferenceId] = (startIndex, count + 1);
-            }
-            ++i;
-        }
+		//pass 1: build dico
+		foreach (var meta in schemaSpan)
+		{
+			if (meta.IsField || meta.IsRelation || meta.IsIndex)
+			{
+				if (!dico.ContainsKey(meta.ReferenceId)) dico.Add(meta.ReferenceId, (i, 0));
+				(startIndex, count) = dico[meta.ReferenceId];
+				dico[meta.ReferenceId] = (startIndex, count + 1);
+			}
+			++i;
+		}
 
-        //pass 2: create tableArray
-        var result = new List<Table>(dico.Count);
-        foreach (var meta in schemaSpan)
-        {
-            if (meta.IsTable)
-            {
-                var emptyTable = GetEmptyTable(meta);
-                var physicalName = ddlBuilder.GetPhysicalName(emptyTable, emptySchema);
-                var segment = dico.ContainsKey(meta.Id) ?
-                    new ArraySegment<Meta>(schema, dico[meta.Id].Item1, dico[meta.Id].Item2) :
-                    new ArraySegment<Meta>(schema, 0, 0);
-                var table = meta.ToTable(segment, PhysicalType.Table, physicalName);
+		//pass 2: create tableArray
+		var result = new List<Table>(dico.Count);
+		foreach (var meta in schemaSpan)
+		{
+			if (meta.IsTable)
+			{
+				var emptyTable = GetEmptyTable(meta);
+				var physicalName = ddlBuilder.GetPhysicalName(emptyTable, emptySchema);
+				var segment = dico.ContainsKey(meta.Id) ?
+					new ArraySegment<Meta>(schema, dico[meta.Id].Item1, dico[meta.Id].Item2) :
+					new ArraySegment<Meta>(schema, 0, 0);
+				var table = meta.ToTable(segment, PhysicalType.Table, physicalName);
 #pragma warning disable CS8604 // Possible null reference argument.
-                result.Add(table);
+				result.Add(table);
 #pragma warning restore CS8604
-            }
-        }
-        return result.ToArray();
-    }
+			}
+		}
+		return result.ToArray();
+	}
 
 	private static Table[] ShallowCopy(Span<Table> tables)
 	{
@@ -450,23 +452,23 @@ internal readonly struct Meta
 		return string.CompareOrdinal(meta1.Name, meta2.Name);
 	}
 
-    private static int GetColumnMapperSize(ArraySegment<Meta> items, TableType tableType, int fieldCount)
-    {
-        if (tableType == TableType.Mtm) return 2;
-        var result = fieldCount;
-        var span = items.AsSpan();
-        foreach (var item in span)
-        {
-            if (item.IsRelation)
-            {
-                var relationType = item.GetRelationType();
-                if (relationType == RelationType.Mto || relationType == RelationType.Otop)
-                    ++result;
-            }
-        }
-        return result;
-    }
+	private static int GetColumnMapperSize(ArraySegment<Meta> items, TableType tableType, int fieldCount)
+	{
+		if (tableType == TableType.Mtm) return 2;
+		var result = fieldCount;
+		var span = items.AsSpan();
+		foreach (var item in span)
+		{
+			if (item.IsRelation)
+			{
+				var relationType = item.GetRelationType();
+				if (relationType == RelationType.Mto || relationType == RelationType.Otop)
+					++result;
+			}
+		}
+		return result;
+	}
 
-    #endregion
+	#endregion
 
 }

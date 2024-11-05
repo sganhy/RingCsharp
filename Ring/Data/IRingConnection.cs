@@ -17,6 +17,7 @@ public interface IRingConnection: IDisposable
     IRingConnection CreateNewInstance();
     string?[] Execute(in RetrieveQuery query);
     int Execute(in AlterQuery query);
+    ValueTask<int> ExecuteAsync(in AlterQuery query, CancellationToken cancellationToken = default);
     int Execute(in SaveQuery query);
     
 }

@@ -4,102 +4,99 @@ namespace Ring.Data;
 
 internal ref struct SpanList<T> where T : struct
 {
-    private Span<T> _buffer;
-    private int _count;
-    private readonly int _initBucketSize;
+	private Span<T> _buffer;
+	private int _count;
 
-    public SpanList()
-    {
-        _initBucketSize = 4;
-        _buffer = new Span<T>(Array.Empty<T>());
-        _count = 0;
-    }
+	public SpanList()
+	{
+		_buffer = new Span<T>(Array.Empty<T>());
+		_count = 0;
+	}
 
-    public SpanList(int initSize)
-    {
-        _initBucketSize = int.Max(2,initSize);// min 2 
-        _buffer = new Span<T>(Array.Empty<T>());
-        _count = 0;
-    }
+	public SpanList(int initSize)
+	{
+		var initBucketSize = int.Max(2,initSize);// min 2 
+		_buffer = new Span<T>(new T[initBucketSize]);
+		_count = 0;
+	}
 
-    internal readonly int Count => _count;
+	internal readonly int Count => _count;
 
-    /// <summary>
-    /// Indexer of TypedSpanList
-    /// </summary>
-    internal readonly ref T this[int index]
-    {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get { return ref _buffer[index]; }
-    }
+	/// <summary>
+	/// Indexer of TypedSpanList
+	/// </summary>
+	internal readonly ref T this[int index]
+	{
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		get { return ref _buffer[index]; }
+	}
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void Add(in T value)
-    {
-        var count = _count;
-        if (count >= _buffer.Length) ReDim();
-        _buffer[_count] = value;
-        ++count; 
-        _count = count;
-    }
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal void Add(in T value)
+	{
+		var count = _count;
+		if (count >= _buffer.Length) ReDim();
+		_buffer[_count] = value;
+		++count; 
+		_count = count;
+	}
 
-    internal void Clear() => _count = 0;
+	internal void Clear() => _count = 0;
 
-    public Enumerator GetEnumerator() => new(this);
+	public readonly Enumerator GetEnumerator() => new(this);
 
-    #region subclasses
+	#region subclasses
 
-    public ref struct Enumerator
-    {
-        private readonly SpanList<T> _span;
-        private int _index;
+	public ref struct Enumerator
+	{
+		private readonly SpanList<T> _span;
+		private int _index;
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		internal Enumerator(SpanList<T> spanList)
+		{
+			_span = spanList;
+			_index = -1;
+		}
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal Enumerator(SpanList<T> spanList)
-        {
-            _span = spanList;
-            _index = -1;
-        }
+		/// <summary>Advances the enumerator to the next element of the span.</summary>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public bool MoveNext()
+		{
+			var index = _index + 1;
+			if (index < _span._count)
+			{
+				_index = index;
+				return true;
+			}
+			return false;
+		}
 
-        /// <summary>Advances the enumerator to the next element of the span.</summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool MoveNext()
-        {
-            var index = _index + 1;
-            if (index < _span._count)
-            {
-                _index = index;
-                return true;
-            }
-            return false;
-        }
+		/// <summary>Gets the element at the current position of the enumerator.</summary>
+		public ref T Current
+		{
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			get => ref _span[_index];
+		}
+	}
 
-        /// <summary>Gets the element at the current position of the enumerator.</summary>
-        public ref T Current
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => ref _span[_index];
-        }
-    }
-
-    #endregion
+	#endregion
 
 #pragma warning disable IDE0251 // Make member 'readonly'
 
-    internal void Sort(Comparison<T> comparison) => _buffer.Sort(comparison);
+	internal void Sort(Comparison<T> comparison) => _buffer.Sort(comparison);
     
 #pragma warning restore IDE0251
 
-    #region private methods 
+	#region private methods 
 
-    private void ReDim()
-    {
-        var newSize = int.Max(_count<<1, _initBucketSize); 
-        var buffer = new Span<T>(new T[newSize]);
-        _buffer.CopyTo(buffer);
-        _buffer = buffer;
-    }
+	private void ReDim()
+	{
+		var newSize = int.Max(_count<<1,4); 
+		var buffer = new Span<T>(new T[newSize]);
+		_buffer.CopyTo(buffer);
+		_buffer = buffer;
+	}
 
-    #endregion
+	#endregion
 }

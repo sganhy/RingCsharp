@@ -1,10 +1,7 @@
 ﻿using AutoFixture;
 using Ring.Data;
-using Ring.Schema;
 using Ring.Schema.Builders;
 using Ring.Schema.Enums;
-using Ring.Schema.Models;
-using System;
 
 namespace Ring.Tests.Data;
 public sealed class BulkAlterTest
@@ -23,10 +20,13 @@ public sealed class BulkAlterTest
         var builder = new SchemaBuilder();
         var config = new Configuration() { DefaultSchema = _fixture.Create<string>(), MaxConnectionPoolSize = 20 };
         var schema = builder.GetMeta(DatabaseProvider.SqlServer, config);
-        var bulk = new BulkAlter(schema);
 
         // act 
-        var ex = Assert.Throws<ArgumentException>(() => bulk.CreateTable("Test"));
+        var ex = Assert.Throws<ArgumentException>(() => {
+                var bulk = new BulkAlter(schema);
+                bulk.CreateTable("Test");
+            }
+        );
 
         // assert
         Assert.Equal("Object type 'Test' does not exist.", ex.Message);
@@ -40,10 +40,13 @@ public sealed class BulkAlterTest
         var builder = new SchemaBuilder();
         var config = new Configuration() { DefaultSchema = _fixture.Create<string>(), MaxConnectionPoolSize = 20 };
         var schema = builder.GetMeta(DatabaseProvider.SqlServer, config);
-        var bulk = new BulkAlter(schema);
+        
 
         // act 
-        var ex = Assert.Throws<ArgumentException>(() => bulk.AlterTableAdd("@meta", "Test"));
+        var ex = Assert.Throws<ArgumentException>(() => {
+                var bulk = new BulkAlter(schema);
+                bulk.AlterTableAdd("@meta", "Test");
+            });
 
         // assert
         Assert.Equal("Column name 'Test' does not exist for object type '@meta'.", ex.Message);

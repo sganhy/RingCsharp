@@ -25,7 +25,7 @@ internal ref struct BulkAlter
 
     internal BulkAlter(Database schema)
     {
-        _queries = new SpanList<AlterQuery>();
+        _queries = new SpanList<AlterQuery>(16); // min bucket size = 16
         _schema = schema;
         _tablespaces = GetTableSpaceDictionary(schema);
     }
@@ -60,7 +60,7 @@ internal ref struct BulkAlter
         AppendDdlCommand(AlterQueryType.AlterTableAddColumn, table, field??relation);
     }
 
-    internal void Apply(IRingConnection connection)
+    internal readonly void Apply(IRingConnection connection)
     {
         // sort by Type
         _queries.Sort(delegate (AlterQuery q1, AlterQuery q2)
@@ -68,8 +68,7 @@ internal ref struct BulkAlter
              if (q1.Type == q2.Type) return q1.Id.CompareTo(q2.Id);
              return q1.Type.CompareTo(q2.Type);
          });
-        var count = _queries.Count;
-        for (var i = 0; i < count; ++i) connection.Execute(_queries[i]);
+        foreach(var query in _queries) connection.Execute(query);
     }
 
     #region private methods
