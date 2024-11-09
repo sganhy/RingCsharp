@@ -9,6 +9,9 @@ using Ring.Schema.Builders;
 using System.Globalization;
 using System.Reflection;
 using Ring.Schema;
+using Ring.Data.Enums;
+using Ring.Util.Builders.MySQL;
+using Ring.Data.Models;
 
 namespace Ring.Tests.Data;
 
@@ -27,7 +30,7 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
-    public void Equal_EmptyRecord_True()
+    public void Equals_EmptyRecord_True()
     {
         // arrange 
         var rcd = new Record();
@@ -41,7 +44,7 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
-    public void Equal_Null_False()
+    public void Equals_Null_False()
     {
         // arrange 
         var rcd = new Record();
@@ -54,7 +57,7 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
-    public void Equal_FeatRecord_True()
+    public void Equals_FeatRecord_True()
     {
         // arrange 
         var table = _schema.GetTable("feat");
@@ -72,7 +75,7 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
-    public void Equal_RaceRecord_False()
+    public void Equals_RaceRecord_False()
     {
         // arrange 
         var table = _schema.GetTable("race");
@@ -89,7 +92,7 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
-    public void Equal_DifferentRecordType_False()
+    public void Equals_DifferentRecordType_False()
     {
         // arrange 
         var genderTable = _schema.GetTable("gender");
@@ -107,7 +110,7 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
-    public void Equal_DifferentRecordType_True()
+    public void Equals_DifferentRecordType_True()
     {
         // arrange 
         var genderTable = _schema.GetTable("gender");
@@ -128,7 +131,7 @@ public sealed class RecordTest : BaseExtensionsTest
 
 
     [Fact]
-    public void Equal_DifferentRecordTypeWithNull_False()
+    public void Equals_DifferentRecordTypeWithNull_False()
     {
         // arrange 
         var tableGender = _schema.GetTable("gender");
@@ -146,6 +149,29 @@ public sealed class RecordTest : BaseExtensionsTest
         // assert
         Assert.False(result1);
         Assert.True(result2);
+    }
+
+    [Fact]
+    public void Equals_AnonymousSaveQuery_True()
+    {
+        // arrange 
+        var table = _schema.GetTable("feat");
+        Assert.NotNull(table);
+        var bucket = GetBucket(table, 4, 6);
+        var rcd1 = new Record(table, bucket, table.RecordSize * 2);
+        for (var i = 0; i < table.RecordSize; ++i) rcd1[i] = _fixture.Create<string?>();
+
+        // Table table, SaveQueryType type, IDmlBuilder builder, string[]? data, int offset
+
+#pragma warning disable CS8620 // Argument cannot be used for parameter due to differences in the nullability of reference types.
+        var saveQuery = new SaveQuery(table, SaveQueryType.Undefined, new DmlBuilder(), bucket, 26);
+#pragma warning restore CS8620
+
+        // act 
+        var result = rcd1.Equals(saveQuery);
+
+        // assert
+        Assert.True(result);
     }
 
     [Fact]
@@ -201,7 +227,7 @@ public sealed class RecordTest : BaseExtensionsTest
     }
     
     [Fact]
-    public void SetField_AnonymousValue_ThrowRecordUnkownRecordType()
+    public void SetField_AnonymousValue_ThrowRecordUnknownRecordType()
     {
         // arrange 
         var rcd = new Record();

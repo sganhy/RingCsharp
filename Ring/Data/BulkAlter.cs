@@ -30,7 +30,7 @@ internal ref struct BulkAlter
         _tablespaces = GetTableSpaceDictionary(schema);
     }
 
-    internal SpanList<AlterQuery> Queries => _queries;
+    internal readonly SpanList<AlterQuery> Queries => _queries;
 
     internal void CreateTable(string tableName)
     {
