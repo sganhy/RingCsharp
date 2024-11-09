@@ -4,7 +4,7 @@ using Ring.Schema.Extensions;
 
 namespace Ring.Tests.Schema.Extensions;
 
-public sealed class IndexExtensionsTest : BaseExtensionsTest
+public sealed class IndexExtensionsTest : BaseTest
 {
     [Fact]
     public void ToMeta_Index1_MetaObject()

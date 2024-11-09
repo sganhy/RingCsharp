@@ -4,7 +4,7 @@
 		<TargetFrameworks>net8.0;net7.0</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
  		<Nullable>enable</Nullable>
- 		<LangVersion>10.0</LangVersion>
+ 		<LangVersion>11.0</LangVersion>
 		<Platforms>x64</Platforms>
 		<AnalysisLevel>6.0-all</AnalysisLevel>
 		<AssemblyVersion>1.0.1.129</AssemblyVersion>

@@ -1,4 +1,5 @@
-﻿using Ring.Data.Extensions;
+﻿using Microsoft.VisualBasic;
+using Ring.Data.Extensions;
 using Ring.Data.Models;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
@@ -65,14 +66,31 @@ public struct Record : IEquatable<Record>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		readonly get => _data[i + _offset];
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		set => _data[i + _offset] = value;
-	}
+#pragma warning disable IDE0251 // Make member 'readonly'
+        set => _data[i + _offset] = value;
+#pragma warning restore IDE0251
+    }
+
+    internal readonly string?[] Data => _data ?? Array.Empty<string?>();
+
+    internal readonly int Offset => _offset;
 
 	public readonly bool IsDirty => _data != null && _data[_type.RecordSize-1+_offset] != null;
 
+	public readonly bool IsNew
+	{
+		get
+		{
+			if (_type == null) ThrowRecordUnknownRecordType();
+			if (_type.Type == TableType.Business) return _data[_type.RecordIndexes[0]]==null;
+			// not manage ==> @lexicon_itm, @log, @meta, @meta_id; 
+			return true; // always New if there is no keys
+		}
+	}
+
 #pragma warning restore CS8602
 
-	internal readonly Table? Table => _type;
+    internal readonly Table? Table => _type;
 
 #pragma warning disable IDE0251 // Make member 'readonly'
 	internal void ClearData()

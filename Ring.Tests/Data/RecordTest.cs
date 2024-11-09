@@ -12,10 +12,11 @@ using Ring.Schema;
 using Ring.Data.Enums;
 using Ring.Util.Builders.MySQL;
 using Ring.Data.Models;
+using System.Reflection.Metadata;
 
 namespace Ring.Tests.Data;
 
-public sealed class RecordTest : BaseExtensionsTest
+public sealed class RecordTest : BaseTest
 {
     private readonly DbSchema _schema;
     private readonly IFixture _fixture;
@@ -175,6 +176,30 @@ public sealed class RecordTest : BaseExtensionsTest
     }
 
     [Fact]
+    public void Equals_AnonymousSaveQuery_False()
+    {
+        // arrange 
+        var table = _schema.GetTable("feat");
+        Assert.NotNull(table);
+        var bucket = GetBucket(table, 4, 5);
+        var bucket2 = GetBucket(table, 3, 7);
+        var rcd1 = new Record(table, bucket, table.RecordSize * 2);
+        for (var i = 0; i < table.RecordSize; ++i) rcd1[i] = _fixture.Create<string?>();
+
+        // Table table, SaveQueryType type, IDmlBuilder builder, string[]? data, int offset
+
+#pragma warning disable CS8620 // Argument cannot be used for parameter due to differences in the nullability of reference types.
+        var saveQuery = new SaveQuery(table, SaveQueryType.Undefined, new DmlBuilder(), bucket2, 26);
+#pragma warning restore CS8620
+
+        // act 
+        var result = rcd1.Equals(saveQuery);
+
+        // assert
+        Assert.False(result);
+    }
+
+    [Fact]
     public void GetHashCode_DifferentRecordEmpty_Equals()
     {
         // arrange 
@@ -225,7 +250,24 @@ public sealed class RecordTest : BaseExtensionsTest
         // assert
         Assert.Equal(result1, result2);
     }
-    
+
+    [Fact]
+    public void IsNew_GenderRecord_True()
+    {
+        // arrange 
+        var tableGender = _schema.GetTable("gender");
+        Assert.NotNull(tableGender);
+        var rcd = new Record(tableGender);
+        rcd.SetField("name", "123123");
+        rcd.SetField("iso_code", 77);
+
+        // act 
+        var result = rcd.IsNew;
+
+        // assert
+        Assert.True(result);
+    }
+
     [Fact]
     public void SetField_AnonymousValue_ThrowRecordUnknownRecordType()
     {

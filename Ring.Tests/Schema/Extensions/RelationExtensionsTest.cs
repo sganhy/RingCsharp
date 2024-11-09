@@ -6,7 +6,7 @@ using Ring.Schema.Models;
 
 namespace Ring.Tests.Schema.Extensions;
 
-public class RelationExtensionsTest : BaseExtensionsTest
+public class RelationExtensionsTest : BaseTest
 {
     private readonly IFixture _fixture;
 

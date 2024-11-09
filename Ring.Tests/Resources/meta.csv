@@ -84,7 +84,7 @@
 2,0,2,1031,1021,786448,class2book,,book2class,true
 1034,0,0,1,1,8704,domain,Domains,,true
 4,0,3,1034,0,8192,divine,,divine,true
-1041,0,0,1,1,8704,feat,Feats connected to a role playing game,,true
+1041,0,0,1,1,8192,feat,Feats connected to a role playing game,,true
 1,0,2,1041,1021,786456,feat2book,,book2feat,true
 2,0,1,1051,16,10493964,name,,,true
 2,0,3,1053,0,8704,name,,name,true

@@ -3,7 +3,7 @@ using Ring.Schema.Extensions;
 
 namespace Ring.Tests.Schema.Extensions;
 
-public sealed class IntExtensionsTest : BaseExtensionsTest
+public sealed class IntExtensionsTest : BaseTest
 {
     [Fact]
     public void ToRelationType_AllExistingEnumId_Enum()

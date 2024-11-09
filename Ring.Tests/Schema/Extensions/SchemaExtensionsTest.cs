@@ -6,7 +6,7 @@ using DbSchema = Ring.Schema.Models.Schema;
 
 namespace Ring.Tests.Schema.Extensions;
 
-public class SchemaExtensionsTest : BaseExtensionsTest
+public class SchemaExtensionsTest : BaseTest
 {
     private readonly DbSchema _schema ;
 

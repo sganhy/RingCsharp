@@ -6,9 +6,9 @@ using System.Reflection;
 using Index = Ring.Schema.Models.Index;
 using Ring.Schema;
 
-namespace Ring.Tests.Schema.Extensions;
+namespace Ring.Tests;
 
-public abstract class BaseExtensionsTest
+public abstract class BaseTest
 {
     private readonly IFixture _fixture = new Fixture();
 

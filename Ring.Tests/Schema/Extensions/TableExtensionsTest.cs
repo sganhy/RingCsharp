@@ -6,7 +6,7 @@ using Ring.Schema.Extensions;
 
 namespace Ring.Tests.Schema.Extensions;
 
-public class TableExtensionsTest : BaseExtensionsTest
+public class TableExtensionsTest : BaseTest
 {
     [Fact]
     internal void GetField_AnonymousTable_FieldObject()

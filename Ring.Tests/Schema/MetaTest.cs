@@ -8,7 +8,7 @@ using Ring.Tests.Schema.Extensions;
 
 namespace Ring.Tests.Schema;
 
-public sealed class MetaTest : BaseExtensionsTest
+public sealed class MetaTest : BaseTest
 {
     private readonly IFixture _fixture;
 

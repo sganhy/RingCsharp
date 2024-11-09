@@ -82,7 +82,7 @@ internal readonly struct Meta
 	internal static long SetEntityBaseline(long flags, bool value) => WriteFlag(flags, BitPositionEntityBaseline, value);
 	#endregion
 
-	#region field methods  
+	#region field methods
 	internal FieldType GetFieldType() => (DataType & 127).ToFieldType();
 	internal bool IsFieldNotNull() => ReadFlag(BitPositionFieldNotNull);
 	internal bool IsFieldCaseSensitive() => ReadFlag(BitPositionFieldCaseSensitive);
@@ -117,7 +117,7 @@ internal readonly struct Meta
 	}
 	#endregion
 
-	#region relation methods  
+	#region relation methods
 	internal bool IsRelationNotNull => ReadFlag(BitPositionRelationNotNull);
 	internal bool HasRelationConstraint => ReadFlag(BitPositionRelationConstraint);
 	internal RelationType GetRelationType() => ((int)((Flags>>BitPositionFirstPositionRelType) & 127)).ToRelationType();
@@ -145,7 +145,7 @@ internal readonly struct Meta
 	internal static long SetIndexBitmap(long flags, bool value) => WriteFlag(flags, BitPositionIndexBitmap, value);
 	#endregion
 
-	#region table methods  
+	#region table methods
 	internal static long SetTableReadonly(long flags, bool readonlyValue) => WriteFlag(flags, BitPositionTableReadonly, readonlyValue);
 	internal static long SetTableCached(long flags, bool cached) => WriteFlag(flags, BitPositionTableCached, cached);
 	internal bool IsTableReadonly => ReadFlag(BitPositionTableReadonly);
@@ -159,7 +159,7 @@ internal readonly struct Meta
 	internal static int SetParameterValueType(int dataType, FieldType valueType) => (dataType & 0xFFF8) + ((byte)valueType) & 127;
 	#endregion
 
-	#region tablespace methods  
+	#region tablespace methods
 	internal static long SetTablespaceTable(long flags, bool isTablespaceTable) => WriteFlag(flags, BitPositionTablespaceTable, isTablespaceTable);
 	internal static long SetTablespaceIndex(long flags, bool isTablespaceIndex) => WriteFlag(flags, BitPositionTablespaceIndex, isTablespaceIndex);
 	internal bool IsTablespaceTable() => ReadFlag(BitPositionTablespaceTable);
@@ -202,7 +202,7 @@ internal readonly struct Meta
 		}
 		return null;
 	}
-    
+
 	internal Field? ToField()
 		=> IsField ? new Field(Id, Name, Description, GetFieldType(), GetFieldSize(), GetFieldDefaultValue(), IsEntityBaseline,
 			IsFieldNotNull(), IsFieldCaseSensitive(), IsFieldMultilingual(), Active) : null;
@@ -328,18 +328,18 @@ internal readonly struct Meta
 	private static TableSpace[] GetTableSpaces(Span<Meta> schema)
 	{
 		var result = new List<TableSpace>();
-#pragma warning disable CS8604
+#pragma warning disable CS8604 // Possible null reference argument.
 		foreach (var meta in schema) if (meta.IsTableSpace) result.Add(meta.ToTableSpace());
-#pragma warning restore CS8604 // Possible null reference argument.
+#pragma warning restore CS8604
 		return result.ToArray();
 	}
 
 	private static Parameter[] GetParameters(Span<Meta> schema)
 	{
 		var result = new List<Parameter>();
-#pragma warning disable CS8604
+#pragma warning disable CS8604 // Possible null reference argument.
 		foreach (var meta in schema) if (meta.IsParameter) result.Add(meta.ToParameter());
-#pragma warning restore CS8604 // Possible null reference argument.
+#pragma warning restore CS8604
 		return result.ToArray();
 	}
 
@@ -395,7 +395,7 @@ internal readonly struct Meta
 		}
 		return null;
 	}
-   
+
 	private static Table[] GetTables(Meta[] schema, IDdlBuilder ddlBuilder, Meta metaSchema, DatabaseProvider provider)
 	{
 		int startIndex, count, i = 0;
