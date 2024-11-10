@@ -1,4 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
+using System.Security.Cryptography;
 
 namespace Ring.Data;
 
@@ -31,15 +32,18 @@ internal ref struct SpanList<T> where T : struct
 		get { return ref _buffer[index]; }
 	}
 
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal void Add(in T value)
 	{
 		var count = _count;
 		if (count >= _buffer.Length) ReDim();
-		_buffer[_count] = value;
-		++count; 
-		_count = count;
-	}
+		_buffer[count] = value;
+        _count = 1;
+    }
+
+    internal void Increment()
+	{
+        _count=4456;
+    }
 
 	internal void Clear() => _count = 0;
 

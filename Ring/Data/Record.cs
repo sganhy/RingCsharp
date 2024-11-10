@@ -14,9 +14,11 @@ using System.Text;
 
 namespace Ring.Data;
 
-public struct Record : IEquatable<Record>
+#pragma warning disable CA1815, CA1066, CS0660 // Implement IEquatable when overriding Object.Equals
+public struct Record
 {
-	private static readonly string NullField = "^^";
+#pragma warning restore CS0660, CA1066, CA1815
+    private static readonly string NullField = "^^";
 	private static readonly string NullString = "Null";
 	private static readonly string DefaultPrimaryKeyValue = "0";
 	private static readonly char HashFieldDelimiter = (char)3;// end of text character
@@ -343,9 +345,9 @@ public struct Record : IEquatable<Record>
 			}
 			return true;
 		}
+	
 		return false;
 	}
-	public override readonly bool Equals(object? obj) => obj is Record record && Equals(record);
 	public override readonly int GetHashCode()
 	{
 		var result = new StringBuilder();

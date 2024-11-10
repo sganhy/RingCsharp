@@ -38,6 +38,7 @@ public class BulkSaveTest : BaseTest
         var rcdFeat = new Record(table);
         var bs = new BulkSave(_schema);
         bs.InsertRecord(rcdFeat); // {1}
+        bs.Queries.Increment();
         bs.InsertRecord(rcdFeat); // {2}
 
         rcdFeat.SetField("id", 7777);
