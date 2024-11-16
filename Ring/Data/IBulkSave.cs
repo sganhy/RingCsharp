@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace Ring.Data;
 
-namespace Ring.Data;
-
-public interface IBulkSave
+public interface IBulkSave : IEquatable<BulkSave>
 {
+    void CancelRecord(Record? recordToCancel);
 }

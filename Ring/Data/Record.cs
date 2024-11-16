@@ -14,10 +14,8 @@ using System.Text;
 
 namespace Ring.Data;
 
-#pragma warning disable CA1815, CA1066, CS0660 // Implement IEquatable when overriding Object.Equals
-public struct Record
+public struct Record : IEquatable<Record>
 {
-#pragma warning restore CS0660, CA1066, CA1815
     private static readonly string NullField = "^^";
 	private static readonly string NullString = "Null";
 	private static readonly string DefaultPrimaryKeyValue = "0";
@@ -325,7 +323,8 @@ public struct Record
 	}
 	public static bool operator ==(Record left, Record right) => left.Equals(right);
 	public static bool operator !=(Record left, Record right) => !(left == right);
-	public readonly bool Equals(Record other)
+    public override readonly bool Equals(object? obj) => obj != null && obj is Record record && Equals(record);
+    public readonly bool Equals(Record other)
 	{
 		if (ReferenceEquals(_type, other._type))
 		{
@@ -594,6 +593,6 @@ public struct Record
 	private static void ThrowInvalidBase64String() =>
 		throw new FormatException(ResourceHelper.GetErrorMessage(ResourceType.InvalidBase64String));
 
-	#endregion
+    #endregion
 
 }

@@ -16,11 +16,11 @@ using Database = Ring.Schema.Models.Schema;
 
 namespace Ring.Data;
 
-public ref struct BulkSave
+public struct BulkSave : IBulkSave 
 {
     private static readonly Database DefaultSchema = 
             Meta.GetEmptySchema(new Meta(-1, (byte) EntityType.Schema, 0,0, 0L, string.Empty, null,null,true), DatabaseProvider.Undefined);
-    private readonly SpanList<SaveQuery> _queries;
+    private SpanList<SaveQuery> _queries;
     private Database _schema;
 
     internal BulkSave(Database schema)
@@ -61,7 +61,7 @@ public ref struct BulkSave
     public readonly int CountByType(string? objectType)
     {
         var result = 0;
-        if (objectType==null)
+        if (objectType!=null)
         {
             var count = _queries.Count;
             for (var i = 0; i < count; ++i)
@@ -137,11 +137,26 @@ public ref struct BulkSave
     }
 
 
-#pragma warning restore IDE0251
+    public override bool Equals(object obj)
+    {
+        throw new NotImplementedException();
+    }
+
+    public override int GetHashCode()
+    {
+        throw new NotImplementedException();
+    }
+
+    public static bool operator ==(BulkSave left, BulkSave right) => left.Equals(right);
+    public static bool operator !=(BulkSave left, BulkSave right) => !(left == right);
+
+    public bool Equals(BulkSave other)
+    {
+        throw new NotImplementedException();
+    }
 
     #region private methods
 
-#pragma warning disable IDE0251 // Make member 'readonly'
     private void ReplaceQueryType(int index, SaveQueryType saveQueryType)
 #pragma warning restore IDE0251
     {
@@ -154,5 +169,6 @@ public ref struct BulkSave
     [DoesNotReturn]
     private static void ThrowRecordUnknownRecordType() => throw new ArgumentException(ResourceHelper.GetErrorMessage(ResourceType.RecordUnkownRecordType));
 
-    #endregion 
+
+    #endregion
 }

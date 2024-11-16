@@ -15,7 +15,7 @@ using Index = Ring.Schema.Models.Index;
 namespace Ring.Data;
 
 #pragma warning disable IDE0250 // Make struct 'readonly'
-internal ref struct BulkAlter
+internal struct BulkAlter
 {
 #pragma warning restore IDE0250
     private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;

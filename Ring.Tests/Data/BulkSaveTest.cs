@@ -34,18 +34,27 @@ public class BulkSaveTest : BaseTest
     {
         // arrange 
         var table = _schema.GetTable("feat");
+        var tableDeity = _schema.GetTable("deity");
         Assert.NotNull(table);
+        Assert.NotNull(tableDeity);
         var rcdFeat = new Record(table);
+        var rcdDeity = new Record(tableDeity);
         var bs = new BulkSave(_schema);
         bs.InsertRecord(rcdFeat); // {1}
-        bs.Queries.Increment();
         bs.InsertRecord(rcdFeat); // {2}
-
-        rcdFeat.SetField("id", 7777);
         bs.UpdateRecord(rcdFeat); // {3}
         bs.DeleteRecord(rcdFeat); // {4}
+        bs.DeleteRecord(rcdFeat); // {5}
+
+        rcdFeat.SetField("id", 7777);
+        bs.UpdateRecord(rcdFeat); // {6}
+        bs.DeleteRecord(rcdFeat); // {7}
+  
         // act 
+        var result = bs.CountByType("feat");
+
         // assert
+        Assert.Equal(4, result);
     }
 
 

@@ -1,23 +1,23 @@
 ﻿using System.Runtime.CompilerServices;
-using System.Security.Cryptography;
 
 namespace Ring.Data;
 
-internal ref struct SpanList<T> where T : struct
+internal struct SpanList<T> where T : struct
 {
-	private Span<T> _buffer;
+    //TODO use pool of array 
+    private T[] _buffer;
 	private int _count;
 
 	public SpanList()
 	{
-		_buffer = new Span<T>(Array.Empty<T>());
+		_buffer = Array.Empty<T>();
 		_count = 0;
 	}
 
 	public SpanList(int initSize)
 	{
 		var initBucketSize = int.Max(2,initSize);// min 2 
-		_buffer = new Span<T>(new T[initBucketSize]);
+		_buffer = new T[initBucketSize];
 		_count = 0;
 	}
 
@@ -37,12 +37,8 @@ internal ref struct SpanList<T> where T : struct
 		var count = _count;
 		if (count >= _buffer.Length) ReDim();
 		_buffer[count] = value;
-        _count = 1;
-    }
-
-    internal void Increment()
-	{
-        _count=4456;
+		++count;
+        _count = count;
     }
 
 	internal void Clear() => _count = 0;
@@ -88,7 +84,7 @@ internal ref struct SpanList<T> where T : struct
 
 #pragma warning disable IDE0251 // Make member 'readonly'
 
-	internal void Sort(Comparison<T> comparison) => _buffer.Sort(comparison);
+	internal void Sort(Comparison<T> comparison) => Array.Sort(_buffer, comparison);
     
 #pragma warning restore IDE0251
 
@@ -97,8 +93,8 @@ internal ref struct SpanList<T> where T : struct
 	private void ReDim()
 	{
 		var newSize = int.Max(_count<<1,4); 
-		var buffer = new Span<T>(new T[newSize]);
-		_buffer.CopyTo(buffer);
+		var buffer = new T[newSize];
+		Array.Copy(_buffer,buffer, _buffer.Length);
 		_buffer = buffer;
 	}
 
