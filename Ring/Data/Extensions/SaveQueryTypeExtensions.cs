@@ -2,7 +2,7 @@
 
 namespace Ring.Data.Extensions;
 
-internal static class SaveQueryTypeExtension
+internal static class SaveQueryTypeExtensions
 {
 	public static SaveQueryType CancelOperation(this SaveQueryType operation) 
 	{

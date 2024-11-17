@@ -1,5 +1,6 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Models;
+using Ring.Util.Helpers;
 using System.Globalization;
 using System.Text;
 
@@ -7,8 +8,9 @@ namespace Ring.Schema.Extensions;
 
 internal static class RelationExtensions
 {
-    private const char MtmSeparator = '_';
-    private const char PaddingChar = '0';
+    private static readonly char MtmSeparator = '_';
+    private static readonly char PaddingChar = '0';
+    private static readonly char HashCodeSeparator = '&';
 
     internal static Meta ToMeta(this Relation relation, int fromTableId, RelationType? newRelationType=null)
     {
@@ -67,4 +69,35 @@ internal static class RelationExtensions
         return meta.ToRelation(relation.ToTable) ?? relation;
     }
 
+    internal static long GetHashCode(this Relation relation)
+    {
+        /*
+         *          Relation InverseRelation
+	     * readonly bool HasConstraint
+	     * readonly bool NotNull
+	     * readonly Table ToTable
+	     * readonly RelationType Type
+	     * readonly FieldType FieldType
+	     */
+        var result = new StringBuilder();
+        result.Append(relation.InverseRelation.Name);
+        result.Append(relation.InverseRelation.Id);
+        result.Append(HashCodeSeparator);
+        result.Append(relation.InverseRelation.Type.ToString());
+        result.Append(HashCodeSeparator);
+        result.Append(relation.HasConstraint);
+        result.Append(HashCodeSeparator);
+        result.Append(relation.NotNull);
+        result.Append(HashCodeSeparator);
+        result.Append(relation.ToTable.Id);
+        result.Append(relation.ToTable.Name);
+        result.Append(HashCodeSeparator);
+        result.Append(relation.Type.ToString());
+        result.Append(HashCodeSeparator);
+        result.Append(relation.FieldType.ToString());
+        // BaseEntity
+        result.Append(BaseEntityExtensions.GetHashCode(relation));
+        HashHelper.Djb2X(result.ToString(), out long hash);
+        return hash;
+    }
 }

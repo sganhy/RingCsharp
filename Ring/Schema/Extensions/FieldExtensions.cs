@@ -1,5 +1,6 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Models;
+using Ring.Util.Helpers;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -8,7 +9,8 @@ namespace Ring.Schema.Extensions;
 
 internal static class FieldExtensions
 {
-	private static readonly string PrimaryKeyFieldName = "id";
+    private static readonly char HashCodeSeparator = '$';
+    private static readonly string PrimaryKeyFieldName = "id";
 	private static readonly string PrimaryKeyDescription = "Internal record number";
 	private static readonly string NumberDefaultValue = "0";
 	private static readonly Field _defaultPrimaryKeyInt64 =
@@ -69,14 +71,37 @@ internal static class FieldExtensions
 
 	internal static Field? GetDefaultPrimaryKey(this Field? _, FieldType fieldType)
 	{
-		switch (fieldType)
+#pragma warning disable IDE0066 // Convert switch statement to expression
+        switch (fieldType)
 		{
 			case FieldType.Byte: return _defaultPrimaryKeyInt08;
 			case FieldType.Short: return _defaultPrimaryKeyInt16;
 			case FieldType.Int: return _defaultPrimaryKeyInt32;
 			case FieldType.Long: return _defaultPrimaryKeyInt64;
 		}
-		return null;
+#pragma warning restore IDE0066
+        return null;
+	}
+
+	internal static long GetHashCode(this Field field)
+	{
+		var result = new StringBuilder();
+		result.Append(field.CaseSensitive);
+		result.Append(HashCodeSeparator);
+        result.Append(field.DefaultValue);
+        result.Append(HashCodeSeparator);
+        result.Append(field.Multilingual);
+        result.Append(HashCodeSeparator);
+        result.Append(field.NotNull);
+        result.Append(HashCodeSeparator);
+        result.Append(field.Size);
+        result.Append(HashCodeSeparator);
+        result.Append(field.Type.ToString());
+        result.Append(HashCodeSeparator);
+		// BaseEntity
+        result.Append(BaseEntityExtensions.GetHashCode(field));
+        HashHelper.Djb2X(result.ToString(), out long hash);
+        return hash;
 	}
 
 }

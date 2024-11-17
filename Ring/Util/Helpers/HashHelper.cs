@@ -5,11 +5,20 @@ internal static class HashHelper
     /// <summary>
     /// Hash code method: djb2 (xor version)
     /// </summary>
-    internal static int Djb2X(string input)
+    internal static void Djb2X(string input, out int hash)
     {
-        var hash = 5381;
-        var count = input.Length;
-        for (var i=0; i<count; ++i) hash ^= hash << 5 ^ input[i];
-        return hash;
+        hash = 5381;
+        var span = input.AsSpan();
+        foreach (var c in span) hash ^= hash << 5 ^ c;
+    }
+
+    /// <summary>
+    /// Hash code method: djb2 (xor version) 64 bits version
+    /// </summary>
+    internal static void Djb2X(string input, out long hash)
+    {
+        hash = 5381L;
+        var span = input.AsSpan();
+        foreach (var c in span) hash ^= hash << 5 ^ c;
     }
 }

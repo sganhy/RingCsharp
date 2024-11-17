@@ -12,6 +12,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.CompilerServices;
+using System.Text;
 using Database = Ring.Schema.Models.Schema;
 
 namespace Ring.Data;
@@ -144,7 +145,10 @@ public struct BulkSave : IBulkSave
 
     public override int GetHashCode()
     {
-        throw new NotImplementedException();
+        var result = new StringBuilder();
+        result.Append(typeof(BulkSave).Name);
+        HashHelper.Djb2X(result.ToString(), out int hash);
+        return hash;
     }
 
     public static bool operator ==(BulkSave left, BulkSave right) => left.Equals(right);

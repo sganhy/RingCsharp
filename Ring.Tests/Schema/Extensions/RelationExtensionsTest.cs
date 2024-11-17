@@ -245,5 +245,45 @@ public class RelationExtensionsTest : BaseTest
         }
     }
 
+    [Fact]
+    internal void GetHashCode_RelationHashEqual_True()
+    {
+        // arrange 
+        var metaName = _fixture.Create<string>();
+        var meta1 = new Meta(metaName);
+        var meta2 = new Meta(metaName);
+        var relation1 = Meta.GetEmptyRelation(meta1, RelationType.Mtm, TableType.Fake);
+        var relation2 = Meta.GetEmptyRelation(meta2, RelationType.Mtm, TableType.Fake);
+
+        // act 
+        var hash1 = RelationExtensions.GetHashCode(relation1);
+        var hash2 = RelationExtensions.GetHashCode(relation2);
+
+        // assert
+        Assert.Equal(hash1, hash2);
+    }
+
+    [Fact]
+    internal void GetHashCode_RelationHashEqual_False()
+    {
+        // arrange 
+        var metaName = _fixture.Create<string>();
+        var meta1 = new Meta(metaName);
+        var meta2 = new Meta(metaName);
+        var meta3 = new Meta(metaName+ metaName);
+        var relation1 = Meta.GetEmptyRelation(meta1, RelationType.Mto, TableType.Fake);
+        var relation2 = Meta.GetEmptyRelation(meta2, RelationType.Mtm, TableType.Fake);
+        var relation3 = Meta.GetEmptyRelation(meta3, RelationType.Mtm, TableType.Fake);
+
+        // act 
+        var hash1 = RelationExtensions.GetHashCode(relation1);
+        var hash2 = RelationExtensions.GetHashCode(relation2);
+        var hash3 = RelationExtensions.GetHashCode(relation3);
+
+        // assert
+        Assert.NotEqual(hash1, hash2);
+        Assert.NotEqual(hash1, hash3);
+        Assert.NotEqual(hash2, hash3);
+    }
 
 }

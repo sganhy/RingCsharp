@@ -1,12 +1,16 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System;
+using System.Runtime.CompilerServices;
+using System.Text;
 using Ring.Schema.Enums;
 using Ring.Schema.Models;
+using Ring.Util.Helpers;
 using Index = Ring.Schema.Models.Index;
 
 namespace Ring.Schema.Extensions;
 
 internal static class TableExtensions
 {
+    private static readonly char HashCodeSeparator = '+';
 
     /// <summary>
     /// Get field by name, case sensitive search ==> O(log n) complexity
@@ -275,6 +279,55 @@ internal static class TableExtensions
         }
     }
 
+    internal static long GetHashCode(this Table table)
+    {
+        /*
+         *  readonly bool Cached;
+	     *  readonly Field[] Fields
+	     *  readonly Relation[] Relations
+	     *  readonly Index[] Indexes
+	     *  readonly int[] RecordIndexes
+	     *  readonly int RecordSize
+	     *  readonly IColumn[] Columns
+         *  readonly string PhysicalName
+	     *  readonly PhysicalType PhysicalType
+    	 *  readonly int SchemaId
+	     *  readonly string? Subject
+	     *  readonly TableType Type
+	     *  readonly CacheId CacheId
+	     *  readonly bool Readonly
+	     */  
+        var result = new StringBuilder();
+        result.Append(table.Cached);
+        result.Append(HashCodeSeparator);
+        result.Append(GetHashCode(table.Fields));
+        result.Append(HashCodeSeparator);
+        result.Append(GetHashCode(table.Relations));
+        result.Append(HashCodeSeparator);
+        result.Append(GetHashCode(table.Indexes));
+        result.Append(HashCodeSeparator);
+        result.Append(GetHashCode(table.RecordIndexes));         // int[] RecordIndexes
+        result.Append(HashCodeSeparator);
+        result.Append(table.RecordSize);
+        result.Append(HashCodeSeparator);
+        // IColumn[] Columns - removed from computing !!
+        result.Append(table.PhysicalName);
+        result.Append(HashCodeSeparator);
+        result.Append(table.Type.ToString());
+        result.Append(HashCodeSeparator);
+        result.Append(table.SchemaId);
+        result.Append(HashCodeSeparator);
+        result.Append(table.PhysicalType);
+        result.Append(HashCodeSeparator);
+        result.Append(table.Subject);
+        result.Append(HashCodeSeparator);
+        result.Append(table.Readonly);
+        // BaseEntity
+        result.Append(BaseEntityExtensions.GetHashCode(table));
+        HashHelper.Djb2X(result.ToString(), out long hash);
+        return hash;
+    }
+
     #region private methods 
 
     /// <summary>
@@ -293,6 +346,42 @@ internal static class TableExtensions
         var col = table.GetField(name??string.Empty);
         if (col != null) return col;
         return table.GetRelation(name??string.Empty);
+    }
+
+
+    private static long GetHashCode(Field[] fields)
+    {
+        var span = fields.AsSpan();
+        var hash = 0L;
+        foreach (var field in span) hash += field.GetHashCode();
+        return hash;
+    }
+    private static long GetHashCode(Relation[] relations)
+    {
+        var span = relations.AsSpan();
+        var hash = 0L;
+        foreach (var relation in span) hash += relation.GetHashCode();
+        return hash;
+    }
+    private static long GetHashCode(Index[] indexes)
+    {
+        var span = indexes.AsSpan();
+        var hash = 0L;
+        foreach (var index in span) hash += index.GetHashCode();
+        return hash;
+    }
+    private static long GetHashCode(int[] integerArray)
+    {
+        var result = new StringBuilder();
+        result.Append(HashCodeSeparator);
+        var span = integerArray.AsSpan();
+        foreach (var number in span)
+        {
+            result.Append(number);
+            result.Append(HashCodeSeparator);
+        }
+        HashHelper.Djb2X(result.ToString(), out long hash);
+        return hash;
     }
 
     #endregion 

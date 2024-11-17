@@ -364,7 +364,8 @@ public struct Record : IEquatable<Record>
 				++i;
 			}
 		}
-		return HashHelper.Djb2X(result.ToString());
+        HashHelper.Djb2X(result.ToString(), out int hash);
+        return hash;
 	}
 	internal readonly bool Equals(SaveQuery obj) => ReferenceEquals(obj.Data, _data) && obj.Offset == _offset;
 	internal readonly bool IsFieldChanged(string name)

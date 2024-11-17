@@ -72,4 +72,53 @@ public class FieldExtensionsTest : BaseTest
         Assert.True(meta.Active);
     }
 
+
+    [Fact]
+    internal void GetHashCode_FieldHashEqual_True()
+    {
+        // arrange 
+        var id = _fixture.Create<int>();
+        var name = _fixture.Create<string>();
+        var description = _fixture.Create<string>();
+        var tableId = _fixture.Create<int>();
+        var fieldType = _fixture.Create<FieldType>();
+        var defaultValue = _fixture.Create<string?>();
+        var size = _fixture.Create<int>();
+        var field1 = new Field(id, name, description, fieldType, size, defaultValue, false, false, false, false, true);
+        var field2 = new Field(id, name, description, fieldType, size, defaultValue, false, false, false, false, true);
+
+        // act 
+        var hash1 = FieldExtensions.GetHashCode(field1);
+        var hash2 = FieldExtensions.GetHashCode(field2);
+
+        // assert
+        Assert.Equal(hash1, hash2);
+    }
+
+    [Fact]
+    internal void GetHashCode_FieldHashEqual_False()
+    {
+        // arrange 
+        var id = _fixture.Create<int>();
+        var name = _fixture.Create<string>();
+        var description = _fixture.Create<string>();
+        var tableId = _fixture.Create<int>();
+        var fieldType = _fixture.Create<FieldType>();
+        var defaultValue = _fixture.Create<string?>();
+        var size = _fixture.Create<int>();
+        var field1 = new Field(id, name, description, fieldType, size, defaultValue, false, false, false, false, true);
+        var field2 = new Field(id, name, description, fieldType, size, defaultValue, false, false, false, true, true);
+        var field3 = new Field(id, name, description, fieldType, size, defaultValue, true, false, false, false, true);
+
+        // act 
+        var hash1 = FieldExtensions.GetHashCode(field1);
+        var hash2 = FieldExtensions.GetHashCode(field2);
+        var hash3 = FieldExtensions.GetHashCode(field3);
+
+        // assert
+        Assert.NotEqual(hash1, hash2);
+        Assert.NotEqual(hash1, hash3);
+        Assert.NotEqual(hash2, hash3);
+    }
+
 }

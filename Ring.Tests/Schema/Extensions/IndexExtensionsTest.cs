@@ -1,11 +1,22 @@
-﻿using Ring.Schema;
+﻿using AutoFixture;
+using Ring.Schema;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
+
+using Index = Ring.Schema.Models.Index;
 
 namespace Ring.Tests.Schema.Extensions;
 
 public sealed class IndexExtensionsTest : BaseTest
 {
+
+    private readonly IFixture _fixture;
+
+    public IndexExtensionsTest()
+    {
+        _fixture = new Fixture();
+    }
+
     [Fact]
     public void ToMeta_Index1_MetaObject()
     {
@@ -54,6 +65,49 @@ public sealed class IndexExtensionsTest : BaseTest
         Assert.Equal("prestige", meta.Name);
         Assert.Equal("prestige", meta.Value);
         Assert.True(meta.Active);
+    }
+
+    [Fact]
+    internal void GetHashCode_IndexHashEqual_True()
+    {
+        // arrange 
+        var id = _fixture.Create<int>();
+        var name = _fixture.Create<string>();
+        var description = _fixture.Create<string>();
+        var columns = _fixture.CreateMany<string>(5).ToArray();
+        var index1 = new Index(id, name, description, columns, true, false, true, false);
+        var index2 = new Index(id, name, description, columns, true, false, true, false);
+
+        // act 
+        var hash1 = IndexExtensions.GetHashCode(index1);
+        var hash2 = IndexExtensions.GetHashCode(index2);
+
+        // assert
+        Assert.Equal(hash1, hash2);
+    }
+
+    [Fact]
+    internal void GetHashCode_IndexHashEqual_False()
+    {
+        // arrange 
+        var id = _fixture.Create<int>();
+        var name = _fixture.Create<string>();
+        var description = _fixture.Create<string>();
+        var columns = _fixture.CreateMany<string>(5).ToArray();
+        var columns2 = _fixture.CreateMany<string>(7).ToArray();
+        var index1 = new Index(id, name, description, columns, true, false, true, false);
+        var index2 = new Index(id, name, description, columns2, true, false, true, false);
+        var index3 = new Index(id, name, description, columns, true, false, true, true);
+
+        // act 
+        var hash1 = IndexExtensions.GetHashCode(index1);
+        var hash2 = IndexExtensions.GetHashCode(index2);
+        var hash3 = IndexExtensions.GetHashCode(index3);
+
+        // assert
+        Assert.NotEqual(hash1, hash2);
+        Assert.NotEqual(hash1, hash3);
+        Assert.NotEqual(hash2, hash3);
     }
 
 }

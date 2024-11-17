@@ -1,5 +1,7 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Models;
+using Ring.Util.Helpers;
+using System.Linq;
 using System.Text;
 using Index = Ring.Schema.Models.Index;
 
@@ -10,6 +12,8 @@ namespace Ring.Schema.Extensions;
 /// </summary>
 internal static class IndexExtensions
 {
+    private static readonly char HashCodeSeparator = '*';
+
     internal static Meta ToMeta(this Index index, int tableId)
     {
         var flags = 0L;
@@ -39,6 +43,26 @@ internal static class IndexExtensions
             result = indexKey == key.ToString();
         }
         return result;
+    }
+
+    internal static long GetHashCode(this Index index)
+    {
+        /*
+         * readonly bool Bitmap
+	     * readonly string[] Columns
+	     * readonly bool Unique
+         */
+        var result = new StringBuilder();
+        result.Append(index.Bitmap);
+        result.Append(HashCodeSeparator);
+        result.Append(string.Join(HashCodeSeparator, index.Columns));
+        result.Append(HashCodeSeparator);
+        result.Append(index.Unique);
+        result.Append(HashCodeSeparator);
+        // BaseEntity
+        result.Append(BaseEntityExtensions.GetHashCode(index));
+        HashHelper.Djb2X(result.ToString(), out long hash);
+        return hash;
     }
 
 }
