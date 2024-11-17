@@ -204,10 +204,12 @@ internal static class TableExtensions
         for (i=0; i < table.Relations.Length; ++i) result.Add(table.Relations[i].ToMeta(table.Id));
         for (i=0; i < table.Indexes.Length; ++i) result.Add(table.Indexes[i].ToMeta(table.Id));
         var flags = 0L;
+        // set Table Flags
         flags = Meta.SetTableCached(flags, table.Cached);
         flags = Meta.SetTableReadonly(flags, table.Readonly);
-        var meta = new Meta(table.Id, (byte)EntityType.Table, schemaId, (int)table.Type, flags, table.Name, 
-            table.Description, null, table.Active);
+        // set BaseEntity Flags
+        flags = Meta.SetEntityBaseline(flags, table.Baseline);
+        var meta = new Meta(table.Id, (byte)EntityType.Table, schemaId, (int)table.Type, flags, table.Name, table.Description, null, table.Active);
         // first - define Object type
         result.Add(meta);
         return result.ToArray(); 
@@ -281,6 +283,12 @@ internal static class TableExtensions
 
     internal static long GetHashCode(this Table table)
     {
+        HashHelper.Djb2X(table.GetStringCode(), out long hash);
+        return hash;
+    }
+
+    internal static string GetStringCode(this Table table)
+    {
         /*
          *  readonly bool Cached;
 	     *  readonly Field[] Fields
@@ -296,17 +304,17 @@ internal static class TableExtensions
 	     *  readonly TableType Type
 	     *  readonly CacheId CacheId
 	     *  readonly bool Readonly
-	     */  
+	     */
         var result = new StringBuilder();
         result.Append(table.Cached);
         result.Append(HashCodeSeparator);
-        result.Append(GetHashCode(table.Fields));
+        result.Append(GetStringCode(table.Fields));
         result.Append(HashCodeSeparator);
-        result.Append(GetHashCode(table.Relations));
+        result.Append(GetStringCode(table.Relations));
         result.Append(HashCodeSeparator);
-        result.Append(GetHashCode(table.Indexes));
+        result.Append(GetStringCode(table.Indexes));
         result.Append(HashCodeSeparator);
-        result.Append(GetHashCode(table.RecordIndexes));         // int[] RecordIndexes
+        result.Append(string.Join(HashCodeSeparator,table.RecordIndexes));         // int[] RecordIndexes
         result.Append(HashCodeSeparator);
         result.Append(table.RecordSize);
         result.Append(HashCodeSeparator);
@@ -323,9 +331,8 @@ internal static class TableExtensions
         result.Append(HashCodeSeparator);
         result.Append(table.Readonly);
         // BaseEntity
-        result.Append(BaseEntityExtensions.GetHashCode(table));
-        HashHelper.Djb2X(result.ToString(), out long hash);
-        return hash;
+        result.Append(BaseEntityExtensions.GetStringCode(table));
+        return result.ToString();
     }
 
     #region private methods 
@@ -340,48 +347,44 @@ internal static class TableExtensions
                 if (table.Indexes[i].Unique) return table.Indexes[i];
         return null;
     }
-
     private static IColumn GetColumn(this Table table, string name)
     {
         var col = table.GetField(name??string.Empty);
         if (col != null) return col;
         return table.GetRelation(name??string.Empty);
     }
-
-
-    private static long GetHashCode(Field[] fields)
+    private static string GetStringCode(Field[] fields)
     {
         var span = fields.AsSpan();
-        var hash = 0L;
-        foreach (var field in span) hash += field.GetHashCode();
-        return hash;
-    }
-    private static long GetHashCode(Relation[] relations)
-    {
-        var span = relations.AsSpan();
-        var hash = 0L;
-        foreach (var relation in span) hash += relation.GetHashCode();
-        return hash;
-    }
-    private static long GetHashCode(Index[] indexes)
-    {
-        var span = indexes.AsSpan();
-        var hash = 0L;
-        foreach (var index in span) hash += index.GetHashCode();
-        return hash;
-    }
-    private static long GetHashCode(int[] integerArray)
-    {
         var result = new StringBuilder();
-        result.Append(HashCodeSeparator);
-        var span = integerArray.AsSpan();
-        foreach (var number in span)
+        foreach (var field in span)
         {
-            result.Append(number);
+            result.Append(field.GetStringCode());
             result.Append(HashCodeSeparator);
         }
-        HashHelper.Djb2X(result.ToString(), out long hash);
-        return hash;
+        return result.ToString();
+    }
+    private static string GetStringCode(Relation[] relations)
+    {
+        var span = relations.AsSpan();
+        var result = new StringBuilder();
+        foreach (var relation in span)
+        {
+            result.Append(relation.GetStringCode());
+            result.Append(HashCodeSeparator);
+        }
+        return result.ToString();
+    }
+    private static string GetStringCode(Index[] indexes)
+    {
+        var span = indexes.AsSpan();
+        var result = new StringBuilder();
+        foreach (var index in span)
+        {
+            result.Append(index.GetStringCode());
+            result.Append(HashCodeSeparator);
+        }
+        return result.ToString();
     }
 
     #endregion 

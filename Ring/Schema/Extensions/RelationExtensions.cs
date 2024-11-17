@@ -71,14 +71,20 @@ internal static class RelationExtensions
 
     internal static long GetHashCode(this Relation relation)
     {
+        HashHelper.Djb2X(relation.GetStringCode(), out long hash);
+        return hash;
+    }
+
+    internal static string GetStringCode(this Relation relation)
+    {
         /*
-         *          Relation InverseRelation
-	     * readonly bool HasConstraint
-	     * readonly bool NotNull
-	     * readonly Table ToTable
-	     * readonly RelationType Type
-	     * readonly FieldType FieldType
-	     */
+         * Relation InverseRelation
+         * readonly bool HasConstraint
+         * readonly bool NotNull
+         * readonly Table ToTable
+         * readonly RelationType Type
+         * readonly FieldType FieldType
+         */
         var result = new StringBuilder();
         result.Append(relation.InverseRelation.Name);
         result.Append(relation.InverseRelation.Id);
@@ -96,8 +102,7 @@ internal static class RelationExtensions
         result.Append(HashCodeSeparator);
         result.Append(relation.FieldType.ToString());
         // BaseEntity
-        result.Append(BaseEntityExtensions.GetHashCode(relation));
-        HashHelper.Djb2X(result.ToString(), out long hash);
-        return hash;
+        result.Append(BaseEntityExtensions.GetStringCode(relation));
+        return result.ToString();
     }
 }

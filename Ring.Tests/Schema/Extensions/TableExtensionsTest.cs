@@ -1,4 +1,5 @@
-﻿using Ring.Data;
+﻿using AutoFixture;
+using Ring.Data;
 using Ring.Schema;
 using Ring.Schema.Builders;
 using Ring.Schema.Enums;
@@ -8,6 +9,13 @@ namespace Ring.Tests.Schema.Extensions;
 
 public class TableExtensionsTest : BaseTest
 {
+    private readonly IFixture _fixture;
+
+    public TableExtensionsTest()
+    {
+        _fixture = new Fixture();
+    }
+
     [Fact]
     internal void GetField_AnonymousTable_FieldObject()
     {
@@ -338,6 +346,77 @@ public class TableExtensionsTest : BaseTest
         Assert.Equal("id", result[0].Name);
         Assert.Equal("schema_id", result[1].Name);
         Assert.Equal("object_type", result[2].Name);
+    }
+
+    [Fact]
+    internal void GetHashCode_TableHashEqual_True()
+    {
+        // arrange 
+        var metaList = GetSchema1();
+        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
+        var table1 = schema?.GetTable("book");
+        Assert.NotNull(schema);
+        Assert.NotNull(table1);
+        var meta2 = table1.ToMeta(schema.Id);
+        var metaTable = Meta.FirstOrDefault(meta2, EntityType.Table);
+        Assert.NotNull(metaTable);
+        var table2 = metaTable?.ToTable(new ArraySegment<Meta>(meta2), table1.PhysicalType, table1.PhysicalName);
+        Assert.NotNull(table2);
+        // copy relations
+        for (var i = 0; i < table2.Relations.Length; ++i) table2.Relations[i] = table1.Relations[i];
+        table2.LoadColumnMapper();
+        table2.LoadRelationRecordIndex();
+
+        // act 
+        var hash1 = TableExtensions.GetHashCode(table1);
+        var hash2 = TableExtensions.GetHashCode(table2);
+
+        // assert
+        Assert.Equal(hash1, hash2);
+    }
+
+    [Fact]
+    internal void GetHashCode_TableHashEqual_False()
+    {
+        // arrange 
+        var schemaName = "@Test2";
+        var schBuilder = new SchemaBuilder();
+        var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
+        var schema1 = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
+        var schema2 = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
+        var schema3 = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
+        var schema4 = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
+        var table1 = schema1.GetTable("@log");
+        var table2 = schema2.GetTable("@log");
+        var table3 = schema3.GetTable("@log"); // indentical
+        var table4 = schema4.GetTable("@log"); // invert two columns
+        var table5 = schema4.GetTable("@meta");
+
+        Assert.NotNull(table1);
+        Assert.NotNull(table2);
+        Assert.NotNull(table3);
+        Assert.NotNull(table4);
+
+        table2.RecordIndexes[0] = 44; // change one RecordIndex
+
+        // swap two columns
+        var tempCol = table4.Columns[0];
+        table4.Columns[0] = table4.Columns[1];
+        table4.Columns[1] = tempCol;
+
+        // act 
+        var hash1 = TableExtensions.GetHashCode(table1);
+        var hash2 = TableExtensions.GetHashCode(table2);
+        var hash3 = TableExtensions.GetHashCode(table3);
+        var hash4 = TableExtensions.GetHashCode(table4);
+        var hash5 = TableExtensions.GetHashCode(table5);
+        
+
+        // assert
+        Assert.NotEqual(hash1, hash2);
+        Assert.Equal(hash1, hash3);
+        Assert.Equal(hash1, hash4);
+        Assert.NotEqual(hash1, hash5);
     }
 
 }

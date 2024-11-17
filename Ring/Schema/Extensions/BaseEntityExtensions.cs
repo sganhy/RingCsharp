@@ -10,6 +10,12 @@ internal static class BaseEntityExtensions
 
     internal static long GetHashCode(this BaseEntity baseEntity)
     {
+        HashHelper.Djb2X(GetStringCode(baseEntity), out long hash);
+        return hash;
+    }
+
+    internal static string GetStringCode(this BaseEntity baseEntity)
+    {
         var result = new StringBuilder();
         result.Append(baseEntity.Active);
         result.Append(HashCodeSeparator);
@@ -20,7 +26,7 @@ internal static class BaseEntityExtensions
         result.Append(baseEntity.Id);
         result.Append(HashCodeSeparator);
         result.Append(baseEntity.Name);
-        HashHelper.Djb2X(result.ToString(), out long hash);
-        return hash;
+        return result.ToString();
     }
+
 }

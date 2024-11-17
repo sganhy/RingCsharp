@@ -47,11 +47,17 @@ internal static class IndexExtensions
 
     internal static long GetHashCode(this Index index)
     {
+        HashHelper.Djb2X(GetStringCode(index), out long hash);
+        return hash;
+    }
+
+    internal static string GetStringCode(this Index index)
+    {
         /*
-         * readonly bool Bitmap
-	     * readonly string[] Columns
-	     * readonly bool Unique
-         */
+        * readonly bool Bitmap
+        * readonly string[] Columns
+        * readonly bool Unique
+        */
         var result = new StringBuilder();
         result.Append(index.Bitmap);
         result.Append(HashCodeSeparator);
@@ -60,9 +66,8 @@ internal static class IndexExtensions
         result.Append(index.Unique);
         result.Append(HashCodeSeparator);
         // BaseEntity
-        result.Append(BaseEntityExtensions.GetHashCode(index));
-        HashHelper.Djb2X(result.ToString(), out long hash);
-        return hash;
+        result.Append(BaseEntityExtensions.GetStringCode(index));
+        return result.ToString();
     }
 
 }

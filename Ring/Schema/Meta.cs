@@ -185,8 +185,20 @@ internal readonly struct Meta
 	internal static Field GetEmptyField(Meta meta, FieldType fieldType) =>
 		new(meta.Id, meta.Name, meta.Description, fieldType, 0, null, true, false,
 			false, false, true);
+	internal static Meta? FirstOrDefault(Meta[] metas, EntityType entityType) 
+	{
+		Meta? result=null;
+		var span = new ReadOnlySpan<Meta>(metas);
+		var entityTypeId = (byte)entityType;
+        for (var i = 0; i < span.Length; ++i) {
+			var meta = span[i];
+			if (entityTypeId == meta.ObjectType) return meta;
+		}
+		return result;
+	}
+    
 
-	internal EntityType GetEntityType() => ((int)ObjectType).ToEntityType();
+    internal EntityType GetEntityType() => ((int)ObjectType).ToEntityType();
 
 	#region convertors 
 

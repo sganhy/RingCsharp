@@ -61,6 +61,7 @@ internal static class FieldExtensions
 		flags = Meta.SetEntityBaseline(flags,field.Baseline);
         flags = Meta.SetFieldNotNull(flags, field.NotNull);
         flags = Meta.SetFieldMultilingual(flags, field.Multilingual);
+        flags = Meta.SetFieldCaseSensitive(flags, field.CaseSensitive);
         flags = Meta.SetFieldSize(flags, field.Size);
         var dataType = 0 ;
         dataType = Meta.SetFieldType(dataType, newFieldType ?? field.Type);
@@ -85,9 +86,15 @@ internal static class FieldExtensions
 
 	internal static long GetHashCode(this Field field)
 	{
-		var result = new StringBuilder();
-		result.Append(field.CaseSensitive);
-		result.Append(HashCodeSeparator);
+        HashHelper.Djb2X(GetStringCode(field), out long hash);
+        return hash;
+	}
+
+    internal static string GetStringCode(this Field field)
+    {
+        var result = new StringBuilder();
+        result.Append(field.CaseSensitive);
+        result.Append(HashCodeSeparator);
         result.Append(field.DefaultValue);
         result.Append(HashCodeSeparator);
         result.Append(field.Multilingual);
@@ -98,11 +105,10 @@ internal static class FieldExtensions
         result.Append(HashCodeSeparator);
         result.Append(field.Type.ToString());
         result.Append(HashCodeSeparator);
-		// BaseEntity
-        result.Append(BaseEntityExtensions.GetHashCode(field));
-        HashHelper.Djb2X(result.ToString(), out long hash);
-        return hash;
-	}
+        // BaseEntity
+        result.Append(BaseEntityExtensions.GetStringCode(field));
+        return result.ToString();
+    }
 
 }
 
