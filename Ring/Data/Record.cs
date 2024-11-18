@@ -1,5 +1,4 @@
-﻿using Microsoft.VisualBasic;
-using Ring.Data.Extensions;
+﻿using Ring.Data.Extensions;
 using Ring.Data.Models;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
@@ -323,7 +322,7 @@ public struct Record : IEquatable<Record>
 	}
 	public static bool operator ==(Record left, Record right) => left.Equals(right);
 	public static bool operator !=(Record left, Record right) => !(left == right);
-    public override readonly bool Equals(object? obj) => obj != null && obj is Record record && Equals(record);
+    public override readonly bool Equals(object? obj) => obj is Record record && Equals(record);
     public readonly bool Equals(Record other)
 	{
 		if (ReferenceEquals(_type, other._type))
@@ -344,7 +343,6 @@ public struct Record : IEquatable<Record>
 			}
 			return true;
 		}
-	
 		return false;
 	}
 	public override readonly int GetHashCode()

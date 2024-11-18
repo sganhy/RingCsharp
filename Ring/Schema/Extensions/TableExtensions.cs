@@ -39,13 +39,13 @@ internal static class TableExtensions
     /// Get field by name, case unsensitive search ==> O(n) complexity
     /// </summary>
     /// <param name="table">table object</param>
-    /// <param name="fieldName">field name</param>
+    /// <param name="name">field name</param>
     /// <param name="comparisonType">StringComparison enum</param>
     /// <returns>Field object</returns>
     internal static Field? GetField(this Table table, string name, StringComparison comparisonType)
     {
-        var span = new ReadOnlySpan<Field>(table.Fields);
-        foreach (var field in span) if (string.Equals(name, field.Name, comparisonType)) return field;
+        foreach (var field in new ReadOnlySpan<Field>(table.Fields)) 
+            if (string.Equals(name, field.Name, comparisonType)) return field;
         return null;
     }
 
@@ -134,8 +134,8 @@ internal static class TableExtensions
     /// <returns>Relation object</returns>
     internal static Relation? GetRelation(this Table table, int id)
     {
-        var span = new ReadOnlySpan<Relation>(table.Relations);
-        foreach (var relation in span) if (id == relation.Id) return relation;
+        foreach (var relation in new ReadOnlySpan<Relation>(table.Relations)) 
+            if (id == relation.Id) return relation;
         return null;
     }
 
@@ -143,7 +143,7 @@ internal static class TableExtensions
     /// Get index relation by name, case sensitive search ==> O(log n) complexity
     /// </summary>
     /// <param name="table">table object</param>
-    /// <param name="fieldName">relation name</param>
+    /// <param name="name">relation name</param>
     /// <returns>Field index or -1 if not found</returns>
     internal static int GetRelationIndex(this Table table, string name)
     {
@@ -184,14 +184,16 @@ internal static class TableExtensions
 	internal static List<IColumn> GetPrimaryKey(this Table table)
 	{
 		var result = new List<IColumn>();
-		if (table.Type == TableType.Business || table.Type == TableType.Lexicon) 
-			result.Add(table.Fields[table.RecordIndexes[0]]);
-		else 
-		{
-			var index = table.GetFirstUniqueIndex();
-			if (index != null) 
-				foreach(string column in index.Columns) result.Add(GetColumn(table, column));
-		}
+        if (table.Type == TableType.Business || table.Type == TableType.Lexicon)
+        {
+            result.Add(table.Fields[table.RecordIndexes[0]]);
+        }
+        else
+        {
+            var index = table.GetFirstUniqueIndex();
+            if (index != null)
+                foreach (string column in index.Columns) result.Add(GetColumn(table, column));
+        }
 		return result;
 	}
 
@@ -290,7 +292,7 @@ internal static class TableExtensions
     internal static string GetStringCode(this Table table)
     {
         /*
-         *  readonly bool Cached;
+         *  readonly bool Cached
 	     *  readonly Field[] Fields
 	     *  readonly Relation[] Relations
 	     *  readonly Index[] Indexes
@@ -314,7 +316,7 @@ internal static class TableExtensions
         result.Append(HashCodeSeparator);
         result.Append(GetStringCode(table.Indexes));
         result.Append(HashCodeSeparator);
-        result.Append(string.Join(HashCodeSeparator,table.RecordIndexes));         // int[] RecordIndexes
+        result.AppendJoin(HashCodeSeparator, table.RecordIndexes);         // int[] RecordIndexes
         result.Append(HashCodeSeparator);
         result.Append(table.RecordSize);
         result.Append(HashCodeSeparator);
@@ -350,8 +352,7 @@ internal static class TableExtensions
     private static IColumn GetColumn(this Table table, string name)
     {
         var col = table.GetField(name??string.Empty);
-        if (col != null) return col;
-        return table.GetRelation(name??string.Empty);
+        return col != null ? col : table.GetRelation(name??string.Empty);
     }
     private static string GetStringCode(Field[] fields)
     {

@@ -1,5 +1,4 @@
 ﻿using Ring.Schema.Enums;
-using Ring.Schema.Extensions;
 
 namespace Ring.Schema.Models;
 
@@ -32,7 +31,7 @@ internal sealed class Relation : BaseEntity, IColumn
 	/// <summary>
 	///     assign only once the property 
 	/// </summary>
-	internal void SetInverseRelation(Relation relation) => 
+	internal void SetInverseRelation(Relation relation) =>
 		InverseRelation = ReferenceEquals(InverseRelation,this) ? relation : InverseRelation;
 
 	internal void SetRecordIndex(int index) => RecordIndex = index;

@@ -1,18 +1,12 @@
-﻿using Microsoft.VisualBasic;
-using Ring.Data.Enums;
+﻿using Ring.Data.Enums;
 using Ring.Data.Extensions;
 using Ring.Data.Models;
 using Ring.Schema;
-using Ring.Schema.Builders;
 using Ring.Schema.Enums;
-using Ring.Schema.Models;
 using Ring.Util.Enums;
 using Ring.Util.Helpers;
-using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 using System.Runtime.CompilerServices;
-using System.Text;
 using Database = Ring.Schema.Models.Schema;
 
 namespace Ring.Data;
@@ -137,26 +131,23 @@ public struct BulkSave : IBulkSave
         if (!record.IsNew) _queries.Add(new SaveQuery(record.Table, SaveQueryType.UpdateRecord, _schema.DmlBuiler, record.Data, record.Offset));
     }
 
-
-    public override bool Equals(object obj)
-    {
-        throw new NotImplementedException();
-    }
-
     public override int GetHashCode()
     {
-        var result = new StringBuilder();
-        result.Append(typeof(BulkSave).Name);
-        HashHelper.Djb2X(result.ToString(), out int hash);
+        var span = _queries.AsSpan();
+        var hash = 0;
+        foreach (var query in span) hash += SaveQueryExtensions.GetHashCode(query);
         return hash;
     }
-
     public static bool operator ==(BulkSave left, BulkSave right) => left.Equals(right);
     public static bool operator !=(BulkSave left, BulkSave right) => !(left == right);
-
+    public override readonly bool Equals(object? obj) => obj is Record record && Equals(record);
     public bool Equals(BulkSave other)
     {
-        throw new NotImplementedException();
+        if (ReferenceEquals(_schema, other._schema))
+        {
+            return GetHashCode()== other.GetHashCode();
+        }
+        return false;
     }
 
     #region private methods
@@ -171,7 +162,8 @@ public struct BulkSave : IBulkSave
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     [DoesNotReturn]
-    private static void ThrowRecordUnknownRecordType() => throw new ArgumentException(ResourceHelper.GetErrorMessage(ResourceType.RecordUnkownRecordType));
+    private static void ThrowRecordUnknownRecordType() => 
+        throw new ArgumentException(ResourceHelper.GetErrorMessage(ResourceType.RecordUnkownRecordType));
 
 
     #endregion

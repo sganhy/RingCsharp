@@ -45,9 +45,11 @@ internal struct SpanList<T> where T : struct
 
 	public readonly Enumerator GetEnumerator() => new(this);
 
-	#region subclasses
+    public readonly Span<T> AsSpan() => _buffer.AsSpan();
 
-	public ref struct Enumerator
+    #region subclasses
+
+    public ref struct Enumerator
 	{
 		private readonly SpanList<T> _span;
 		private int _index;
@@ -85,7 +87,6 @@ internal struct SpanList<T> where T : struct
 #pragma warning disable IDE0251 // Make member 'readonly'
 
 	internal void Sort(Comparison<T> comparison) => Array.Sort(_buffer, comparison);
-    
 #pragma warning restore IDE0251
 
 	#region private methods 
