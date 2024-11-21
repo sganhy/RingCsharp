@@ -1,4 +1,4 @@
-﻿using AutoFixture;
+﻿using Bogus;
 using Ring.Data;
 using Ring.Schema;
 using Ring.Schema.Builders;
@@ -6,19 +6,16 @@ using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using Ring.Util.Builders;
-using Ring.Util.Builders.PostgreSQL;
+using DdlBuilder = Ring.Util.Builders.PostgreSQL.DdlBuilder; // test only for PostgreSQL
 
 namespace Ring.Tests.Util.Builders.PostgreSQL;
 
 public class DdlBuilderTest : BaseBuilderTest
 {
-    private readonly IDdlBuilder _sut;
-    private readonly IFixture _fixture;
-    public DdlBuilderTest()
-    {
-        _sut = new DdlBuilder();
-        _fixture = new Fixture();
-    }
+#pragma warning disable CA1859 // Use concrete types when possible for improved performance
+    private readonly IDdlBuilder _sut = new DdlBuilder();
+#pragma warning restore CA1859
+    private readonly Faker _faker = new();
 
     [Fact]
     public void Drop_Table1_DdlQuery()
@@ -55,7 +52,7 @@ public class DdlBuilderTest : BaseBuilderTest
         // arrange 
         var metaTable = GetMeta2Table(TableType.Business);
         var metaItems = GetMeta2TableItems(true);
-        var physicalName = _fixture.Create<string>();
+        var physicalName = _faker.Random.String();
         var segment = new ArraySegment<Meta>(metaItems, 0, metaItems.Length);
         var table2 = metaTable.ToTable(segment, PhysicalType.Table, physicalName);
         Assert.NotNull(table2);
@@ -82,7 +79,7 @@ public class DdlBuilderTest : BaseBuilderTest
         // arrange 
         var metaTable = GetMeta2Table(TableType.Lexicon);
         var metaItems = GetMeta2TableItems(false);
-        var physicalName = _fixture.Create<string>();
+        var physicalName = _faker.Random.String();
         var segment = new ArraySegment<Meta>(metaItems, 0, metaItems.Length);
         var table3 = metaTable.ToTable(segment, PhysicalType.Table, physicalName);
 #pragma warning disable CS8602
@@ -108,10 +105,10 @@ public class DdlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var metaTable = GetMeta2Table(TableType.Log);
-        var tablespaceName = _fixture.Create<string>();
+        var tablespaceName = _faker.Random.String();
         var tablespace = GetAnonymousTableSpace(tablespaceName);
         var metaItems = GetMeta2TableItems(false);
-        var physicalName = _fixture.Create<string>();
+        var physicalName = _faker.Random.String();
         var segment = new ArraySegment<Meta>(metaItems, 0, metaItems.Length);
         var table4 = metaTable.ToTable(segment, PhysicalType.Table, physicalName);
 
@@ -137,10 +134,10 @@ public class DdlBuilderTest : BaseBuilderTest
     public void Create_TableSpace1_DdlQuery()
     {
         // arrange 
-        var fileName = _fixture.Create<string>();
-        var tablespaceName = _fixture.Create<string>();
-        var tablespace = new TableSpace(_fixture.Create<int>(), tablespaceName, _fixture.Create<string?>(), true, true, true, 
-            _fixture.CreateMany<string>().ToArray(),
+        var fileName = _faker.Random.String();
+        var tablespaceName = _faker.Random.String();
+        var tablespace = new TableSpace(_faker.Random.Number(), tablespaceName, _faker.Random.String(), true, true, true,
+            _faker.Random.WordsArray(11),
             fileName, true, true);
         var expectedSql = $"CREATE TABLESPACE {tablespaceName} LOCATION '{fileName}'";
 
@@ -372,7 +369,7 @@ public class DdlBuilderTest : BaseBuilderTest
     public void GetPhysicalName_MtmTable1_TableName()
     {
         // arrange 
-        var metaTable = new Meta(_fixture.Create<int>(), (byte)EntityType.Table, 0, (int)TableType.Mtm
+        var metaTable = new Meta(_faker.Random.Number(), (byte)EntityType.Table, 0, (int)TableType.Mtm
             , 0L, "Test", null, null, true);
         var emptyTable = Meta.GetEmptyTable(metaTable);
         var emptySchema = Meta.GetEmptySchema(new Meta("Where"), DatabaseProvider.MySql);

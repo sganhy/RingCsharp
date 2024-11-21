@@ -1,4 +1,4 @@
-﻿using AutoFixture;
+﻿using Bogus;
 using Ring.Data;
 using Ring.Schema.Builders;
 using Ring.Schema.Enums;
@@ -9,11 +9,10 @@ namespace Ring.Tests.Schema.Builders;
 public sealed class SchemaBuilderTest
 {
     private readonly SchemaBuilder _sut;
-    private readonly IFixture _fixture;
+
     public SchemaBuilderTest()
     {
         _sut = new SchemaBuilder();
-        _fixture = new Fixture();
     }
 
     [Fact]

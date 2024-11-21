@@ -1,19 +1,13 @@
-﻿using AutoFixture;
+﻿using Bogus;
 using Ring.Schema;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
-using Ring.Schema.Models;
 
 namespace Ring.Tests.Schema.Extensions;
 
 public class RelationExtensionsTest : BaseTest
 {
-    private readonly IFixture _fixture;
-
-    public RelationExtensionsTest()
-    {
-        _fixture = new Fixture();
-    }
+    private readonly Faker _faker = new();
 
     [Fact]
     public void ToMeta_Relation1_MetaObject()
@@ -150,9 +144,9 @@ public class RelationExtensionsTest : BaseTest
     internal void SetInverseRelation_Meta_RelationObject()
     {
         // arrange 
-        var meta1 = new Meta(_fixture.Create<string>());
-        var meta2 = new Meta(_fixture.Create<string>());
-        var meta3 = new Meta(_fixture.Create<string>());
+        var meta1 = new Meta(_faker.Random.String());
+        var meta2 = new Meta(_faker.Random.String());
+        var meta3 = new Meta(_faker.Random.String());
         var relation1 = Meta.GetEmptyRelation(meta1, RelationType.Otm, TableType.Fake);
         var relation2 = Meta.GetEmptyRelation(meta2, RelationType.Mtm, TableType.Fake);
         var relation3 = Meta.GetEmptyRelation(meta3, RelationType.Mto, TableType.Fake);
@@ -170,8 +164,8 @@ public class RelationExtensionsTest : BaseTest
     internal void Initialized_Relation1_True()
     {
         // arrange 
-        var meta1 = new Meta(_fixture.Create<string>());
-        var meta2 = new Meta(_fixture.Create<string>());
+        var meta1 = new Meta(_faker.Random.String());
+        var meta2 = new Meta(_faker.Random.String());
         var relation1 = Meta.GetEmptyRelation(meta1, RelationType.Otm, TableType.Fake);
         var relation2 = Meta.GetEmptyRelation(meta2, RelationType.Mtm, TableType.Fake);
 
@@ -186,8 +180,8 @@ public class RelationExtensionsTest : BaseTest
     internal void Initialized_Relation2_False()
     {
         // arrange 
-        var meta2 = new Meta(_fixture.Create<string>());
-        var meta3 = new Meta(_fixture.Create<string>());
+        var meta2 = new Meta(_faker.Random.String());
+        var meta3 = new Meta(_faker.Random.String());
         var relation2 = Meta.GetEmptyRelation(meta2, RelationType.Mtm, TableType.Fake);
         var relation3 = Meta.GetEmptyRelation(meta3, RelationType.Mtm, TableType.Fake);
 
@@ -202,8 +196,8 @@ public class RelationExtensionsTest : BaseTest
     internal void Initialized_Relation3_True()
     {
         // arrange 
-        var meta3 = new Meta(_fixture.Create<string>());
-        var meta4 = new Meta(_fixture.Create<string>());
+        var meta3 = new Meta(_faker.Random.String());
+        var meta4 = new Meta(_faker.Random.String());
         var relation3 = Meta.GetEmptyRelation(meta3, RelationType.Mtm, TableType.Mtm);
         var relation4 = Meta.GetEmptyRelation(meta4, RelationType.Mtm, TableType.Fake);
 
@@ -218,7 +212,7 @@ public class RelationExtensionsTest : BaseTest
     internal void Initialized_Relation4_False()
     {
         // arrange 
-        var meta4 = new Meta(_fixture.Create<string>());
+        var meta4 = new Meta(_faker.Random.String());
         var relation4 = Meta.GetEmptyRelation(meta4, RelationType.Mtm, TableType.Fake);
         // act 
         // assert
@@ -249,7 +243,7 @@ public class RelationExtensionsTest : BaseTest
     internal void GetHashCode_RelationHashEqual_True()
     {
         // arrange 
-        var metaName = _fixture.Create<string>();
+        var metaName = _faker.Random.String();
         var meta1 = new Meta(metaName);
         var meta2 = new Meta(metaName);
         var relation1 = Meta.GetEmptyRelation(meta1, RelationType.Mtm, TableType.Fake);
@@ -267,7 +261,7 @@ public class RelationExtensionsTest : BaseTest
     internal void GetHashCode_RelationHashEqual_False()
     {
         // arrange 
-        var metaName = _fixture.Create<string>();
+        var metaName = _faker.Random.String();
         var meta1 = new Meta(metaName);
         var meta2 = new Meta(metaName);
         var meta3 = new Meta(metaName+ metaName);

@@ -1,4 +1,4 @@
-﻿using AutoFixture;
+﻿using Bogus;
 using Ring.Util.Builders;
 using Ring.Util.Enums;
 
@@ -6,15 +6,16 @@ namespace Ring.Tests.Util.Builders;
 
 public class LogBuilderTest
 {
-    private readonly IFixture _fixture;
-    public LogBuilderTest() => _fixture = new Fixture();
+    private readonly Faker _faker = new();
 
     [Fact]
     internal void GetError_FileNotFound_LogObject()
     {
         // arrange 
-        var sut = new LogBuilder();
-        sut.SchemaId = _fixture.Create<int>();
+        var sut = new LogBuilder
+        {
+            SchemaId = _faker.Random.Number()
+        };
         // act - execution line should be 19!!!!!!!!!!!!!!!!!
         var log = sut.GetError(LogType.FileNotFound, "test");
         // assert
@@ -30,8 +31,8 @@ public class LogBuilderTest
     {
         // arrange 
         var sut = new LogBuilder();
-        sut.SchemaId = _fixture.Create<int>();
-        sut.JobId = _fixture.Create<long>();
+        sut.SchemaId = _faker.Random.Number();
+        sut.JobId = _faker.Random.Long();
         // act
         var log = sut.GetWarning(LogType.FileNotFound, "test2");
         // assert
@@ -47,8 +48,8 @@ public class LogBuilderTest
         // arrange 
         var sut = new LogBuilder
         {
-            SchemaId = _fixture.Create<int>(),
-            JobId = _fixture.Create<long?>()
+            SchemaId = _faker.Random.Number(),
+            JobId = _faker.Random.Bool() ? null: _faker.Random.Long()
         };
         var currentThreadId = Environment.CurrentManagedThreadId;
         // act

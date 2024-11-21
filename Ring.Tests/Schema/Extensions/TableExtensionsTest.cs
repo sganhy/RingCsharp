@@ -1,4 +1,4 @@
-﻿using AutoFixture;
+﻿using Bogus;
 using Ring.Data;
 using Ring.Schema;
 using Ring.Schema.Builders;
@@ -9,13 +9,6 @@ namespace Ring.Tests.Schema.Extensions;
 
 public class TableExtensionsTest : BaseTest
 {
-    private readonly IFixture _fixture;
-
-    public TableExtensionsTest()
-    {
-        _fixture = new Fixture();
-    }
-
     [Fact]
     internal void GetField_AnonymousTable_FieldObject()
     {

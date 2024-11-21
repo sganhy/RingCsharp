@@ -1,4 +1,4 @@
-﻿using AutoFixture;
+﻿using Bogus;
 using Ring.Data;
 using Ring.Schema.Builders;
 using Ring.Schema.Enums;
@@ -6,19 +6,14 @@ using Ring.Schema.Enums;
 namespace Ring.Tests.Data;
 public sealed class BulkAlterTest
 {
-    private readonly IFixture _fixture;
-
-    public BulkAlterTest()
-    {
-        _fixture = new Fixture();
-    }
+    private readonly Faker _faker=new();
 
     [Fact]
     public void CreateTable_TestValue_BulkAlterInvalidTableName()
     {
         // arrange 
         var builder = new SchemaBuilder();
-        var config = new Configuration() { DefaultSchema = _fixture.Create<string>(), MaxConnectionPoolSize = 20 };
+        var config = new Configuration() { DefaultSchema = _faker.Random.String(), MaxConnectionPoolSize = 20 };
         var schema = builder.GetMeta(DatabaseProvider.SqlServer, config);
 
         // act 
@@ -38,9 +33,8 @@ public sealed class BulkAlterTest
     {
         // arrange 
         var builder = new SchemaBuilder();
-        var config = new Configuration() { DefaultSchema = _fixture.Create<string>(), MaxConnectionPoolSize = 20 };
+        var config = new Configuration() { DefaultSchema = _faker.Random.String(), MaxConnectionPoolSize = 20 };
         var schema = builder.GetMeta(DatabaseProvider.SqlServer, config);
-        
 
         // act 
         var ex = Assert.Throws<ArgumentException>(() => {
@@ -51,5 +45,4 @@ public sealed class BulkAlterTest
         // assert
         Assert.Equal("Column name 'Test' does not exist for object type '@meta'.", ex.Message);
     }
-
 }

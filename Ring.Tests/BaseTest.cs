@@ -1,16 +1,16 @@
-﻿using AutoFixture;
-using Ring.Schema.Enums;
+﻿using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using System.Reflection;
 using Index = Ring.Schema.Models.Index;
 using Ring.Schema;
+using Bogus;
 
 namespace Ring.Tests;
 
 public abstract class BaseTest
 {
-    private readonly IFixture _fixture = new Fixture();
+    private readonly Faker _faker = new();
 
     internal Table GetAnonymousTable(int numberOfField = 0, int numberOfRelation = 0)
     {
@@ -25,44 +25,32 @@ public abstract class BaseTest
         fieldsById.Sort((t1, t2) => t1.Id.CompareTo(t2.Id));
 
         relations = relations.OrderBy(o => o.Name).ToList();
-        var result = new Table(_fixture.Create<int>(), _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<string>(),
-            _fixture.Create<string>(), TableType.Business, relations.ToArray(), fields.ToArray(), 
+        var result = new Table(_faker.Random.Number(), _faker.Random.String(), _faker.Random.String(), _faker.Random.String(),
+            _faker.Random.String(), TableType.Business, relations.ToArray(), fields.ToArray(), 
             new int[fields.Count+relations.Count], new IColumn[fields.Count + relations.Count], Array.Empty<Index>(), 12, PhysicalType.Table, true, true, true, true);
         result.LoadColumnMapper();
         result.LoadRelationRecordIndex();
         return result;
     }
 
-    internal Field GetAnonymousField()
-    {
-        var result = new Field(_fixture.Create<int>(), _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<FieldType>(),
-            _fixture.Create<int>(), _fixture.Create<string?>(), _fixture.Create<bool>(), _fixture.Create<bool>(), _fixture.Create<bool>(),
-            _fixture.Create<bool>(), _fixture.Create<bool>());
-        return result;
-    }
-
-    internal Field GetAnonymousField(FieldType fieldType, int size)
-    {
-        var result = new Field(_fixture.Create<int>(), _fixture.Create<string>(), _fixture.Create<string>(), fieldType, size, 
-            _fixture.Create<string?>(), _fixture.Create<bool>(), _fixture.Create<bool>(), _fixture.Create<bool>(),
-            _fixture.Create<bool>(), _fixture.Create<bool>());
-        return result;
-    }
+    internal Field GetAnonymousField() =>
+        new (_faker.Random.Number(), _faker.Random.String(), _faker.Random.String(), _faker.PickRandom<FieldType>(),
+            _faker.Random.Number(), _faker.Random.String(), _faker.Random.Bool(), _faker.Random.Bool(), _faker.Random.Bool(),
+            _faker.Random.Bool(), _faker.Random.Bool());
 
     internal Relation GetAnonymousRelation(string? name=null)
     {
-        var toTable = new Table(_fixture.Create<int>(), _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<string>(),
-            _fixture.Create<string>(), TableType.Business, Array.Empty<Relation>(), Array.Empty<Field>(), Array.Empty<int>(), Array.Empty<IColumn>(),
+        var toTable = new Table(_faker.Random.Number(), _faker.Random.String(), _faker.Random.String(), _faker.Random.String(),
+            _faker.Random.String(), TableType.Business, Array.Empty<Relation>(), Array.Empty<Field>(), Array.Empty<int>(), Array.Empty<IColumn>(),
             Array.Empty<Index>(), 12, PhysicalType.Table, true, true, true, true);
-        var result = new Relation(_fixture.Create<int>(), name??_fixture.Create<string>(), _fixture.Create<string>(),
-            _fixture.Create<RelationType>(), toTable, -1, FieldType.Long, _fixture.Create<bool>(), _fixture.Create<bool>(),
-            _fixture.Create<bool>(), _fixture.Create<bool>()) ;
-        return result;
+        return new Relation(_faker.Random.Number(), name ?? _faker.Random.String(), _faker.Random.String(),
+            _faker.PickRandom<RelationType>(), toTable, -1, FieldType.Long, _faker.Random.Bool(), _faker.Random.Bool(),
+            _faker.Random.Bool(), _faker.Random.Bool());
     }
     internal Meta GetMeta1Table(TableType tableType)
     {
-        return new Meta(1061, (byte)EntityType.Table, _fixture.Create<int>(), (int)tableType, 8704, "skill", 
-            _fixture.Create<string>(), null, true);
+        return new Meta(1061, (byte)EntityType.Table, _faker.Random.Number(), (int)tableType, 8704, "skill", 
+            _faker.Random.String(), null, true);
     }
 
     internal Meta[] GetMeta1TableItems()
@@ -94,12 +82,15 @@ public abstract class BaseTest
         return metaList.ToArray();
     }
 
+    // Methods and properties that don't access instance data should be static
+    // Mark members as static
+#pragma warning disable S2325, CA1822
     internal Meta[] GetSchema1()
     {
+#pragma warning restore CA1822, S2325
         var result = new List<Meta>();
         var assembly = Assembly.GetExecutingAssembly();
         var resourceName = "Ring.Tests.Resources.meta.csv";
-
 
 #pragma warning disable CS8600 
 #pragma warning disable CS8604 
@@ -122,9 +113,7 @@ public abstract class BaseTest
     }
 
     private Meta GetMeta(int id, string name, EntityType entityType, int dataType, long flags, bool active, int? referenceId = null)
-    {
-        return new(id, (byte)entityType, referenceId ?? _fixture.Create<int>(), dataType, flags,
-            name, _fixture.Create<string>(), _fixture.Create<string>(), active);
-    }
+        => new(id, (byte)entityType, referenceId ?? _faker.Random.Number(), dataType, flags,
+            name, _faker.Random.String(), _faker.Random.String(), active);
 
 }

@@ -1,10 +1,8 @@
-﻿using Ring.Tests.Schema.Extensions;
-using Record = Ring.Data.Record;
+﻿using Record = Ring.Data.Record;
 using DbSchema = Ring.Schema.Models.Schema;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
-using AutoFixture;
 using Ring.Schema.Builders;
 using System.Globalization;
 using System.Reflection;
@@ -12,19 +10,19 @@ using Ring.Schema;
 using Ring.Data.Enums;
 using Ring.Util.Builders.MySQL;
 using Ring.Data.Models;
-using System.Reflection.Metadata;
+using Bogus;
 
 namespace Ring.Tests.Data;
 
 public sealed class RecordTest : BaseTest
 {
     private readonly DbSchema _schema;
-    private readonly IFixture _fixture;
+    private readonly Faker _faker = new();
+
 
     public RecordTest()
     {
         var metaList = GetSchema1();
-        _fixture = new Fixture();
         var meta = new Meta("Test");
         _schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql) ??
                     Meta.GetEmptySchema(meta, DatabaseProvider.PostgreSql);
@@ -64,7 +62,7 @@ public sealed class RecordTest : BaseTest
         var table = _schema.GetTable("feat");
         Assert.NotNull(table);
         var rcd1 = new Record(table, GetBucket(table,5,6), table.RecordSize*2);
-        for (var i = 0; i < table.RecordSize; ++i) rcd1[i] = _fixture.Create<string?>();
+        for (var i = 0; i < table.RecordSize; ++i) rcd1[i] = _faker.Random.String();
         var rcd2 = new Record(table);
         for (var i = 0; i < table.RecordSize; ++i) rcd2[i] = rcd1[i];
 
@@ -82,7 +80,7 @@ public sealed class RecordTest : BaseTest
         var table = _schema.GetTable("race");
         Assert.NotNull(table);
         var rcd1 = new Record(table);
-        for (var i = 1; i < table.Fields.Length; ++i) rcd1[i] = _fixture.Create<string?>();
+        for (var i = 1; i < table.Fields.Length; ++i) rcd1[i] = _faker.Random.String();
         var rcd2 = new Record(table);
 
         // act 
@@ -160,7 +158,7 @@ public sealed class RecordTest : BaseTest
         Assert.NotNull(table);
         var bucket = GetBucket(table, 4, 6);
         var rcd1 = new Record(table, bucket, table.RecordSize * 2);
-        for (var i = 0; i < table.RecordSize; ++i) rcd1[i] = _fixture.Create<string?>();
+        for (var i = 0; i < table.RecordSize; ++i) rcd1[i] = _faker.Random.String();
 
         // Table table, SaveQueryType type, IDmlBuilder builder, string[]? data, int offset
 
@@ -184,7 +182,7 @@ public sealed class RecordTest : BaseTest
         var bucket = GetBucket(table, 4, 5);
         var bucket2 = GetBucket(table, 3, 7);
         var rcd1 = new Record(table, bucket, table.RecordSize * 2);
-        for (var i = 0; i < table.RecordSize; ++i) rcd1[i] = _fixture.Create<string?>();
+        for (var i = 0; i < table.RecordSize; ++i) rcd1[i] = _faker.Random.String();
 
         // Table table, SaveQueryType type, IDmlBuilder builder, string[]? data, int offset
 
@@ -275,7 +273,7 @@ public sealed class RecordTest : BaseTest
         var rcd = new Record();
 
         // act 
-        var ex = Assert.Throws<ArgumentException>(() => rcd.SetField(_fixture.Create<string>(), null));
+        var ex = Assert.Throws<ArgumentException>(() => rcd.SetField(_faker.Random.String(), null));
 
         // assert
         Assert.Equal("This Record object has an unknown RecordType.  The RecordType \nproperty must be set before performing this operation.", ex.Message);
@@ -290,7 +288,7 @@ public sealed class RecordTest : BaseTest
         var rcd = new Record(genderTable);
 
         // act 
-        var ex = Assert.Throws<ArgumentException>(() => rcd.SetField("zorro", _fixture.Create<string>()));
+        var ex = Assert.Throws<ArgumentException>(() => rcd.SetField("zorro", _faker.Random.String()));
 
         // assert
         Assert.Equal("Field name 'zorro' does not exist for object type 'gender'.", ex.Message);
@@ -322,7 +320,7 @@ public sealed class RecordTest : BaseTest
         var table = _schema.GetTable("alignment");
         Assert.NotNull(table);
         var rcd = new Record(table,new string?[table.RecordSize*4], table.RecordSize*2);
-        var expectedValue = _fixture.Create<short>().ToString();
+        var expectedValue = _faker.Random.Short().ToString();
 
         // act 
         rcd.SetField("id", expectedValue);
@@ -338,7 +336,7 @@ public sealed class RecordTest : BaseTest
         var table = _schema.GetTable("book");
         Assert.NotNull(table);
         var rcd = new Record(table);
-        var expectedValue = _fixture.Create<int>().ToString();
+        var expectedValue = _faker.Random.Number().ToString();
 
         // act 
         rcd.SetField("id", expectedValue);
@@ -354,7 +352,7 @@ public sealed class RecordTest : BaseTest
         var table = _schema.GetTable("class");
         Assert.NotNull(table);
         var rcd = new Record(table);
-        var expectedValue = _fixture.Create<sbyte>().ToString();
+        var expectedValue = _faker.Random.SByte().ToString();
 
         // act 
         rcd.SetField("fortitude", expectedValue);
@@ -370,7 +368,7 @@ public sealed class RecordTest : BaseTest
         var table = _schema.GetTable("class");
         Assert.NotNull(table);
         var rcd = new Record(table);
-        var expectedValue = _fixture.Create<sbyte>();
+        var expectedValue = _faker.Random.SByte();
 
         // act 
         rcd.SetField("hit_die", expectedValue);
@@ -432,7 +430,7 @@ public sealed class RecordTest : BaseTest
         var campaignSettingTable = _schema.GetTable("campaign_setting");
         Assert.NotNull(campaignSettingTable);
         var rcd = new Record(campaignSettingTable);
-        var expectedValue = _fixture.Create<short>();
+        var expectedValue = _faker.Random.Short();
 
         // act 
         rcd.SetField("status", expectedValue);
@@ -448,7 +446,7 @@ public sealed class RecordTest : BaseTest
         var armorTable = _schema.GetTable("armor");
         Assert.NotNull(armorTable);
         var rcd = new Record(armorTable);
-        var expectedValue = _fixture.Create<int>();
+        var expectedValue = _faker.Random.Number();
 
         // act 
         rcd.SetField("cost", expectedValue);
@@ -1031,7 +1029,7 @@ public sealed class RecordTest : BaseTest
         var newField = meta?.ToField();
         logTable.Fields[index] = newField ?? GetAnonymousField();
         var rcd = new Record(logTable, new string?[logTable.RecordSize*3], logTable.RecordSize); // mutliple record 
-        var byteArray = new byte[] { _fixture.Create<byte>(), _fixture.Create<byte>(), _fixture.Create<byte>() };
+        var byteArray = new byte[] { _faker.Random.Byte(), _faker.Random.Byte(), _faker.Random.Byte() };
         var base64 = Convert.ToBase64String(byteArray);
 
         // act 
@@ -1252,7 +1250,7 @@ public sealed class RecordTest : BaseTest
         var table = _schema.GetTable("armor");
         Assert.NotNull(table);
         var rcd = new Record(table, new string?[table.RecordSize*5], table.RecordSize*2);
-        rcd.SetField("name", _fixture.Create<string>());
+        rcd.SetField("name", _faker.Random.String());
 
         // act 
         var result = rcd.IsFieldChanged("name");
@@ -1268,7 +1266,7 @@ public sealed class RecordTest : BaseTest
         var table = _schema.GetTable("armor");
         Assert.NotNull(table);
         var rcd1 = new Record(table);
-        rcd1.SetField("name", _fixture.Create<string>());
+        rcd1.SetField("name", _faker.Random.String());
         var rcd2 = new Record(table);
 
         // act 
@@ -1349,21 +1347,21 @@ public sealed class RecordTest : BaseTest
         var table = _schema.GetTable(1071); // weapon
         Assert.NotNull(table);
         var rcd1 = new Record(table); // filled record 
-        rcd1.SetField("name", _fixture.Create<string>());
-        rcd1.SetField("unarmed_attack", _fixture.Create<bool>());
-        rcd1.SetField("ammo", _fixture.Create<bool>());
+        rcd1.SetField("name", _faker.Random.String());
+        rcd1.SetField("unarmed_attack", _faker.Random.Bool());
+        rcd1.SetField("ammo", _faker.Random.Bool());
         rcd1.SetField("light_melee", null);
-        rcd1.SetField("one_handed_melee", _fixture.Create<bool>());
-        rcd1.SetField("two_handed_melee", _fixture.Create<bool>());
-        rcd1.SetField("ranged", _fixture.Create<bool>());
-        rcd1.SetField("range_increment", _fixture.Create<short>());
-        rcd1.SetField("critical_range", _fixture.Create<short>());
-        rcd1.SetField("critical_multiplier_1", _fixture.Create<short>());
-        rcd1.SetField("critical_multiplier_2", _fixture.Create<short>());
+        rcd1.SetField("one_handed_melee", _faker.Random.Bool());
+        rcd1.SetField("two_handed_melee", _faker.Random.Bool());
+        rcd1.SetField("ranged", _faker.Random.Bool());
+        rcd1.SetField("range_increment", _faker.Random.Short());
+        rcd1.SetField("critical_range", _faker.Random.Short());
+        rcd1.SetField("critical_multiplier_1", _faker.Random.Short());
+        rcd1.SetField("critical_multiplier_2", _faker.Random.Short());
         table = _schema.GetTable("book"); // book
         Assert.NotNull(table);
         var rcd2 = new Record(table, GetBucket(table,4,80), 3 * table.RecordSize); // as fourth record
-        rcd2.SetField("title", _fixture.Create<string>());
+        rcd2.SetField("title", _faker.Random.String());
 
         // act 
         rcd1.ClearData();
@@ -1416,7 +1414,7 @@ public sealed class RecordTest : BaseTest
         var table = _schema.GetTable(1071); // weapon
         Assert.NotNull(table);
         var rcd = new Record(table);
-        for (var i = 0; i < table.Fields.Length; i++) rcd[i] = _fixture.Create<string>();
+        for (var i = 0; i < table.Fields.Length; i++) rcd[i] = _faker.Random.String();
 
         // act 
         rcd.SetField("ammo", true);
@@ -1562,13 +1560,12 @@ public sealed class RecordTest : BaseTest
         var rcd = new Record(tableBook);
 
         // act 
-        rcd.SetRelation("book2rule", _fixture.Create<long>());
+        rcd.SetRelation("book2rule", _faker.Random.Long());
         var result = rcd.IsRelationChanged("book2rule");
 
         // assert
         Assert.True(result);
     }
-
 
     private string?[] GetBucket(Table table, int recordCount, int maxStringSize)
     {
@@ -1577,7 +1574,7 @@ public sealed class RecordTest : BaseTest
         {
             // don't fill flag string (last string into array)
             if (i==0 || i% table.RecordSize != table.RecordIndexes.Length) 
-                bucket[i] = string.Join("", _fixture.CreateMany<char>(maxStringSize)); 
+                bucket[i] = string.Join("", _faker.Random.Chars(' ', '}', maxStringSize));
         }
         return bucket;
     }

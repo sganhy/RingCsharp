@@ -1,21 +1,15 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
-using Ring.Schema.Models;
-using AutoFixture;
 using System.Reflection;
 using Ring.Schema;
-using Ring.Tests.Schema.Extensions;
+using Bogus;
 
 namespace Ring.Tests.Schema;
 
 public sealed class MetaTest : BaseTest
 {
-    private readonly IFixture _fixture;
+    private readonly Faker _faker = new();
 
-    public MetaTest()
-    {
-        _fixture = new Fixture();
-    }
 
     [Theory]
     [InlineData(1L, 1, true)]
@@ -31,8 +25,8 @@ public sealed class MetaTest : BaseTest
     internal void ReadFlag_Input_OnlyOneTrueFlag(long flags, byte bitPosition, bool expectedValue)
     {
         // arrange 
-        var meta  = new Meta(_fixture.Create<int>(), (byte)_fixture.Create<EntityType>(), _fixture.Create<int>(), _fixture.Create<int>(), 
-            flags, _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<bool>());
+        var meta  = new Meta(_faker.Random.Number(), (byte)_faker.PickRandom<EntityType>(), _faker.Random.Number(), _faker.Random.Number(), 
+            flags, _faker.Random.String(), _faker.Random.String(), _faker.Random.String(), _faker.Random.Bool());
         var readFlagMethod = meta.GetType().GetMethod("ReadFlag", BindingFlags.NonPublic | BindingFlags.Instance);
 
         // act 
@@ -59,16 +53,16 @@ public sealed class MetaTest : BaseTest
     internal void WriteFlag_Input_TrueFlag(long flags, byte bitPosition)
     {
         // arrange 
-        var meta = new Meta(_fixture.Create<int>(), (byte)_fixture.Create<EntityType>(), _fixture.Create<int>(), _fixture.Create<int>(),
-            flags, _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<bool>());
+        var meta = new Meta(_faker.Random.Number(), (byte)_faker.PickRandom<EntityType>(), _faker.Random.Number(), _faker.Random.Number(),
+            flags, _faker.Random.String(), _faker.Random.String(), _faker.Random.String(), _faker.Random.Bool());
         var readFlagMethod = meta.GetType().GetMethod("ReadFlag", BindingFlags.NonPublic | BindingFlags.Instance);
         var writeFlagMethod = meta.GetType().GetMethod("WriteFlag", BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
 
         // act 
 #pragma warning disable CS8605,CS8602  
         flags = (long)writeFlagMethod.Invoke(meta, new object[] { meta.Flags, bitPosition, false });
-        meta = new Meta(_fixture.Create<int>(), (byte)_fixture.Create<EntityType>(), _fixture.Create<int>(), _fixture.Create<int>(),
-            flags, _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<bool>());
+        meta = new Meta(_faker.Random.Number(), (byte)_faker.PickRandom<EntityType>(), _faker.Random.Number(), _faker.Random.Number(),
+            flags, _faker.Random.String(), _faker.Random.String(), _faker.Random.String(), _faker.Random.Bool());
         var result = (bool?)readFlagMethod?.Invoke(meta, new object[] { bitPosition });
         var flagAfterWrite = (long)writeFlagMethod.Invoke(meta, new object[] { meta.Flags, bitPosition, false });
 #pragma warning restore CS8602, CS8605 
@@ -96,12 +90,12 @@ public sealed class MetaTest : BaseTest
     internal void GetFieldType_Input_ValidFieldType(int dataType, FieldType expectedResult)
     {
         // arrange 
-        var mask = _fixture.Create<int>() << 16;
-        var flags = _fixture.Create<long>();
+        var mask = _faker.Random.Number() << 16;
+        var flags = _faker.Random.Long();
         mask &= 0x0FFFFF00;
 
-        var meta = new Meta(_fixture.Create<int>(), _fixture.Create<byte>(), _fixture.Create<int>(), dataType + mask, flags, _fixture.Create<string>(),
-             _fixture.Create<string>(),null, true);
+        var meta = new Meta(_faker.Random.Number(), _faker.Random.Byte(), _faker.Random.Number(), dataType + mask, flags, _faker.Random.String(),
+             _faker.Random.String(),null, true);
 
         // act 
         var result = meta.GetFieldType();
@@ -121,11 +115,11 @@ public sealed class MetaTest : BaseTest
     internal void IsEntityBaseline_Input_Expected(long mask, bool expectedResult)
     {
         // arrange 
-        var flags = _fixture.Create<long>() << 16;
+        var flags = _faker.Random.Long() << 16;
         flags += mask;
 
-        var meta = new Meta(_fixture.Create<int>(), (byte)EntityType.Schema, _fixture.Create<int>(), _fixture.Create<int>(), flags,
-            _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<string>(), false);
+        var meta = new Meta(_faker.Random.Number(), (byte)EntityType.Schema, _faker.Random.Number(), _faker.Random.Number(), flags,
+            _faker.Random.String(), _faker.Random.String(), _faker.Random.String(), false);
 
         // act 
         var result = meta.IsEntityBaseline;
@@ -138,14 +132,14 @@ public sealed class MetaTest : BaseTest
     internal void GetFieldSize_AnonymoousSize_ReturnValue()
     {
         // arrange 
-        var size = _fixture.Create<int>();
+        var size = _faker.Random.Number();
         var expectedResult1 = size;
         var expectedResult2 = int.MaxValue;
         var flags = size << 17;
-        var meta1 = new Meta(_fixture.Create<int>(), (byte)EntityType.Schema, _fixture.Create<int>(), _fixture.Create<int>(), flags + 1111 + 0x100000000000000,
-            _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<string>(), false);
-        var meta2 = new Meta(_fixture.Create<int>(), (byte)EntityType.Schema, _fixture.Create<int>(), _fixture.Create<int>(), long.MaxValue,
-            _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<string>(), false);
+        var meta1 = new Meta(_faker.Random.Number(), (byte)EntityType.Schema, _faker.Random.Number(), _faker.Random.Number(), flags + 1111 + 0x100000000000000,
+            _faker.Random.String(), _faker.Random.String(), _faker.Random.String(), false);
+        var meta2 = new Meta(_faker.Random.Number(), (byte)EntityType.Schema, _faker.Random.Number(), _faker.Random.Number(), long.MaxValue,
+            _faker.Random.String(), _faker.Random.String(), _faker.Random.String(), false);
 
         // act 
         var result1 = meta1.GetFieldSize();
@@ -161,7 +155,7 @@ public sealed class MetaTest : BaseTest
     {
         // arrange 
         // eg. from rpg_schema.xml => ability.name (generated by golang version of ring) 
-        var meta = new Meta(2, (byte)EntityType.Field, 1011, 16, 10493964, "name",_fixture.Create<string>(), null, true);
+        var meta = new Meta(2, (byte)EntityType.Field, 1011, 16, 10493964, "name",_faker.Random.String(), null, true);
 
         var exepectedFieldType = FieldType.String;
         var exepectedFieldSize = 80;
@@ -190,7 +184,7 @@ public sealed class MetaTest : BaseTest
     {
         // arrange 
         // eg. from rpg_schema.xml => ability.name (generated by golang version of ring) 
-        var meta = new Meta(6, (byte)EntityType.Field, 1021, 16, 1712142, "isbn", _fixture.Create<string>(), "Test2", false);
+        var meta = new Meta(6, (byte)EntityType.Field, 1021, 16, 1712142, "isbn", _faker.Random.String(), "Test2", false);
         var exepectedFieldType = FieldType.String;
         var exepectedFieldSize = 13;
         var exepectedDefaultValue = "Test2";
@@ -218,7 +212,7 @@ public sealed class MetaTest : BaseTest
     {
         // arrange 
         // eg. from rpg_schema.xml => ability.name (generated by golang version of ring) 
-        var meta = new Meta(4, (byte)EntityType.Field, 1032, 2, 6, "status", _fixture.Create<string>(), "Test3", true);
+        var meta = new Meta(4, (byte)EntityType.Field, 1032, 2, 6, "status", _faker.Random.String(), "Test3", true);
         var exepectedFieldType = FieldType.Short;
         var exepectedFieldSize = 0;
         var exepectedDefaultValue = "Test3";
@@ -246,7 +240,7 @@ public sealed class MetaTest : BaseTest
     {
         // arrange 
         // eg. from rpg_schema.xml => ability.name (generated by golang version of ring) 
-        var meta = new Meta(4, (byte)EntityType.Undefined, 1032, 2, 6, "status", _fixture.Create<string>(), "Test3", true);
+        var meta = new Meta(4, (byte)EntityType.Undefined, 1032, 2, 6, "status", _faker.Random.String(), "Test3", true);
     
         // act 
         var field = meta.ToField();
@@ -268,7 +262,7 @@ public sealed class MetaTest : BaseTest
         flags = Meta.SetFieldMultilingual(flags, false);
         var dataType = 6;
         dataType = Meta.SetFieldType(dataType, FieldType.Int);
-        var meta = new Meta(4, (byte)EntityType.Field, 1032, dataType, flags, "status", _fixture.Create<string>(), "0", true);
+        var meta = new Meta(4, (byte)EntityType.Field, 1032, dataType, flags, "status", _faker.Random.String(), "0", true);
         var exepectedFieldType = FieldType.Int;
         var exepectedFieldSize = 0;
         var exepectedDefaultValue = "0";
@@ -307,8 +301,8 @@ public sealed class MetaTest : BaseTest
     internal void GetEntityType_MutlipleInput_EntityType(byte objectType, EntityType entityType)
     {
         // arrange
-        var meta = new Meta(_fixture.Create<int>(), objectType, _fixture.Create<int>(), _fixture.Create<int>(), _fixture.Create<long>(),
-            _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<bool>());
+        var meta = new Meta(_faker.Random.Number(), objectType, _faker.Random.Number(), _faker.Random.Number(), _faker.Random.Long(),
+            _faker.Random.String(), _faker.Random.String(), _faker.Random.String(), _faker.Random.Bool());
 
         // act 
         var result = meta.GetEntityType();
@@ -322,11 +316,11 @@ public sealed class MetaTest : BaseTest
     {
         // arrange 
         // eg. from rpg_schema.xml => ability.name (generated by golang version of ring) 
-        var id = _fixture.Create<int>();
-        var name = _fixture.Create<string>();
+        var id = _faker.Random.Number();
+        var name = _faker.Random.String();
 
-        var meta = new Meta(id, (byte)EntityType.Index, 1071, _fixture.Create<int>(), 8704L,
-           name, _fixture.Create<string>(), "name;object2book", true);
+        var meta = new Meta(id, (byte)EntityType.Index, 1071, _faker.Random.Number(), 8704L,
+           name, _faker.Random.String(), "name;object2book", true);
 
         // act 
         var index = meta.ToIndex();
@@ -346,8 +340,8 @@ public sealed class MetaTest : BaseTest
     internal void ToIndex_Meta2_IndexObject()
     {
         // arrange
-        var meta = new Meta(_fixture.Create<int>(), (byte)EntityType.Alias, _fixture.Create<int>(), _fixture.Create<int>(), _fixture.Create<long>(),
-            _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<bool>());
+        var meta = new Meta(_faker.Random.Number(), (byte)EntityType.Alias, _faker.Random.Number(), _faker.Random.Number(), _faker.Random.Long(),
+            _faker.Random.String(), _faker.Random.String(), _faker.Random.String(), _faker.Random.Bool());
         
         // act 
         var index = meta.ToIndex();
@@ -369,8 +363,8 @@ public sealed class MetaTest : BaseTest
         // arrange - BitPositionFirstPositionRelType = 18
         flags <<= 18;
         flags += mask;
-        var meta = new Meta(_fixture.Create<int>(), (byte)EntityType.Alias, _fixture.Create<int>(), _fixture.Create<int>(), flags,
-            _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<bool>());
+        var meta = new Meta(_faker.Random.Number(), (byte)EntityType.Alias, _faker.Random.Number(), _faker.Random.Number(), flags,
+            _faker.Random.String(), _faker.Random.String(), _faker.Random.String(), _faker.Random.Bool());
 
 
         // act 
@@ -393,8 +387,8 @@ public sealed class MetaTest : BaseTest
         // arrange - BitPositionFirstPositionRelType = 18
         var newFlags = (long)flags;
         newFlags = Meta.SetRelationType(newFlags, relationType);
-        var meta = new Meta(_fixture.Create<int>(), (byte)EntityType.Alias, _fixture.Create<int>(), _fixture.Create<int>(), newFlags,
-            _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<bool>());
+        var meta = new Meta(_faker.Random.Number(), (byte)EntityType.Alias, _faker.Random.Number(), _faker.Random.Number(), newFlags,
+            _faker.Random.String(), _faker.Random.String(), _faker.Random.String(), _faker.Random.Bool());
 
         // act 
         var result = meta.GetRelationType();
@@ -409,8 +403,8 @@ public sealed class MetaTest : BaseTest
     {
         // arrange 
         // eg. from rpg_schema.xml => ability2book (generated by golang version of ring) 
-        var meta = new Meta(2, (byte)EntityType.Relation, 1011, _fixture.Create<int>(), 786448L,
-                    "ability2book", _fixture.Create<string>(), "book2ability", true);
+        var meta = new Meta(2, (byte)EntityType.Relation, 1011, _faker.Random.Number(), 786448L,
+                    "ability2book", _faker.Random.String(), "book2ability", true);
         var exepectedRelType = RelationType.Mtm;
 
         // act 
@@ -434,7 +428,7 @@ public sealed class MetaTest : BaseTest
         // eg. from rpg_schema.xml => ability2book (generated by golang version of ring) 
         var expectedValue = "en-US";
         var meta = new Meta(4, (byte)EntityType.Parameter, 0, 16, 286720L,
-                    "@language", _fixture.Create<string>(), expectedValue, true);
+                    "@language", _faker.Random.String(), expectedValue, true);
 
         // act 
         var parameter = meta.ToParameter();
@@ -461,10 +455,10 @@ public sealed class MetaTest : BaseTest
         foreach (var fieldType in fieldTypeList)
         {
             // act 
-            var dataType = _fixture.Create<int>();
+            var dataType = _faker.Random.Number();
             dataType = Meta.SetFieldType(dataType, fieldType);
-            var meta = new Meta(_fixture.Create<int>(), (byte)EntityType.Alias, _fixture.Create<int>(), dataType, _fixture.Create<long>(),
-                        _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<bool>());
+            var meta = new Meta(_faker.Random.Number(), (byte)EntityType.Alias, _faker.Random.Number(), dataType, _faker.Random.Long(),
+                        _faker.Random.String(), _faker.Random.String(), _faker.Random.String(), _faker.Random.Bool());
             var result = meta.GetFieldType();
 
             // assert
@@ -483,10 +477,10 @@ public sealed class MetaTest : BaseTest
         foreach (var relType in relTypeList)
         {
             // act 
-            var flags = _fixture.Create<long>();
+            var flags = _faker.Random.Long();
             flags = Meta.SetRelationType(flags, relType);
-            var meta = new Meta(_fixture.Create<int>(), (byte)EntityType.Alias, _fixture.Create<int>(), _fixture.Create<int>(), flags,
-                        _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<bool>());
+            var meta = new Meta(_faker.Random.Number(), (byte)EntityType.Alias, _faker.Random.Number(), _faker.Random.Number(), flags,
+                        _faker.Random.String(), _faker.Random.String(), _faker.Random.String(), _faker.Random.Bool());
             var result = meta.GetRelationType();
 
             // assert
@@ -499,7 +493,7 @@ public sealed class MetaTest : BaseTest
     {
         // arrange 
         // eg. from rpg_schema.xml => ability2book (generated by golang version of ring) 
-        var meta = new Meta(2, (byte)EntityType.Tablespace, 0, 0, 1024L, "rpg_index", _fixture.Create<string>(), 
+        var meta = new Meta(2, (byte)EntityType.Tablespace, 0, 0, 1024L, "rpg_index", _faker.Random.String(), 
             "c:\\temp\\rpg\\index", true);
         
         // act 
@@ -522,7 +516,7 @@ public sealed class MetaTest : BaseTest
         // arrange 
         var metaTable = GetMeta1Table(TableType.Logical);
         var metaItems = GetMeta1TableItems();
-        var physicalName = _fixture.Create<string>();
+        var physicalName = _faker.Random.String();
         var segment = new ArraySegment<Meta>(metaItems, 0, metaItems.Length);
 
         // act 
@@ -558,7 +552,7 @@ public sealed class MetaTest : BaseTest
         // arrange 
         var metaTable = GetMeta2Table();
         var metaItems = GetMeta2TableItems();
-        var physicalName = _fixture.Create<string>();
+        var physicalName = _faker.Random.String();
         var segment = new ArraySegment<Meta>(metaItems, 0, metaItems.Length);
 
         // act 
@@ -647,7 +641,7 @@ public sealed class MetaTest : BaseTest
     {
         // arrange 
         var meta = new Meta(0, (byte)EntityType.Undefined, 0, (int)TableType.Fake, 0L, 
-            _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<string>(), false);
+            _faker.Random.String(), _faker.Random.String(), _faker.Random.String(), false);
 
         // act 
         var relation = Meta.GetEmptyRelation(meta, RelationType.Otm, TableType.Fake);

@@ -1,4 +1,4 @@
-﻿using AutoFixture;
+﻿using Bogus;
 using Ring.Schema;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
@@ -10,14 +10,13 @@ namespace Ring.Tests.Util.Builders;
 
 public class BaseBuilderTest
 {
-    private readonly IFixture _fixture = new Fixture();
-
+    private readonly Faker _faker = new();
 
     internal Table GetAnonymousTable(int numberOfField = 0, int numberOfRelation = 0)
     {
         var fields = new List<Field>();
         for (var i = 0; i < numberOfField - 1; i++)
-            fields.Add(GetAnonymousField(GetAnonymousFieldType(), _fixture.Create<int>(), i + 10));
+            fields.Add(GetAnonymousField(GetAnonymousFieldType(), _faker.Random.Number(), i + 10));
 
         // add pk
         Field pk = FieldExtensions.GetDefaultPrimaryKey(null, FieldType.Short) ?? default!;
@@ -32,28 +31,23 @@ public class BaseBuilderTest
         fieldsById.Sort((t1, t2) => t1.Id.CompareTo(t2.Id));
         relations = relations.OrderBy(o => o.Name).ToList();
 
-        var result = new Table(_fixture.Create<int>(), _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<string>(),
-            _fixture.Create<string>(), TableType.Business, relations.ToArray(), fields.ToArray(), 
+        var result = new Table(_faker.Random.Number(), _faker.Random.String(), _faker.Random.String(), _faker.Random.String(),
+            _faker.Random.String(), TableType.Business, relations.ToArray(), fields.ToArray(), 
             new int[fields.Count+relations.Count], new IColumn[fields.Count + relations.Count], Array.Empty<Index>(), 12, PhysicalType.Table, true, true, true, true);
         result.LoadColumnMapper();
         result.LoadRelationRecordIndex();
         return result;
     }
 
-    internal TableSpace GetAnonymousTableSpace(string name)
-    {
-        var result = new TableSpace(_fixture.Create<int>(), name, _fixture.Create<string>(), _fixture.Create<bool>(), _fixture.Create<bool>(),
-            _fixture.Create<bool>(), _fixture.CreateMany<string>().ToArray(), _fixture.Create<string>(), _fixture.Create<bool>(), _fixture.Create<bool>());
-        return result;
-    }
+    internal TableSpace GetAnonymousTableSpace(string name) =>
+        new (_faker.Random.Number(), name, _faker.Random.String(), _faker.Random.Bool(), _faker.Random.Bool(),
+            _faker.Random.Bool(), _faker.Random.WordsArray(8), _faker.Random.String(), _faker.Random.Bool(), _faker.Random.Bool());
+        
 
-    internal Field GetAnonymousField(FieldType fieldType, int size, int? id = null, string? name = null)
-    {
-        var result = new Field(id ?? _fixture.Create<int>(), name ?? _fixture.Create<string>(), _fixture.Create<string>(), fieldType, size,
-            _fixture.Create<string?>(), _fixture.Create<bool>(), _fixture.Create<bool>(), _fixture.Create<bool>(),
-            _fixture.Create<bool>(), _fixture.Create<bool>());
-        return result;
-    }
+    internal Field GetAnonymousField(FieldType fieldType, int size, int? id = null, string? name = null) =>
+        new (id ?? _faker.Random.Number(), name ?? _faker.Random.String(), _faker.Random.String(), fieldType, size,
+            _faker.Random.Bool()?  null : _faker.Random.String(), _faker.Random.Bool(), _faker.Random.Bool(), _faker.Random.Bool(),
+            _faker.Random.Bool(), _faker.Random.Bool());
 
     internal Relation GetAnonymousRelation(RelationType relationType, int id, string? name = null, bool notNull = true)
     {
@@ -61,29 +55,20 @@ public class BaseBuilderTest
         Field primaryKey = FieldExtensions.GetDefaultPrimaryKey(null, FieldType.Long) ?? default!;
 
         var fieldList = new List<Field>() { primaryKey };
-        var relationName = name == null ? _fixture.Create<string>() : name;
-        var toTable = new Table(_fixture.Create<int>(), _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<string>(),
-            _fixture.Create<string>(), TableType.Business, Array.Empty<Relation>(), fieldList.ToArray(), 
+        var relationName = name == null ? _faker.Random.String() : name;
+        var toTable = new Table(_faker.Random.Number(), _faker.Random.String(), _faker.Random.String(), _faker.Random.String(),
+            _faker.Random.String(), TableType.Business, Array.Empty<Relation>(), fieldList.ToArray(), 
             new int[fieldList.Count], new IColumn[fieldList.Count], Array.Empty<Index>(), 12, PhysicalType.Table, true, true, true, true);
         toTable.LoadColumnMapper();
         toTable.LoadRelationRecordIndex();
         // generate primary key 
-        var result = new Relation(id, relationName, _fixture.Create<string>(), relationType, toTable, -1, primaryKey.Type, 
-            notNull, _fixture.Create<bool>(), _fixture.Create<bool>(), _fixture.Create<bool>());
+        var result = new Relation(id, relationName, _faker.Random.String(), relationType, toTable, -1, primaryKey.Type, 
+            notNull, _faker.Random.Bool(), _faker.Random.Bool(), _faker.Random.Bool());
 
         return result;
     }
 
-    internal FieldType GetAnonymousFieldType()
-    {
-        // generate primary key 
-        var result = FieldType.Undefined;
-        while (result == FieldType.Undefined)
-        {
-            result = _fixture.Create<FieldType>();
-        }
-        return result;
-    }
+    internal FieldType GetAnonymousFieldType() => _faker.PickRandomWithout(FieldType.Undefined);
 
     internal Meta[] GetMeta2TableItems(bool addMtmRelationship)
     {
@@ -108,7 +93,7 @@ public class BaseBuilderTest
         return metaList.ToArray();
     }
     internal Meta GetMeta2Table(TableType tableType) =>
-        new (1061, (byte)EntityType.Table, _fixture.Create<int>(), (int)tableType, 8704, "skill", _fixture.Create<string>(), _fixture.Create<string>(), true);
+        new (1061, (byte)EntityType.Table, _faker.Random.Number(), (int)tableType, 8704, "skill", _faker.Random.String(), _faker.Random.String(), true);
 
     internal Meta[] GetSchema1()
     {
@@ -139,8 +124,8 @@ public class BaseBuilderTest
 
     private Meta GetMeta(int id, string name, EntityType entityType, int dataType, long flags, bool active, int? referenceId=null)
     {
-        return new(id, (byte)entityType, referenceId??_fixture.Create<int>(), dataType, flags,
-            name, _fixture.Create<string>(), _fixture.Create<string>(), active);
+        return new(id, (byte)entityType, referenceId??_faker.Random.Number(), dataType, flags,
+            name, _faker.Random.String(), _faker.Random.String(), active);
     }
 
 }

@@ -1,15 +1,7 @@
-﻿using AutoFixture;
-using Ring.Data;
+﻿using Ring.Data;
 using Ring.Schema;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
-using Ring.Tests.Data.Extensions;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 using DbSchema = Ring.Schema.Models.Schema;
 using Record = Ring.Data.Record;
 
@@ -17,13 +9,11 @@ namespace Ring.Tests.Data;
 
 public class BulkSaveTest : BaseTest
 {
-    private readonly IFixture _fixture;
     private readonly DbSchema _schema;
     
     public BulkSaveTest()
     {
-        var metaList = base.GetSchema1();
-        _fixture = new Fixture();
+        var metaList = GetSchema1();
         var meta = new Meta("Test");
         _schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql) ??
                     Meta.GetEmptySchema(meta, DatabaseProvider.PostgreSql);

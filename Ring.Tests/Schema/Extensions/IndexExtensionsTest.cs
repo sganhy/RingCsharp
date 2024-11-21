@@ -1,4 +1,4 @@
-﻿using AutoFixture;
+﻿using Bogus;
 using Ring.Schema;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
@@ -9,13 +9,7 @@ namespace Ring.Tests.Schema.Extensions;
 
 public sealed class IndexExtensionsTest : BaseTest
 {
-
-    private readonly IFixture _fixture;
-
-    public IndexExtensionsTest()
-    {
-        _fixture = new Fixture();
-    }
+    private readonly Faker _faker = new();
 
     [Fact]
     public void ToMeta_Index1_MetaObject()
@@ -71,10 +65,10 @@ public sealed class IndexExtensionsTest : BaseTest
     internal void GetHashCode_IndexHashEqual_True()
     {
         // arrange 
-        var id = _fixture.Create<int>();
-        var name = _fixture.Create<string>();
-        var description = _fixture.Create<string>();
-        var columns = _fixture.CreateMany<string>(5).ToArray();
+        var id = _faker.Random.Number(10000);
+        var name = _faker.Random.String();
+        var description = _faker.Random.String();
+        var columns = _faker.Random.WordsArray(5).ToArray();
         var index1 = new Index(id, name, description, columns, true, false, true, false);
         var index2 = new Index(id, name, description, columns, true, false, true, false);
 
@@ -90,11 +84,11 @@ public sealed class IndexExtensionsTest : BaseTest
     internal void GetHashCode_IndexHashEqual_False()
     {
         // arrange 
-        var id = _fixture.Create<int>();
-        var name = _fixture.Create<string>();
-        var description = _fixture.Create<string>();
-        var columns = _fixture.CreateMany<string>(5).ToArray();
-        var columns2 = _fixture.CreateMany<string>(7).ToArray();
+        var id = _faker.Random.Number();
+        var name = _faker.Random.String();
+        var description = _faker.Random.String();
+        var columns = _faker.Random.WordsArray(5).ToArray();
+        var columns2 = _faker.Random.WordsArray(7).ToArray();
         var index1 = new Index(id, name, description, columns, true, false, true, false);
         var index2 = new Index(id, name, description, columns2, true, false, true, false);
         var index3 = new Index(id, name, description, columns, true, false, true, true);

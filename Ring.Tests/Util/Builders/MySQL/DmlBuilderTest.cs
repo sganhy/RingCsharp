@@ -1,4 +1,4 @@
-﻿using AutoFixture;
+﻿using Bogus;
 using Ring.Data;
 using Ring.Schema;
 using Ring.Schema.Builders;
@@ -13,14 +13,13 @@ namespace Ring.Tests.Util.Builders.MySQL;
 public class DmlBuilderTest : BaseBuilderTest
 {
     private readonly IDmlBuilder _sut;
-    private readonly IFixture _fixture;
     private readonly DbSchema _schema;
+    private readonly Faker _faker = new();
 
     public DmlBuilderTest()
     {
-        _fixture = new Fixture();
         var metaList = GetSchema1();
-        var meta = new Meta(_fixture.Create<string>());
+        var meta = new Meta(_faker.Random.String());
         _schema = Meta.ToSchema(metaList,DatabaseProvider.MySql) ??
             Meta.GetEmptySchema(meta, DatabaseProvider.MySql);
         _sut = new DmlBuilder();
@@ -68,8 +67,8 @@ public class DmlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var sut = new DmlBuilder();
-        var schemaId = _fixture.Create<int>();
-        var testTable= new Meta(_fixture.Create<int>(), (byte)EntityType.Table, schemaId, (int)TableType.Business
+        var schemaId = _faker.Random.Number();
+        var testTable= new Meta(_faker.Random.Number(), (byte)EntityType.Table, schemaId, (int)TableType.Business
             , 0L, "Test", null, null, true);
         var testSchema= new Meta(schemaId, (byte)EntityType.Schema, schemaId, 0, 0L, "Test", null, null, true);
         var schema = Meta.ToSchema(new Meta[] { testTable, testSchema }, DatabaseProvider.MySql);

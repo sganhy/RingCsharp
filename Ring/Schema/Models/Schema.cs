@@ -21,11 +21,11 @@ internal sealed class Schema : BaseEntity
 	internal readonly IDqlBuilder DqlBuiler;
 
 	internal Schema(int id, string name, string? description, Parameter[] parameters, Lexicon[] lexicons, SchemaLoadType loadType,
-        SchemaType type, Sequence[] sequences, Table[] tablesById, Table[] tablesByName, TableSpace[] tableSpaces, DatabaseProvider provider,
+		SchemaType type, Sequence[] sequences, Table[] tablesById, Table[] tablesByName, TableSpace[] tableSpaces, DatabaseProvider provider,
 		bool active, bool baseline) : base(id, name, description, active, baseline)
 	{
 		Connections = new ConnectionPool(id, parameters.GetMinPoolSize(id), parameters.GetMaxPoolSize(id),
-                                 parameters.GetDbConnectionString(id));
+		parameters.GetDbConnectionString(id));
 		Lexicons = lexicons;
 		LoadType = loadType;
 		Type = type;

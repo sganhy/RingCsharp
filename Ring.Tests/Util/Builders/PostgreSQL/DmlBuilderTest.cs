@@ -1,4 +1,4 @@
-﻿using AutoFixture;
+﻿using Bogus;
 using Ring.Data;
 using Ring.Schema;
 using Ring.Schema.Builders;
@@ -13,14 +13,13 @@ namespace Ring.Tests.Util.Builders.PostgreSQL;
 public class DmlBuilderTest : BaseBuilderTest
 {
     private readonly IDmlBuilder _sut;
-    private readonly IFixture _fixture;
     private readonly DbSchema _schema;
+    private readonly Faker _faker = new();
 
     public DmlBuilderTest()
     {
-        _fixture = new Fixture();
         var metaList = GetSchema1();
-        var meta = new Meta(_fixture.Create<string>());
+        var meta = new Meta(_faker.Random.String());
         _schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql) ??
             Meta.GetEmptySchema(meta, DatabaseProvider.PostgreSql);
         _sut = new DmlBuilder();
@@ -68,10 +67,10 @@ public class DmlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var sut = new DmlBuilder();
-        var schemaId = _fixture.Create<int>();
-        var testTable = new Meta(_fixture.Create<int>(), (byte)EntityType.Table, schemaId, (int)TableType.Business
+        var schemaId = _faker.Random.Number();
+        var testTable = new Meta(_faker.Random.Number(), (byte)EntityType.Table, schemaId, (int)TableType.Business
             , 0L, "Test", null, null, true);
-        var testSch = new Meta(_fixture.Create<int>(), (byte)EntityType.Schema, schemaId, 0, 0L, "Test", null, null, true);
+        var testSch = new Meta(_faker.Random.Number(), (byte)EntityType.Schema, schemaId, 0, 0L, "Test", null, null, true);
         var schema = Meta.ToSchema(new Meta[] { testTable, testSch }, DatabaseProvider.PostgreSql);
         var expectedResult = "INSERT INTO test.t_test () VALUES ()";
         var tableTest = schema?.GetTable("Test");

@@ -1,4 +1,4 @@
-﻿using AutoFixture;
+﻿using Bogus;
 using Ring.Data;
 using Ring.Schema.Builders;
 using Ring.Schema.Enums;
@@ -9,15 +9,14 @@ namespace Ring.Tests.Data;
 public sealed class SpanListTest
 {
     private readonly DbSchema _schema;
-    private readonly IFixture _fixture;
+    private readonly Faker _faker = new();
 
     public SpanListTest()
     {
-        _fixture = new Fixture();
         var builder = new SchemaBuilder();
         IConfiguration config = new Configuration
         {
-            ConnectionString = _fixture.Create<string>(),
+            ConnectionString = _faker.Random.String(),
             DefaultSchema = "test",
             MinConnectionPoolSize = 1,
             MaxConnectionPoolSize = 4,

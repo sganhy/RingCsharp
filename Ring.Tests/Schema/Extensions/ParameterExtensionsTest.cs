@@ -1,27 +1,27 @@
-﻿using AutoFixture;
-using Ring.Schema.Enums;
+﻿using Ring.Schema.Enums;
 using Ring.Schema.Models;
 using Ring.Schema.Extensions;
-using Ring.Schema;
+using Bogus;
 
 namespace Ring.Tests.Schema.Extensions;
 
 public class ParameterExtensionsTest
 {
     private readonly Parameter[] _parameterCollection;
-    private readonly IFixture _fixture;
+    private readonly Faker _faker = new();
     private const int schemaId = 888;
 
     public ParameterExtensionsTest()
     {
-        _fixture = new Fixture();
         // create collection of Parameter 
         var result = new List<Parameter>();
         foreach (var element in Enum.GetValues(typeof(ParameterType)))
-            result.Add(new Parameter((int)element, _fixture.Create<string>(), _fixture.Create<string>(), (ParameterType)element,
-                _fixture.Create<FieldType>(), ((ParameterType)element).GetDefaultValue() ?? string.Empty, 
+        {
+            result.Add(new Parameter((int)element, _faker.Random.String(), _faker.Random.String(), (ParameterType)element,
+                _faker.PickRandom<FieldType>(), ((ParameterType)element).GetDefaultValue() ?? string.Empty, 
                 ((ParameterType)element).GetDefaultValue() ?? string.Empty, schemaId,
-                true,true)); 
+                true,true));
+        }
         // sort by id 
         _parameterCollection = result.OrderBy(o => o.Hash).ToArray();
     }
@@ -93,16 +93,16 @@ public class ParameterExtensionsTest
     internal void GetParameterHash_Parameter1_ReferenceId()
     {
         // arrange 
-        var paramType = ParameterType.DefaultLanguage;
-        var paramTypeId = (int)paramType;
-        var referenceId = _fixture.Create<int>();
+        const ParameterType paramType = ParameterType.DefaultLanguage;
+        const int paramTypeId = (int)paramType;
+        var referenceId = _faker.Random.Number();
 
         // act 
         var value = ParameterExtensions.GetParameterHash(null, paramType, referenceId);
 
         // assert
-        Assert.Equal(referenceId, value&int.MaxValue);
-        Assert.Equal(paramTypeId, value>>32);
+        Assert.Equal(referenceId, value & int.MaxValue);
+        Assert.Equal(paramTypeId, value >> 32);
     }
 
     [Fact]
@@ -111,7 +111,7 @@ public class ParameterExtensionsTest
         // arrange 
         var paramType = ParameterType.Undefined;
         var paramTypeId = (int)paramType;
-        var referenceId = _fixture.Create<int>();
+        var referenceId = _faker.Random.Number();
 
         // act 
         var value = ParameterExtensions.GetParameterHash(null, paramType, referenceId);
@@ -125,7 +125,7 @@ public class ParameterExtensionsTest
     internal void ToMeta_GetMaxPoolSize_Meta()
     {
         // arrange 
-        var paramType = ParameterType.MaxPoolSize;
+        const ParameterType paramType = ParameterType.MaxPoolSize;
         var param = _parameterCollection.GetParameter(paramType, schemaId);
         Assert.NotNull(param);
 
@@ -145,5 +145,4 @@ public class ParameterExtensionsTest
         Assert.Equal(param.Baseline, paramResult.Baseline);
         Assert.Equal(paramType, paramResult.Type);
     }
-
 }

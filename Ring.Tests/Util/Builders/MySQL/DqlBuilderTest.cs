@@ -1,4 +1,4 @@
-﻿using AutoFixture;
+﻿using Bogus;
 using Ring.Schema;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
@@ -11,14 +11,13 @@ namespace Ring.Tests.Util.Builders.MySQL;
 public sealed class DqlBuilderTest : BaseBuilderTest
 {
     private readonly IDqlBuilder _sut;
-    private readonly IFixture _fixture;
+    private readonly Faker _faker = new();
     private readonly DbSchema _schema;
 
     public DqlBuilderTest()
     {
-        _fixture = new Fixture();
         var metaList = GetSchema1();
-        var meta = new Meta(_fixture.Create<string>());
+        var meta = new Meta(_faker.Random.String());
         _schema = Meta.ToSchema(metaList,DatabaseProvider.MySql) ??
             Meta.GetEmptySchema(meta, DatabaseProvider.MySql);
         _sut = new DqlBuilder();

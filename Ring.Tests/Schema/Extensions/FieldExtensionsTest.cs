@@ -1,4 +1,4 @@
-﻿using AutoFixture;
+﻿using Bogus;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
@@ -7,24 +7,19 @@ namespace Ring.Tests.Schema.Extensions;
 
 public class FieldExtensionsTest : BaseTest
 {
-    private readonly IFixture _fixture;
-
-    public FieldExtensionsTest()
-    {
-        _fixture = new Fixture();
-    }
+    private readonly Faker _faker = new();
 
     [Fact]
     internal void ToMeta_Field1_MetaValue()
     {
         // arrange 
-        var id = _fixture.Create<int>();
-        var name = _fixture.Create<string>();
-        var description = _fixture.Create<string>();
-        var tableId = _fixture.Create<int>();
-        var fieldType = _fixture.Create<FieldType>();
-        var defaultValue = _fixture.Create<string?>();
-        var size = _fixture.Create<int>();
+        var id = _faker.Random.Number();
+        var name = _faker.Random.String();
+        var description = _faker.Random.String();
+        var tableId = _faker.Random.Number();
+        var fieldType = _faker.PickRandom<FieldType>();
+        var defaultValue = _faker.Random.Bool()? null : _faker.Random.String(); // nullable string
+        var size = _faker.Random.Number();
         var field = new Field(id, name, description, fieldType, size, defaultValue, true, true, true, true, false);
 
         // act 
@@ -47,17 +42,19 @@ public class FieldExtensionsTest : BaseTest
     internal void ToMeta_Field2_MetaValue()
     {
         // arrange 
-        var id = _fixture.Create<int>();
-        var name = _fixture.Create<string>();
-        var description = _fixture.Create<string>();
-        var tableId = _fixture.Create<int>();
-        var fieldType = _fixture.Create<FieldType>();
-        var defaultValue = _fixture.Create<string?>();
-        var size = _fixture.Create<int>();
+        var id = _faker.Random.Number();
+        var name = _faker.Random.String();
+        var description = _faker.Random.String();
+        var tableId = _faker.Random.Number();
+        var fieldType = _faker.PickRandom<FieldType>();
+        var defaultValue = _faker.Random.Bool()? null: _faker.Random.String();
+        var size = _faker.Random.Number();
         var field = new Field(id, name, description, fieldType, size, defaultValue, false, false, false, false, true);
 
         // act 
+#pragma warning disable RCS1196 // Call extension method as instance method
         var meta = FieldExtensions.ToMeta(field, tableId);
+#pragma warning restore RCS1196
 
         // assert
         Assert.Equal(meta.Id, id);
@@ -72,18 +69,16 @@ public class FieldExtensionsTest : BaseTest
         Assert.True(meta.Active);
     }
 
-
     [Fact]
     internal void GetHashCode_FieldHashEqual_True()
     {
         // arrange 
-        var id = _fixture.Create<int>();
-        var name = _fixture.Create<string>();
-        var description = _fixture.Create<string>();
-        var tableId = _fixture.Create<int>();
-        var fieldType = _fixture.Create<FieldType>();
-        var defaultValue = _fixture.Create<string?>();
-        var size = _fixture.Create<int>();
+        var id = _faker.Random.Number();
+        var name = _faker.Random.String();
+        var description = _faker.Random.String();
+        var fieldType = _faker.PickRandom<FieldType>();
+        var defaultValue = _faker.Random.Bool()? null: _faker.Random.String();
+        var size = _faker.Random.Number();
         var field1 = new Field(id, name, description, fieldType, size, defaultValue, false, false, false, false, true);
         var field2 = new Field(id, name, description, fieldType, size, defaultValue, false, false, false, false, true);
 
@@ -99,13 +94,12 @@ public class FieldExtensionsTest : BaseTest
     internal void GetHashCode_FieldHashEqual_False()
     {
         // arrange 
-        var id = _fixture.Create<int>();
-        var name = _fixture.Create<string>();
-        var description = _fixture.Create<string>();
-        var tableId = _fixture.Create<int>();
-        var fieldType = _fixture.Create<FieldType>();
-        var defaultValue = _fixture.Create<string?>();
-        var size = _fixture.Create<int>();
+        var id = _faker.Random.Number();
+        var name = _faker.Random.String();
+        var description = _faker.Random.String();
+        var fieldType = _faker.PickRandom<FieldType>();
+        var defaultValue = _faker.Random.Bool() ? null : _faker.Random.String();
+        var size = _faker.Random.Number();
         var field1 = new Field(id, name, description, fieldType, size, defaultValue, false, false, false, false, true);
         var field2 = new Field(id, name, description, fieldType, size, defaultValue, false, false, false, true, true);
         var field3 = new Field(id, name, description, fieldType, size, defaultValue, true, false, false, false, true);
