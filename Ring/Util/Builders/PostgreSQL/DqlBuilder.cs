@@ -17,10 +17,10 @@ internal sealed class DqlBuilder : BaseDqlBuilder
     private static readonly string DateFormat = "'yyyy-mm-dd";
     private static readonly string ShortDateFormat = CastPrefix + DateFormat + "')";
     private static readonly string DateTimeFormat = CastPrefix + DateFormat + "\"T\"HH24:MI:SS.US\"Z\"')";
-    public sealed override DatabaseProvider Provider => DatabaseProvider.PostgreSql;
+    public override DatabaseProvider Provider => DatabaseProvider.PostgreSql;
     public DqlBuilder() : base() {}
 
-    protected sealed override string GetSelection(Field field)
+    protected override string GetSelection(Field field)
     {
         switch (field.Type)
         {
@@ -31,5 +31,5 @@ internal sealed class DqlBuilder : BaseDqlBuilder
             default: return _ddlBuilder.GetPhysicalName(field);
         }
     }
-    protected sealed override string GetSelection(Relation relation) => _ddlBuilder.GetPhysicalName(relation);
+    protected override string GetSelection(Relation relation) => _ddlBuilder.GetPhysicalName(relation);
 }

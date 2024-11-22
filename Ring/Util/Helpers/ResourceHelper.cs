@@ -32,14 +32,14 @@ internal sealed class ResourceHelper
         return message.Replace(ResourceCrLf, ResourceEndOfLine.ToString());
     }
 
-#pragma warning disable CA1822 // Mark members as static
+#pragma warning disable CA1822, S2325 // Mark members as static
     internal string GetMessage(ResourceType resourceType)
         => ((int)resourceType <= _logMessages.Length) ? _logMessages[(int)resourceType - 1] : null;
     internal string? GetMessage(LogType logType)
         => ((int)logType <= _logMessages.Length) ? _logMessages[(int)logType - 1] : null;
     internal string? GetDescription(LogType logType)
         => ((int)logType <= _logDescriptions.Length) ? _logDescriptions[(int)logType - 1] : null;
-#pragma warning restore CA1822 // Mark members as static
+#pragma warning restore S2325, CA1822 // Mark members as static
 
     internal static HashSet<string> GetReservedWords(DatabaseProvider databaseProvider)
     {

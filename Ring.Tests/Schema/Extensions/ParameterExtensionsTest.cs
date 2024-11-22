@@ -34,7 +34,7 @@ public class ParameterExtensionsTest
     internal void GetParameter_MinPoolSize_1()
     {
         // arrange 
-        var paramType = ParameterType.MinPoolSize;
+        const ParameterType paramType = ParameterType.MinPoolSize;
 
         // act 
         var param = _parameterCollection.GetParameter(paramType, schemaId);
@@ -131,9 +131,7 @@ public class ParameterExtensionsTest
         Assert.NotNull(param);
 
         // act 
-#pragma warning disable RCS1196 // Call extension method as instance method
         var value = ParameterExtensions.ToMeta(param); // reverse parameter
-#pragma warning restore RCS1196
         var paramResult = value.ToParameter();
 
         // assert

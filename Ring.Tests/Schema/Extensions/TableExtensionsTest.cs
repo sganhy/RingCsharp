@@ -18,9 +18,7 @@ public class TableExtensionsTest : BaseTest
         foreach (var field in table.Fields.OrderByDescending(x => x.Name))
         {
             // act 
-#pragma warning disable RCS1196 // Call extension method as instance method
             var result = TableExtensions.GetField(table, field.Name);
-#pragma warning restore RCS1196
 
             // assert
             Assert.NotNull(result);
@@ -42,10 +40,8 @@ public class TableExtensionsTest : BaseTest
         foreach (var field in table.Fields.OrderByDescending(x => x.Name))
         {
             // act 
-#pragma warning disable RCS1196 // Call extension method as instance method
             var result = TableExtensions.GetField(table, field.Name.ToLower(CultureInfo.InvariantCulture),
                 StringComparison.InvariantCultureIgnoreCase);
-#pragma warning restore RCS1196
 
             // assert
             Assert.NotNull(result);
@@ -80,9 +76,7 @@ public class TableExtensionsTest : BaseTest
         var table = GetAnonymousTable(0, 2);
 
         // act 
-#pragma warning disable RCS1196 // Call extension method as instance method
         var result = TableExtensions.GetField(table, "Test", StringComparison.CurrentCulture);
-#pragma warning restore
 
         // assert
         Assert.Null(result);
@@ -96,9 +90,7 @@ public class TableExtensionsTest : BaseTest
         foreach (var field in table.Fields.OrderByDescending(x => x.Id))
         {
             // act 
-#pragma warning disable RCS1196 // Call extension method as instance method
             var result = TableExtensions.GetField(table, field.Id);
-#pragma warning restore RCS1196
 
             // assert
             Assert.NotNull(result);
@@ -361,7 +353,7 @@ public class TableExtensionsTest : BaseTest
         var meta2 = table1.ToMeta(schema.Id);
         var metaTable = Meta.FirstOrDefault(meta2, EntityType.Table);
         Assert.NotNull(metaTable);
-        var table2 = metaTable?.ToTable(new ArraySegment<Meta>(meta2), table1.PhysicalType, table1.PhysicalName);
+        var table2 = metaTable.Value.ToTable(new ArraySegment<Meta>(meta2), table1.PhysicalType, table1.PhysicalName);
         Assert.NotNull(table2);
         // copy relations
         for (var i = 0; i < table2.Relations.Length; ++i) table2.Relations[i] = table1.Relations[i];
@@ -397,6 +389,7 @@ public class TableExtensionsTest : BaseTest
         Assert.NotNull(table2);
         Assert.NotNull(table3);
         Assert.NotNull(table4);
+        Assert.NotNull(table5);
 
         table2.RecordIndexes[0] = 44; // change one RecordIndex
 

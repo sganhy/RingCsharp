@@ -15,9 +15,7 @@ public class ArrayExtensionsTest
         const string expectedResult = "007";
 
         // act 
-#pragma warning disable RCS1196 // Call extension method as instance method
         var result = ArrayExtensions.GetIndex(array, expectedResult);
-#pragma warning restore RCS1196
 
         // assert
         Assert.Equal(expectedResult, array[result]);
@@ -33,9 +31,7 @@ public class ArrayExtensionsTest
         const string expectedResult = "Test";
 
         // act 
-#pragma warning disable RCS1196 // Call extension method as instance method
         var result = ArrayExtensions.GetIndex(array, expectedResult);
-#pragma warning restore RCS1196
 
         // assert
         Assert.Equal(-1, result);

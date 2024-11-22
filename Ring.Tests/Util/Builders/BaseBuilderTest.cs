@@ -96,7 +96,7 @@ public class BaseBuilderTest
     internal Meta GetMeta2Table(TableType tableType) =>
         new (1061, (byte)EntityType.Table, _faker.Random.Number(int.MinValue,int.MaxValue), (int)tableType, 8704, "skill", _faker.Random.String(), _faker.Random.String(), true);
 
-    internal Meta[] GetSchema1()
+    internal static Meta[] GetSchema1()
     {
         var result = new List<Meta>();
         var assembly = Assembly.GetExecutingAssembly();

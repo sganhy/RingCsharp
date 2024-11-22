@@ -52,9 +52,7 @@ public class FieldExtensionsTest : BaseTest
         var field = new Field(id, name, description, fieldType, size, defaultValue, false, false, false, false, true);
 
         // act 
-#pragma warning disable RCS1196 // Call extension method as instance method
         var meta = FieldExtensions.ToMeta(field, tableId);
-#pragma warning restore RCS1196
 
         // assert
         Assert.Equal(meta.Id, id);

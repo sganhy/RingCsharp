@@ -68,7 +68,7 @@ public class RelationExtensionsTest : BaseTest
         var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
         var table = schema?.GetTable("ability");
         var relation1 = table?.GetRelation("ability2book");
-        var expectedValue = "01011_01021_002";
+        const string expectedValue = "01011_01021_002";
 
         // act 
         Assert.NotNull(relation1);

@@ -28,7 +28,6 @@ public class BulkSaveTest : BaseTest
         Assert.NotNull(table);
         Assert.NotNull(tableDeity);
         var rcdFeat = new Record(table);
-        var rcdDeity = new Record(tableDeity);
         var bs = new BulkSave(_schema);
         bs.InsertRecord(rcdFeat); // {1}
         bs.InsertRecord(rcdFeat); // {2}

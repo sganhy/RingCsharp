@@ -261,7 +261,7 @@ internal readonly struct Meta
 			GetParameterValueType(), GetParameterValue(), parameterType.GetDefaultValue(), ReferenceId,
 				IsEntityBaseline, Active) : null;
 	}
-	
+
 	internal Index? ToIndex() => IsIndex ? new Index(Id, Name, Description, GetIndexedColumns(),
 		IsIndexUnique, IsIndexBitmap, Active, IsEntityBaseline) : null;
 
