@@ -1,5 +1,6 @@
 ﻿using Ring.Data.Extensions;
 using Ring.Data.Models;
+using Ring.Schema.Builders;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
@@ -15,10 +16,13 @@ namespace Ring.Data;
 
 public struct Record : IEquatable<Record>
 {
+#pragma warning disable RCS1187 // Use constant instead of field
+    private static readonly string[] DefaultData = new string[2]; // 1 field + state info
+    private static readonly Table DefaultType = TableBuilder.GetDefaultRecordType();
     private static readonly string NullField = "^^";
-	private static readonly string NullString = "Null";
+    private static readonly string NullString = "Null";
 	private static readonly string DefaultPrimaryKeyValue = "0";
-	private static readonly char HashFieldDelimiter = (char)3;// end of text character
+	private static readonly char HashFieldDelimiter = (char)333;// end of text character
 	private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
 	private static readonly NumberStyles DefaultNumberStyle = NumberStyles.Integer;
 	private static readonly NumberStyles DefaultFloatStyle = NumberStyles.AllowDecimalPoint | NumberStyles.Float;
@@ -30,11 +34,12 @@ public struct Record : IEquatable<Record>
 	private static readonly decimal MinShortValue = short.MinValue;
 	private static readonly decimal MaxByteValue = sbyte.MaxValue;
 	private static readonly decimal MinByteValue = sbyte.MinValue;
+#pragma warning restore RCS1187
 
-	// should be instantiate when record type is defined
-	// _data.Length should be > _type.Fields.Length
-	private string?[]? _data;
-	private Table? _type;
+    // should be instantiate when record type is defined
+    // _data.Length should be > _type.Fields.Length
+    private string?[] _data;
+	private Table _type;
 	private readonly int _offset;
 
 	/// <summary>
@@ -42,8 +47,8 @@ public struct Record : IEquatable<Record>
 	/// </summary>
 	public Record()
 	{
-		_type = null;
-		_data = null;
+		_type = DefaultType;
+		_data = DefaultData;
 		_offset = 0;
 	}
 	internal Record(Table type)
@@ -59,43 +64,40 @@ public struct Record : IEquatable<Record>
 		_offset = offset;
 	}
 
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
 	internal string? this[int i]
 	{
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		readonly get => _data[i + _offset];
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 #pragma warning disable IDE0251 // Make member 'readonly'
-        set => _data[i + _offset] = value;
+		set => _data[i + _offset] = value;
 #pragma warning restore IDE0251
-    }
+	}
 
-    internal readonly string?[] Data => _data ?? Array.Empty<string?>();
+	internal readonly string?[] Data => _data;
 
+#pragma warning disable RCS1085 // Use auto-implemented property
     internal readonly int Offset => _offset;
+#pragma warning restore
 
-	public readonly bool IsDirty => _data != null && _data[_type.RecordSize-1+_offset] != null;
-
-	public readonly bool IsNew
+    public readonly bool IsDirty => _data[_type.RecordSize-1+_offset] != null;
+    public readonly bool IsNew
 	{
 		get
 		{
-			if (_type == null) ThrowRecordUnknownRecordType();
+			if (_type.Id==-1) ThrowRecordUnknownRecordType();
 			if (_type.Type == TableType.Business) return _data[_type.RecordIndexes[0]]==null;
 			// not manage ==> @lexicon_itm, @log, @meta, @meta_id; 
 			return true; // always New if there is no keys
 		}
 	}
-
-#pragma warning restore CS8602
-
-    internal readonly Table? Table => _type;
+	internal readonly Table Table => _type;
 
 #pragma warning disable IDE0251 // Make member 'readonly'
 	internal void ClearData()
 	{
 #pragma warning restore IDE0251
-	var span = _data.AsSpan();
+		var span = _data.AsSpan();
 		var lastIndex = _type?.RecordSize + _offset;
 		for (var i= _offset;i< lastIndex;++i) span[i] = null;
 	}
@@ -104,20 +106,16 @@ public struct Record : IEquatable<Record>
 	///	 Get primary key value (Field name ID)
 	/// </summary>
 	internal readonly long GetField()
-#pragma warning disable CS8602 // Dereference of a possibly null reference. _type cannot be null here 
 		=> long.Parse(_data[_type.RecordIndexes[0]+_offset] ?? DefaultPrimaryKeyValue, DefaultCulture);
-#pragma warning restore CS8602
 
 	/// <summary>
 	///	 GetField methods
 	/// </summary>
 	public readonly string? GetField(string name)
 	{
-		if (_type == null) ThrowRecordUnknownRecordType();
+		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = _type.GetFieldIndex(name);
-#pragma warning disable CS8604, CS8602 // Dereference of a possibly null reference. _type cannot be null here 
 		if (fieldId > -1) return _data[fieldId + _offset] ?? _type.Fields[fieldId].DefaultValue;
-#pragma warning restore CS8602, CS8604
 		ThrowRecordUnknownFieldName(name);
 		return null;
 	}
@@ -125,15 +123,13 @@ public struct Record : IEquatable<Record>
 	public readonly void GetField(string name, out bool? value)
 	{
 		value = null;
-		if (_type == null) ThrowRecordUnknownRecordType();
+		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = _type.GetFieldIndex(name);
 		if (fieldId <= -1) ThrowRecordUnknownFieldName(name);
 		var field = _type.Fields[fieldId];
 		if (field.Type != FieldType.Boolean) ThrowImpossibleConversion(field.Type, FieldType.Boolean);
 		//BooleanTrue: BooleanFalse
-#pragma warning disable CS8604, CS8602 // Dereference of a possibly null reference. _type cannot be null here 
 		var result = _data[fieldId + _offset] ?? _type.Fields[fieldId].DefaultValue;
-#pragma warning restore CS8602, CS8604
 		if (BooleanTrue.Equals(result, StringComparison.Ordinal)) value = true;
 		else if (BooleanFalse.Equals(result, StringComparison.Ordinal)) value = false;
 	}
@@ -141,29 +137,25 @@ public struct Record : IEquatable<Record>
 	public readonly void GetField(string name, out byte[]? value)
 	{
 		value = null;
-		if (_type == null) ThrowRecordUnknownRecordType();
+		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = _type.GetFieldIndex(name);
 		if (fieldId <= -1) ThrowRecordUnknownFieldName(name);
 		var field = _type.Fields[fieldId];
 		if (field.Type != FieldType.ByteArray) ThrowImpossibleConversion(field.Type, FieldType.Boolean);
-#pragma warning disable CS8604, CS8602 // Dereference of a possibly null reference. _type cannot be null here 
 		var result = _data[fieldId + _offset] ?? _type.Fields[fieldId].DefaultValue;
-#pragma warning restore CS8602, CS8604
 		if (result != null) value = Convert.FromBase64String(result);
 	}
 
 	public readonly void GetField(string name, out long? value)
 	{
-		if (_type == null) ThrowRecordUnknownRecordType();
+		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		value = null;
 		var fieldId = _type.GetFieldIndex(name);
 		if (fieldId <= -1) ThrowRecordUnknownFieldName(name);
 		var field = _type.Fields[fieldId];
 		if (field.Type != FieldType.Byte && field.Type != FieldType.Short && field.Type != FieldType.Int && field.Type != FieldType.Long)
 			ThrowImpossibleConversion(field.Type, FieldType.Long);
-#pragma warning disable CS8604, CS8602 // Dereference of a possibly null reference. _type cannot be null here 
 		var result = _data[fieldId + _offset] ?? _type.Fields[fieldId].DefaultValue;
-#pragma warning restore CS8602, CS8604
 		if (result != null) value = long.Parse(result, DefaultCulture);
 	}
 
@@ -173,15 +165,13 @@ public struct Record : IEquatable<Record>
 	public readonly void GetField(string name, out DateTime? value)
 	{
 		value = null;
-		if (_type == null) ThrowRecordUnknownRecordType();
+		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = _type.GetFieldIndex(name);
 		if (fieldId <= -1) ThrowRecordUnknownFieldName(name);
 		var field = _type.Fields[fieldId];
 		if (field.Type != FieldType.DateTime && field.Type != FieldType.LongDateTime && field.Type != FieldType.ShortDateTime)
 			ThrowImpossibleConversion(field.Type, FieldType.DateTime);
-#pragma warning disable CS8604, CS8602 // Dereference of a possibly null reference. _type cannot be null here 
 		var result = _data[fieldId + _offset] ?? _type.Fields[fieldId].DefaultValue;
-#pragma warning restore CS8602, CS8604
 		if (result == null) return;
 		var year = int.Parse(result[..4], DefaultCulture);
 		var month = int.Parse(result.AsSpan(5, 2), DefaultNumberStyle, DefaultCulture);
@@ -201,13 +191,13 @@ public struct Record : IEquatable<Record>
 	}
 
 	/// <summary>
-	///	 Set field value 
+	///	 Set field value
 	/// </summary>
 	/// <param name="name">field name</param>
 	/// <param name="value">field value</param>
 	public void SetField(string name, string? value)
 	{
-		if (_type == null) ThrowRecordUnknownRecordType();
+		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = _type.GetFieldIndex(name);
 		if (fieldId == -1) ThrowRecordUnknownFieldName(name);
 		var type = _type.Fields[fieldId].Type;
@@ -230,7 +220,7 @@ public struct Record : IEquatable<Record>
 
 	internal void SetField(string name, long value, FieldType fieldType)
 	{
-		if (_type == null) ThrowRecordUnknownRecordType();
+		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = _type.GetFieldIndex(name);
 		if (fieldId == -1) ThrowRecordUnknownFieldName(name);
 		var type = _type.Fields[fieldId].Type;
@@ -272,7 +262,7 @@ public struct Record : IEquatable<Record>
 	public void SetField(string name, sbyte value) => SetField(name, value, FieldType.Byte);
 	public void SetField(string name, bool value)
 	{
-		if (_type == null) ThrowRecordUnknownRecordType();
+		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = _type.GetFieldIndex(name);
 		if (fieldId == -1) ThrowRecordUnknownFieldName(name);
 		var fieldType = _type.Fields[fieldId].Type;
@@ -281,21 +271,21 @@ public struct Record : IEquatable<Record>
 	}
 	public void SetField(string name, DateTime value)
 	{
-		if (_type == null) ThrowRecordUnknownRecordType();
+		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = _type.GetFieldIndex(name);
 		if (fieldId == -1) ThrowRecordUnknownFieldName(name);
 		SetDateTimeField(fieldId, _type.Fields[fieldId].Type, value, null);
 	}
 	public void SetField(string name, DateTimeOffset value)
 	{
-		if (_type == null) ThrowRecordUnknownRecordType();
+		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = _type.GetFieldIndex(name);
 		if (fieldId == -1) ThrowRecordUnknownFieldName(name);
 		SetDateTimeField(fieldId, _type.Fields[fieldId].Type, value.DateTime, value.Offset);
 	}
 	public void SetField(string name, double value)
 	{
-		if (_type == null) ThrowRecordUnknownRecordType();
+		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = _type.GetFieldIndex(name);
 		if (fieldId == -1) ThrowRecordUnknownFieldName(name);
 		var fieldType = _type.Fields[fieldId].Type;
@@ -304,7 +294,7 @@ public struct Record : IEquatable<Record>
 	}
 	public void SetField(string name, float value)
 	{
-		if (_type == null) ThrowRecordUnknownRecordType();
+		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = _type.GetFieldIndex(name);
 		if (fieldId == -1) ThrowRecordUnknownFieldName(name);
 		var fieldType = _type.Fields[fieldId].Type;
@@ -313,7 +303,7 @@ public struct Record : IEquatable<Record>
 	}
 	public void SetField<T>(string name, T value) where T : IEnumerable<byte>
 	{
-		if (_type == null) ThrowRecordUnknownRecordType();
+		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = _type.GetFieldIndex(name);
 		if (fieldId == -1) ThrowRecordUnknownFieldName(name);
 		var fieldType = _type.Fields[fieldId].Type;
@@ -321,7 +311,7 @@ public struct Record : IEquatable<Record>
 		SetData(fieldId, Convert.ToBase64String(value.ToArray()));
 	}
 	public static bool operator ==(Record left, Record right) => left.Equals(right);
-	public static bool operator !=(Record left, Record right) => !(left == right);
+	public static bool operator !=(Record left, Record right) => !left.Equals(right);
     public override readonly bool Equals(object? obj) => obj is Record record && Equals(record);
     public readonly bool Equals(Record other)
 	{
@@ -348,19 +338,15 @@ public struct Record : IEquatable<Record>
 	public override readonly int GetHashCode()
 	{
 		var result = new StringBuilder();
-
-		if (_type != null) result.Append(_type.PhysicalName);
-		if (_data != null)
+		result.Append(_type.PhysicalName);
+		var i = _offset;
+		var columnCount = _type.RecordSize - 1;
+		columnCount += i;
+		while (i < columnCount)
 		{
-			var i = _offset;
-			var columnCount = _type?.RecordSize - 1 ?? 0;
-			columnCount += i;
-			while (i < columnCount)
-			{
-				result.Append(_data[i] ?? NullField);
-				result.Append(HashFieldDelimiter);
-				++i;
-			}
+			result.Append(_data[i] ?? NullField);
+			result.Append(HashFieldDelimiter);
+			++i;
 		}
         HashHelper.Djb2X(result.ToString(), out int hash);
         return hash;
@@ -368,7 +354,7 @@ public struct Record : IEquatable<Record>
 	internal readonly bool Equals(SaveQuery obj) => ReferenceEquals(obj.Data, _data) && obj.Offset == _offset;
 	internal readonly bool IsFieldChanged(string name)
 	{
-		if (_type == null) ThrowRecordUnknownRecordType();
+		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var index = _type.GetFieldIndex(name);
 		var trackerIndex = _offset + _type.RecordSize - 1;
 #pragma warning disable CS8604, CS8602 // Dereference of a possibly null reference. _type cannot be null here 
@@ -378,11 +364,11 @@ public struct Record : IEquatable<Record>
 		return false;
 	}
 
-	internal readonly bool IsFieldExist(string name) => _type != null && _type.GetFieldIndex(name) != -1;
+	internal readonly bool IsFieldExist(string name) => _type.GetFieldIndex(name) != -1;
 
 	internal readonly bool IsRelationChanged(string name)
 	{
-		if (_type == null) ThrowRecordUnknownRecordType();
+		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var relation = _type.GetRelation(name);
 		var trackerIndex = _offset + _type.RecordSize - 1;
 		if (relation == null) ThrowRecordUnknownRelationName(name);
@@ -393,7 +379,7 @@ public struct Record : IEquatable<Record>
 		return false;
 	}
 
-	internal readonly bool IsRelationExist(string name) => _type != null && _type.GetRelationIndex(name) != -1;
+	internal readonly bool IsRelationExist(string name) => _type.GetRelationIndex(name) != -1;
 
 	/// <summary>
 	///	 Return relation ID value by name
@@ -402,7 +388,7 @@ public struct Record : IEquatable<Record>
 	/// <returns>relation ID value;if not defined return null</returns>
 	internal readonly long? GetRelation(string name)
 	{
-		if (_type == null) ThrowRecordUnknownRecordType();
+		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var relation = _type.GetRelation(name);
 		if (relation == null) ThrowRecordUnknownRelationName(name);
 #pragma warning disable CS8604, CS8602, S2259 // Dereference of a possibly null reference. _type cannot be null here 
@@ -415,7 +401,7 @@ public struct Record : IEquatable<Record>
 
 	internal void SetRelation(string name, long? value)
 	{
-		if (_type == null) ThrowRecordUnknownRecordType();
+		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var relation = _type.GetRelation(name);
 		if (relation == null) ThrowRecordUnknownRelationName(name);
 		var index = relation.RecordIndex;
@@ -501,7 +487,7 @@ public struct Record : IEquatable<Record>
 
 	private readonly void MandatoryField(int fieldId)
 	{
-		if (_type!=null && _type.Fields[fieldId].DefaultValue==null) {
+		if (_type.Fields[fieldId].DefaultValue==null) {
 			// throw exception mandatory field 
 			ThrowMandatoryFieldCannotBeNull(_type.Fields[fieldId].Name);
 		}

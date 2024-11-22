@@ -116,6 +116,16 @@ internal sealed class TableBuilder
         return result;
     }
 
+    internal static Table GetDefaultRecordType()
+    {
+        var metaTable = new Meta(-1, (byte)EntityType.Table, 0, (int)TableType.Undefined, 0L, string.Empty, null, null, true);
+        var metaList = new List<Meta>
+        {
+            GetField(FieldId, FieldType.Long)
+        };
+        return GetTable(string.Empty, DatabaseProvider.Undefined, metaList.ToArray(), metaTable);
+    }
+
     #region private methods 
 
     private static Table GetTable(string schemaName, DatabaseProvider provider, Meta[] metaArray, Meta metaTable, PhysicalType? physicalType=null)
@@ -124,7 +134,7 @@ internal sealed class TableBuilder
         var emptyTable = Meta.GetEmptyTable(metaTable);
         var emptySchema = Meta.GetEmptySchema(GetSchema(0, schemaName), provider);
         var spanMeta = metaArray.AsSpan();
-        for (var i=0; i< spanMeta.Length; ++i) spanMeta[i] = new Meta(i,spanMeta[i]);
+        for (var i=0; i< spanMeta.Length; ++i) spanMeta[i] = Meta.Create(i,spanMeta[i]);
         return metaTable.ToTable(new ArraySegment<Meta>(metaArray, 0, metaArray.Length),
                 physicalType ?? PhysicalType.Table, ddlBuilder.GetPhysicalName(emptyTable, emptySchema)) ?? emptyTable;
     }

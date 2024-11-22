@@ -11,9 +11,9 @@ using Database = Ring.Schema.Models.Schema;
 
 namespace Ring.Data;
 
-public struct BulkSave : IBulkSave 
+public struct BulkSave : IBulkSave
 {
-    private static readonly Database DefaultSchema = 
+    private static readonly Database DefaultSchema =
             Meta.GetEmptySchema(new Meta(-1, (byte) EntityType.Schema, 0,0, 0L, string.Empty, null,null,true), DatabaseProvider.Undefined);
     private SpanList<SaveQuery> _queries;
     private Database _schema;

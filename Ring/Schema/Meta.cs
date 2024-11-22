@@ -1,14 +1,17 @@
-﻿using Ring.Schema.Enums;
+﻿using Ring.Data;
+using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using Ring.Util.Builders;
+using Ring.Util.Helpers;
 using System.Runtime.CompilerServices;
+using System.Text;
 using DbSchema = Ring.Schema.Models.Schema;
 using Index = Ring.Schema.Models.Index;
 
 namespace Ring.Schema;
 
-internal readonly struct Meta
+internal readonly struct Meta : IEquatable<Meta>
 {
 	#region constants
 
@@ -22,9 +25,10 @@ internal readonly struct Meta
 	private const byte TablespaceId = (byte)EntityType.Tablespace;
 	private const byte ParameterId = (byte)EntityType.Parameter;
 	private const char IndexColumnDelimiter = ';';
+    private const char HashCodeSeparator = '§';
 
-	// flags bit positions
-	private const byte BitPositionFieldCaseSensitive = 2;
+    // flags bit positions
+    private const byte BitPositionFieldCaseSensitive = 2;
 	private const byte BitPositionFieldNotNull = 3;
 	private const byte BitPositionFieldMultilingual = 4;
 	private const byte BitPositionIndexBitmap = 9;
@@ -51,10 +55,8 @@ internal readonly struct Meta
 	internal readonly string? Value;
 	internal readonly bool Active;
 
-	internal Meta(string name) 
+	internal Meta(string name)
 		: this(default, default, default, default, default, name, null, default, true) { }
-	internal Meta(int id, Meta meta)
-		: this(id, meta.ObjectType, meta.ReferenceId, meta.DataType, meta.Flags, meta.Name, meta.Description, meta.Value, meta.Active) { }
 	internal Meta(int id, byte objectType, int referenceId, int dataType, long flags, string name, string? description, string? value, bool active)
 	{
 		Id = id;
@@ -195,7 +197,10 @@ internal readonly struct Meta
 		}
 		return result;
 	}
-    
+
+	internal static Meta Create(int id,in Meta meta) =>
+		new(id, meta.ObjectType, meta.ReferenceId, meta.DataType, meta.Flags, meta.Name, 
+			meta.Description, meta.Value, meta.Active);
 
     internal EntityType GetEntityType() => ((int)ObjectType).ToEntityType();
 
@@ -224,7 +229,7 @@ internal readonly struct Meta
 		// sort ASC by reference_id, name
 		Array.Sort(schema, (x, y) => MetaSchemaComparer(x, y));
 		var meta = GetSchema(schema);
-		if (meta != null)
+		if (meta.HasValue)
 		{
 			var metaValue = meta.Value;
 			var ddlBuilder = provider.GetDdlBuilder();
@@ -253,7 +258,7 @@ internal readonly struct Meta
 	}
 	internal TableSpace? ToTableSpace() => IsTableSpace ? new TableSpace(Id, Name, Description, IsTablespaceIndex(), IsTablespaceTable(),
 			false, Array.Empty<string>(), Value ?? string.Empty, Active, IsEntityBaseline) : null;
-			
+
 	internal Parameter? ToParameter()
 	{
 		var parameterType = GetParameterType();
@@ -282,15 +287,54 @@ internal readonly struct Meta
 			Array.Sort(fields, (x, y) => string.CompareOrdinal(x.Name, y.Name));
 			Array.Sort(indexes, (x, y) => string.CompareOrdinal(x.Name, y.Name));
 
-			var result = new Table(Id, Name, Description, Value, physicalName,
-				tableType, relations, fields, new int[columnMapperSize], new IColumn[columnMapperSize], indexes, ReferenceId,
-				physicalType, IsEntityBaseline, Active, IsTableCached, IsTableReadonly);
-
-			return result;
-		}
+			return new Table(Id, Name, Description, Value, physicalName,
+                tableType, relations, fields, new int[columnMapperSize], new IColumn[columnMapperSize], indexes, ReferenceId,
+                physicalType, IsEntityBaseline, Active, IsTableCached, IsTableReadonly);
+        }
 		return null;
 	}
-	#endregion
+    #endregion
+
+    public static bool operator ==(Meta left, Meta right) => left.Equals(right);
+    public static bool operator !=(Meta left, Meta right) => !left.Equals(right);
+    public readonly bool Equals(Meta other) =>
+		Id == other.Id &&
+		ObjectType == other.ObjectType &&
+		ReferenceId == other.ReferenceId &&
+		DataType == other.DataType &&
+		Flags == other.Flags &&
+		string.Equals(Name, other.Name, StringComparison.Ordinal) &&
+		string.Equals(Description, other.Description, StringComparison.Ordinal) &&
+		string.Equals(Value, other.Value, StringComparison.Ordinal) &&
+		Active == other.Active;
+	public override readonly bool Equals(object? obj) => obj is Record record && Equals(record);
+	public override readonly int GetHashCode()
+	{
+		HashHelper.Djb2X(GetStringCode(), out int hash);
+		return hash;
+	}
+	internal readonly string GetStringCode()
+	{
+		var result = new StringBuilder();
+		result.Append(Id);
+		result.Append(HashCodeSeparator);
+		result.Append(ObjectType);
+		result.Append(HashCodeSeparator);
+		result.Append(ReferenceId);
+		result.Append(HashCodeSeparator);
+		result.Append(DataType);
+		result.Append(HashCodeSeparator);
+		result.Append(Flags);
+		result.Append(HashCodeSeparator);
+		result.Append(Name);
+		result.Append(HashCodeSeparator);
+		result.Append(Description);
+		result.Append(HashCodeSeparator);
+		result.Append(Value);
+		result.Append(HashCodeSeparator);
+		result.Append(Active);
+		return result.ToString();
+	}
 
 #if DEBUG
 	public override string ToString() => string.IsNullOrEmpty(Name) ? string.Empty : $"{Id} - {Name}";
@@ -389,8 +433,7 @@ internal readonly struct Meta
 	{
 		// count element
 		var relationCount = 0;
-		var span = items.AsSpan();
-		foreach (var item in span) if (item.IsRelation) ++relationCount;
+		foreach (var item in items.AsSpan()) if (item.IsRelation) ++relationCount;
 		// relation are assigned later
 		return relationCount > 0 ? new Relation[relationCount] : Array.Empty<Relation>();
 	}
@@ -399,7 +442,7 @@ internal readonly struct Meta
 	{
 		var i = 0;
 		var count = schema.Length;
-		while (i < count)
+		while (i<count)
 		{
 			if (schema[i].IsSchema) return schema[i];
 			++i;
@@ -467,8 +510,7 @@ internal readonly struct Meta
 	{
 		if (tableType == TableType.Mtm) return 2;
 		var result = fieldCount;
-		var span = items.AsSpan();
-		foreach (var item in span)
+		foreach (var item in items.AsSpan())
 		{
 			if (item.IsRelation)
 			{

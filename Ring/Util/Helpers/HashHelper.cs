@@ -3,13 +3,12 @@
 internal static class HashHelper
 {
     /// <summary>
-    /// Hash code method: djb2 (xor version)
+    /// Hash code method: djb2 (xor version) 32 bits version
     /// </summary>
     internal static void Djb2X(string input, out int hash)
     {
         hash = 5381;
-        var span = input.AsSpan();
-        foreach (var c in span) hash ^= hash << 5 ^ c;
+        foreach (var c in input.AsSpan()) hash ^= hash << 5 ^ c;
     }
 
     /// <summary>
@@ -18,7 +17,6 @@ internal static class HashHelper
     internal static void Djb2X(string input, out long hash)
     {
         hash = 5381L;
-        var span = input.AsSpan();
-        foreach (var c in span) hash ^= hash << 5 ^ c;
+        foreach (var c in input.AsSpan()) hash ^= hash << 5 ^ c;
     }
 }

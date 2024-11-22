@@ -3,6 +3,7 @@ using Ring.Schema.Extensions;
 using System.Reflection;
 using Ring.Schema;
 using Bogus;
+using Ring.Schema.Models;
 
 namespace Ring.Tests.Schema;
 
@@ -653,5 +654,67 @@ public sealed class MetaTest : BaseTest
         Assert.Equal(RelationType.Otm, relation.Type);
         Assert.Equal(relation.ToTable.Name, meta.Name);
         Assert.Equal(TableType.Fake, relation.ToTable.Type);
+    }
+
+    [Fact]
+    public void GetHashCode_DifferentMetaEmpty_Equals()
+    {
+        // arrange 
+        var meta1 = new Meta();
+        var meta2 = new Meta();
+
+        // act 
+        var result1 = meta1.GetHashCode();
+        var result2 = meta2.GetHashCode();
+
+        // assert
+        Assert.Equal(result1, result2);
+    }
+
+    [Fact]
+    public void GetHashCode_DifferentName_NotEquals()
+    {
+        // arrange 
+        var meta1 = new Meta("meta1");
+        var meta2 = new Meta("meta2");
+
+        // act 
+        var result1 = meta1.GetHashCode();
+        var result2 = meta2.GetHashCode();
+
+        // assert
+        Assert.NotEqual(result1, result2);
+    }
+
+    [Fact]
+    public void Equals_DifferentId_False()
+    {
+        // arrange 
+        var baseMeta = new Meta("baseMeta");
+        var meta2 = Meta.Create(8888, baseMeta);
+        var meta1 = Meta.Create(7777, baseMeta);
+
+        // act 
+        var result = meta1 == meta2;
+
+        // assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void Equals_SameId_True()
+    {
+        // arrange 
+        var meta1 = new Meta(_faker.Random.Number(int.MinValue, int.MaxValue), (byte)EntityType.Schema, _faker.Random.Number(int.MinValue, int.MaxValue), 0, 0L, "Test",
+            _faker.Random.String(), null, false);
+        var meta2 = Meta.Create(meta1.Id, meta1);
+
+        // act 
+        var result1 = meta1 == meta2;
+        var result2 = meta1 != meta2;
+
+        // assert
+        Assert.True(result1);
+        Assert.False(result2);
     }
 }
