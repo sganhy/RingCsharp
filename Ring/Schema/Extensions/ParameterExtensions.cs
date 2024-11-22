@@ -31,7 +31,8 @@ internal static class ParameterExtensions
     internal static Parameter? GetParameter(this Parameter[] parameters, ParameterType type, int referenceId) =>
         GetParameter(parameters, GetParameterHash(null, type, referenceId));
 
-    internal static long GetParameterHash(this Parameter? _, ParameterType type, int referenceId) => (((long)type) << 32) + referenceId;
+    internal static long GetParameterHash(this Parameter? _, ParameterType type, int referenceId) =>
+        (((long)type) << 32) + (uint)referenceId;
 
     internal static int GetMinPoolSize(this Parameter[] parameters, int schemaId)
     {

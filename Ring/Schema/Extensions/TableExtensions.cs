@@ -1,5 +1,4 @@
-﻿using System;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Text;
 using Ring.Schema.Enums;
 using Ring.Schema.Models;
@@ -258,7 +257,6 @@ internal static class TableExtensions
             }
             ++i;
         }
-
     }
 
     /// <summary>

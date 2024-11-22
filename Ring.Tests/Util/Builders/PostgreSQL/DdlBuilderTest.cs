@@ -136,7 +136,7 @@ public class DdlBuilderTest : BaseBuilderTest
         // arrange 
         var fileName = _faker.Random.String();
         var tablespaceName = _faker.Random.String();
-        var tablespace = new TableSpace(_faker.Random.Number(), tablespaceName, _faker.Random.String(), true, true, true,
+        var tablespace = new TableSpace(_faker.Random.Number(int.MinValue,int.MaxValue), tablespaceName, _faker.Random.String(), true, true, true,
             _faker.Random.WordsArray(11),
             fileName, true, true);
         var expectedSql = $"CREATE TABLESPACE {tablespaceName} LOCATION '{fileName}'";
@@ -369,7 +369,7 @@ public class DdlBuilderTest : BaseBuilderTest
     public void GetPhysicalName_MtmTable1_TableName()
     {
         // arrange 
-        var metaTable = new Meta(_faker.Random.Number(), (byte)EntityType.Table, 0, (int)TableType.Mtm
+        var metaTable = new Meta(_faker.Random.Number(int.MinValue,int.MaxValue), (byte)EntityType.Table, 0, (int)TableType.Mtm
             , 0L, "Test", null, null, true);
         var emptyTable = Meta.GetEmptyTable(metaTable);
         var emptySchema = Meta.GetEmptySchema(new Meta("Where"), DatabaseProvider.MySql);

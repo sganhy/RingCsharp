@@ -96,8 +96,6 @@ internal readonly struct Meta
 		if (IsFieldNotNull()) return GetFieldType().GetDefaultValue();
 		return null;
 	}
-	
-	// data type 
 	internal static int SetFieldType(int dataType, FieldType fieldType)
 	{
 		dataType &= 0x7FFFFF80; // clear 7 first bits
@@ -111,6 +109,7 @@ internal readonly struct Meta
 	internal static long SetFieldSize(long flags, int size)
 	{
 		var temp = (long)size;
+		// apply a mask here !!
 		temp <<= BitPositionFirstPositionSize;
 		flags += temp;
 		return flags;
@@ -127,7 +126,7 @@ internal readonly struct Meta
 	{
 		var temp = (long)type & 127L;
 		// maxInt32 & size << ()
-		flags &= 0x7FFFFFFFFF00FFFF;
+		flags &= 0x7FFFFFFFFC03FFFF;
 		temp <<= BitPositionFirstPositionRelType;
 		flags += temp;
 		return flags;

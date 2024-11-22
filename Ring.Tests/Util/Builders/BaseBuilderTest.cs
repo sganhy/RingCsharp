@@ -15,8 +15,8 @@ public class BaseBuilderTest
     internal Table GetAnonymousTable(int numberOfField = 0, int numberOfRelation = 0)
     {
         var fields = new List<Field>();
-        for (var i = 0; i < numberOfField - 1; i++)
-            fields.Add(GetAnonymousField(GetAnonymousFieldType(), _faker.Random.Number(), i + 10));
+        for (var i = 0; i < numberOfField-1; i++)
+            fields.Add(GetAnonymousField(GetAnonymousFieldType(), _faker.Random.Number(int.MinValue,int.MaxValue), i + 10));
 
         // add pk
         Field pk = FieldExtensions.GetDefaultPrimaryKey(null, FieldType.Short) ?? default!;
@@ -27,11 +27,12 @@ public class BaseBuilderTest
         for (var i = 0; i < numberOfRelation; i++) relations.Add(GetAnonymousRelation(RelationType.Mto, i+20, "skill2book"));
 
         // sort lists
-        fields = fields.OrderBy(o => o.Name).ToList();
+        // Array.Sort(fields, (x, y) => 
+        fields = fields.OrderBy(o => o.Name, StringComparer.Ordinal).ToList(); // compare ordinal here !! string.CompareOrdinal()
         fieldsById.Sort((t1, t2) => t1.Id.CompareTo(t2.Id));
-        relations = relations.OrderBy(o => o.Name).ToList();
+        relations = relations.OrderBy(o => o.Name, StringComparer.Ordinal).ToList();
 
-        var result = new Table(_faker.Random.Number(), _faker.Random.String(), _faker.Random.String(), _faker.Random.String(),
+        var result = new Table(_faker.Random.Number(int.MinValue,int.MaxValue), _faker.Random.String(), _faker.Random.String(), _faker.Random.String(),
             _faker.Random.String(), TableType.Business, relations.ToArray(), fields.ToArray(), 
             new int[fields.Count+relations.Count], new IColumn[fields.Count + relations.Count], Array.Empty<Index>(), 12, PhysicalType.Table, true, true, true, true);
         result.LoadColumnMapper();
@@ -40,12 +41,12 @@ public class BaseBuilderTest
     }
 
     internal TableSpace GetAnonymousTableSpace(string name) =>
-        new (_faker.Random.Number(), name, _faker.Random.String(), _faker.Random.Bool(), _faker.Random.Bool(),
+        new (_faker.Random.Number(int.MinValue,int.MaxValue), name, _faker.Random.String(), _faker.Random.Bool(), _faker.Random.Bool(),
             _faker.Random.Bool(), _faker.Random.WordsArray(8), _faker.Random.String(), _faker.Random.Bool(), _faker.Random.Bool());
         
 
     internal Field GetAnonymousField(FieldType fieldType, int size, int? id = null, string? name = null) =>
-        new (id ?? _faker.Random.Number(), name ?? _faker.Random.String(), _faker.Random.String(), fieldType, size,
+        new (id ?? _faker.Random.Number(int.MinValue,int.MaxValue), name ?? _faker.Random.String(), _faker.Random.String(), fieldType, size,
             _faker.Random.Bool()?  null : _faker.Random.String(), _faker.Random.Bool(), _faker.Random.Bool(), _faker.Random.Bool(),
             _faker.Random.Bool(), _faker.Random.Bool());
 
@@ -56,7 +57,7 @@ public class BaseBuilderTest
 
         var fieldList = new List<Field>() { primaryKey };
         var relationName = name == null ? _faker.Random.String() : name;
-        var toTable = new Table(_faker.Random.Number(), _faker.Random.String(), _faker.Random.String(), _faker.Random.String(),
+        var toTable = new Table(_faker.Random.Number(int.MinValue,int.MaxValue), _faker.Random.String(), _faker.Random.String(), _faker.Random.String(),
             _faker.Random.String(), TableType.Business, Array.Empty<Relation>(), fieldList.ToArray(), 
             new int[fieldList.Count], new IColumn[fieldList.Count], Array.Empty<Index>(), 12, PhysicalType.Table, true, true, true, true);
         toTable.LoadColumnMapper();
@@ -93,7 +94,7 @@ public class BaseBuilderTest
         return metaList.ToArray();
     }
     internal Meta GetMeta2Table(TableType tableType) =>
-        new (1061, (byte)EntityType.Table, _faker.Random.Number(), (int)tableType, 8704, "skill", _faker.Random.String(), _faker.Random.String(), true);
+        new (1061, (byte)EntityType.Table, _faker.Random.Number(int.MinValue,int.MaxValue), (int)tableType, 8704, "skill", _faker.Random.String(), _faker.Random.String(), true);
 
     internal Meta[] GetSchema1()
     {
@@ -124,7 +125,7 @@ public class BaseBuilderTest
 
     private Meta GetMeta(int id, string name, EntityType entityType, int dataType, long flags, bool active, int? referenceId=null)
     {
-        return new(id, (byte)entityType, referenceId??_faker.Random.Number(), dataType, flags,
+        return new(id, (byte)entityType, referenceId??_faker.Random.Number(int.MinValue,int.MaxValue), dataType, flags,
             name, _faker.Random.String(), _faker.Random.String(), active);
     }
 

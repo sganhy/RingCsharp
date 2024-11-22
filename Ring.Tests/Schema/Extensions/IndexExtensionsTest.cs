@@ -84,7 +84,7 @@ public sealed class IndexExtensionsTest : BaseTest
     internal void GetHashCode_IndexHashEqual_False()
     {
         // arrange 
-        var id = _faker.Random.Number();
+        var id = _faker.Random.Number(int.MinValue,int.MaxValue);
         var name = _faker.Random.String();
         var description = _faker.Random.String();
         var columns = _faker.Random.WordsArray(5).ToArray();

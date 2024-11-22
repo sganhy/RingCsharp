@@ -51,7 +51,7 @@ public class ParameterExtensionsTest
     internal void GetParameter_MaxPoolSize_1()
     {
         // arrange 
-        var paramType = ParameterType.MaxPoolSize;
+        const ParameterType paramType = ParameterType.MaxPoolSize;
 
         // act 
         var param = _parameterCollection.GetParameter(paramType, schemaId);
@@ -95,13 +95,14 @@ public class ParameterExtensionsTest
         // arrange 
         const ParameterType paramType = ParameterType.DefaultLanguage;
         const int paramTypeId = (int)paramType;
-        var referenceId = _faker.Random.Number();
+        const long mask = 4294967295L;
+        var referenceId = _faker.Random.Number(int.MinValue,-1); // negative
 
         // act 
         var value = ParameterExtensions.GetParameterHash(null, paramType, referenceId);
 
         // assert
-        Assert.Equal(referenceId, value & int.MaxValue);
+        Assert.Equal(referenceId, (int)(value & mask));
         Assert.Equal(paramTypeId, value >> 32);
     }
 
@@ -109,15 +110,15 @@ public class ParameterExtensionsTest
     internal void GetParameterHash_Parameter2_ReferenceId()
     {
         // arrange 
-        var paramType = ParameterType.Undefined;
-        var paramTypeId = (int)paramType;
-        var referenceId = _faker.Random.Number();
+        const ParameterType paramType = ParameterType.Undefined;
+        const int paramTypeId = (int)paramType;
+        var referenceId = _faker.Random.Number(0,int.MaxValue); // positive
 
         // act 
         var value = ParameterExtensions.GetParameterHash(null, paramType, referenceId);
 
         // assert
-        Assert.Equal(referenceId, value & int.MaxValue);
+        Assert.Equal(referenceId, value & 0xffffffff);
         Assert.Equal(paramTypeId, value >> 32);
     }
 
@@ -130,7 +131,9 @@ public class ParameterExtensionsTest
         Assert.NotNull(param);
 
         // act 
+#pragma warning disable RCS1196 // Call extension method as instance method
         var value = ParameterExtensions.ToMeta(param); // reverse parameter
+#pragma warning restore RCS1196
         var paramResult = value.ToParameter();
 
         // assert

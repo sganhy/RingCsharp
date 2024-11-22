@@ -47,8 +47,7 @@ internal sealed class TableBuilder
         };
         metaList.Add(GetIndex(true, new [] { metaList[0], metaList[1], metaList[2], metaList[3] }));
         var metaTable = GetTable((int)TableType.Meta, TableMetaName, TableType.Meta);
-        var result = GetTable(schemaName, provider, metaList.ToArray(), metaTable);
-        return result;
+        return GetTable(schemaName, provider, metaList.ToArray(), metaTable);
     }
 
 #pragma warning disable CA1822, S2325 // Mark members as static
@@ -62,8 +61,7 @@ internal sealed class TableBuilder
         };
         var metaTable = GetTable((int)TableType.MetaId, TableMetaIdName, TableType.MetaId);
         metaList.Add(GetIndex(true, new[] { metaList[0], metaList[1], metaList[2] }));
-        var result= GetTable(schemaName, provider, metaList.ToArray(), metaTable);
-        return result;
+        return GetTable(schemaName, provider, metaList.ToArray(), metaTable);
     }
 
 #pragma warning disable CA1822, S2325 // Mark members as static
@@ -84,8 +82,7 @@ internal sealed class TableBuilder
         };
         var metaTable = GetTable((int)TableType.Log, TableLogName, TableType.Log);
         metaList.Add(GetIndex(false, new[] { metaList[1] }));
-        var result = GetTable(schemaName, provider, metaList.ToArray(), metaTable);
-        return result;
+        return GetTable(schemaName, provider, metaList.ToArray(), metaTable);
     }
 
 #pragma warning disable CA1822, S2325 // Mark members as static
@@ -96,8 +93,7 @@ internal sealed class TableBuilder
         if (entityType != EntityType.Schema)
             metaList.Add(GetField(provider.GetEntityFieldName(entityType), FieldType.String));
         var catalog = GetTable((int)tableType, provider.GetCatalogViewName(entityType), tableType);
-        var result = GetTable(provider.GetCatalogSchema(), provider, metaList.ToArray(), catalog, PhysicalType.View);
-        return result;
+        return GetTable(provider.GetCatalogSchema(), provider, metaList.ToArray(), catalog, PhysicalType.View);
     }
 
 #pragma warning disable CA1822, S2325 // Mark members as static

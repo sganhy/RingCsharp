@@ -25,7 +25,7 @@ public sealed class MetaTest : BaseTest
     internal void ReadFlag_Input_OnlyOneTrueFlag(long flags, byte bitPosition, bool expectedValue)
     {
         // arrange 
-        var meta  = new Meta(_faker.Random.Number(), (byte)_faker.PickRandom<EntityType>(), _faker.Random.Number(), _faker.Random.Number(), 
+        var meta  = new Meta(_faker.Random.Number(int.MinValue,int.MaxValue), (byte)_faker.PickRandom<EntityType>(), _faker.Random.Number(int.MinValue,int.MaxValue), _faker.Random.Number(int.MinValue,int.MaxValue), 
             flags, _faker.Random.String(), _faker.Random.String(), _faker.Random.String(), _faker.Random.Bool());
         var readFlagMethod = meta.GetType().GetMethod("ReadFlag", BindingFlags.NonPublic | BindingFlags.Instance);
 
@@ -53,7 +53,7 @@ public sealed class MetaTest : BaseTest
     internal void WriteFlag_Input_TrueFlag(long flags, byte bitPosition)
     {
         // arrange 
-        var meta = new Meta(_faker.Random.Number(), (byte)_faker.PickRandom<EntityType>(), _faker.Random.Number(), _faker.Random.Number(),
+        var meta = new Meta(_faker.Random.Number(int.MinValue,int.MaxValue), (byte)_faker.PickRandom<EntityType>(), _faker.Random.Number(int.MinValue,int.MaxValue), _faker.Random.Number(int.MinValue,int.MaxValue),
             flags, _faker.Random.String(), _faker.Random.String(), _faker.Random.String(), _faker.Random.Bool());
         var readFlagMethod = meta.GetType().GetMethod("ReadFlag", BindingFlags.NonPublic | BindingFlags.Instance);
         var writeFlagMethod = meta.GetType().GetMethod("WriteFlag", BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
@@ -61,7 +61,7 @@ public sealed class MetaTest : BaseTest
         // act 
 #pragma warning disable CS8605,CS8602  
         flags = (long)writeFlagMethod.Invoke(meta, new object[] { meta.Flags, bitPosition, false });
-        meta = new Meta(_faker.Random.Number(), (byte)_faker.PickRandom<EntityType>(), _faker.Random.Number(), _faker.Random.Number(),
+        meta = new Meta(_faker.Random.Number(int.MinValue,int.MaxValue), (byte)_faker.PickRandom<EntityType>(), _faker.Random.Number(int.MinValue,int.MaxValue), _faker.Random.Number(int.MinValue,int.MaxValue),
             flags, _faker.Random.String(), _faker.Random.String(), _faker.Random.String(), _faker.Random.Bool());
         var result = (bool?)readFlagMethod?.Invoke(meta, new object[] { bitPosition });
         var flagAfterWrite = (long)writeFlagMethod.Invoke(meta, new object[] { meta.Flags, bitPosition, false });
@@ -90,11 +90,11 @@ public sealed class MetaTest : BaseTest
     internal void GetFieldType_Input_ValidFieldType(int dataType, FieldType expectedResult)
     {
         // arrange 
-        var mask = _faker.Random.Number() << 16;
+        var mask = _faker.Random.Number(int.MinValue,int.MaxValue) << 16;
         var flags = _faker.Random.Long();
         mask &= 0x0FFFFF00;
 
-        var meta = new Meta(_faker.Random.Number(), _faker.Random.Byte(), _faker.Random.Number(), dataType + mask, flags, _faker.Random.String(),
+        var meta = new Meta(_faker.Random.Number(int.MinValue,int.MaxValue), _faker.Random.Byte(), _faker.Random.Number(int.MinValue,int.MaxValue), dataType + mask, flags, _faker.Random.String(),
              _faker.Random.String(),null, true);
 
         // act 
@@ -118,7 +118,7 @@ public sealed class MetaTest : BaseTest
         var flags = _faker.Random.Long() << 16;
         flags += mask;
 
-        var meta = new Meta(_faker.Random.Number(), (byte)EntityType.Schema, _faker.Random.Number(), _faker.Random.Number(), flags,
+        var meta = new Meta(_faker.Random.Number(int.MinValue,int.MaxValue), (byte)EntityType.Schema, _faker.Random.Number(int.MinValue,int.MaxValue), _faker.Random.Number(int.MinValue,int.MaxValue), flags,
             _faker.Random.String(), _faker.Random.String(), _faker.Random.String(), false);
 
         // act 
@@ -129,16 +129,18 @@ public sealed class MetaTest : BaseTest
     }
 
     [Fact]
-    internal void GetFieldSize_AnonymoousSize_ReturnValue()
+    internal void GetFieldSize_AnonymousSize_ReturnValue()
     {
         // arrange 
-        var size = _faker.Random.Number();
+        var size = _faker.Random.Number(0, int.MaxValue); // min value == 0
         var expectedResult1 = size;
-        var expectedResult2 = int.MaxValue;
-        var flags = size << 17;
-        var meta1 = new Meta(_faker.Random.Number(), (byte)EntityType.Schema, _faker.Random.Number(), _faker.Random.Number(), flags + 1111 + 0x100000000000000,
-            _faker.Random.String(), _faker.Random.String(), _faker.Random.String(), false);
-        var meta2 = new Meta(_faker.Random.Number(), (byte)EntityType.Schema, _faker.Random.Number(), _faker.Random.Number(), long.MaxValue,
+        const int expectedResult2 = int.MaxValue;
+        var flags = ((long)size) << 17;
+        var meta1 = new Meta(_faker.Random.Number(int.MinValue,int.MaxValue), (byte)EntityType.Schema,
+            _faker.Random.Number(int.MinValue,int.MaxValue), _faker.Random.Number(int.MinValue,int.MaxValue), 
+            flags + 1111 + 0x100000000000000, _faker.Random.String(), _faker.Random.String(), _faker.Random.String(), false);
+        var meta2 = new Meta(_faker.Random.Number(int.MinValue,int.MaxValue), (byte)EntityType.Schema, 
+            _faker.Random.Number(int.MinValue,int.MaxValue), _faker.Random.Number(int.MinValue,int.MaxValue), long.MaxValue,
             _faker.Random.String(), _faker.Random.String(), _faker.Random.String(), false);
 
         // act 
@@ -301,7 +303,7 @@ public sealed class MetaTest : BaseTest
     internal void GetEntityType_MutlipleInput_EntityType(byte objectType, EntityType entityType)
     {
         // arrange
-        var meta = new Meta(_faker.Random.Number(), objectType, _faker.Random.Number(), _faker.Random.Number(), _faker.Random.Long(),
+        var meta = new Meta(_faker.Random.Number(int.MinValue,int.MaxValue), objectType, _faker.Random.Number(int.MinValue,int.MaxValue), _faker.Random.Number(int.MinValue,int.MaxValue), _faker.Random.Long(),
             _faker.Random.String(), _faker.Random.String(), _faker.Random.String(), _faker.Random.Bool());
 
         // act 
@@ -316,10 +318,10 @@ public sealed class MetaTest : BaseTest
     {
         // arrange 
         // eg. from rpg_schema.xml => ability.name (generated by golang version of ring) 
-        var id = _faker.Random.Number();
+        var id = _faker.Random.Number(int.MinValue,int.MaxValue);
         var name = _faker.Random.String();
 
-        var meta = new Meta(id, (byte)EntityType.Index, 1071, _faker.Random.Number(), 8704L,
+        var meta = new Meta(id, (byte)EntityType.Index, 1071, _faker.Random.Number(int.MinValue,int.MaxValue), 8704L,
            name, _faker.Random.String(), "name;object2book", true);
 
         // act 
@@ -340,7 +342,7 @@ public sealed class MetaTest : BaseTest
     internal void ToIndex_Meta2_IndexObject()
     {
         // arrange
-        var meta = new Meta(_faker.Random.Number(), (byte)EntityType.Alias, _faker.Random.Number(), _faker.Random.Number(), _faker.Random.Long(),
+        var meta = new Meta(_faker.Random.Number(int.MinValue,int.MaxValue), (byte)EntityType.Alias, _faker.Random.Number(int.MinValue,int.MaxValue), _faker.Random.Number(int.MinValue,int.MaxValue), _faker.Random.Long(),
             _faker.Random.String(), _faker.Random.String(), _faker.Random.String(), _faker.Random.Bool());
         
         // act 
@@ -363,7 +365,7 @@ public sealed class MetaTest : BaseTest
         // arrange - BitPositionFirstPositionRelType = 18
         flags <<= 18;
         flags += mask;
-        var meta = new Meta(_faker.Random.Number(), (byte)EntityType.Alias, _faker.Random.Number(), _faker.Random.Number(), flags,
+        var meta = new Meta(_faker.Random.Number(int.MinValue,int.MaxValue), (byte)EntityType.Alias, _faker.Random.Number(int.MinValue,int.MaxValue), _faker.Random.Number(int.MinValue,int.MaxValue), flags,
             _faker.Random.String(), _faker.Random.String(), _faker.Random.String(), _faker.Random.Bool());
 
 
@@ -387,7 +389,7 @@ public sealed class MetaTest : BaseTest
         // arrange - BitPositionFirstPositionRelType = 18
         var newFlags = (long)flags;
         newFlags = Meta.SetRelationType(newFlags, relationType);
-        var meta = new Meta(_faker.Random.Number(), (byte)EntityType.Alias, _faker.Random.Number(), _faker.Random.Number(), newFlags,
+        var meta = new Meta(_faker.Random.Number(int.MinValue,int.MaxValue), (byte)EntityType.Alias, _faker.Random.Number(int.MinValue,int.MaxValue), _faker.Random.Number(int.MinValue,int.MaxValue), newFlags,
             _faker.Random.String(), _faker.Random.String(), _faker.Random.String(), _faker.Random.Bool());
 
         // act 
@@ -403,7 +405,7 @@ public sealed class MetaTest : BaseTest
     {
         // arrange 
         // eg. from rpg_schema.xml => ability2book (generated by golang version of ring) 
-        var meta = new Meta(2, (byte)EntityType.Relation, 1011, _faker.Random.Number(), 786448L,
+        var meta = new Meta(2, (byte)EntityType.Relation, 1011, _faker.Random.Number(int.MinValue,int.MaxValue), 786448L,
                     "ability2book", _faker.Random.String(), "book2ability", true);
         var exepectedRelType = RelationType.Mtm;
 
@@ -455,9 +457,9 @@ public sealed class MetaTest : BaseTest
         foreach (var fieldType in fieldTypeList)
         {
             // act 
-            var dataType = _faker.Random.Number();
+            var dataType = _faker.Random.Number(int.MinValue,int.MaxValue);
             dataType = Meta.SetFieldType(dataType, fieldType);
-            var meta = new Meta(_faker.Random.Number(), (byte)EntityType.Alias, _faker.Random.Number(), dataType, _faker.Random.Long(),
+            var meta = new Meta(_faker.Random.Number(int.MinValue,int.MaxValue), (byte)EntityType.Alias, _faker.Random.Number(int.MinValue,int.MaxValue), dataType, _faker.Random.Long(),
                         _faker.Random.String(), _faker.Random.String(), _faker.Random.String(), _faker.Random.Bool());
             var result = meta.GetFieldType();
 
@@ -479,7 +481,7 @@ public sealed class MetaTest : BaseTest
             // act 
             var flags = _faker.Random.Long();
             flags = Meta.SetRelationType(flags, relType);
-            var meta = new Meta(_faker.Random.Number(), (byte)EntityType.Alias, _faker.Random.Number(), _faker.Random.Number(), flags,
+            var meta = new Meta(_faker.Random.Number(int.MinValue,int.MaxValue), (byte)EntityType.Alias, _faker.Random.Number(int.MinValue,int.MaxValue), _faker.Random.Number(int.MinValue,int.MaxValue), flags,
                         _faker.Random.String(), _faker.Random.String(), _faker.Random.String(), _faker.Random.Bool());
             var result = meta.GetRelationType();
 

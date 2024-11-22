@@ -67,8 +67,8 @@ public class DmlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var sut = new DmlBuilder();
-        var schemaId = _faker.Random.Number();
-        var testTable= new Meta(_faker.Random.Number(), (byte)EntityType.Table, schemaId, (int)TableType.Business
+        var schemaId = _faker.Random.Number(int.MinValue,int.MaxValue);
+        var testTable= new Meta(_faker.Random.Number(int.MinValue,int.MaxValue), (byte)EntityType.Table, schemaId, (int)TableType.Business
             , 0L, "Test", null, null, true);
         var testSchema= new Meta(schemaId, (byte)EntityType.Schema, schemaId, 0, 0L, "Test", null, null, true);
         var schema = Meta.ToSchema(new Meta[] { testTable, testSchema }, DatabaseProvider.MySql);

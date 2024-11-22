@@ -13,13 +13,13 @@ public class FieldExtensionsTest : BaseTest
     internal void ToMeta_Field1_MetaValue()
     {
         // arrange 
-        var id = _faker.Random.Number();
+        var id = _faker.Random.Number(int.MinValue,int.MaxValue);
         var name = _faker.Random.String();
         var description = _faker.Random.String();
-        var tableId = _faker.Random.Number();
+        var tableId = _faker.Random.Number(0,int.MaxValue);
         var fieldType = _faker.PickRandom<FieldType>();
         var defaultValue = _faker.Random.Bool()? null : _faker.Random.String(); // nullable string
-        var size = _faker.Random.Number();
+        var size = _faker.Random.Number(0,int.MaxValue);
         var field = new Field(id, name, description, fieldType, size, defaultValue, true, true, true, true, false);
 
         // act 
@@ -42,13 +42,13 @@ public class FieldExtensionsTest : BaseTest
     internal void ToMeta_Field2_MetaValue()
     {
         // arrange 
-        var id = _faker.Random.Number();
+        var id = _faker.Random.Number(int.MinValue,int.MaxValue);
         var name = _faker.Random.String();
         var description = _faker.Random.String();
-        var tableId = _faker.Random.Number();
+        var tableId = _faker.Random.Number(int.MinValue,int.MaxValue);
         var fieldType = _faker.PickRandom<FieldType>();
         var defaultValue = _faker.Random.Bool()? null: _faker.Random.String();
-        var size = _faker.Random.Number();
+        var size = _faker.Random.Number(0,int.MaxValue);
         var field = new Field(id, name, description, fieldType, size, defaultValue, false, false, false, false, true);
 
         // act 
@@ -73,12 +73,12 @@ public class FieldExtensionsTest : BaseTest
     internal void GetHashCode_FieldHashEqual_True()
     {
         // arrange 
-        var id = _faker.Random.Number();
+        var id = _faker.Random.Number(int.MinValue,int.MaxValue);
         var name = _faker.Random.String();
         var description = _faker.Random.String();
         var fieldType = _faker.PickRandom<FieldType>();
         var defaultValue = _faker.Random.Bool()? null: _faker.Random.String();
-        var size = _faker.Random.Number();
+        var size = _faker.Random.Number(int.MinValue,int.MaxValue);
         var field1 = new Field(id, name, description, fieldType, size, defaultValue, false, false, false, false, true);
         var field2 = new Field(id, name, description, fieldType, size, defaultValue, false, false, false, false, true);
 
@@ -94,12 +94,12 @@ public class FieldExtensionsTest : BaseTest
     internal void GetHashCode_FieldHashEqual_False()
     {
         // arrange 
-        var id = _faker.Random.Number();
+        var id = _faker.Random.Number(int.MinValue,int.MaxValue);
         var name = _faker.Random.String();
         var description = _faker.Random.String();
         var fieldType = _faker.PickRandom<FieldType>();
         var defaultValue = _faker.Random.Bool() ? null : _faker.Random.String();
-        var size = _faker.Random.Number();
+        var size = _faker.Random.Number(int.MinValue,int.MaxValue);
         var field1 = new Field(id, name, description, fieldType, size, defaultValue, false, false, false, false, true);
         var field2 = new Field(id, name, description, fieldType, size, defaultValue, false, false, false, true, true);
         var field3 = new Field(id, name, description, fieldType, size, defaultValue, true, false, false, false, true);

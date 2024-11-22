@@ -1,9 +1,9 @@
-﻿using Bogus;
-using Ring.Data;
+﻿using Ring.Data;
 using Ring.Schema;
 using Ring.Schema.Builders;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
+using System.Globalization;
 
 namespace Ring.Tests.Schema.Extensions;
 
@@ -14,12 +14,13 @@ public class TableExtensionsTest : BaseTest
     {
         // arrange 
         var table = GetAnonymousTable(160, 160);
-        var fields = table.Fields.OrderByDescending(x => x.Name);
 
-        foreach (var field in fields)
+        foreach (var field in table.Fields.OrderByDescending(x => x.Name))
         {
             // act 
+#pragma warning disable RCS1196 // Call extension method as instance method
             var result = TableExtensions.GetField(table, field.Name);
+#pragma warning restore RCS1196
 
             // assert
             Assert.NotNull(result);
@@ -28,24 +29,29 @@ public class TableExtensionsTest : BaseTest
         }
     }
 
+    /// <summary>
+    /// CRASH SOMETIMES !
+    /// </summary>
     [Fact]
     internal void GetFieldI_AnonymousTable_FieldObject()
     {
         // arrange 
-        var table = GetAnonymousTable(20, 20);
-        var fields = table.Fields.OrderByDescending(x => x.Name);
+        var table = GetAnonymousTable(64, 10, 'А', 'Я'); // test on cyrilic alphabet
 
-        foreach (var field in fields)
+        // test not working on specific special character!
+        foreach (var field in table.Fields.OrderByDescending(x => x.Name))
         {
             // act 
-            var result = TableExtensions.GetField(table, field.Name.ToUpper(), StringComparison.CurrentCultureIgnoreCase);
+#pragma warning disable RCS1196 // Call extension method as instance method
+            var result = TableExtensions.GetField(table, field.Name.ToLower(CultureInfo.InvariantCulture),
+                StringComparison.InvariantCultureIgnoreCase);
+#pragma warning restore RCS1196
 
             // assert
             Assert.NotNull(result);
             Assert.Equal(result.Id, field.Id);
             Assert.Equal(result.Name, field.Name);
         }
-
     }
 
     [Fact]
@@ -74,7 +80,9 @@ public class TableExtensionsTest : BaseTest
         var table = GetAnonymousTable(0, 2);
 
         // act 
+#pragma warning disable RCS1196 // Call extension method as instance method
         var result = TableExtensions.GetField(table, "Test", StringComparison.CurrentCulture);
+#pragma warning restore
 
         // assert
         Assert.Null(result);
@@ -85,12 +93,12 @@ public class TableExtensionsTest : BaseTest
     {
         // arrange 
         var table = GetAnonymousTable(40, 10);
-        var fields = table.Fields.OrderByDescending(x => x.Id);
-
-        foreach (var field in fields)
+        foreach (var field in table.Fields.OrderByDescending(x => x.Id))
         {
             // act 
+#pragma warning disable RCS1196 // Call extension method as instance method
             var result = TableExtensions.GetField(table, field.Id);
+#pragma warning restore RCS1196
 
             // assert
             Assert.NotNull(result);

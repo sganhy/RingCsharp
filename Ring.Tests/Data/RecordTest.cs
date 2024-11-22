@@ -336,7 +336,7 @@ public sealed class RecordTest : BaseTest
         var table = _schema.GetTable("book");
         Assert.NotNull(table);
         var rcd = new Record(table);
-        var expectedValue = _faker.Random.Number().ToString();
+        var expectedValue = _faker.Random.Number(int.MinValue,int.MaxValue).ToString();
 
         // act 
         rcd.SetField("id", expectedValue);
@@ -446,7 +446,7 @@ public sealed class RecordTest : BaseTest
         var armorTable = _schema.GetTable("armor");
         Assert.NotNull(armorTable);
         var rcd = new Record(armorTable);
-        var expectedValue = _faker.Random.Number();
+        var expectedValue = _faker.Random.Number(int.MinValue,int.MaxValue);
 
         // act 
         rcd.SetField("cost", expectedValue);

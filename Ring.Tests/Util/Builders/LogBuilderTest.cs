@@ -14,16 +14,16 @@ public class LogBuilderTest
         // arrange 
         var sut = new LogBuilder
         {
-            SchemaId = _faker.Random.Number()
+            SchemaId = _faker.Random.Number(int.MinValue,int.MaxValue)
         };
-        // act - execution line should be 19!!!!!!!!!!!!!!!!!
+        // act - execution line should be 20!!!!!!!!!!!!!!!!!
         var log = sut.GetError(LogType.FileNotFound, "test");
         // assert
         Assert.NotNull(log);
-        Assert.Equal(19, log.LineNumber);
+        Assert.Equal(20, log.LineNumber);
         Assert.Equal("GetError_FileNotFound_LogObject", log.Method);
         Assert.Equal("Ring.Tests.Util.Builders.LogBuilderTest", log.CallSite);
-        Assert.Equal(19, log.Id);
+        Assert.Equal((int)LogType.FileNotFound, log.Id);
     }
 
     [Fact]
@@ -31,7 +31,7 @@ public class LogBuilderTest
     {
         // arrange 
         var sut = new LogBuilder();
-        sut.SchemaId = _faker.Random.Number();
+        sut.SchemaId = _faker.Random.Number(int.MinValue,int.MaxValue);
         sut.JobId = _faker.Random.Long();
         // act
         var log = sut.GetWarning(LogType.FileNotFound, "test2");
@@ -48,7 +48,7 @@ public class LogBuilderTest
         // arrange 
         var sut = new LogBuilder
         {
-            SchemaId = _faker.Random.Number(),
+            SchemaId = _faker.Random.Number(int.MinValue,int.MaxValue),
             JobId = _faker.Random.Bool() ? null: _faker.Random.Long()
         };
         var currentThreadId = Environment.CurrentManagedThreadId;

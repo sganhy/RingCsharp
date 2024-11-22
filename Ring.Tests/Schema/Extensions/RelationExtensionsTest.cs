@@ -279,5 +279,4 @@ public class RelationExtensionsTest : BaseTest
         Assert.NotEqual(hash1, hash3);
         Assert.NotEqual(hash2, hash3);
     }
-
 }
