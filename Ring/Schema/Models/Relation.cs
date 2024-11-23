@@ -10,11 +10,10 @@ internal sealed class Relation : BaseEntity, IColumn
 	internal readonly Table ToTable;
 	internal readonly RelationType Type;
 	internal readonly FieldType FieldType;
-
-	internal int RecordIndex { get; private set; }          // index of relationship into record._data by default -1
+	internal readonly int RecordIndex;                      // removed property , to avoid callVirt IL statment
 
 	/// <summary>
-	///     Ctor
+	/// 	Ctor
 	/// </summary>
 	internal Relation(int id, string name, string? description, RelationType type, Table toObject, int recordIndex, FieldType fieldType,
 		bool notnull, bool constraint, bool baseline, bool active) : base(id, name, description, active, baseline)
@@ -29,15 +28,12 @@ internal sealed class Relation : BaseEntity, IColumn
 	}
 
 	/// <summary>
-	///     assign only once the property 
+	/// 	Assign only once the property 
 	/// </summary>
-	internal void SetInverseRelation(Relation relation) =>
-		InverseRelation = ReferenceEquals(InverseRelation,this) ? relation : InverseRelation;
-
-	internal void SetRecordIndex(int index) => RecordIndex = index;
+	internal void SetInverseRelation(Relation relation) => InverseRelation = ReferenceEquals(InverseRelation,this) ? relation : InverseRelation;
 
 	/// <summary>
-	///     Implement IColumn
+	/// 	Implement IColumn
 	/// </summary>
 	int IColumn.Id => Id;
 	FieldType IColumn.FieldType => FieldType;

@@ -105,4 +105,9 @@ internal static class RelationExtensions
         result.Append(BaseEntityExtensions.GetStringCode(relation));
         return result.ToString();
     }
+
+    internal static Relation SetRecordIndex(this Relation relation, int recordIndex)
+        => new (relation.Id, relation.Name, relation.Description, relation.Type, relation.ToTable, recordIndex,
+            relation.FieldType, relation.NotNull, relation.HasConstraint, relation.Baseline, relation.Active);
+    
 }

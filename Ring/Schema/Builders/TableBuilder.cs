@@ -114,17 +114,7 @@ internal sealed class TableBuilder
         result.RecordIndexes[0]=0; // columnMapper 4 Mtm table is always {0,1}
         result.RecordIndexes[1]=1; // columnMapper 4 Mtm table is always {0,1}
         return result;
-    }
-
-    internal static Table GetDefaultRecordType()
-    {
-        var metaTable = new Meta(-1, (byte)EntityType.Table, 0, (int)TableType.Undefined, 0L, string.Empty, null, null, true);
-        var metaList = new List<Meta>
-        {
-            GetField(FieldId, FieldType.Long)
-        };
-        return GetTable(string.Empty, DatabaseProvider.Undefined, metaList.ToArray(), metaTable);
-    }
+    }  
 
     #region private methods 
 

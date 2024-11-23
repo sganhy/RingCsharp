@@ -138,8 +138,8 @@ public class TableExtensionsTest : BaseTest
     internal void GetRelationI_AnonymousTable_RelationObject()
     {
         // arrange 
-        var table = GetAnonymousTable(2, 15);
-        var relations = table.Relations.OrderByDescending(x => x.Name);
+        var table = GetAnonymousTable(2, 65, '0', 'z');
+        var relations = table.Relations.OrderByDescending(x => x.Name, StringComparer.Ordinal);
 
         foreach (var relation in relations)
         {

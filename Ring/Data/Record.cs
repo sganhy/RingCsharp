@@ -1,5 +1,6 @@
 ﻿using Ring.Data.Extensions;
 using Ring.Data.Models;
+using Ring.Schema;
 using Ring.Schema.Builders;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
@@ -7,20 +8,22 @@ using Ring.Schema.Models;
 using Ring.Util.Enums;
 using Ring.Util.Extensions;
 using Ring.Util.Helpers;
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Xml.Linq;
 
 namespace Ring.Data;
 
 public struct Record : IEquatable<Record>
 {
 #pragma warning disable RCS1187 // Use constant instead of field
-    private static readonly string[] DefaultData = new string[2]; // 1 field + state info
-    private static readonly Table DefaultType = TableBuilder.GetDefaultRecordType();
-    private static readonly string NullField = "^^";
-    private static readonly string NullString = "Null";
+	private static readonly string[] DefaultData = new string[2]; // 1 field + state info
+	private static readonly Table DefaultType = GetDefaultType();
+	private static readonly string NullField = "^^";
+	private static readonly string NullString = "Null";
 	private static readonly string DefaultPrimaryKeyValue = "0";
 	private static readonly char HashFieldDelimiter = (char)333;// end of text character
 	private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
@@ -36,9 +39,9 @@ public struct Record : IEquatable<Record>
 	private static readonly decimal MinByteValue = sbyte.MinValue;
 #pragma warning restore RCS1187
 
-    // should be instantiate when record type is defined
-    // _data.Length should be > _type.Fields.Length
-    private string?[] _data;
+	// should be instantiate when record type is defined
+	// _data.Length should be > _type.Fields.Length
+	private string?[] _data;
 	private Table _type;
 	private readonly int _offset;
 
@@ -69,19 +72,13 @@ public struct Record : IEquatable<Record>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		readonly get => _data[i + _offset];
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-#pragma warning disable IDE0251 // Make member 'readonly'
 		set => _data[i + _offset] = value;
-#pragma warning restore IDE0251
 	}
 
 	internal readonly string?[] Data => _data;
-
-#pragma warning disable RCS1085 // Use auto-implemented property
-    internal readonly int Offset => _offset;
-#pragma warning restore
-
-    public readonly bool IsDirty => _data[_type.RecordSize-1+_offset] != null;
-    public readonly bool IsNew
+	internal readonly int Offset => _offset;
+	public readonly bool IsDirty => _data[_type.RecordSize-1+_offset] != null;
+	public readonly bool IsNew
 	{
 		get
 		{
@@ -93,13 +90,11 @@ public struct Record : IEquatable<Record>
 	}
 	internal readonly Table Table => _type;
 
-#pragma warning disable IDE0251 // Make member 'readonly'
 	internal void ClearData()
 	{
-#pragma warning restore IDE0251
 		var span = _data.AsSpan();
-		var lastIndex = _type?.RecordSize + _offset;
-		for (var i= _offset;i< lastIndex;++i) span[i] = null;
+		var lastIndex = _type.RecordSize + _offset;
+		for (var i=_offset;i<lastIndex;++i) span[i] = null;
 	}
 
 	/// <summary>
@@ -122,12 +117,12 @@ public struct Record : IEquatable<Record>
 
 	public readonly void GetField(string name, out bool? value)
 	{
-		value = null;
 		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = _type.GetFieldIndex(name);
 		if (fieldId <= -1) ThrowRecordUnknownFieldName(name);
 		var field = _type.Fields[fieldId];
 		if (field.Type != FieldType.Boolean) ThrowImpossibleConversion(field.Type, FieldType.Boolean);
+		value = null;
 		//BooleanTrue: BooleanFalse
 		var result = _data[fieldId + _offset] ?? _type.Fields[fieldId].DefaultValue;
 		if (BooleanTrue.Equals(result, StringComparison.Ordinal)) value = true;
@@ -136,10 +131,10 @@ public struct Record : IEquatable<Record>
 
 	public readonly void GetField(string name, out byte[]? value)
 	{
-		value = null;
 		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = _type.GetFieldIndex(name);
 		if (fieldId <= -1) ThrowRecordUnknownFieldName(name);
+		value = null;
 		var field = _type.Fields[fieldId];
 		if (field.Type != FieldType.ByteArray) ThrowImpossibleConversion(field.Type, FieldType.Boolean);
 		var result = _data[fieldId + _offset] ?? _type.Fields[fieldId].DefaultValue;
@@ -149,9 +144,9 @@ public struct Record : IEquatable<Record>
 	public readonly void GetField(string name, out long? value)
 	{
 		if (_type.Id == -1) ThrowRecordUnknownRecordType();
-		value = null;
 		var fieldId = _type.GetFieldIndex(name);
 		if (fieldId <= -1) ThrowRecordUnknownFieldName(name);
+		value = null;
 		var field = _type.Fields[fieldId];
 		if (field.Type != FieldType.Byte && field.Type != FieldType.Short && field.Type != FieldType.Int && field.Type != FieldType.Long)
 			ThrowImpossibleConversion(field.Type, FieldType.Long);
@@ -164,10 +159,10 @@ public struct Record : IEquatable<Record>
 	/// </summary>
 	public readonly void GetField(string name, out DateTime? value)
 	{
-		value = null;
 		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = _type.GetFieldIndex(name);
 		if (fieldId <= -1) ThrowRecordUnknownFieldName(name);
+		value = null;
 		var field = _type.Fields[fieldId];
 		if (field.Type != FieldType.DateTime && field.Type != FieldType.LongDateTime && field.Type != FieldType.ShortDateTime)
 			ThrowImpossibleConversion(field.Type, FieldType.DateTime);
@@ -312,24 +307,19 @@ public struct Record : IEquatable<Record>
 	}
 	public static bool operator ==(Record left, Record right) => left.Equals(right);
 	public static bool operator !=(Record left, Record right) => !left.Equals(right);
-    public override readonly bool Equals(object? obj) => obj is Record record && Equals(record);
-    public readonly bool Equals(Record other)
+	public override readonly bool Equals(object? obj) => obj is Record record && Equals(record);
+	public readonly bool Equals(Record other)
 	{
 		if (ReferenceEquals(_type, other._type))
 		{
-			if (_data != null)
+			var i = 0;
+			var offset1 = _offset;
+			var offset2 = other._offset;
+			var count = _type.RecordSize-1;
+			while (i < count)
 			{
-				var i = 0;
-				var offset1 = _offset;
-				var offset2 = other._offset;
-#pragma warning disable CS8602 // Dereference of a possibly null reference. --> other._data cannot be null here
-				var count = _type.RecordSize-1;
-				while (i < count)
-				{
-					if (!string.Equals(_data[i+offset1], other._data[i+offset2], StringComparison.Ordinal)) return false;
-#pragma warning restore CS8602
-					++i;
-				}
+				if (!string.Equals(_data[i+offset1], other._data[i+offset2], StringComparison.Ordinal)) return false;
+				++i;
 			}
 			return true;
 		}
@@ -348,8 +338,8 @@ public struct Record : IEquatable<Record>
 			result.Append(HashFieldDelimiter);
 			++i;
 		}
-        HashHelper.Djb2X(result.ToString(), out int hash);
-        return hash;
+		HashHelper.Djb2X(result.ToString(), out int hash);
+		return hash;
 	}
 	internal readonly bool Equals(SaveQuery obj) => ReferenceEquals(obj.Data, _data) && obj.Offset == _offset;
 	internal readonly bool IsFieldChanged(string name)
@@ -357,9 +347,7 @@ public struct Record : IEquatable<Record>
 		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var index = _type.GetFieldIndex(name);
 		var trackerIndex = _offset + _type.RecordSize - 1;
-#pragma warning disable CS8604, CS8602 // Dereference of a possibly null reference. _type cannot be null here 
 		if (index != -1) return _data[trackerIndex] != null && IsColumnChanged(index, trackerIndex);
-#pragma warning restore CS8602, CS8604
 		ThrowRecordUnknownFieldName(name);
 		return false;
 	}
@@ -372,10 +360,8 @@ public struct Record : IEquatable<Record>
 		var relation = _type.GetRelation(name);
 		var trackerIndex = _offset + _type.RecordSize - 1;
 		if (relation == null) ThrowRecordUnknownRelationName(name);
-#pragma warning disable CS8604, CS8602, S2259 // Dereference of a possibly null reference. _type cannot be null here 
 		var index = relation.RecordIndex;
 		if (index >= 0) return _data[trackerIndex] != null && IsColumnChanged(index, trackerIndex);
-#pragma warning restore S2259, CS8602, CS8604
 		return false;
 	}
 
@@ -391,11 +377,9 @@ public struct Record : IEquatable<Record>
 		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var relation = _type.GetRelation(name);
 		if (relation == null) ThrowRecordUnknownRelationName(name);
-#pragma warning disable CS8604, CS8602, S2259 // Dereference of a possibly null reference. _type cannot be null here 
 		var index = relation.RecordIndex + _offset;
-		if (index >= 0 && _data[index] != null) return long.Parse(_data[index], CultureInfo.InvariantCulture);
+		if (index >= 0 && _data[index] != null) return long.Parse(_data[index]!, CultureInfo.InvariantCulture);
 		else ThrowRecordWrongRelationType(name);
-#pragma warning restore S2259, CS8602, CS8604
 		return null;
 	}
 
@@ -416,7 +400,7 @@ public struct Record : IEquatable<Record>
 	{
 		if (value==null) SetData(fieldId, null);
 		else if (value.Length <= fieldSize) SetData(fieldId, value);
-		else SetData(fieldId, value.Truncate(fieldSize));// truncate or exception ??
+		else SetData(fieldId, value.Truncate(fieldSize));// truncate or exception ?? // replace by Span<T>
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -493,55 +477,49 @@ public struct Record : IEquatable<Record>
 		}
 	}
 
-#pragma warning disable CS8602 // Dereference of a possibly null reference. - _type cannot be null here !!!
 	private void InitializeTracking(int trackerIndex) => _data[trackerIndex] = new string(new char[(_type.Fields.Length >> 4) + 1]);
-#pragma warning restore CS8602
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private void SetData(int fieldId, string? value)
 	{
 		var fieldIndex = fieldId + _offset;
-#pragma warning disable CS8602, CS8604 // Dereference of a possibly null reference. - _data cannot be null here !!!
 		var trackerIndex = _type.RecordSize -1 +_offset;
-		if (string.CompareOrdinal(_data[fieldIndex], value) == 0) return;// detect no change
-		if (value == null && _type.Fields[fieldId].NotNull) MandatoryField(fieldId);// manage mandatory fields !!
+		if (string.CompareOrdinal(_data[fieldIndex], value) == 0) return; // detect no change
+		if (value == null && _type.Fields[fieldId].NotNull) MandatoryField(fieldId); // manage mandatory fields !!
 		if (_data[trackerIndex] == null) InitializeTracking(trackerIndex);
-		_data[trackerIndex].SetBitValue(fieldId);
-#pragma warning restore CS8604, CS8602 // Possible null reference argument.
+		_data[trackerIndex]!.SetBitValue(fieldId); // cannot be null here !!
 		_data[fieldIndex] = value;
 	}
 
 	// Dereference of a possibly null reference. - _data cannot be null here !!!
 	// Possible null reference argument. 
-#pragma warning disable CS8602, CS8604
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private readonly bool IsColumnChanged(int fieldId, int trackerIndex) => _data[trackerIndex].GetBitValue(fieldId);
-#pragma warning restore CS8604, CS8602
+	private readonly bool IsColumnChanged(int fieldId, int trackerIndex) => _data[trackerIndex]!.GetBitValue(fieldId); // cannot be null here 
 
 	// exceptions 
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
 	private readonly void ThrowRecordUnknownFieldName(string fieldName) => 
 		throw new ArgumentException(string.Format(DefaultCulture,
-			ResourceHelper.GetErrorMessage(ResourceType.RecordUnkownFieldName), fieldName, _type?.Name));
+			ResourceHelper.GetErrorMessage(ResourceType.RecordUnkownFieldName), fieldName, _type.Name));
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
 	private readonly void ThrowRecordWrongRelationType(string relationName) =>
 		throw new ArgumentException(string.Format(DefaultCulture,
-			ResourceHelper.GetErrorMessage(ResourceType.RecordWrongRelationType), relationName, _type?.Name));
+			ResourceHelper.GetErrorMessage(ResourceType.RecordWrongRelationType), relationName, _type.Name));
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
 	private readonly void ThrowRecordUnknownRelationName(string relationName) =>
 		throw new ArgumentException(string.Format(DefaultCulture,
-			ResourceHelper.GetErrorMessage(ResourceType.RecordUnkownRelationName), relationName, _type?.Name));
+			ResourceHelper.GetErrorMessage(ResourceType.RecordUnkownRelationName), relationName, _type.Name));
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
 	private readonly void ThrowMandatoryFieldCannotBeNull(string fieldName) =>
 		throw new ArgumentException(string.Format(DefaultCulture,
-			ResourceHelper.GetErrorMessage(ResourceType.FieldIsMandatory), _type?.Name, fieldName));
+			ResourceHelper.GetErrorMessage(ResourceType.FieldIsMandatory), _type.Name, fieldName));
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
@@ -563,7 +541,7 @@ public struct Record : IEquatable<Record>
 	[DoesNotReturn]
 	private static void ThrowWrongBooleanValue(string? value) =>
 		throw new FormatException(string.Format(DefaultCulture,
-			ResourceHelper.GetErrorMessage(ResourceType.RecordWrongBooleanValue), value?? NullString));
+			ResourceHelper.GetErrorMessage(ResourceType.RecordWrongBooleanValue), value ?? NullString));
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
@@ -578,6 +556,13 @@ public struct Record : IEquatable<Record>
 	private static void ThrowInvalidBase64String() =>
 		throw new FormatException(ResourceHelper.GetErrorMessage(ResourceType.InvalidBase64String));
 
-    #endregion
+	private static Table GetDefaultType()
+	{
+		var metaTable = new Meta(-1, (byte)EntityType.Table, 0, (int)TableType.Undefined, 0L, string.Empty, null, null, true);
+		var metaArray = new Meta[] { new(0, (byte)EntityType.Field, 0, 0, 0L, string.Empty, null, null, true) };
+		return metaTable.ToTable(new ArraySegment<Meta>(metaArray), PhysicalType.Undefined, string.Empty)!; // cannot be null here!!
+	}
+
+	#endregion
 
 }

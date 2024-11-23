@@ -5,5 +5,8 @@ internal enum PhysicalType : byte
 	Table = 1,
 	View = 3,
 	Measurement = 5,
-	Logical = 11
+	Logical = 11,
+
+	// [125, 127] reserved for unit tests
+	Undefined = 127
 }

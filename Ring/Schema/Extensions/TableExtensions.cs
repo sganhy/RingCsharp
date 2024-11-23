@@ -273,10 +273,10 @@ internal static class TableExtensions
             var relation = table.Relations[i];
             if (relation.Type == RelationType.Mto || relation.Type == RelationType.Otop)
             {
-                relation.SetRecordIndex(currentIndex + fieldCount);
+                table.Relations[i] = relation.SetRecordIndex(currentIndex + fieldCount);
                 ++currentIndex;
             }
-            else relation.SetRecordIndex(-1);
+            else table.Relations[i] = relation.SetRecordIndex(-1);
             ++i;
         }
     }

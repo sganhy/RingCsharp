@@ -260,7 +260,7 @@ public class RelationExtensionsTest : BaseTest
     [Fact]
     internal void GetHashCode_RelationHashEqual_False()
     {
-        // arrange 
+        // arrange -- TODO faile sometimes , to be investigated
         var metaName = _faker.Random.String();
         var meta1 = new Meta(metaName);
         var meta2 = new Meta(metaName);
