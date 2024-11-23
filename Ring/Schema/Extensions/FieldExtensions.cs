@@ -9,8 +9,8 @@ namespace Ring.Schema.Extensions;
 
 internal static class FieldExtensions
 {
-    private static readonly char HashCodeSeparator = '$';
-    private static readonly string PrimaryKeyFieldName = "id";
+	private const char HashCodeSeparator = '$';
+	private static readonly string PrimaryKeyFieldName = "id";
 	private static readonly string PrimaryKeyDescription = "Internal record number";
 	private static readonly string NumberDefaultValue = "0";
 	private static readonly Field _defaultPrimaryKeyInt64 =
@@ -35,9 +35,9 @@ internal static class FieldExtensions
 		ReferenceEquals(field, _defaultPrimaryKeyInt64) || ReferenceEquals(field, _defaultPrimaryKeyInt32) ||
 		ReferenceEquals(field, _defaultPrimaryKeyInt16) || ReferenceEquals(field, _defaultPrimaryKeyInt08);
 
-    /// <summary>
-    /// Calculate searchable field value (remove diacritic characters and value.ToUpper())
-    /// </summary>
+	/// <summary>
+	/// Calculate searchable field value (remove diacritic characters and value.ToUpper())
+	/// </summary>
 	internal static string? GetSearchableValue(this Field _, string value)
 	{
 		if (value == null) return null;
@@ -59,21 +59,21 @@ internal static class FieldExtensions
 	{
 		var flags = 0L;
 		flags = Meta.SetEntityBaseline(flags,field.Baseline);
-        flags = Meta.SetFieldNotNull(flags, field.NotNull);
-        flags = Meta.SetFieldMultilingual(flags, field.Multilingual);
-        flags = Meta.SetFieldCaseSensitive(flags, field.CaseSensitive);
-        flags = Meta.SetFieldSize(flags, field.Size);
-        var dataType = 0 ;
-        dataType = Meta.SetFieldType(dataType, newFieldType ?? field.Type);
-        string? value = null;
-        var meta = new Meta(field.Id, (byte)EntityType.Field, tableId, dataType, flags, field.Name, field.Description, value, field.Active);
+		flags = Meta.SetFieldNotNull(flags, field.NotNull);
+		flags = Meta.SetFieldMultilingual(flags, field.Multilingual);
+		flags = Meta.SetFieldCaseSensitive(flags, field.CaseSensitive);
+		flags = Meta.SetFieldSize(flags, field.Size);
+		var dataType = 0 ;
+		dataType = Meta.SetFieldType(dataType, newFieldType ?? field.Type);
+		string? value = null;
+		var meta = new Meta(field.Id, (byte)EntityType.Field, tableId, dataType, flags, field.Name, field.Description, value, field.Active);
 		return meta;
 	}
 
 	internal static Field? GetDefaultPrimaryKey(this Field? _, FieldType fieldType)
 	{
 #pragma warning disable IDE0066 // Convert switch statement to expression
-        switch (fieldType)
+		switch (fieldType)
 		{
 			case FieldType.Byte: return _defaultPrimaryKeyInt08;
 			case FieldType.Short: return _defaultPrimaryKeyInt16;
@@ -81,34 +81,33 @@ internal static class FieldExtensions
 			case FieldType.Long: return _defaultPrimaryKeyInt64;
 		}
 #pragma warning restore IDE0066
-        return null;
+		return null;
 	}
 
 	internal static long GetHashCode(this Field field)
 	{
-        HashHelper.Djb2X(GetStringCode(field), out long hash);
-        return hash;
+		HashHelper.Djb2X(GetStringCode(field), out long hash);
+		return hash;
 	}
 
-    internal static string GetStringCode(this Field field)
-    {
-        var result = new StringBuilder();
-        result.Append(field.CaseSensitive);
-        result.Append(HashCodeSeparator);
-        result.Append(field.DefaultValue);
-        result.Append(HashCodeSeparator);
-        result.Append(field.Multilingual);
-        result.Append(HashCodeSeparator);
-        result.Append(field.NotNull);
-        result.Append(HashCodeSeparator);
-        result.Append(field.Size);
-        result.Append(HashCodeSeparator);
-        result.Append(field.Type.ToString());
-        result.Append(HashCodeSeparator);
-        // BaseEntity
-        result.Append(BaseEntityExtensions.GetStringCode(field));
-        return result.ToString();
-    }
-
+	internal static string GetStringCode(this Field field)
+	{
+		var result = new StringBuilder();
+		result.Append(field.CaseSensitive);
+		result.Append(HashCodeSeparator);
+		result.Append(field.DefaultValue);
+		result.Append(HashCodeSeparator);
+		result.Append(field.Multilingual);
+		result.Append(HashCodeSeparator);
+		result.Append(field.NotNull);
+		result.Append(HashCodeSeparator);
+		result.Append(field.Size);
+		result.Append(HashCodeSeparator);
+		result.Append(field.Type.ToString());
+		result.Append(HashCodeSeparator);
+		// BaseEntity
+		result.Append(BaseEntityExtensions.GetStringCode(field));
+		return result.ToString();
+	}
 }
 

@@ -12,6 +12,7 @@ namespace Ring.Util.Builders;
 internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 {
     // commands
+    private const char DmlEqual = '=';
     private static readonly string DmlInsert = @"INSERT INTO ";
     private static readonly string DmlValues = @") VALUES (";
     private static readonly string DmlUpdate = @"UPDATE ";
@@ -19,7 +20,6 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
     private static readonly string DmlDelete = @"DELETE FROM ";
     private static readonly string DmlWhere = @" WHERE ";
     private static readonly string DmlAnd = " AND ";
-    private static readonly char DmlEqual = '=';
     private static readonly string FirstParameter = @"1";
 
     private string[] _tableIndex;

@@ -7,9 +7,9 @@ namespace Ring.Data.Extensions;
 
 internal static class StringExtensions
 {
+    private const char ZuluTimeSuffix = 'Z';
     private static readonly string Date4Suffix = "-01-01";
     private static readonly string Date7Suffix = "-01";
-    private static readonly char ZuluTimeSuffix = 'Z';
     private static readonly string ZuluTimeStrSuffix = ZuluTimeSuffix.ToString();
     private readonly static CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
 

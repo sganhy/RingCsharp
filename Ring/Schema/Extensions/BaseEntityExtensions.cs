@@ -6,7 +6,7 @@ namespace Ring.Schema.Extensions;
 
 internal static class BaseEntityExtensions
 {
-    private static readonly char HashCodeSeparator = '/';
+    private const char HashCodeSeparator = '/';
 
     internal static long GetHashCode(this BaseEntity baseEntity)
     {

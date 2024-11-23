@@ -19,24 +19,24 @@ namespace Ring.Data;
 
 public struct Record : IEquatable<Record>
 {
+	private const char HashFieldDelimiter = (char)333;// end of text character
+	private const decimal MaxIntValue = int.MaxValue;
+	private const decimal MinIntValue = int.MinValue;
+	private const decimal MaxShortValue = short.MaxValue;
+	private const decimal MinShortValue = short.MinValue;
+	private const decimal MaxByteValue = sbyte.MaxValue;
+	private const decimal MinByteValue = sbyte.MinValue;
 #pragma warning disable RCS1187 // Use constant instead of field
 	private static readonly string[] DefaultData = new string[2]; // 1 field + state info
 	private static readonly Table DefaultType = GetDefaultType();
 	private static readonly string NullField = "^^";
 	private static readonly string NullString = "Null";
 	private static readonly string DefaultPrimaryKeyValue = "0";
-	private static readonly char HashFieldDelimiter = (char)333;// end of text character
 	private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
 	private static readonly NumberStyles DefaultNumberStyle = NumberStyles.Integer;
 	private static readonly NumberStyles DefaultFloatStyle = NumberStyles.AllowDecimalPoint | NumberStyles.Float;
 	private static readonly string BooleanTrue = true.ToString(DefaultCulture);
 	private static readonly string BooleanFalse = false.ToString(DefaultCulture);
-	private static readonly decimal MaxIntValue = int.MaxValue;
-	private static readonly decimal MinIntValue = int.MinValue;
-	private static readonly decimal MaxShortValue = short.MaxValue;
-	private static readonly decimal MinShortValue = short.MinValue;
-	private static readonly decimal MaxByteValue = sbyte.MaxValue;
-	private static readonly decimal MinByteValue = sbyte.MinValue;
 #pragma warning restore RCS1187
 
 	// should be instantiate when record type is defined
@@ -196,22 +196,24 @@ public struct Record : IEquatable<Record>
 		var fieldId = _type.GetFieldIndex(name);
 		if (fieldId == -1) ThrowRecordUnknownFieldName(name);
 		var type = _type.Fields[fieldId].Type;
-		switch (type)
-		{
-			case FieldType.String: SetStringField(_type.Fields[fieldId].Size, fieldId, value);break;
-			case FieldType.Byte:
-			case FieldType.Short:
-			case FieldType.Int:
-			case FieldType.Long: SetIntegerField(fieldId, type, value);break;
-			case FieldType.Float:
-			case FieldType.Double: SetFloatField(type, fieldId, value);break;
-			case FieldType.ShortDateTime:
-			case FieldType.DateTime:
-			case FieldType.LongDateTime: SetDateTimeField(fieldId, type, value);break;
-			case FieldType.Boolean: SetBooleanField(fieldId, value);break;
-			case FieldType.ByteArray: SetByteArrayField(fieldId, value);break;
-		}
-	}
+		if (value != null) 
+			switch (type)
+			{
+				case FieldType.String: SetStringField(_type.Fields[fieldId].Size, fieldId, value); break;
+				case FieldType.Byte:
+				case FieldType.Short:
+				case FieldType.Int:
+				case FieldType.Long: SetIntegerField(fieldId, type, value); break;
+				case FieldType.Float:
+				case FieldType.Double: SetFloatField(type, fieldId, value); break;
+				case FieldType.ShortDateTime:
+				case FieldType.DateTime:
+				case FieldType.LongDateTime: SetDateTimeField(fieldId, type, value); break;
+				case FieldType.Boolean: SetBooleanField(fieldId, value); break;
+				case FieldType.ByteArray: SetByteArrayField(fieldId, value); break;
+			}
+		else SetData(fieldId, null);
+    }
 
 	internal void SetField(string name, long value, FieldType fieldType)
 	{
@@ -396,17 +398,15 @@ public struct Record : IEquatable<Record>
 	#region private methods 
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private void SetStringField(int fieldSize, int fieldId, string? value)
+	private void SetStringField(int fieldSize, int fieldId, string value)
 	{
-		if (value==null) SetData(fieldId, null);
-		else if (value.Length <= fieldSize) SetData(fieldId, value);
-		else SetData(fieldId, value.Truncate(fieldSize));// truncate or exception ?? // replace by Span<T>
+		if (value.Length <= fieldSize) SetData(fieldId, value);
+		else SetData(fieldId, value.Truncate(fieldSize)); // truncate or exception ?? // replace by Span<T>
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private void SetIntegerField(int fieldId, FieldType numberType, string? value) {
-		if (value == null) SetData(fieldId, null);
-		else if (!value.IsNumber()) ThrowWrongStringFormat();
+	private void SetIntegerField(int fieldId, FieldType numberType, string value) {
+		if (!value.IsNumber()) ThrowWrongStringFormat();
 		else if (long.TryParse(value, DefaultNumberStyle, DefaultCulture, out long lng) && (
 				(numberType == FieldType.Int && lng <= MaxIntValue && lng >= MinIntValue) ||
 				(numberType == FieldType.Short && lng <= MaxShortValue && lng >= MinShortValue) ||
@@ -415,13 +415,8 @@ public struct Record : IEquatable<Record>
 		else ThrowValueTooLarge(numberType);
 	}
 
-	private void SetFloatField(FieldType fieldType, int fieldId, string? value)
+	private void SetFloatField(FieldType fieldType, int fieldId, string value)
 	{
-		if (value==null)
-		{
-			SetData(fieldId, null);
-			return;
-		}
 		if (value.Contains(',')) value = value.Replace(',', '.');
 		if (value.IsFloat())
 		{
@@ -435,31 +430,22 @@ public struct Record : IEquatable<Record>
 		ThrowWrongStringFormat();
 	}
 
-	private void SetByteArrayField(int fieldId, string? value)
+	private void SetByteArrayField(int fieldId, string value)
 	{
-		if (value==null) SetData(fieldId, null);
-		else if (value.IsBase64String()) SetData(fieldId, value);
+		if (value.IsBase64String()) SetData(fieldId, value);
 		else ThrowInvalidBase64String();
 	}
 
-	private void SetBooleanField(int fieldId, string? value)
+	private void SetBooleanField(int fieldId, string value)
 	{
-		if (value==null) SetData(fieldId, null);
-		else if (bool.TryParse(value, out bool result)) SetData(fieldId, result ? BooleanTrue : BooleanFalse);
+		if (bool.TryParse(value, out bool result)) SetData(fieldId, result ? BooleanTrue : BooleanFalse);
 		else ThrowWrongBooleanValue(value);
 	}
 
-	private void SetDateTimeField(int fieldId, FieldType fieldType, string? value)
+	private void SetDateTimeField(int fieldId, FieldType fieldType, string value)
 	{
-		if (value != null)
-		{
-			var dateTimeOffset = value.ParseIso8601Date();
-			SetDateTimeField(fieldId, fieldType, dateTimeOffset.DateTime, dateTimeOffset.Offset);
-		}
-		else
-		{
-			SetData(fieldId, null);
-		}
+		var dateTimeOffset = value.ParseIso8601Date();
+		SetDateTimeField(fieldId, fieldType, dateTimeOffset.DateTime, dateTimeOffset.Offset);
 	}
 
 	private void SetDateTimeField(int fieldId, FieldType fieldType, DateTime value, TimeSpan? offset)
@@ -471,7 +457,7 @@ public struct Record : IEquatable<Record>
 
 	private readonly void MandatoryField(int fieldId)
 	{
-		if (_type.Fields[fieldId].DefaultValue==null) {
+		if (_type.Fields[fieldId].DefaultValue == null) {
 			// throw exception mandatory field 
 			ThrowMandatoryFieldCannotBeNull(_type.Fields[fieldId].Name);
 		}

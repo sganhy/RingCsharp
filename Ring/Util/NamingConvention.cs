@@ -5,9 +5,9 @@ namespace Ring.Util;
 
 internal static class NamingConvention
 {
-    private static readonly char Space = ' ';
-    private static readonly char SnakeCaseSeparator = '_';
-    private static readonly char SpecialCharacter = '@';
+    private const char Space = ' ';
+    private const char SnakeCaseSeparator = '_';
+    private const char SpecialCharacter = '@';
     private static readonly string SpecialCharacterStr = SpecialCharacter.ToString();
 
     public static string? ToSnakeCase(string? name)
