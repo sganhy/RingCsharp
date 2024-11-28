@@ -15,7 +15,7 @@ internal sealed class ResourceHelper
     private static readonly string ResourceCrLf = @"|||";
     private static readonly string ResourceNameSpace = @"Ring.Util.Resources.";
     private static readonly string MessageDescSplitChar = "#$";
-    private static readonly char ResourceEndOfLine = '\n';
+    private const char ResourceEndOfLine = '\n';
     private static bool _ressourcesLoaded;
     private static string?[] _logMessages = Array.Empty<string?>();
     private static string?[] _logDescriptions = Array.Empty<string?>();

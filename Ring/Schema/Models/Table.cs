@@ -11,7 +11,7 @@ internal sealed class Table : BaseEntity
 	internal readonly int[] RecordIndexes;    // [tableId] <= position into Fields & Relations sorted by Column.Id
 	internal readonly int RecordSize;
 	internal readonly IColumn[] Columns;      // columns[n].id should be unique
-    internal readonly string PhysicalName;
+	internal readonly string PhysicalName;
 	internal readonly PhysicalType PhysicalType;
 	internal readonly int SchemaId;
 	internal readonly string? Subject;
@@ -20,7 +20,7 @@ internal sealed class Table : BaseEntity
 	internal readonly bool Readonly;
 
 	/// <summary>
-	///     Ctor
+	/// 	Ctor
 	/// </summary>
 	internal Table(int id, string name, string? description, string? subject, string physicalName, TableType type,
 		Relation[] relations, Field[] fields, int [] recordIndexes, IColumn[] columns, Index[] indexes, int schemaId, PhysicalType physicalType, 

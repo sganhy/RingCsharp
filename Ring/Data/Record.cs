@@ -19,7 +19,7 @@ namespace Ring.Data;
 
 public struct Record : IEquatable<Record>
 {
-	private const char HashFieldDelimiter = (char)333;// end of text character
+	private const char HashCodeSeparator = (char)3333;// end of text character
 	private const decimal MaxIntValue = int.MaxValue;
 	private const decimal MinIntValue = int.MinValue;
 	private const decimal MaxShortValue = short.MaxValue;
@@ -337,7 +337,7 @@ public struct Record : IEquatable<Record>
 		while (i < columnCount)
 		{
 			result.Append(_data[i] ?? NullField);
-			result.Append(HashFieldDelimiter);
+			result.Append(HashCodeSeparator);
 			++i;
 		}
 		HashHelper.Djb2X(result.ToString(), out int hash);
@@ -463,7 +463,7 @@ public struct Record : IEquatable<Record>
 		}
 	}
 
-	private void InitializeTracking(int trackerIndex) => _data[trackerIndex] = new string(new char[(_type.Fields.Length >> 4) + 1]);
+    private void InitializeTracking(int trackerIndex) => _data[trackerIndex] = new string(new char[(_type.Fields.Length >> 4) + 1]);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private void SetData(int fieldId, string? value)

@@ -1,35 +1,34 @@
-﻿using Ring.Data.Enums;
+﻿using Microsoft.VisualBasic;
+using Ring.Data.Enums;
 using Ring.Data.Extensions;
 using Ring.Data.Models;
 using Ring.Schema;
 using Ring.Schema.Enums;
+using Ring.Schema.Extensions;
+using Ring.Schema.Models;
+using Ring.Util.Builders;
 using Ring.Util.Enums;
 using Ring.Util.Helpers;
+using System;
+using System.Data;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Database = Ring.Schema.Models.Schema;
 
 namespace Ring.Data;
 
-public struct BulkSave : IBulkSave
+public readonly struct BulkSave : IBulkSave
 {
-    private static readonly Database DefaultSchema =
-            Meta.GetEmptySchema(new Meta(-1, (byte) EntityType.Schema, 0,0, 0L, string.Empty, null,null,true), DatabaseProvider.Undefined);
-    private SpanList<SaveQuery> _queries;
-    private Database _schema;
+    private static readonly SaveQuery EmptySaveQuery = new SaveQuery(GetDefaultType(), SaveQueryType.Undefined, GetDefaultDmlBuilder(), Array.Empty<string?>(), 0);
+    private readonly BulkSaveInfo _info;
 
-    internal BulkSave(Database schema)
-    {
-        _queries = new SpanList<SaveQuery>(32); // schema upgrade constructor
-        _schema = schema;
-    }
-    public BulkSave()
-    {
-        _queries = new SpanList<SaveQuery>(4); // min bucket size = 4
-        _schema = DefaultSchema;
-    }
+    /// <summary>
+	///	 Ctor
+	/// </summary>
+    internal BulkSave(Database schema) => _info = new BulkSaveInfo(32, schema);
+    public BulkSave() => _info = new BulkSaveInfo(4);
 
-    internal readonly SpanList<SaveQuery> Queries => _queries;
+    internal SpanList<SaveQuery> Queries => _info.Queries;
 
     /// <summary>
     /// The CancelRecord method removes one record from the BulkSave object only (not from the database) and 
@@ -40,10 +39,10 @@ public struct BulkSave : IBulkSave
     {
         if (recordToCancel != null)
         {
-            var count = _queries.Count;
+            var count = _info.Queries.Count;
             for (var i=0; i<count; ++i)
-                if (recordToCancel.Equals(_queries[i]))
-                    ReplaceQueryType(i, _queries[i].Type.CancelOperation());
+                if (recordToCancel.Equals(_info.Queries[i]))
+                    ReplaceQueryType(i, _info.Queries[i].Type.CancelOperation());
         }
     }
 
@@ -53,16 +52,16 @@ public struct BulkSave : IBulkSave
     /// in the BulkSave object.
     /// </summary>
     /// <returns>This method returns an integer value indicating the number of records of the specified type in this object</returns>
-    public readonly int CountByType(string? objectType)
+    public int CountByType(string? objectType)
     {
         var result = 0;
         if (objectType!=null)
         {
-            var count = _queries.Count;
+            var count = _info.Queries.Count;
             for (var i = 0; i < count; ++i)
             {
                 // may be compare schema too ? 
-                var query = _queries[i];
+                var query = _info.Queries[i];
                 if ((query.Type == SaveQueryType.InsertRecord || query.Type == SaveQueryType.UpdateRecord || query.Type == SaveQueryType.DeleteRecord) &&
                     string.Equals(query.Table.Name, objectType, StringComparison.OrdinalIgnoreCase)) ++result;
             }
@@ -81,7 +80,7 @@ public struct BulkSave : IBulkSave
         // cannot use DeleteRecordById() coz of @meta objects
         if (record.Table == null) return;
         if (record.IsNew && record.Table.Type == TableType.Business) return;
-        _queries.Add(new SaveQuery(record.Table, SaveQueryType.DeleteRecord, _schema.DmlBuiler, record.Data, record.Offset));
+        _info.Queries.Add(new SaveQuery(record.Table, SaveQueryType.DeleteRecord, _info.Schema.DmlBuiler, record.Data, record.Offset));
     }
 
     public void DeleteRecordById(string recordType, long id)
@@ -102,10 +101,10 @@ public struct BulkSave : IBulkSave
     public Record? GetRecordByIndex(int index, string objectType)
     {
         int currentIndex = 0;
-        if (index >= 0 && index < _queries.Count)
+        if (index >= 0 && index < _info.Queries.Count)
         {
             /*
-            var query = _queries[index];
+            var query = _info.Queries[index];
             if ((query.Type == SaveQueryType.InsertRecord || query.Type == SaveQueryType.UpdateRecord || query.Type == SaveQueryType.DeleteRecord) &&
                 _data[i].CurrentRecord.RecordType.IndexOf(objectType, StringComparison.OrdinalIgnoreCase) >= 0)
             {
@@ -117,37 +116,63 @@ public struct BulkSave : IBulkSave
         return null;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void InsertRecord(Record record)
     {
         if (record.Table == null) ThrowRecordUnknownRecordType();
-        if (record.Table.Readonly) return; // throw exception here !!
-        if (record.IsNew) _queries.Add(new SaveQuery(record.Table, SaveQueryType.InsertRecord, _schema.DmlBuiler, record.Data, record.Offset));
+        if (record.Table.Readonly) return; // throw exception here ??
+        if (record.Table.Type == TableType.Business) ++_info.IdCount;
+        if (record.IsNew) _info.Queries.Add(new SaveQuery(record.Table, SaveQueryType.InsertRecord, _info.Schema.DmlBuiler, record.Data, record.Offset));
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void UpdateRecord(Record record)
     {
         if (record.Table == null) ThrowRecordUnknownRecordType();
         if (record.Table.Readonly) return; // throw exception here !!
-        if (!record.IsNew) _queries.Add(new SaveQuery(record.Table, SaveQueryType.UpdateRecord, _schema.DmlBuiler, record.Data, record.Offset));
+        if (!record.IsNew) _info.Queries.Add(new SaveQuery(record.Table, SaveQueryType.UpdateRecord, _info.Schema.DmlBuiler, record.Data, record.Offset));
     }
 
-    public override int GetHashCode()
-    {
-        var span = _queries.AsSpan();
-        var hash = 0;
-        foreach (var query in span) hash += SaveQueryExtensions.GetHashCode(query);
-        return hash;
-    }
-    public static bool operator ==(BulkSave left, BulkSave right) => left.Equals(right);
-    public static bool operator !=(BulkSave left, BulkSave right) => !(left == right);
-    public override readonly bool Equals(object? obj) => obj is Record record && Equals(record);
+    public readonly override int GetHashCode() => GetHashCode(this);
+    public static bool operator == (BulkSave left, BulkSave right) => left.Equals(right);
+    public static bool operator != (BulkSave left, BulkSave right) => !(left == right);
+    public override bool Equals(object? obj) => obj is BulkSave && Equals(obj);
     public bool Equals(BulkSave other)
     {
-        if (ReferenceEquals(_schema, other._schema))
+        if (_info.Schema.Id == other._info.Schema.Id && _info.IdCount == other._info.IdCount && _info.Queries.Count == other._info.Queries.Count)
         {
-            return GetHashCode()== other.GetHashCode();
+            return GetHashCode(this) == GetHashCode(other);
         }
         return false;
+    }
+
+    public void Clear()
+    {
+        var count = _info.Queries.Count;
+        var span = _info.Queries.AsSpan();
+        // remove all  references to array
+        for (var i = 0; i < count; ++i) span[i] = EmptySaveQuery;
+        // reset Queries._count
+        _info.Queries.Clear(); 
+        _info.IdCount = 0;
+    }
+
+    internal void Save(IRingConnection connection)
+    {
+        if (_info.Queries.Count == 0) return;
+
+        //  generate id
+        if (_info.IdCount > 0) GenerateId(connection);
+
+        //TODO if more than 100K multiple transactions
+        //TODO throw exception ==> invalid insert into with id==0
+        if (_info.Queries.Count == 1) SaveWithoutTransactions(connection);
+        /*
+        if (_data.Count > 1) SaveWithTransaction(connection);
+        if (isIdGenerate) GenerateMissingId();
+        */
+        // clear pipe 
+        Clear(); 
     }
 
     #region private methods
@@ -155,9 +180,9 @@ public struct BulkSave : IBulkSave
     private void ReplaceQueryType(int index, SaveQueryType saveQueryType)
 #pragma warning restore IDE0251
     {
-        var prevQuery = _queries[index];
+        var prevQuery = _info.Queries[index];
         var newQuery = new SaveQuery(prevQuery.Table, saveQueryType, prevQuery.Builder, prevQuery.Data, prevQuery.Offset);
-        _queries[index] = newQuery;
+        _info.Queries[index] = newQuery;
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
@@ -165,6 +190,33 @@ public struct BulkSave : IBulkSave
     private static void ThrowRecordUnknownRecordType() => 
         throw new ArgumentException(ResourceHelper.GetErrorMessage(ResourceType.RecordUnkownRecordType));
 
+    private void GenerateId(IRingConnection connection)
+    { 
+
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void SaveWithoutTransactions(IRingConnection connection)
+    {
+        foreach (var query in _info.Queries.AsReadOnlySpan()) if (!query.Type.IsCancelled()) connection.Execute(query);
+    }
+
+    private static Table GetDefaultType()
+    {
+        var metaTable = new Meta(-1, (byte)EntityType.Table, 0, (int)TableType.Undefined, 0L, string.Empty, null, null, true);
+        var metaArray = new Meta[] { new(0, (byte)EntityType.Field, 0, 0, 0L, string.Empty, null, null, true) };
+        return metaTable.ToTable(new ArraySegment<Meta>(metaArray), PhysicalType.Undefined, string.Empty)!; // cannot be null here!!
+    }
+
+    private static IDmlBuilder GetDefaultDmlBuilder() => new Ring.Util.Builders.PostgreSQL.DmlBuilder();
+
+    private static int GetHashCode(in BulkSave bulkSave)
+    {
+        var span = bulkSave._info.Queries.AsReadOnlySpan();
+        var hash = 0;
+        foreach (var query in span) hash += SaveQueryExtensions.GetHashCode(query);
+        return hash;
+    }
 
     #endregion
 }

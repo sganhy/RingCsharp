@@ -9,6 +9,7 @@ using System.Globalization;
 using Ring.Util.Enums;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 using Ring.Data.Enums;
+using Ring.Schema.Models;
 
 namespace Ring.PostgreSQL;
 
@@ -16,11 +17,11 @@ public sealed class Connection : IRingConnection, IDisposable
 {
     private readonly static Dictionary<string, int> _connectionCounts = new(); // <connectionString.ToUpper(), connectionCount>
     private readonly static string ActionMessage = "{Message}";
+    private readonly static NpgsqlParameter [] DefaultParameterArray = Array.Empty<NpgsqlParameter>();
     private readonly static LogBuilder _logBuilder = new();
     private readonly static string?[] EmptyResult = Array.Empty<string?>();
     private readonly static object _syncRoot = new();
     private readonly static string _ddlOperationType = nameof(AlterQueryType);
-
     private readonly IConfiguration _configuration;
     private readonly ILogger<Connection> _logger;
     private readonly int _id;
@@ -144,7 +145,7 @@ public sealed class Connection : IRingConnection, IDisposable
     }
 
 
-    public int Execute(in AlterQuery query)
+    public long Execute(in AlterQuery query)
     {
         if (_informationEnabled) _lastExecutionTime = DateTime.Now;
         int returnValue;
@@ -218,13 +219,68 @@ public sealed class Connection : IRingConnection, IDisposable
         return new(Task.FromResult(returnValue));
     }
 
-    public int Execute(in SaveQuery query)
+    public long Execute(in SaveQuery query)
     {
-        throw new NotImplementedException();
+        if (_informationEnabled) _lastExecutionTime = DateTime.Now;
+        int returnValue;
+        var sql = query.ToSql();
+        if (sql == null)
+        {
+            LogUnSupportedOperation(query);
+            return 0;
+        }
+        
+        // Review SQL queries for security vulnerabilities
+        // Do not catch general exception types
+#pragma warning disable CA2100, CA1031
+        var cmd = new NpgsqlCommand(sql, _connection);
+        try
+        {
+            cmd.Parameters.AddRange(Getparameters(query));
+            cmd.ExecuteNonQuery();
+            returnValue = 1;
+        }
+        catch (Exception ex)
+        {
+            LogDmlException(ex, query);
+            returnValue = 0;
+        }
+#pragma warning restore CA1031, CA2100
+        cmd.Connection = null;
+        cmd.Dispose();
+
+        if (returnValue > 0 && _informationEnabled) LogOperationPerformed(query, DateTime.Now - _lastExecutionTime);
+        return 2;
+    }
+
+    #region private methods 
+
+    private static NpgsqlParameter[] Getparameters(in SaveQuery saveQuery) 
+    {
+        NpgsqlParameter[] result = DefaultParameterArray;
+        if (saveQuery.Type == SaveQueryType.InsertRecord)
+        {
+            // use a pool
+            result = new NpgsqlParameter[saveQuery.Table.RecordSize-1];
+            var span = new ReadOnlySpan<IColumn>(saveQuery.Table.Columns);
+            foreach (var col in span)
+            { 
+
+            }
+        }
+        else if (saveQuery.Type == SaveQueryType.UpdateRecord)
+        { 
+
+        }
+        return result;
     }
 
     private void LogDdlException(Exception ex, AlterQuery query) => 
         _logDdlException(_logger, _logBuilder.GetMessage(query, EventType.DdlException), ex);
+
+    private void LogDmlException(Exception ex, SaveQuery query) 
+    { 
+    }
 
     private void LogUnSupportedOperation(AlterQuery query) {
         var message = _logBuilder.GetMessage(EventType.UnsupportedOperation,
@@ -232,9 +288,19 @@ public sealed class Connection : IRingConnection, IDisposable
         var ex = new ArgumentException(message);
         LogDdlException(ex, query);
     }
+    private void LogUnSupportedOperation(SaveQuery query)
+    {
+        var message = _logBuilder.GetMessage(EventType.UnsupportedOperation,
+            (int)query.Type, _ddlOperationType, query.Type.ToString());
+        var ex = new ArgumentException(message);
+        //LogDdlException(ex, query);
+    }
 
     private void LogOperationPerformed(AlterQuery query, TimeSpan ts) =>
         _logOperationPerformed(_logger, string.Empty, null);
 
-    
+    private void LogOperationPerformed(SaveQuery query, TimeSpan ts) =>
+        _logOperationPerformed(_logger, string.Empty, null);
+
+    #endregion 
 }

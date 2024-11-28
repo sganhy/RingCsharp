@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System;
+using System.Runtime.CompilerServices;
 
 namespace Ring.Data;
 
@@ -44,8 +45,8 @@ internal struct SpanList<T> where T : struct
 	internal void Clear() => _count = 0;
 
 	public readonly Enumerator GetEnumerator() => new(this);
-
-    public readonly Span<T> AsSpan() => _buffer.AsSpan();
+    public readonly Span<T> AsSpan() => new(_buffer, 0, _count);
+    public readonly ReadOnlySpan<T> AsReadOnlySpan() => new(_buffer, 0, _count);
 
     #region subclasses
 
@@ -85,7 +86,6 @@ internal struct SpanList<T> where T : struct
 	#endregion
 
 #pragma warning disable IDE0251 // Make member 'readonly'
-
 	internal void Sort(Comparison<T> comparison) => Array.Sort(_buffer, comparison);
 #pragma warning restore IDE0251
 

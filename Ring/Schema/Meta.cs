@@ -25,7 +25,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	private const byte TablespaceId = (byte)EntityType.Tablespace;
 	private const byte ParameterId = (byte)EntityType.Parameter;
 	private const char IndexColumnDelimiter = ';';
-    private const char HashCodeSeparator = '§';
+    private const char HashCodeSeparator = (char)7777;
 
     // flags bit positions
     private const byte BitPositionFieldCaseSensitive = 2;

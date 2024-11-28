@@ -56,7 +56,7 @@ public sealed class RecordTest : BaseTest
     }
 
     [Fact]
-    public void Equals_FeatRecord_True()
+    public void Equals_FeatRecords_True()
     {
         // arrange 
         var table = _schema.GetTable("feat");
@@ -65,6 +65,8 @@ public sealed class RecordTest : BaseTest
         for (var i = 0; i < table.RecordSize; ++i) rcd1[i] = _faker.Random.String();
         var rcd2 = new Record(table);
         for (var i = 0; i < table.RecordSize; ++i) rcd2[i] = rcd1[i];
+        rcd1.SetField("name", "name");
+        rcd2.SetField("name", "name");
 
         // act 
         var result = rcd1.Equals(rcd2);
@@ -82,6 +84,9 @@ public sealed class RecordTest : BaseTest
         var rcd1 = new Record(table);
         for (var i = 1; i < table.Fields.Length; ++i) rcd1[i] = _faker.Random.String();
         var rcd2 = new Record(table);
+        for (var i = 0; i < table.RecordSize; ++i) rcd2[i] = rcd1[i];
+        rcd1.SetField("name", "test1");
+        rcd2.SetField("name", "test2");
 
         // act 
         var result = rcd1 == rcd2;

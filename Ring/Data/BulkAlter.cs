@@ -14,12 +14,10 @@ using Index = Ring.Schema.Models.Index;
 
 namespace Ring.Data;
 
-#pragma warning disable IDE0250 // Make struct 'readonly'
-internal struct BulkAlter
+internal struct BulkAlter : IEquatable<BulkAlter>
 {
-#pragma warning restore IDE0250
     private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
-    private readonly SpanList<AlterQuery> _queries;
+    private SpanList<AlterQuery> _queries;
     private readonly Database _schema;
     private readonly Dictionary<EntityType, Dictionary<string, TableSpace>> _tablespaces; // <entityType, <tableName or default>, TableSpaceInfo>
 
@@ -69,6 +67,19 @@ internal struct BulkAlter
              return q1.Type.CompareTo(q2.Type);
          });
         foreach(var query in _queries) connection.Execute(query);
+    }
+
+    public readonly override int GetHashCode() => GetHashCode(this);
+    public static bool operator ==(BulkAlter left, BulkAlter right) => left.Equals(right);
+    public static bool operator !=(BulkAlter left, BulkAlter right) => !left.Equals(right);
+    public override readonly bool Equals(object? obj) => obj is BulkAlter bulkAlter && Equals(bulkAlter);
+    public readonly bool Equals(BulkAlter other)
+    {
+        if (_schema.Id == other._schema.Id && _queries.Count == other._queries.Count)
+        {
+            return GetHashCode(this) == GetHashCode(other);
+        }
+        return false;
     }
 
     #region private methods
@@ -165,6 +176,14 @@ internal struct BulkAlter
             dico[EntityType.Table].Add(tableName, tablespace);
         if (tablespace.Constraint && !dico[EntityType.Constraint].ContainsKey(tableName))
             dico[EntityType.Constraint].Add(tableName, tablespace);
+    }
+
+    private static int GetHashCode(in BulkAlter bulkAlter)
+    {
+        var span = bulkAlter._queries.AsReadOnlySpan();
+        var hash = 0;
+        foreach (var query in span) hash += AlterQueryExtensions.GetHashCode(query);
+        return hash;
     }
 
     #endregion

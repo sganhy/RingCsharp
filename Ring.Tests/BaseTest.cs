@@ -19,7 +19,7 @@ public abstract class BaseTest
         for (var i = 0; i < numberOfField; i++) fields.Add(GetAnonymousField(minChar, maxChar));
         var fieldsById = new List<Field>(fields);
         var relations = new List<Relation>();
-        for (var i = 0; i < numberOfRelation; i++) relations.Add(GetAnonymousRelation());
+        for (var i = 0; i < numberOfRelation; i++) relations.Add(GetAnonymousRelation(null,minChar, maxChar));
 
         // sort lists
         fields = fields.OrderBy(o => o.Name, StringComparer.Ordinal).ToList();
@@ -40,12 +40,12 @@ public abstract class BaseTest
             _faker.Random.String(), _faker.Random.Bool(), _faker.Random.Bool(), _faker.Random.Bool(),
             _faker.Random.Bool(), _faker.Random.Bool());
 
-    internal Relation GetAnonymousRelation(string? name=null)
+    internal Relation GetAnonymousRelation(string? name=null, char minChar = char.MinValue, char maxChar = char.MaxValue)
     {
-        var toTable = new Table(_faker.Random.Number(int.MinValue,int.MaxValue), _faker.Random.String(), _faker.Random.String(), _faker.Random.String(),
-            _faker.Random.String(), TableType.Business, Array.Empty<Relation>(), Array.Empty<Field>(), Array.Empty<int>(), Array.Empty<IColumn>(),
-            Array.Empty<Index>(), 12, PhysicalType.Table, true, true, true, true);
-        return new Relation(_faker.Random.Number(100, int.MaxValue), name ?? _faker.Random.String(), _faker.Random.String(),
+        var toTable = new Table(_faker.Random.Number(int.MinValue,int.MaxValue), _faker.Random.String(null, minChar, maxChar), _faker.Random.String(), 
+            _faker.Random.String(), _faker.Random.String(), TableType.Business, Array.Empty<Relation>(), Array.Empty<Field>(), Array.Empty<int>(), 
+            Array.Empty<IColumn>(), Array.Empty<Index>(), 12, PhysicalType.Table, true, true, true, true);
+        return new Relation(_faker.Random.Number(100, int.MaxValue), name ?? _faker.Random.String(null, minChar, maxChar), _faker.Random.String(),
             _faker.PickRandom<RelationType>(), toTable, -1, FieldType.Long, _faker.Random.Bool(), _faker.Random.Bool(),
             _faker.Random.Bool(), _faker.Random.Bool());
     }

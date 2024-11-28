@@ -16,8 +16,7 @@ public interface IRingConnection: IDisposable
     Task CloseAsync(CancellationToken cancellationToken);
     IRingConnection CreateNewInstance();
     string?[] Execute(in RetrieveQuery query);
-    int Execute(in AlterQuery query);
+    long Execute(in AlterQuery query);
+    long Execute(in SaveQuery query);
     ValueTask<int> ExecuteAsync(in AlterQuery query, CancellationToken cancellationToken = default);
-    int Execute(in SaveQuery query);
-    
 }
