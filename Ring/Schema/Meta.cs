@@ -25,10 +25,10 @@ internal readonly struct Meta : IEquatable<Meta>
 	private const byte TablespaceId = (byte)EntityType.Tablespace;
 	private const byte ParameterId = (byte)EntityType.Parameter;
 	private const char IndexColumnDelimiter = ';';
-    private const char HashCodeSeparator = (char)7777;
+	private const char HashCodeSeparator = (char)7777;
 
-    // flags bit positions
-    private const byte BitPositionFieldCaseSensitive = 2;
+	// flags bit positions
+	private const byte BitPositionFieldCaseSensitive = 2;
 	private const byte BitPositionFieldNotNull = 3;
 	private const byte BitPositionFieldMultilingual = 4;
 	private const byte BitPositionIndexBitmap = 9;
@@ -50,7 +50,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	internal readonly int ReferenceId;
 	internal readonly int DataType;
 	internal readonly long Flags;
-	internal readonly string Name;          // name of entity
+	internal readonly string Name;		  // name of entity
 	internal readonly string? Description;  // late loading 
 	internal readonly string? Value;
 	internal readonly bool Active;
@@ -191,7 +191,7 @@ internal readonly struct Meta : IEquatable<Meta>
 		Meta? result=null;
 		var span = new ReadOnlySpan<Meta>(metas);
 		var entityTypeId = (byte)entityType;
-        for (var i = 0; i < span.Length; ++i) {
+		for (var i = 0; i < span.Length; ++i) {
 			var meta = span[i];
 			if (entityTypeId == meta.ObjectType) return meta;
 		}
@@ -202,7 +202,7 @@ internal readonly struct Meta : IEquatable<Meta>
 		new(id, meta.ObjectType, meta.ReferenceId, meta.DataType, meta.Flags, meta.Name, 
 			meta.Description, meta.Value, meta.Active);
 
-    internal EntityType GetEntityType() => ((int)ObjectType).ToEntityType();
+	internal EntityType GetEntityType() => ((int)ObjectType).ToEntityType();
 
 	#region convertors 
 
@@ -288,16 +288,16 @@ internal readonly struct Meta : IEquatable<Meta>
 			Array.Sort(indexes, (x, y) => string.CompareOrdinal(x.Name, y.Name));
 
 			return new Table(Id, Name, Description, Value, physicalName,
-                tableType, relations, fields, new int[columnMapperSize], new IColumn[columnMapperSize], indexes, ReferenceId,
-                physicalType, IsEntityBaseline, Active, IsTableCached, IsTableReadonly);
-        }
+				tableType, relations, fields, new int[columnMapperSize], new IColumn[columnMapperSize], indexes, ReferenceId,
+				physicalType, IsEntityBaseline, Active, IsTableCached, IsTableReadonly);
+		}
 		return null;
 	}
-    #endregion
+	#endregion
 
-    public static bool operator ==(Meta left, Meta right) => left.Equals(right);
-    public static bool operator !=(Meta left, Meta right) => !left.Equals(right);
-    public readonly bool Equals(Meta other) =>
+	public static bool operator ==(Meta left, Meta right) => left.Equals(right);
+	public static bool operator !=(Meta left, Meta right) => !left.Equals(right);
+	public readonly bool Equals(Meta other) =>
 		Id == other.Id &&
 		ObjectType == other.ObjectType &&
 		ReferenceId == other.ReferenceId &&

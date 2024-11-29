@@ -9,7 +9,7 @@ namespace Ring.Schema.Extensions;
 
 internal static class FieldExtensions
 {
-	private const char HashCodeSeparator = '$';
+	private const char HashCodeSeparator = (char)3333;
 	private static readonly string PrimaryKeyFieldName = "id";
 	private static readonly string PrimaryKeyDescription = "Internal record number";
 	private static readonly string NumberDefaultValue = "0";

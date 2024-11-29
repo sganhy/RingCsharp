@@ -8,7 +8,7 @@ internal struct CacheId
 	internal int ReservedRange;  // cache a range of id 
 
 	/// <summary>
-	///     Ctor
+	/// 	Ctor
 	/// </summary>
 	public CacheId()
 	{

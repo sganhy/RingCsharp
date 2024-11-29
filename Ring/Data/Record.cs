@@ -19,7 +19,7 @@ namespace Ring.Data;
 
 public struct Record : IEquatable<Record>
 {
-	private const char HashCodeSeparator = (char)3333;// end of text character
+	private const char HashCodeSeparator = (char)3553;// end of text character
 	private const decimal MaxIntValue = int.MaxValue;
 	private const decimal MinIntValue = int.MinValue;
 	private const decimal MaxShortValue = short.MaxValue;
@@ -213,7 +213,7 @@ public struct Record : IEquatable<Record>
 				case FieldType.ByteArray: SetByteArrayField(fieldId, value); break;
 			}
 		else SetData(fieldId, null);
-    }
+	}
 
 	internal void SetField(string name, long value, FieldType fieldType)
 	{
@@ -463,7 +463,7 @@ public struct Record : IEquatable<Record>
 		}
 	}
 
-    private void InitializeTracking(int trackerIndex) => _data[trackerIndex] = new string(new char[(_type.Fields.Length >> 4) + 1]);
+	private void InitializeTracking(int trackerIndex) => _data[trackerIndex] = new string(new char[(_type.Fields.Length >> 4) + 1]);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private void SetData(int fieldId, string? value)

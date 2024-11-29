@@ -5,8 +5,8 @@ namespace Ring.Data;
 
 internal struct SpanList<T> where T : struct
 {
-    //TODO use pool of array 
-    private T[] _buffer;
+	//TODO use pool of array 
+	private T[] _buffer;
 	private int _count;
 
 	public SpanList()
@@ -39,18 +39,18 @@ internal struct SpanList<T> where T : struct
 		if (count >= _buffer.Length) ReDim();
 		_buffer[count] = value;
 		++count;
-        _count = count;
-    }
+		_count = count;
+	}
 
 	internal void Clear() => _count = 0;
 
 	public readonly Enumerator GetEnumerator() => new(this);
-    public readonly Span<T> AsSpan() => new(_buffer, 0, _count);
-    public readonly ReadOnlySpan<T> AsReadOnlySpan() => new(_buffer, 0, _count);
+	public readonly Span<T> AsSpan() => new(_buffer, 0, _count);
+	public readonly ReadOnlySpan<T> AsReadOnlySpan() => new(_buffer, 0, _count);
 
-    #region subclasses
+	#region subclasses
 
-    public ref struct Enumerator
+	public ref struct Enumerator
 	{
 		private readonly SpanList<T> _span;
 		private int _index;

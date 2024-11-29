@@ -9,15 +9,15 @@ namespace Ring.Schema.Extensions;
 
 internal static class TableExtensions
 {
-	private const char HashCodeSeparator = '+';
+	private const char HashCodeSeparator = (char)9999;
 
-	/// <summary>
-	/// Get field by name, case sensitive search ==> O(log n) complexity
-	/// </summary>
-	/// <param name="table">table object</param>
-	/// <param name="name">field name</param>
-	/// <returns>Field object</returns>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+    /// <summary>
+    /// Get field by name, case sensitive search ==> O(log n) complexity
+    /// </summary>
+    /// <param name="table">table object</param>
+    /// <param name="name">field name</param>
+    /// <returns>Field object</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static Field? GetField(this Table table, string name)
 	{
 		var span = new ReadOnlySpan<Field>(table.Fields);

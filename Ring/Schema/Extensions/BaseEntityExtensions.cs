@@ -6,13 +6,7 @@ namespace Ring.Schema.Extensions;
 
 internal static class BaseEntityExtensions
 {
-	private const char HashCodeSeparator = (char)555;
-
-	internal static long GetHashCode(this BaseEntity baseEntity)
-	{
-		HashHelper.Djb2X(GetStringCode(baseEntity), out long hash);
-		return hash;
-	}
+	private const char HashCodeSeparator = (char)8888;
 
 	internal static string GetStringCode(this BaseEntity baseEntity)
 	{

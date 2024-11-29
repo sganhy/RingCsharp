@@ -12,7 +12,7 @@ namespace Ring.Schema.Extensions;
 /// </summary>
 internal static class IndexExtensions
 {
-	private const char HashCodeSeparator = '*';
+	private const char HashCodeSeparator = (char)1111;
 
 	internal static Meta ToMeta(this Index index, int tableId)
 	{

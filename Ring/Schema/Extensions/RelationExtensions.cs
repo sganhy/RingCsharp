@@ -10,7 +10,7 @@ internal static class RelationExtensions
 {
 	private const char MtmSeparator = '_';
 	private const char PaddingChar = '0';
-	private const char HashCodeSeparator = '&';
+	private const char HashCodeSeparator = (char)2222;
 
 	internal static Meta ToMeta(this Relation relation, int fromTableId, RelationType? newRelationType=null)
 	{

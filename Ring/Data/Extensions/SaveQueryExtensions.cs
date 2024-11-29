@@ -7,7 +7,7 @@ namespace Ring.Data.Extensions;
 
 internal static class SaveQueryExtensions
 {
-	private const char HashCodeSeparator = (char)444;
+	private const char HashCodeSeparator = (char)4444;
 
 	internal static int GetHashCode(this SaveQuery saveQuery)
 	{

@@ -7,7 +7,7 @@ namespace Ring.Data.Extensions;
 
 internal static class AlterQueryExtensions
 {
-	private const char HashCodeSeparator = (char)555;
+	private const char HashCodeSeparator = (char)5555;
 
 	internal static string? ToSql(this AlterQuery query)
 	{
