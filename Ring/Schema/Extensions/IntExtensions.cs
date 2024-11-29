@@ -68,7 +68,7 @@ internal static class IntExtensions
 	private static readonly Dictionary<int, ParameterType> ParameterTypeEnumsId = GetParameterTypeId();
 
 	/// <summary>
-	/// Casting from int to TableType
+	/// 	Casting from int to TableType
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static TableType ToTableType(this int dataType)
@@ -134,7 +134,7 @@ internal static class IntExtensions
 	}
 
 	/// <summary>
-	/// Low performance !
+	/// 	Low performance !
 	/// </summary>
 	internal static ParameterType ToParameterType(this int id) =>
 		ParameterTypeEnumsId.ContainsKey(id) ? ParameterTypeEnumsId[id] : ParameterType.Undefined;

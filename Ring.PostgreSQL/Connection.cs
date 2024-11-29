@@ -13,7 +13,7 @@ using Ring.Schema.Models;
 
 namespace Ring.PostgreSQL;
 
-public sealed class Connection : IRingConnection, IDisposable
+public sealed class Connection : IRingConnection
 {
     private readonly static Dictionary<string, int> _connectionCounts = new(); // <connectionString.ToUpper(), connectionCount>
     private readonly static string ActionMessage = "{Message}";
@@ -229,7 +229,6 @@ public sealed class Connection : IRingConnection, IDisposable
             LogUnSupportedOperation(query);
             return 0;
         }
-        
         // Review SQL queries for security vulnerabilities
         // Do not catch general exception types
 #pragma warning disable CA2100, CA1031
@@ -255,20 +254,24 @@ public sealed class Connection : IRingConnection, IDisposable
 
     #region private methods 
 
-    private static NpgsqlParameter[] Getparameters(in SaveQuery saveQuery) 
+    private static NpgsqlParameter[] Getparameters(in SaveQuery saveQuery)
     {
         NpgsqlParameter[] result = DefaultParameterArray;
         if (saveQuery.Type == SaveQueryType.InsertRecord)
         {
             // use a pool
-            result = new NpgsqlParameter[saveQuery.Table.RecordSize-1];
+            result = new NpgsqlParameter[saveQuery.Table.RecordSize - 1];
             var span = new ReadOnlySpan<IColumn>(saveQuery.Table.Columns);
             foreach (var col in span)
-            { 
+            {
 
             }
         }
         else if (saveQuery.Type == SaveQueryType.UpdateRecord)
+        {
+
+        }
+        else if (saveQuery.Type == SaveQueryType.UpdateReturningRecord)
         { 
 
         }

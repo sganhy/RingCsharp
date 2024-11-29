@@ -43,10 +43,6 @@
 	<ItemGroup>
 		<PackageReference Include="Microsoft.DotNet.ILCompiler" Version="9.0.0" />
 		<PackageReference Include="Microsoft.NET.ILLink.Tasks" Version="9.0.0" />
-		<PackageReference Update="SonarAnalyzer.CSharp" Version="9.32.0.97167">
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-		</PackageReference>
 	</ItemGroup>
 	
 </Project>

@@ -1,19 +1,16 @@
 ﻿using Ring.Data.Extensions;
 using Ring.Data.Models;
 using Ring.Schema;
-using Ring.Schema.Builders;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using Ring.Util.Enums;
 using Ring.Util.Extensions;
 using Ring.Util.Helpers;
-using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
-using System.Xml.Linq;
 
 namespace Ring.Data;
 
@@ -98,13 +95,13 @@ public struct Record : IEquatable<Record>
 	}
 
 	/// <summary>
-	///	 Get primary key value (Field name ID)
+	/// 	Get primary key value (Field name ID)
 	/// </summary>
 	internal readonly long GetField()
 		=> long.Parse(_data[_type.RecordIndexes[0]+_offset] ?? DefaultPrimaryKeyValue, DefaultCulture);
 
 	/// <summary>
-	///	 GetField methods
+	/// 	GetField methods
 	/// </summary>
 	public readonly string? GetField(string name)
 	{
@@ -124,9 +121,9 @@ public struct Record : IEquatable<Record>
 		if (field.Type != FieldType.Boolean) ThrowImpossibleConversion(field.Type, FieldType.Boolean);
 		value = null;
 		//BooleanTrue: BooleanFalse
-		var result = _data[fieldId + _offset] ?? _type.Fields[fieldId].DefaultValue;
-		if (BooleanTrue.Equals(result, StringComparison.Ordinal)) value = true;
-		else if (BooleanFalse.Equals(result, StringComparison.Ordinal)) value = false;
+		var result = _data[fieldId + _offset] ?? field.DefaultValue;
+		if (string.Equals(BooleanTrue, result, StringComparison.Ordinal)) value = true;
+		else if (string.Equals(BooleanFalse, result, StringComparison.Ordinal)) value = false;
 	}
 
 	public readonly void GetField(string name, out byte[]? value)
@@ -136,8 +133,9 @@ public struct Record : IEquatable<Record>
 		if (fieldId <= -1) ThrowRecordUnknownFieldName(name);
 		value = null;
 		var field = _type.Fields[fieldId];
-		if (field.Type != FieldType.ByteArray) ThrowImpossibleConversion(field.Type, FieldType.Boolean);
-		var result = _data[fieldId + _offset] ?? _type.Fields[fieldId].DefaultValue;
+		var fieldType = field.Type;
+		if (fieldType != FieldType.ByteArray) ThrowImpossibleConversion(fieldType, FieldType.ByteArray);
+		var result = _data[fieldId + _offset] ?? field.DefaultValue;
 		if (result != null) value = Convert.FromBase64String(result);
 	}
 
@@ -148,14 +146,15 @@ public struct Record : IEquatable<Record>
 		if (fieldId <= -1) ThrowRecordUnknownFieldName(name);
 		value = null;
 		var field = _type.Fields[fieldId];
-		if (field.Type != FieldType.Byte && field.Type != FieldType.Short && field.Type != FieldType.Int && field.Type != FieldType.Long)
-			ThrowImpossibleConversion(field.Type, FieldType.Long);
-		var result = _data[fieldId + _offset] ?? _type.Fields[fieldId].DefaultValue;
+		var fieldType = field.Type;
+		if (fieldType != FieldType.Byte && fieldType != FieldType.Short && fieldType != FieldType.Int && fieldType != FieldType.Long)
+			ThrowImpossibleConversion(fieldType, FieldType.Long);
+		var result = _data[fieldId + _offset] ?? field.DefaultValue;
 		if (result != null) value = long.Parse(result, DefaultCulture);
 	}
 
 	/// <summary>
-	/// Get UTC date/time
+	/// 	Get UTC date/time
 	/// </summary>
 	public readonly void GetField(string name, out DateTime? value)
 	{
@@ -164,14 +163,15 @@ public struct Record : IEquatable<Record>
 		if (fieldId <= -1) ThrowRecordUnknownFieldName(name);
 		value = null;
 		var field = _type.Fields[fieldId];
-		if (field.Type != FieldType.DateTime && field.Type != FieldType.LongDateTime && field.Type != FieldType.ShortDateTime)
-			ThrowImpossibleConversion(field.Type, FieldType.DateTime);
-		var result = _data[fieldId + _offset] ?? _type.Fields[fieldId].DefaultValue;
+		var fieldType = field.Type;
+		if (fieldType != FieldType.DateTime && fieldType != FieldType.LongDateTime && fieldType != FieldType.ShortDateTime)
+			ThrowImpossibleConversion(fieldType, FieldType.DateTime);
+		var result = _data[fieldId + _offset] ?? field.DefaultValue;
 		if (result == null) return;
-		var year = int.Parse(result[..4], DefaultCulture);
+		var year = int.Parse(result.AsSpan(0, 4), DefaultCulture);
 		var month = int.Parse(result.AsSpan(5, 2), DefaultNumberStyle, DefaultCulture);
 		var day = int.Parse(result.AsSpan(8, 2), DefaultNumberStyle, DefaultCulture);
-		if (field.Type == FieldType.ShortDateTime)
+		if (fieldType == FieldType.ShortDateTime)
 		{
 			value = new DateTime(year, month, day, 0, 0, 0, DateTimeKind.Utc);
 		}
@@ -181,12 +181,12 @@ public struct Record : IEquatable<Record>
 			var minute = int.Parse(result.AsSpan(14, 2), DefaultNumberStyle, DefaultCulture);
 			var second = int.Parse(result.AsSpan(17, 2), DefaultNumberStyle, DefaultCulture);
 			var milliSecond = int.Parse(result.AsSpan(20, 3), DefaultNumberStyle, DefaultCulture);
-			if (field.Type == FieldType.DateTime) value = new DateTime(year, month, day, hour, minute, second, milliSecond, DateTimeKind.Utc);
+			if (fieldType == FieldType.DateTime) value = new DateTime(year, month, day, hour, minute, second, milliSecond, DateTimeKind.Utc);
 		}
 	}
 
 	/// <summary>
-	///	 Set field value
+	/// 	Set field value
 	/// </summary>
 	/// <param name="name">field name</param>
 	/// <param name="value">field value</param>
@@ -196,7 +196,8 @@ public struct Record : IEquatable<Record>
 		var fieldId = _type.GetFieldIndex(name);
 		if (fieldId == -1) ThrowRecordUnknownFieldName(name);
 		var type = _type.Fields[fieldId].Type;
-		if (value != null) 
+#pragma warning disable RCS1003 // Add braces to if-else (when expression spans over multiple lines)
+		if (value != null)
 			switch (type)
 			{
 				case FieldType.String: SetStringField(_type.Fields[fieldId].Size, fieldId, value); break;
@@ -213,6 +214,7 @@ public struct Record : IEquatable<Record>
 				case FieldType.ByteArray: SetByteArrayField(fieldId, value); break;
 			}
 		else SetData(fieldId, null);
+#pragma warning restore RCS1003
 	}
 
 	internal void SetField(string name, long value, FieldType fieldType)
@@ -370,7 +372,7 @@ public struct Record : IEquatable<Record>
 	internal readonly bool IsRelationExist(string name) => _type.GetRelationIndex(name) != -1;
 
 	/// <summary>
-	///	 Return relation ID value by name
+	/// 	Return relation ID value by name
 	/// </summary>
 	/// <param name="name">Name of the relation</param>
 	/// <returns>relation ID value;if not defined return null</returns>
@@ -533,7 +535,7 @@ public struct Record : IEquatable<Record>
 	[DoesNotReturn]
 	private static void ThrowImpossibleConversion(FieldType fieldTypeSource, FieldType fieldTypeDestination) =>
 		throw new ArgumentException(string.Format(DefaultCulture,
-			ResourceHelper.GetErrorMessage(ResourceType.RecordCannotConvert), 
+			ResourceHelper.GetErrorMessage(ResourceType.RecordCannotConvert),
 			fieldTypeSource.RecordTypeDisplay() ?? NullString,
 			fieldTypeDestination.RecordTypeDisplay() ?? NullString));
 

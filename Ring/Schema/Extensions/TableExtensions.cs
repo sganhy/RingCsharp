@@ -11,13 +11,13 @@ internal static class TableExtensions
 {
 	private const char HashCodeSeparator = (char)9999;
 
-    /// <summary>
-    /// Get field by name, case sensitive search ==> O(log n) complexity
-    /// </summary>
-    /// <param name="table">table object</param>
-    /// <param name="name">field name</param>
-    /// <returns>Field object</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+	/// <summary>
+	/// 	Get field by name, case sensitive search ==> O(log n) complexity
+	/// </summary>
+	/// <param name="table">table object</param>
+	/// <param name="name">field name</param>
+	/// <returns>Field object</returns>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static Field? GetField(this Table table, string name)
 	{
 		var span = new ReadOnlySpan<Field>(table.Fields);
@@ -35,7 +35,7 @@ internal static class TableExtensions
 	}
 
 	/// <summary>
-	/// Get field by name, case unsensitive search ==> O(n) complexity
+	/// 	Get field by name, case unsensitive search ==> O(n) complexity
 	/// </summary>
 	/// <param name="table">table object</param>
 	/// <param name="name">field name</param>
@@ -49,7 +49,7 @@ internal static class TableExtensions
 	}
 
 	/// <summary>
-	/// Get Fields by id ==> O(n) complexity
+	/// 	Get Fields by id ==> O(n) complexity
 	/// </summary>
 	internal static Field? GetField(this Table table, int id)
 	{
@@ -65,7 +65,7 @@ internal static class TableExtensions
 	}
 
 	/// <summary>
-	/// Get index field by name, case sensitive search ==> O(log n) complexity
+	/// 	Get index field by name, case sensitive search ==> O(log n) complexity
 	/// </summary>
 	/// <param name="table">table object</param>
 	/// <param name="name">field name</param>
@@ -88,7 +88,7 @@ internal static class TableExtensions
 	}
 
 	/// <summary>
-	/// Get relation object by name ==> O(log n) complexity
+	/// 	Get relation object by name ==> O(log n) complexity
 	/// </summary>
 	/// <param name="table">Table object</param>
 	/// <param name="name">Relation name</param>
@@ -111,7 +111,7 @@ internal static class TableExtensions
 	}
 
 	/// <summary>
-	/// Get relation object by name ==> O(n) complexity
+	/// 	Get relation object by name ==> O(n) complexity
 	/// </summary>
 	/// <param name="table">Table object</param>
 	/// <param name="name">Relation name</param>
@@ -128,18 +128,18 @@ internal static class TableExtensions
 	}
 
 	/// <summary>
-	/// Get relation object by id ==> O(n) complexity
+	/// 	Get relation object by id ==> O(n) complexity
 	/// </summary>
 	/// <returns>Relation object</returns>
 	internal static Relation? GetRelation(this Table table, int id)
 	{
-		foreach (var relation in new ReadOnlySpan<Relation>(table.Relations)) 
+		foreach (var relation in new ReadOnlySpan<Relation>(table.Relations))
 			if (id == relation.Id) return relation;
 		return null;
 	}
 
 	/// <summary>
-	/// Get index relation by name, case sensitive search ==> O(log n) complexity
+	/// 	Get index relation by name, case sensitive search ==> O(log n) complexity
 	/// </summary>
 	/// <param name="table">table object</param>
 	/// <param name="name">relation name</param>
@@ -161,7 +161,7 @@ internal static class TableExtensions
 	}
 
 	/// <summary>
-	/// Get index object by name ==> O(log n) complexity
+	/// 	Get index object by name ==> O(log n) complexity
 	/// </summary>
 	/// <returns>Index object</returns>
 	internal static Index? GetIndex(this Table table, string name)
@@ -217,7 +217,7 @@ internal static class TableExtensions
 	}
 
 	/// <summary>
-	/// Load Table.RecordIndexes[] & Table.Columns[]
+	/// 	Load Table.RecordIndexes[] & Table.Columns[]
 	/// </summary>
 	internal static void LoadColumnMapper(this Table table)
 	{
@@ -260,7 +260,7 @@ internal static class TableExtensions
 	}
 
 	/// <summary>
-	/// Compute index of relation(s) to Record._data[]; default value equal to -1
+	/// 	Compute index of relation(s) to Record._data[]; default value equal to -1
 	/// </summary>
 	internal static void LoadRelationRecordIndex(this Table table)
 	{
@@ -290,21 +290,21 @@ internal static class TableExtensions
 	internal static string GetStringCode(this Table table)
 	{
 		/*
-		 *  readonly bool Cached
-		 *  readonly Field[] Fields
-		 *  readonly Relation[] Relations
-		 *  readonly Index[] Indexes
-		 *  readonly int[] RecordIndexes
-		 *  readonly int RecordSize
-		 *  readonly IColumn[] Columns
-		 *  readonly string PhysicalName
-		 *  readonly PhysicalType PhysicalType
-		 *  readonly int SchemaId
-		 *  readonly string? Subject
-		 *  readonly TableType Type
-		 *  readonly CacheId CacheId
-		 *  readonly bool Readonly
-		 */
+		* readonly bool Cached
+		* readonly Field[] Fields
+		* readonly Relation[] Relations
+		* readonly Index[] Indexes
+		* readonly int[] RecordIndexes
+		* readonly int RecordSize
+		* readonly IColumn[] Columns
+		* readonly string PhysicalName
+		* readonly PhysicalType PhysicalType
+		* readonly int SchemaId
+		* readonly string? Subject
+		* readonly TableType Type
+		* readonly CacheId CacheId
+		* readonly bool Readonly
+		*/
 		var result = new StringBuilder();
 		result.Append(table.Cached);
 		result.Append(HashCodeSeparator);
@@ -338,7 +338,7 @@ internal static class TableExtensions
 	#region private methods 
 
 	/// <summary>
-	/// Get first unique index
+	/// 	Get first unique index
 	/// </summary>
 	private static Index? GetFirstUniqueIndex(this Table table)
 	{
