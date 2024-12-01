@@ -335,12 +335,18 @@ internal static class TableExtensions
 		return result.ToString();
 	}
 
-	#region private methods 
+	internal static Table SetObjectIndex(this Table table, int objectIndex)
+		=> new(table.Id, table.Name, table.Description, table.Subject, table.PhysicalName, table.Type, table.Relations, table.Fields,
+                table.RecordIndexes, table.Columns, table.Indexes, table.SchemaId, objectIndex, table.PhysicalType, table.Baseline, table.Active,
+                table.Cached, table.Readonly);
 
-	/// <summary>
-	/// 	Get first unique index
-	/// </summary>
-	private static Index? GetFirstUniqueIndex(this Table table)
+
+    #region private methods 
+
+    /// <summary>
+    /// 	Get first unique index
+    /// </summary>
+    private static Index? GetFirstUniqueIndex(this Table table)
 	{
 		if (table.Indexes.Length > 0)
 			for (var i = 0; i < table.Indexes.Length; ++i)

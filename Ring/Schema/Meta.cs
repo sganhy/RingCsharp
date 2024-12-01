@@ -249,16 +249,16 @@ internal readonly struct Meta : IEquatable<Meta>
 			var result1 = new DbSchema(meta.Value.Id, metaValue.Name, metaValue.Description, parameters,
 				lexicons.ToArray(), loadType, type, sequences.ToArray(), tableById.ToArray(), tableByName.ToArray(), tableSpaces.ToArray(),
 				provider, objectCount, metaValue.Active, metaValue.IsEntityBaseline);
-            result1.GetObjectCount();
+
+            result1.LoadRelations(schema);
+            result1.LoadColumnMappers(); // load column mapper on tables
+            result1.LoadRecordIndexes(); // load record indexes on relations
 
             // build schema Step 2
-            objectCount = result1.GetObjectCount();
-			var result2 = result1.SetObjectCount(objectCount);
-            result2.LoadRelations(schema);
-            result2.LoadColumnMappers(); // load column mapper on tables
-            result2.LoadRecordIndexes(); // load record indexes on relations
+            objectCount = result1.GetObjectCount(); // should be compute after LoadRelations()
+            var result2 = result1.SetObjectCount(objectCount);
 
-			return result2;
+            return result2;
 		}
 		return null;
 	}
