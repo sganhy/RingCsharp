@@ -1,7 +1,6 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
 using Ring.Data;
-using Ring.PostgreSQL;
 using Ring.Schema;
 using Ring.Schema.Builders;
 using Ring.Schema.Enums;
