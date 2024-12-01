@@ -73,7 +73,7 @@ internal static class IntExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static TableType ToTableType(this int dataType)
 	{
-		switch (dataType)
+        switch (dataType)
 		{
 			case TableTypeBusinessId: return TableType.Business;
 			case TableTypeBusinessLogId: return TableType.BusinessLog;
@@ -89,7 +89,7 @@ internal static class IntExtensions
 			case TableTypeTableSpaceCatalogId: return TableType.TableSpaceCatalog;
 			case TableTypeLogicalId: return TableType.Logical;
 		}
-		return TableType.Undefined;
+        return TableType.Undefined;
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -72,7 +72,6 @@ internal static class FieldExtensions
 
 	internal static Field? GetDefaultPrimaryKey(this Field? _, FieldType fieldType)
 	{
-#pragma warning disable IDE0066 // Convert switch statement to expression
 		switch (fieldType)
 		{
 			case FieldType.Byte: return _defaultPrimaryKeyInt08;
@@ -80,7 +79,6 @@ internal static class FieldExtensions
 			case FieldType.Int: return _defaultPrimaryKeyInt32;
 			case FieldType.Long: return _defaultPrimaryKeyInt64;
 		}
-#pragma warning restore IDE0066
 		return null;
 	}
 

@@ -1,19 +1,21 @@
 using Ring.Schema.Enums;
+using System.Reflection.Metadata.Ecma335;
 
 namespace Ring.Schema.Models;
 
 internal sealed class Table : BaseEntity
 {
 	internal readonly bool Cached;
-	internal readonly Field[] Fields;         // sorted by name (field.id should b)
-	internal readonly Relation[] Relations;   // sorted by name
+	internal readonly Field[] Fields;          // sorted by name (field.id should b).
+	internal readonly Relation[] Relations;    // sorted by name.
 	internal readonly Index[] Indexes;
-	internal readonly int[] RecordIndexes;    // [tableId] <= position into Fields & Relations sorted by Column.Id
+	internal readonly int[] RecordIndexes;     // [tableId] <= position into Fields & Relations sorted by Column.Id.
 	internal readonly int RecordSize;
-	internal readonly IColumn[] Columns;      // columns[n].id should be unique
+	internal readonly IColumn[] Columns;       // columns[n].id should be unique.
 	internal readonly string PhysicalName;
 	internal readonly PhysicalType PhysicalType;
 	internal readonly int SchemaId;
+	internal readonly int ObjectIndex;         // position of the table in the table collection sorted by name included MTM one.
 	internal readonly string? Subject;
 	internal readonly TableType Type;
 	internal readonly CacheId CacheId;
@@ -23,8 +25,8 @@ internal sealed class Table : BaseEntity
 	/// 	Ctor
 	/// </summary>
 	internal Table(int id, string name, string? description, string? subject, string physicalName, TableType type,
-		Relation[] relations, Field[] fields, int [] recordIndexes, IColumn[] columns, Index[] indexes, int schemaId, PhysicalType physicalType, 
-		bool baseline, bool active, bool cached, bool readonlyTable) : base(id, name, description, active, baseline)
+		Relation[] relations, Field[] fields, int [] recordIndexes, IColumn[] columns, Index[] indexes, int schemaId, int objectIndex, 
+		PhysicalType physicalType, bool baseline, bool active, bool cached, bool readonlyTable) : base(id, name, description, active, baseline)
 	{
 		Type = type;
 		Fields = fields;
@@ -37,6 +39,7 @@ internal sealed class Table : BaseEntity
 		Subject = subject;
 		CacheId = new CacheId();
 		SchemaId = schemaId;
+		ObjectIndex = objectIndex;
 		PhysicalName = physicalName;
 		PhysicalType = physicalType;
 		Cached = cached;

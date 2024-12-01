@@ -7,7 +7,6 @@ internal static class EntityTypeExtensions
 	internal static TableType ToTableType(this EntityType entityType)
 	{
 		TableType result;
-#pragma warning disable IDE0066 // Convert switch statement to expression
 		switch (entityType)
 		{
 			case EntityType.Table:
@@ -23,7 +22,6 @@ internal static class EntityTypeExtensions
 				result = TableType.Logical;
 				break;
 		}
-#pragma warning restore IDE0066
 		return result;
 	}
 }

@@ -10,7 +10,6 @@ namespace Ring.Util.Builders;
 
 internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
 {
-    private string[] _tableIndex;
     private string[] _tableSelect;
     private string? _catalogTable;
     protected readonly IDdlBuilder _ddlBuilder;
@@ -18,17 +17,15 @@ internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
     protected BaseDqlBuilder()
     {
         _tableSelect = Array.Empty<string>();
-        _tableIndex = Array.Empty<string>();
         _ddlBuilder = Provider.GetDdlBuilder();
     }
 
     public void Init(DbSchema schema, string[] tableIndex)
     {
-        _tableIndex = tableIndex;
         _tableSelect = GetTableSelect(schema);   // pre load selection for all tables
     }
 
-    public string SelectFrom(Table table) => _tableSelect[_tableIndex.GetIndex(table.Name)];
+    public string SelectFrom(Table table) => _tableSelect[table.ObjectIndex];
     
     public string Exists(Table table)
     {
@@ -71,21 +68,19 @@ internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
 
     private string[] GetTableSelect(DbSchema schema)
     {
-        var mtmCount = schema.GetMtmTableCount();
-        var tableCount = schema.TablesById.Length;
-        var result = new string[mtmCount + tableCount];
+        var result = new string[schema.ObjectCount];
         var tableSpan = new ReadOnlySpan<Table>(schema.TablesById);
 
         foreach (var table in tableSpan)
         {
-            var index = _tableIndex.GetIndex(table.Name);
+            var index = table.ObjectIndex;
             result[index] = BuildSelect(table);
             for (var i=table.Relations.Length-1; i>=0; --i)
             {
                 var relation = table.Relations[i];
                 if (relation.Type==RelationType.Mtm)
                 {
-                    index = _tableIndex.GetIndex(relation.ToTable.Name);
+                    index = relation.ToTable.ObjectIndex;
                     result[index] = BuildSelect(relation.ToTable);
                 }
             }

@@ -12,14 +12,12 @@ internal static class AlterQueryExtensions
 	internal static string? ToSql(this AlterQuery query)
 	{
 		var builder = query.Builder;
-#pragma warning disable IDE0066 // Convert switch statement to expression
 		switch (query.Type)
 		{
 			case AlterQueryType.CreateTable: return builder.Create(query.Table, query.TableSpace);
 			case AlterQueryType.CreatePrimaryKey: return builder.Create(query.Constraint!, query.TableSpace);
 			case AlterQueryType.CreateIndex: return builder.Create(query.Index!, query.Table, query.TableSpace);
 		}
-#pragma warning restore IDE0066
 		return null;
 	}
 

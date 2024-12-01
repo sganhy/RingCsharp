@@ -15,7 +15,7 @@
 		<Title>Ring</Title>
 		<Version>1.0.1-beta</Version>
 		<IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
-		<NoWarn>CA1307;CA1802;S3267</NoWarn>
+		<NoWarn>CA1307;CA1802;S3267;IDE0066</NoWarn>
 		<PublishTrimmed>True</PublishTrimmed>
 		<PublishAot>True</PublishAot>
 		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>

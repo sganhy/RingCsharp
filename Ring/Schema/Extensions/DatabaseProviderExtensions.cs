@@ -20,8 +20,6 @@ internal static class DatabaseProviderExtensions
         { EntityType.Table, new Catalog { FieldSchemaName="table_schema", FieldEntityName= "table_name", ViewName="tables" } }
     };
 
-#pragma warning disable IDE0066 // Convert switch statement to expression
-
     internal static IDdlBuilder GetDdlBuilder(this DatabaseProvider provider)
     {
         switch (provider)
@@ -119,7 +117,5 @@ internal static class DatabaseProviderExtensions
         }
         return result;
     }
-
-#pragma warning restore IDE0066
 
 }

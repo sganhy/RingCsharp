@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net8.0</TargetFramework>
+		<TargetFrameworks>net9.0;net8.0;net7.0</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<LangVersion>10.0</LangVersion>
@@ -31,18 +31,18 @@
 		<IsAotCompatible>True</IsAotCompatible>
 		<WarningLevel>6</WarningLevel>
 	</PropertyGroup>
-	
+
 	<ItemGroup>
-	  <PackageReference Include="Npgsql" Version="9.0.1" />
+		<PackageReference Include="Npgsql" Version="9.0.1" />
 	</ItemGroup>
-	
+
 	<ItemGroup>
-	  <ProjectReference Include="..\Ring\Ring.csproj" />
+		<ProjectReference Include="..\Ring\Ring.csproj" />
 	</ItemGroup>
-	
+
 	<ItemGroup>
 		<PackageReference Include="Microsoft.DotNet.ILCompiler" Version="9.0.0" />
 		<PackageReference Include="Microsoft.NET.ILLink.Tasks" Version="9.0.0" />
 	</ItemGroup>
-	
+
 </Project>

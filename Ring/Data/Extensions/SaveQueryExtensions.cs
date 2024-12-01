@@ -37,12 +37,10 @@ internal static class SaveQueryExtensions
 	internal static string? ToSql(this SaveQuery query)
 	{
 		var builder = query.Builder;
-#pragma warning disable IDE0066 // Convert switch statement to expression
 		switch (query.Type)
 		{
 			case SaveQueryType.InsertRecord: return builder.Insert(query.Table);
 		}
-#pragma warning restore IDE0066
 		return null;
 	}
 

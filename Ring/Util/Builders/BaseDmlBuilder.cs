@@ -22,7 +22,6 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
     private static readonly string DmlAnd = " AND ";
     private static readonly string FirstParameter = @"1";
 
-    private string[] _tableIndex;
     private string?[] _tableDelete;
     private string?[] _tableInsert;
     private string?[] _tableUpdate;
@@ -31,7 +30,6 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 
     protected BaseDmlBuilder() 
     {
-        _tableIndex = Array.Empty<string>();
         _tableDelete = Array.Empty<string?>();
         _tableInsert = Array.Empty<string?>();
         _tableUpdate = Array.Empty<string?>();
@@ -43,17 +41,14 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 
     public void Init(DbSchema schema, string[] tableIndex)
     {
-        var mtmCount = schema.GetMtmTableCount();
-        var tableCount = schema.TablesById.Length;
-        _tableIndex = tableIndex;
-        _tableDelete = new string?[mtmCount + tableCount];
-        _tableInsert = new string?[mtmCount + tableCount];
-        _tableUpdate = new string?[mtmCount + tableCount];
+        _tableDelete = new string?[schema.ObjectCount];
+        _tableInsert = new string?[schema.ObjectCount];
+        _tableUpdate = new string?[schema.ObjectCount];
     }
 
     public string Insert(Table table) {
         // avoid lock
-        var index = _tableIndex.GetIndex(table.Name);
+        var index = table.ObjectIndex;
         var result = _tableInsert[index];
         if (result==null)
         {
@@ -64,7 +59,7 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
     }
 
     public string Update(Table table) {
-        var index = _tableIndex.GetIndex(table.Name);
+        var index = table.ObjectIndex;
         var result = _tableUpdate[index];
         if (result==null)
         {
@@ -76,7 +71,7 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 
     public string Delete(Table table) {
         // avoid lock
-        var index = _tableIndex.GetIndex(table.Name);
+        var index = table.ObjectIndex;
         var result = _tableDelete[index];
         if (result==null)
         {

@@ -170,12 +170,12 @@ internal readonly struct Meta : IEquatable<Meta>
 	internal static DbSchema GetEmptySchema(Meta meta, DatabaseProvider provider) =>
 		new(meta.Id, meta.Name, meta.Description, Array.Empty<Parameter>(),
 			Array.Empty<Lexicon>(), SchemaLoadType.Full, SchemaType.Undefined, Array.Empty<Sequence>(), Array.Empty<Table>(),
-			Array.Empty<Table>(), Array.Empty<TableSpace>(), provider, meta.Active, meta.IsEntityBaseline);
+			Array.Empty<Table>(), Array.Empty<TableSpace>(), provider, 0, meta.Active, meta.IsEntityBaseline);
 
 	internal static Table GetEmptyTable(Meta meta) =>
 		new(meta.Id, meta.Name, meta.Description, meta.Value, string.Empty,
 			meta.DataType.ToTableType(), Array.Empty<Relation>(), Array.Empty<Field>(), Array.Empty<int>(), Array.Empty<IColumn>(),
-			Array.Empty<Index>(), meta.ReferenceId, PhysicalType.Table, meta.IsEntityBaseline, meta.Active,
+			Array.Empty<Index>(), meta.ReferenceId, 0, PhysicalType.Table, meta.IsEntityBaseline, meta.Active,
 			meta.IsTableCached, meta.IsTableReadonly);
 
 	internal static Relation GetEmptyRelation(Meta meta, RelationType relationType, TableType toTableType) =>
@@ -239,20 +239,26 @@ internal readonly struct Meta : IEquatable<Meta>
 			var tableByName = GetTables(schema, ddlBuilder, metaValue, provider);
 			var tableById = ShallowCopy(tableByName);
 			var tableSpaces = GetTableSpaces(schema);
+			var objectCount = -1;
 
-			// sort arrays - already sorted by name
+			// sort arrays - already pre-sorted by name
 			Array.Sort(parameters, (x, y) => x.Id.CompareTo(y.Id));
 			Array.Sort(tableById, (x, y) => x.Id.CompareTo(y.Id));
 
-			var result = new DbSchema(meta.Value.Id, metaValue.Name, metaValue.Description, parameters,
+			// build schema Step 1 to result1
+			var result1 = new DbSchema(meta.Value.Id, metaValue.Name, metaValue.Description, parameters,
 				lexicons.ToArray(), loadType, type, sequences.ToArray(), tableById.ToArray(), tableByName.ToArray(), tableSpaces.ToArray(),
-				provider, metaValue.Active, metaValue.IsEntityBaseline);
+				provider, objectCount, metaValue.Active, metaValue.IsEntityBaseline);
+            result1.GetObjectCount();
 
-			result.LoadRelations(schema);
-			result.LoadColumnMappers(); // load column mapper on tables
-			result.LoadRecordIndexes(); // load record indexes on relations
+            // build schema Step 2
+            objectCount = result1.GetObjectCount();
+			var result2 = result1.SetObjectCount(objectCount);
+            result2.LoadRelations(schema);
+            result2.LoadColumnMappers(); // load column mapper on tables
+            result2.LoadRecordIndexes(); // load record indexes on relations
 
-			return result;
+			return result2;
 		}
 		return null;
 	}
@@ -288,7 +294,7 @@ internal readonly struct Meta : IEquatable<Meta>
 			Array.Sort(indexes, (x, y) => string.CompareOrdinal(x.Name, y.Name));
 
 			return new Table(Id, Name, Description, Value, physicalName,
-				tableType, relations, fields, new int[columnMapperSize], new IColumn[columnMapperSize], indexes, ReferenceId,
+				tableType, relations, fields, new int[columnMapperSize], new IColumn[columnMapperSize], indexes, ReferenceId, 1,
 				physicalType, IsEntityBaseline, Active, IsTableCached, IsTableReadonly);
 		}
 		return null;
@@ -521,7 +527,7 @@ internal readonly struct Meta : IEquatable<Meta>
 		}
 		return result;
 	}
-
-	#endregion
+    
+    #endregion
 
 }

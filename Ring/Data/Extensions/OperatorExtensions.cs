@@ -8,7 +8,7 @@ internal static class OperatorExtensions
     {
         // Convert switch statement to expression
         // Ternary operators should not be nested
-#pragma warning disable IDE0066, S3358 
+#pragma warning disable S3358 
         switch (GetStringOperation)
         {
             case Operator.Equal: return string.IsNullOrEmpty(value) ? " IS " : "=";
@@ -23,6 +23,6 @@ internal static class OperatorExtensions
             case Operator.In: return " IN ";
             default: throw new NotSupportedException();
         }
-#pragma warning restore S3358 , IDE0066
+#pragma warning restore S3358
     }
 }

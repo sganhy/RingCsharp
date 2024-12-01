@@ -260,11 +260,11 @@ public class RelationExtensionsTest : BaseTest
     [Fact]
     internal void GetHashCode_RelationHashEqual_False()
     {
-        // arrange -- TODO faile sometimes , to be investigated!!! 2 times already
+        // arrange -- TODO faile sometimes , to be investigated!!! 3 times already
         var metaName = _faker.Random.String();
         var meta1 = new Meta(metaName);
         var meta2 = new Meta(metaName);
-        var meta3 = new Meta(metaName+ metaName);
+        var meta3 = new Meta(metaName + metaName);
         var relation1 = Meta.GetEmptyRelation(meta1, RelationType.Mto, TableType.Fake);
         var relation2 = Meta.GetEmptyRelation(meta2, RelationType.Mtm, TableType.Fake);
         var relation3 = Meta.GetEmptyRelation(meta3, RelationType.Mtm, TableType.Fake);

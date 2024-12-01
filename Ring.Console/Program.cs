@@ -4,11 +4,14 @@ using Ring.Data;
 using Ring.PostgreSQL;
 using Ring.Schema;
 using Ring.Schema.Builders;
+using Ring.Schema.Enums;
+using Ring.Util.Builders;
+using Ring.Util.Builders.PostgreSQL;
 using Serilog;
 using Serilog.Events;
 using Serilog.Extensions.Logging;
 using Serilog.Formatting.Json;
-
+using Ring.Schema.Extensions;
 
 var logger = new LoggerConfiguration()
                           // add console as logging target
@@ -46,6 +49,34 @@ testlst.Add(new Meta("7"));
 testlst.Add(new Meta("8"));
 testlst.Add(new Meta("9"));
 
+// call difference trougth interface and and base class
+var builder = new SchemaBuilder();
+var config = new Configuration() { DefaultSchema = "test", MaxConnectionPoolSize = 20 };
+var schema = builder.GetMeta(DatabaseProvider.PostgreSql, config);
+var metaTable = schema.GetTable("@meta");
+
+IDmlBuilder iDmlBuilder = schema.DmlBuiler;
+var dt = DateTime.Now;
+var sql = string.Empty;
+for (var i = 0; i < 10_000_000; ++i)
+{
+    sql = iDmlBuilder.Insert(metaTable);
+}
+Console.Write("IDmlBuilder index: ");
+Console.WriteLine(DateTime.Now-dt);
+
+BaseDmlBuilder bDmlBuilder = new DmlBuilder();
+bDmlBuilder.Init(schema, schema.GetTableIndex());
+
+dt = DateTime.Now;
+for (var i = 0; i < 10_000_000; ++i)
+{
+    sql = bDmlBuilder.Insert(metaTable);
+}
+Console.Write("BaseDmlBuilder index: ");
+Console.WriteLine(DateTime.Now - dt);
+
+/*
 List<int> testh= new List<int>();
 testh.Sort();
 
@@ -77,3 +108,4 @@ ba.CreateTable("@meta_id");
 ba.CreateTable("@log");
 ba.Apply(conn);
 
+*/

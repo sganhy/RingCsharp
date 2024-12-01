@@ -6,10 +6,6 @@ namespace Ring.Schema.Builders;
 
 internal sealed class TableBuilder
 {
-	internal static readonly string SystemTablePrefix = "@";
-	internal static readonly string TableMetaIdName = SystemTablePrefix + "meta_id";
-	internal static readonly string TableMetaName = SystemTablePrefix + "meta";
-	internal static readonly string TableLogName = SystemTablePrefix + "log";
 	internal static readonly string FieldId = "id";
 	internal static readonly string FieldSchemaId = "schema_id";
 	internal static readonly string FieldObjectType = "object_type";
@@ -46,7 +42,7 @@ internal sealed class TableBuilder
 			GetField(FieldActive, FieldType.Boolean)
 		};
 		metaList.Add(GetIndex(true, new [] { metaList[0], metaList[1], metaList[2], metaList[3] }));
-		var metaTable = GetTable((int)TableType.Meta, TableMetaName, TableType.Meta);
+		var metaTable = GetTable((int)TableType.Meta, TableType.Meta.GetLogicalName(), TableType.Meta);
 		return GetTable(schemaName, provider, metaList.ToArray(), metaTable);
 	}
 
@@ -59,7 +55,7 @@ internal sealed class TableBuilder
 			GetField(FieldObjectType, FieldType.Byte),
 			GetField(FieldValue, FieldType.Long),
 		};
-		var metaTable = GetTable((int)TableType.MetaId, TableMetaIdName, TableType.MetaId);
+		var metaTable = GetTable((int)TableType.MetaId, TableType.MetaId.GetLogicalName(), TableType.MetaId);
 		metaList.Add(GetIndex(true, new[] { metaList[0], metaList[1], metaList[2] }));
 		return GetTable(schemaName, provider, metaList.ToArray(), metaTable);
 	}
@@ -80,7 +76,7 @@ internal sealed class TableBuilder
 			GetField(FieldMessage, FieldType.String, 255, false),
 			GetField(FieldDescription, FieldType.String, 0, false),
 		};
-		var metaTable = GetTable((int)TableType.Log, TableLogName, TableType.Log);
+		var metaTable = GetTable((int)TableType.Log, TableType.Log.GetLogicalName(), TableType.Log);
 		metaList.Add(GetIndex(false, new[] { metaList[1] }));
 		return GetTable(schemaName, provider, metaList.ToArray(), metaTable);
 	}
@@ -100,8 +96,8 @@ internal sealed class TableBuilder
 	internal Table GetMtm(Table partialTable, string physicalName) {
 #pragma warning restore CA1822, S2325
 		// add @ prefix to logical name
-		var metaTable = new Meta(0, (byte)EntityType.Table, 0, (int)TableType.Mtm, 0L, 
-			SystemTablePrefix + partialTable.Name, null,null,true);
+		var metaTable = new Meta(0, (byte)EntityType.Table, 0, (int)TableType.Mtm, 0L, TableType.Mtm.GetLogicalName(partialTable.Name), 
+				null,null,true);
 		var metaRelation = new Meta(0, (byte)EntityType.Relation, 0, 0, 0L, partialTable.Name, null, null, true);
 		// add index 
 		var flags = 0L;

@@ -1,6 +1,7 @@
 ﻿using Ring.Schema.Builders;
 using Ring.Schema.Enums;
 using Ring.Schema.Models;
+using Ring.Util.Enums;
 using System.Runtime.CompilerServices;
 using DbSchema = Ring.Schema.Models.Schema;
 
@@ -12,7 +13,7 @@ internal static class SchemaExtensions
 		=> ParameterExtensions.GetParameter(schema.Parameters, parameterType, schema.Id);
 
 	/// <summary>
-	/// Get table object by name (case sensitive) --> O(log n)
+	/// 	Get table object by name (case sensitive) --> O(log n)
 	/// </summary>
 	internal static Sequence? GetSequence(this DbSchema schema, string name)
 	{
@@ -31,7 +32,7 @@ internal static class SchemaExtensions
 	}
 
 	/// <summary>
-	/// Get table object by Id
+	/// 	Get table object by Id
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static Table? GetTable(this DbSchema schema, int id)
@@ -51,7 +52,7 @@ internal static class SchemaExtensions
 	}
 
 	/// <summary>
-	/// Get table object by name (case sensitive) --> O(log n)
+	/// 	Get table object by name (case sensitive) --> O(log n)
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static Table? GetTable(this DbSchema schema, string name)
@@ -71,7 +72,7 @@ internal static class SchemaExtensions
 	}
 
 	/// <summary>
-	/// Load relationships objects into partial schema 
+	/// 	Load relationships objects into partial schema 
 	/// </summary>
 	/// <param name="schema">Partial built in schema</param>
 	/// <param name="schemaItems">Should be sorted by name</param>
@@ -130,7 +131,7 @@ internal static class SchemaExtensions
 	}
 
 	/// <summary>
-	/// Get sorted list of logical table name
+	/// 	Get sorted list of logical table name
 	/// TODO improve performance
 	/// </summary>
 	internal static string[] GetTableIndex(this DbSchema schema)
@@ -156,6 +157,19 @@ internal static class SchemaExtensions
 		return result;
 	}
 
+	internal static int GetObjectCount(this DbSchema schema)
+	{
+		// mtm table + business table + catalogs should be added too!!
+		var mtmCount = GetMtmTableCount(schema);
+		var tableCount = schema.TablesById.Length;
+		return mtmCount + tableCount;
+	}
+
+	internal static DbSchema SetObjectCount(this DbSchema schema, int objectCount)
+		=> new (schema.Id, schema.Name, schema.Description, schema.Parameters, schema.Lexicons, schema.LoadType, schema.Type, 
+				schema.Sequences, schema.TablesById, schema.TablesByName, schema.TableSpaces,schema.Provider, objectCount, 
+				schema.Active, schema.Baseline);
+ 
 	#region private methods 
 	private static void LoadInverseRelations(this DbSchema schema, Span<Meta> schemaItems)
 	{

@@ -43,7 +43,6 @@ internal sealed class ResourceHelper
 
     internal static HashSet<string> GetReservedWords(DatabaseProvider databaseProvider)
     {
-#pragma warning disable IDE0066 // Convert switch statement to expression
         switch (databaseProvider)
         {
             case DatabaseProvider.Oracle:
@@ -62,7 +61,6 @@ internal sealed class ResourceHelper
                 return GetCompressedResource(ResourceType.SQLiteReservedKeyWord.ToString()
                     + CompressedRessourceSuffix, true).ToHashSet();
         }
-#pragma warning restore IDE0066
         return new HashSet<string>();
     }
 

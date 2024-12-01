@@ -34,7 +34,7 @@ public class BaseBuilderTest
 
         var result = new Table(_faker.Random.Number(int.MinValue,int.MaxValue), _faker.Random.String(), _faker.Random.String(), _faker.Random.String(),
             _faker.Random.String(), TableType.Business, relations.ToArray(), fields.ToArray(), 
-            new int[fields.Count+relations.Count], new IColumn[fields.Count + relations.Count], Array.Empty<Index>(), 12, PhysicalType.Table, true, true, true, true);
+            new int[fields.Count+relations.Count], new IColumn[fields.Count + relations.Count], Array.Empty<Index>(), 12, 0,PhysicalType.Table, true, true, true, true);
         result.LoadColumnMapper();
         result.LoadRelationRecordIndex();
         return result;
@@ -59,7 +59,7 @@ public class BaseBuilderTest
         var relationName = name == null ? _faker.Random.String() : name;
         var toTable = new Table(_faker.Random.Number(int.MinValue,int.MaxValue), _faker.Random.String(), _faker.Random.String(), _faker.Random.String(),
             _faker.Random.String(), TableType.Business, Array.Empty<Relation>(), fieldList.ToArray(), 
-            new int[fieldList.Count], new IColumn[fieldList.Count], Array.Empty<Index>(), 12, PhysicalType.Table, true, true, true, true);
+            new int[fieldList.Count], new IColumn[fieldList.Count], Array.Empty<Index>(), 12, 0, PhysicalType.Table, true, true, true, true);
         toTable.LoadColumnMapper();
         toTable.LoadRelationRecordIndex();
         // generate primary key 
