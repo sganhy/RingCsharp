@@ -131,6 +131,7 @@ public sealed class DqlBuilderTest : BaseBuilderTest
         metaList.AddRange(metaTbl);
         var schema = Meta.ToSchema(metaList.ToArray(), DatabaseProvider.PostgreSql);
         var expectedResult = "SELECT id,schema_id,object_type,reference_id,data_type,flags,name,description,value,active FROM \"@test\".\"@meta\"";
+        table = schema?.GetTable(table.Id);
 
         // act 
         Assert.NotNull(schema);
@@ -156,6 +157,7 @@ public sealed class DqlBuilderTest : BaseBuilderTest
         metaList.AddRange(metaTbl);
         var schema = Meta.ToSchema(metaList.ToArray(), DatabaseProvider.PostgreSql);
         var expectedResult = "SELECT id,schema_id,object_type,value FROM \"@test\".\"@meta_id\"";
+        table = schema?.GetTable(table.Id);
 
         // act 
         Assert.NotNull(schema);
@@ -184,6 +186,7 @@ public sealed class DqlBuilderTest : BaseBuilderTest
         metaList.AddRange(metaTbl);
         var schema = Meta.ToSchema(metaList.ToArray(), DatabaseProvider.PostgreSql);
         var expectedResult = "SELECT id,to_char(entry_time,'yyyy-mm-dd\"T\"HH24:MI:SS.US\"Z\"'),level_id,schema_id,thread_id,call_site,job_id,method,line_number,message,description FROM \"@test\".\"@log\"";
+        table = schema?.GetTable(table.Id);
 
         // act 
         Assert.NotNull(schema);

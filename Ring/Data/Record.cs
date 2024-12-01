@@ -16,7 +16,7 @@ namespace Ring.Data;
 
 public struct Record : IEquatable<Record>
 {
-	private const char HashCodeSeparator = (char)3553;// end of text character
+	private const char HashCodeSeparator = (char)3753;// end of text character
 	private const decimal MaxIntValue = int.MaxValue;
 	private const decimal MinIntValue = int.MinValue;
 	private const decimal MaxShortValue = short.MaxValue;
@@ -27,7 +27,7 @@ public struct Record : IEquatable<Record>
 	private static readonly string[] DefaultData = new string[2]; // 1 field + state info
 	private static readonly Table DefaultType = GetDefaultType();
 	private static readonly string NullField = "^^";
-	private static readonly string NullString = "Null";
+	private static readonly string NullString = "<Null>";
 	private static readonly string DefaultPrimaryKeyValue = "0";
 	private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
 	private static readonly NumberStyles DefaultNumberStyle = NumberStyles.Integer;
@@ -43,7 +43,7 @@ public struct Record : IEquatable<Record>
 	private readonly int _offset;
 
 	/// <summary>
-	///	 Ctor
+	/// 	Ctor
 	/// </summary>
 	public Record()
 	{

@@ -7,7 +7,7 @@ internal sealed class Index : BaseEntity
 	internal readonly bool Unique;
 
 	/// <summary>
-	///     Ctor
+	/// 	Ctor
 	/// </summary>
 	internal Index(int id, string name, string? description, string[] columns, bool unique, bool bitmap, bool active, bool baseline)
 		: base(id, name, description, active, baseline)

@@ -50,8 +50,8 @@ internal readonly struct Meta : IEquatable<Meta>
 	internal readonly int ReferenceId;
 	internal readonly int DataType;
 	internal readonly long Flags;
-	internal readonly string Name;		  // name of entity
-	internal readonly string? Description;  // late loading 
+	internal readonly string Name;			// name of entity
+	internal readonly string? Description;	// late loading 
 	internal readonly string? Value;
 	internal readonly bool Active;
 
@@ -65,7 +65,7 @@ internal readonly struct Meta : IEquatable<Meta>
 		DataType = dataType;
 		Flags = flags;
 		Name = name;
-		Description = description;  // late loading 
+		Description = description;	// late loading 
 		Value = value;
 		Active = active;
 	}
@@ -175,7 +175,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	internal static Table GetEmptyTable(Meta meta) =>
 		new(meta.Id, meta.Name, meta.Description, meta.Value, string.Empty,
 			meta.DataType.ToTableType(), Array.Empty<Relation>(), Array.Empty<Field>(), Array.Empty<int>(), Array.Empty<IColumn>(),
-			Array.Empty<Index>(), meta.ReferenceId, 0, PhysicalType.Table, meta.IsEntityBaseline, meta.Active,
+			Array.Empty<Index>(), meta.ReferenceId, PhysicalType.Table, meta.IsEntityBaseline, meta.Active,
 			meta.IsTableCached, meta.IsTableReadonly);
 
 	internal static Relation GetEmptyRelation(Meta meta, RelationType relationType, TableType toTableType) =>
@@ -246,22 +246,23 @@ internal readonly struct Meta : IEquatable<Meta>
 			Array.Sort(tableById, (x, y) => x.Id.CompareTo(y.Id));
 
 			// build schema Step 1 to result1
-			var result1 = new DbSchema(meta.Value.Id, metaValue.Name, metaValue.Description, parameters,
-				lexicons.ToArray(), loadType, type, sequences.ToArray(), tableById.ToArray(), tableByName.ToArray(), tableSpaces.ToArray(),
+			var result1 = new DbSchema(meta.Value.Id, metaValue.Name, metaValue.Description, parameters, lexicons.ToArray(), 
+				loadType, type, sequences.ToArray(), tableById.ToArray(), tableByName.ToArray(), tableSpaces.ToArray(),
 				provider, objectCount, metaValue.Active, metaValue.IsEntityBaseline);
 
-            result1.LoadRelations(schema);
-            result1.LoadColumnMappers(); // load column mapper on tables
-            result1.LoadRecordIndexes(); // load record indexes on relations
+			result1.LoadRelations(schema);
+			result1.LoadColumnMappers(); // load column mapper on tables
+			result1.LoadRecordIndexes(); // load record indexes on relations
 
-            // build schema Step 2
-            objectCount = result1.GetObjectCount(); // should be compute after LoadRelations()
-            var result2 = result1.SetObjectCount(objectCount);
-
+			// build schema Step 2
+			objectCount = result1.GetObjectCount(); // should be compute after LoadRelations()
+			var result2 = result1.SetObjectCount(objectCount);
+			result2.LoadObjectIndexes();
             return result2;
 		}
 		return null;
 	}
+
 	internal TableSpace? ToTableSpace() => IsTableSpace ? new TableSpace(Id, Name, Description, IsTablespaceIndex(), IsTablespaceTable(),
 			false, Array.Empty<string>(), Value ?? string.Empty, Active, IsEntityBaseline) : null;
 
@@ -277,7 +278,7 @@ internal readonly struct Meta : IEquatable<Meta>
 		IsIndexUnique, IsIndexBitmap, Active, IsEntityBaseline) : null;
 
 	/// <summary>
-	/// Create a instance of table, relation assigned later by schema creation
+	/// 	Create a instance of table, relation assigned later by schema creation
 	/// </summary>
 	internal Table? ToTable(ArraySegment<Meta> tableItems, PhysicalType physicalType, string physicalName)
 	{
@@ -294,8 +295,8 @@ internal readonly struct Meta : IEquatable<Meta>
 			Array.Sort(indexes, (x, y) => string.CompareOrdinal(x.Name, y.Name));
 
 			return new Table(Id, Name, Description, Value, physicalName,
-				tableType, relations, fields, new int[columnMapperSize], new IColumn[columnMapperSize], indexes, ReferenceId, 1,
-				physicalType, IsEntityBaseline, Active, IsTableCached, IsTableReadonly);
+				tableType, relations, fields, new int[columnMapperSize], new IColumn[columnMapperSize], indexes, 
+				ReferenceId, physicalType, IsEntityBaseline, Active, IsTableCached, IsTableReadonly);
 		}
 		return null;
 	}
@@ -527,7 +528,7 @@ internal readonly struct Meta : IEquatable<Meta>
 		}
 		return result;
 	}
-    
-    #endregion
+		
+		#endregion
 
 }

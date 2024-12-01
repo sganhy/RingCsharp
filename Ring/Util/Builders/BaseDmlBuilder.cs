@@ -2,7 +2,6 @@
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
-using Ring.Util.Extensions;
 using System.Globalization;
 using System.Text;
 using DbSchema = Ring.Schema.Models.Schema;
@@ -28,7 +27,7 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
     private readonly IDdlBuilder _ddlBuilder;
     private readonly Field _defaultField;
 
-    protected BaseDmlBuilder() 
+    protected BaseDmlBuilder()
     {
         _tableDelete = Array.Empty<string?>();
         _tableInsert = Array.Empty<string?>();

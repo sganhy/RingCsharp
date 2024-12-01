@@ -1,7 +1,6 @@
 ﻿using Ring.Schema.Builders;
 using Ring.Schema.Enums;
 using Ring.Schema.Models;
-using Ring.Util.Enums;
 using System.Runtime.CompilerServices;
 using DbSchema = Ring.Schema.Models.Schema;
 
@@ -51,10 +50,10 @@ internal static class SchemaExtensions
 		return null;
 	}
 
-	/// <summary>
-	/// 	Get table object by name (case sensitive) --> O(log n)
-	/// </summary>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+    /// <summary>
+    /// 	Get table object by name (case sensitive) --> O(log n)
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static Table? GetTable(this DbSchema schema, string name)
 	{
 		var span = new ReadOnlySpan<Table>(schema.TablesByName);
@@ -80,10 +79,9 @@ internal static class SchemaExtensions
 	{
 		var relationDicoIndex = new Dictionary<int,int>(schema.TablesById.Length*2); // (tableId, relation index)
 		var spanMeta = new ReadOnlySpan<Meta>(schemaItems);
-		var spanTablesById = new ReadOnlySpan<Table>(schema.TablesById);
 
 		// load dico
-		foreach (var table in spanTablesById) relationDicoIndex.Add(table.Id, 0);
+		foreach (var table in new ReadOnlySpan<Table>(schema.TablesById)) relationDicoIndex.Add(table.Id, 0);
 
 		// load relation
 		foreach (var meta in spanMeta)
@@ -110,21 +108,18 @@ internal static class SchemaExtensions
 
 	internal static void LoadColumnMappers(this DbSchema schema)
 	{
-		var span = new Span<Table>(schema.TablesByName);
-		foreach (var tbl in span) tbl.LoadColumnMapper();
+		foreach (var tbl in new Span<Table>(schema.TablesByName)) tbl.LoadColumnMapper();
 	}
 
 	internal static void LoadRecordIndexes(this DbSchema schema)
 	{
-		var span = new Span<Table>(schema.TablesByName);
-		foreach (var tbl in span) tbl.LoadRelationRecordIndex();
+		foreach (var tbl in new Span<Table>(schema.TablesByName)) tbl.LoadRelationRecordIndex();
 	}
 
 	internal static int GetMtmTableCount(this DbSchema schema)
 	{
 		var result = 0;
-		var span = new ReadOnlySpan<Table>(schema.TablesById);
-		foreach (var table in span)
+		foreach (var table in new ReadOnlySpan<Table>(schema.TablesById))
 			for (var j=table.Relations.Length-1;j >= 0; --j)
 				if (table.Relations[j].Type == RelationType.Mtm) ++result;
 		return result >> 1;
@@ -169,9 +164,37 @@ internal static class SchemaExtensions
 		=> new (schema.Id, schema.Name, schema.Description, schema.Parameters, schema.Lexicons, schema.LoadType, schema.Type, 
 				schema.Sequences, schema.TablesById, schema.TablesByName, schema.TableSpaces,schema.Provider, objectCount, 
 				schema.Active, schema.Baseline);
- 
-	#region private methods 
-	private static void LoadInverseRelations(this DbSchema schema, Span<Meta> schemaItems)
+
+	internal static void LoadObjectIndexes(this DbSchema schema)
+	{
+		var objecIndex = 0;
+        var spanById = new Span<Table>(schema.TablesById);
+
+        // first: manage all relations
+        for (var i = 0; i < spanById.Length; ++i)
+        {
+            var table = spanById[i];
+            var spanRel = new Span<Relation>(table.Relations);
+            for (var j = 0; j < spanRel.Length; ++j)
+            {
+                var relation = spanRel[j];
+                if (relation.Type == RelationType.Mtm && relation.ToTable.ObjectIndex < 0)
+                {
+                    relation.ToTable.SetObjectIndex(objecIndex);
+                    ++objecIndex;
+                }
+            }
+        }
+        // second: manage all tables
+        for (var i=0; i < spanById.Length; ++i)
+		{
+            spanById[i].SetObjectIndex(objecIndex);
+            ++objecIndex;
+        }
+    }
+
+    #region private methods 
+    private static void LoadInverseRelations(this DbSchema schema, Span<Meta> schemaItems)
 	{
 		foreach (var meta in schemaItems)
 		{

@@ -30,6 +30,7 @@
 		<DebugType>full</DebugType>
 		<WarningLevel>6</WarningLevel>
 	</PropertyGroup>
+
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
 		<IsAotCompatible>True</IsAotCompatible>
 		<IsTrimmable>true</IsTrimmable>

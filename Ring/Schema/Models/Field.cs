@@ -3,7 +3,7 @@
 namespace Ring.Schema.Models;
 
 /// <summary>
-///     Logical field sourceType (64 bytes by fields)
+/// 	Logical field sourceType (64 bytes by fields)
 /// </summary>
 internal sealed class Field : BaseEntity, IColumn
 {
@@ -15,7 +15,7 @@ internal sealed class Field : BaseEntity, IColumn
 	internal readonly FieldType Type;
 
 	/// <summary>
-	///     Ctor
+	/// 	Ctor
 	/// </summary>
 	internal Field(int id, string name, string? description, FieldType type, int size, string? defaultValue,
 		bool baseline, bool notNull, bool caseSensitif, bool multilingual, bool active)
@@ -30,7 +30,7 @@ internal sealed class Field : BaseEntity, IColumn
 	}
 
 	/// <summary>
-	///     Implement IColumn
+	/// 	Implement IColumn
 	/// </summary>
 	int IColumn.Id => Id;
 	FieldType IColumn.FieldType => Type;

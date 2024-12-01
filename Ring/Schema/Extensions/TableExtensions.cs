@@ -335,29 +335,26 @@ internal static class TableExtensions
 		return result.ToString();
 	}
 
-	internal static Table SetObjectIndex(this Table table, int objectIndex)
-		=> new(table.Id, table.Name, table.Description, table.Subject, table.PhysicalName, table.Type, table.Relations, table.Fields,
-                table.RecordIndexes, table.Columns, table.Indexes, table.SchemaId, objectIndex, table.PhysicalType, table.Baseline, table.Active,
-                table.Cached, table.Readonly);
 
+	#region private methods 
 
-    #region private methods 
-
-    /// <summary>
-    /// 	Get first unique index
-    /// </summary>
-    private static Index? GetFirstUniqueIndex(this Table table)
+	/// <summary>
+	/// 	Get first unique index
+	/// </summary>
+	private static Index? GetFirstUniqueIndex(this Table table)
 	{
 		if (table.Indexes.Length > 0)
 			for (var i = 0; i < table.Indexes.Length; ++i)
 				if (table.Indexes[i].Unique) return table.Indexes[i];
 		return null;
 	}
+
 	private static IColumn GetColumn(this Table table, string name)
 	{
 		var col = table.GetField(name??string.Empty);
 		return col != null ? col : table.GetRelation(name??string.Empty);
 	}
+
 	private static string GetStringCode(Field[] fields)
 	{
 		var span = fields.AsSpan();
@@ -369,6 +366,7 @@ internal static class TableExtensions
 		}
 		return result.ToString();
 	}
+
 	private static string GetStringCode(Relation[] relations)
 	{
 		var span = relations.AsSpan();
@@ -380,6 +378,7 @@ internal static class TableExtensions
 		}
 		return result.ToString();
 	}
+
 	private static string GetStringCode(Index[] indexes)
 	{
 		var span = indexes.AsSpan();

@@ -107,7 +107,7 @@ internal static class RelationExtensions
 	}
 
 	internal static Relation SetRecordIndex(this Relation relation, int recordIndex)
-	{ 
+	{
 		var result = new Relation(relation.Id, relation.Name, relation.Description, relation.Type, relation.ToTable, recordIndex,
 			relation.FieldType, relation.NotNull, relation.HasConstraint, relation.Baseline, relation.Active);
 		// manage inverse relationship
@@ -115,5 +115,4 @@ internal static class RelationExtensions
 		relation.InverseRelation.SetInverseRelation(result);
 		return result;
 	}
-
 }

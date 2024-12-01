@@ -1,10 +1,10 @@
 using Ring.Schema.Enums;
-using System.Reflection.Metadata.Ecma335;
 
 namespace Ring.Schema.Models;
 
 internal sealed class Table : BaseEntity
 {
+	internal int ObjectIndex { get; private set; } // position of the table in the table collection sorted by name included MTM one.
 	internal readonly bool Cached;
 	internal readonly Field[] Fields;          // sorted by name (field.id should b).
 	internal readonly Relation[] Relations;    // sorted by name.
@@ -15,8 +15,7 @@ internal sealed class Table : BaseEntity
 	internal readonly string PhysicalName;
 	internal readonly PhysicalType PhysicalType;
 	internal readonly int SchemaId;
-	internal readonly int ObjectIndex;         // position of the table in the table collection sorted by name included MTM one.
-	internal readonly string? Subject;
+    internal readonly string? Subject;
 	internal readonly TableType Type;
 	internal readonly CacheId CacheId;
 	internal readonly bool Readonly;
@@ -25,7 +24,7 @@ internal sealed class Table : BaseEntity
 	/// 	Ctor
 	/// </summary>
 	internal Table(int id, string name, string? description, string? subject, string physicalName, TableType type,
-		Relation[] relations, Field[] fields, int [] recordIndexes, IColumn[] columns, Index[] indexes, int schemaId, int objectIndex, 
+		Relation[] relations, Field[] fields, int [] recordIndexes, IColumn[] columns, Index[] indexes, int schemaId, 
 		PhysicalType physicalType, bool baseline, bool active, bool cached, bool readonlyTable) : base(id, name, description, active, baseline)
 	{
 		Type = type;
@@ -39,9 +38,16 @@ internal sealed class Table : BaseEntity
 		Subject = subject;
 		CacheId = new CacheId();
 		SchemaId = schemaId;
-		ObjectIndex = objectIndex;
+		ObjectIndex = -1;
 		PhysicalName = physicalName;
 		PhysicalType = physicalType;
 		Cached = cached;
 	}
+
+	internal void SetObjectIndex(int objectIndex) => ObjectIndex = objectIndex;
+
+#if DEBUG
+	public override string ToString() => $"{Id} - {Name} ({ObjectIndex})";
+#endif
+
 }
