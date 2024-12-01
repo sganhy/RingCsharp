@@ -1,6 +1,4 @@
-﻿using Ring.Schema.Attributes;
-
-namespace Ring.Schema.Enums;
+﻿namespace Ring.Schema.Enums;
 
 internal enum TableType : byte
 {

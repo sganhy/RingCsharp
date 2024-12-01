@@ -1,5 +1,4 @@
 ﻿using Ring.Data;
-using System.Data;
 
 namespace Ring.Schema.Models;
 
