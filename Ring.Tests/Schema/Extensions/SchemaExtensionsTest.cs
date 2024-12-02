@@ -46,14 +46,4 @@ public class SchemaExtensionsTest : BaseTest
         Assert.Equal("armor", table2.Name);
     }
 
-    [Fact]
-    internal void GetMtmTableCount_Schema1_10()
-    {
-        // arrange 
-        // act 
-        var mtmCount = SchemaExtensions.GetMtmTableCount(_schema);
-        // assert
-        Assert.Equal(10, mtmCount);
-    }
-
 }

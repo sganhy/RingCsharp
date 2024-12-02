@@ -523,7 +523,7 @@ public sealed class MetaTest : BaseTest
         var segment = new ArraySegment<Meta>(metaItems, 0, metaItems.Length);
 
         // act 
-        var table = metaTable.ToTable(segment, PhysicalType.Table, physicalName);
+        var table = metaTable.ToTable(segment, PhysicalType.Table, physicalName,0);
         var field = table?.GetField("name");
         var fieldPk = table?.GetField("id");
 
@@ -559,7 +559,7 @@ public sealed class MetaTest : BaseTest
         var segment = new ArraySegment<Meta>(metaItems, 0, metaItems.Length);
 
         // act 
-        var table = metaTable.ToTable(segment, PhysicalType.Table, physicalName);
+        var table = metaTable.ToTable(segment, PhysicalType.Table, physicalName,0);
         var fieldPk = table?.GetField("id");
 
         // assert

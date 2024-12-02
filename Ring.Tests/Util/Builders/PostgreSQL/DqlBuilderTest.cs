@@ -22,7 +22,7 @@ public sealed class DqlBuilderTest : BaseBuilderTest
         _schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql) ??
             Meta.GetEmptySchema(meta, DatabaseProvider.PostgreSql);
         _sut = new DqlBuilder();
-        _sut.Init(_schema, _schema.GetTableIndex());
+        _sut.Init(_schema);
     }
 
     [Fact]
@@ -95,7 +95,7 @@ public sealed class DqlBuilderTest : BaseBuilderTest
         // act 
         Assert.NotNull(schema);
         Assert.NotNull(tableTest);
-        sut.Init(schema, schema.GetTableIndex());
+        sut.Init(schema);
         var result = sut.SelectFrom(tableTest);
 
         // assert
@@ -136,7 +136,7 @@ public sealed class DqlBuilderTest : BaseBuilderTest
         // act 
         Assert.NotNull(schema);
         Assert.NotNull(table);
-        sut.Init(schema, schema.GetTableIndex());
+        sut.Init(schema);
         var result = sut.SelectFrom(table);
 
         // assert
@@ -162,7 +162,7 @@ public sealed class DqlBuilderTest : BaseBuilderTest
         // act 
         Assert.NotNull(schema);
         Assert.NotNull(table);
-        sut.Init(schema, schema.GetTableIndex());
+        sut.Init(schema);
         var result1 = sut.SelectFrom(table);
         var result2 = sut.SelectFrom(table); // using cache 
 
@@ -191,7 +191,7 @@ public sealed class DqlBuilderTest : BaseBuilderTest
         // act 
         Assert.NotNull(schema);
         Assert.NotNull(table);
-        sut.Init(schema, schema.GetTableIndex());
+        sut.Init(schema);
         var result1 = sut.SelectFrom(table);
         var result2 = sut.SelectFrom(table); // using cache 
 
@@ -221,7 +221,7 @@ public sealed class DqlBuilderTest : BaseBuilderTest
         // act 
         Assert.NotNull(schema);
         Assert.NotNull(tableTest);
-        sut.Init(schema, schema.GetTableIndex());
+        sut.Init(schema);
         var result = sut.SelectFrom(tableTest);
 
         // assert

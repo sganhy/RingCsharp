@@ -44,9 +44,8 @@ internal sealed class SchemaBuilder
 
 		var result = Meta.ToSchema(metaList.ToArray(),provider, type, loadType) ?? Meta.GetEmptySchema(schemaInfo, provider);
 		// initialise cache for : DmlBuiler & DqlBuiler
-		var tableIndex = result.GetTableIndex();
-		result.DmlBuiler.Init(result, tableIndex);
-		result.DqlBuiler.Init(result, tableIndex);
+		result.DmlBuiler.Init(result);
+		result.DqlBuiler.Init(result);
 		return result;
 	}
 

@@ -65,7 +65,7 @@ Console.Write("IDmlBuilder index: ");
 Console.WriteLine(DateTime.Now-dt);
 
 BaseDmlBuilder bDmlBuilder = new DmlBuilder();
-bDmlBuilder.Init(schema, schema.GetTableIndex());
+bDmlBuilder.Init(schema);
 
 dt = DateTime.Now;
 for (var i = 0; i < 10_000_000; ++i)

@@ -21,7 +21,7 @@ public sealed class DqlBuilderTest : BaseBuilderTest
         _schema = Meta.ToSchema(metaList,DatabaseProvider.MySql) ??
             Meta.GetEmptySchema(meta, DatabaseProvider.MySql);
         _sut = new DqlBuilder();
-        _sut.Init(_schema, _schema.GetTableIndex());
+        _sut.Init(_schema);
     }
 
     [Fact]

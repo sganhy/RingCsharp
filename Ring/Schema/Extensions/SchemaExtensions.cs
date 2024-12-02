@@ -75,16 +75,15 @@ internal static class SchemaExtensions
 	/// </summary>
 	/// <param name="schema">Partial built in schema</param>
 	/// <param name="schemaItems">Should be sorted by name</param>
-	internal static void LoadRelations(this DbSchema schema, Meta[] schemaItems)
+	internal static void LoadRelations(this DbSchema schema, ReadOnlySpan<Meta> schemaItems, int mtmCount)
 	{
 		var relationDicoIndex = new Dictionary<int,int>(schema.TablesById.Length*2); // (tableId, relation index)
-		var spanMeta = new ReadOnlySpan<Meta>(schemaItems);
-
+	
 		// load dico
 		foreach (var table in new ReadOnlySpan<Table>(schema.TablesById)) relationDicoIndex.Add(table.Id, 0);
 
 		// load relation
-		foreach (var meta in spanMeta)
+		foreach (var meta in schemaItems)
 		{
 			if (meta.IsRelation)
 			{
@@ -103,7 +102,7 @@ internal static class SchemaExtensions
 		// load inverse relations
 		schema.LoadInverseRelations(schemaItems);
 		// load mtm relations
-		schema.LoadMtm();
+		schema.LoadMtm(mtmCount);
 	}
 
 	internal static void LoadColumnMappers(this DbSchema schema)
@@ -116,85 +115,8 @@ internal static class SchemaExtensions
 		foreach (var tbl in new Span<Table>(schema.TablesByName)) tbl.LoadRelationRecordIndex();
 	}
 
-	internal static int GetMtmTableCount(this DbSchema schema)
-	{
-		var result = 0;
-		foreach (var table in new ReadOnlySpan<Table>(schema.TablesById))
-			for (var j=table.Relations.Length-1;j >= 0; --j)
-				if (table.Relations[j].Type == RelationType.Mtm) ++result;
-		return result >> 1;
-	}
-
-	/// <summary>
-	/// 	Get sorted list of logical table name
-	/// TODO improve performance
-	/// </summary>
-	internal static string[] GetTableIndex(this DbSchema schema)
-	{
-		var mtmCount = schema.GetMtmTableCount();
-		var tableCount = schema.TablesById.Length;
-		var mtmTaleDico = new HashSet<string>();
-		var mtmIndex = 0;
-		var span = schema.TablesById;
-		var result = new string[tableCount + mtmCount]; // reduce re-allocations
-		for (var i = 0; i < tableCount; ++i) result[i] = span[i].Name;
-		for (var i = 0; i < tableCount; ++i)
-			foreach (var relation in span[i].Relations)
-			{
-				if (relation.Type == RelationType.Mtm && !mtmTaleDico.Contains(relation.ToTable.Name))
-				{
-					result[mtmIndex + tableCount] = relation.ToTable.Name;
-					mtmTaleDico.Add(relation.ToTable.Name);
-					++mtmIndex;
-				}
-			}
-		Array.Sort(result, (x, y) => string.CompareOrdinal(x, y));
-		return result;
-	}
-
-	internal static int GetObjectCount(this DbSchema schema)
-	{
-		// mtm table + business table + catalogs should be added too!!
-		var mtmCount = GetMtmTableCount(schema);
-		var tableCount = schema.TablesById.Length;
-		return mtmCount + tableCount;
-	}
-
-	internal static DbSchema SetObjectCount(this DbSchema schema, int objectCount)
-		=> new (schema.Id, schema.Name, schema.Description, schema.Parameters, schema.Lexicons, schema.LoadType, schema.Type, 
-				schema.Sequences, schema.TablesById, schema.TablesByName, schema.TableSpaces,schema.Provider, objectCount, 
-				schema.Active, schema.Baseline);
-
-	internal static void LoadObjectIndexes(this DbSchema schema)
-	{
-		var objecIndex = 0;
-        var spanById = new Span<Table>(schema.TablesById);
-
-        // first: manage all relations
-        for (var i = 0; i < spanById.Length; ++i)
-        {
-            var table = spanById[i];
-            var spanRel = new Span<Relation>(table.Relations);
-            for (var j = 0; j < spanRel.Length; ++j)
-            {
-                var relation = spanRel[j];
-                if (relation.Type == RelationType.Mtm && relation.ToTable.ObjectIndex < 0)
-                {
-                    relation.ToTable.SetObjectIndex(objecIndex);
-                    ++objecIndex;
-                }
-            }
-        }
-        // second: manage all tables
-        for (var i=0; i < spanById.Length; ++i)
-		{
-            spanById[i].SetObjectIndex(objecIndex);
-            ++objecIndex;
-        }
-    }
-
     #region private methods 
-    private static void LoadInverseRelations(this DbSchema schema, Span<Meta> schemaItems)
+    private static void LoadInverseRelations(this DbSchema schema, ReadOnlySpan<Meta> schemaItems)
 	{
 		foreach (var meta in schemaItems)
 		{
@@ -211,18 +133,18 @@ internal static class SchemaExtensions
 		}
 	}
 
-	private static void LoadMtm(this DbSchema schema)
+	private static void LoadMtm(this DbSchema schema, int mtmCount)
 	{
 		var ddlBuilder = schema.Provider.GetDdlBuilder();
 		var tableBuilder = new TableBuilder();
 		var span = new Span<Table>(schema.TablesById);
 		Table mtmTable;
-		var mtm = new Dictionary<string,Table>(schema.GetMtmTableCount()*2); // store mtm physical name
+		var mtm = new Dictionary<string,Table>(mtmCount * 2); // store mtm physical name
 		foreach (var table in span)
 		{
 			for (var j=table.Relations.Length - 1; j >= 0; --j)
 			{
-				if (table.Relations[j].Type == RelationType.Mtm) 
+				if (table.Relations[j].Type == RelationType.Mtm)
 				{
 					// step 1 - generate physical name
 					var relation = table.Relations[j];
@@ -234,7 +156,7 @@ internal static class SchemaExtensions
 
 					if (!mtm.ContainsKey(physicalName))
 					{
-						mtmTable = tableBuilder.GetMtm(emptyTable, physicalName);
+						mtmTable = tableBuilder.GetMtm(emptyTable, physicalName, mtm.Count);
 						//  step 2 - load relations - sort relation
 						if (string.CompareOrdinal(relation.Name, inverseRelation.Name) < 0)
 						{

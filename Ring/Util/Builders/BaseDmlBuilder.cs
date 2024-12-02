@@ -38,7 +38,7 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 
     public abstract string VariableNameTemplate { get; }
 
-    public void Init(DbSchema schema, string[] tableIndex)
+    public void Init(DbSchema schema)
     {
         _tableDelete = new string?[schema.ObjectCount];
         _tableInsert = new string?[schema.ObjectCount];

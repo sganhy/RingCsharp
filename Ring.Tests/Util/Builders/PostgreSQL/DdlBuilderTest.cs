@@ -54,7 +54,7 @@ public class DdlBuilderTest : BaseBuilderTest
         var metaItems = GetMeta2TableItems(true);
         var physicalName = _faker.Random.String();
         var segment = new ArraySegment<Meta>(metaItems, 0, metaItems.Length);
-        var table2 = metaTable.ToTable(segment, PhysicalType.Table, physicalName);
+        var table2 = metaTable.ToTable(segment, PhysicalType.Table, physicalName, 0);
         Assert.NotNull(table2);
         table2.Relations[1] = GetAnonymousRelation(RelationType.Mto, 1, @"skill2book");
         table2.Relations[0] = GetAnonymousRelation(RelationType.Mtm, 8, @"ability2book");
@@ -81,7 +81,7 @@ public class DdlBuilderTest : BaseBuilderTest
         var metaItems = GetMeta2TableItems(false);
         var physicalName = _faker.Random.String();
         var segment = new ArraySegment<Meta>(metaItems, 0, metaItems.Length);
-        var table3 = metaTable.ToTable(segment, PhysicalType.Table, physicalName);
+        var table3 = metaTable.ToTable(segment, PhysicalType.Table, physicalName, 0);
 #pragma warning disable CS8602
         table3.Relations[0] = GetAnonymousRelation(RelationType.Mto, 11, @"skill2book", true);
         table3.LoadColumnMapper();
@@ -110,7 +110,7 @@ public class DdlBuilderTest : BaseBuilderTest
         var metaItems = GetMeta2TableItems(false);
         var physicalName = _faker.Random.String();
         var segment = new ArraySegment<Meta>(metaItems, 0, metaItems.Length);
-        var table4 = metaTable.ToTable(segment, PhysicalType.Table, physicalName);
+        var table4 = metaTable.ToTable(segment, PhysicalType.Table, physicalName,0);
 
 #pragma warning disable CS8602
         table4.Relations[0] = GetAnonymousRelation(RelationType.Mto, 11, @"skill2book", false);

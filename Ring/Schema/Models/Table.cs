@@ -4,7 +4,7 @@ namespace Ring.Schema.Models;
 
 internal sealed class Table : BaseEntity
 {
-	internal readonly int ObjectIndex; // { get; private set; } // position of the table in the table collection sorted by name included MTM one.
+	internal readonly int ObjectIndex;
 	internal readonly bool Cached;
 	internal readonly Field[] Fields;              // sorted by name (field.id should b).
 	internal readonly Relation[] Relations;        // sorted by name.
@@ -24,8 +24,9 @@ internal sealed class Table : BaseEntity
 	/// 	Ctor
 	/// </summary>
 	internal Table(int id, string name, string? description, string? subject, string physicalName, TableType type,
-		Relation[] relations, Field[] fields, int [] recordIndexes, IColumn[] columns, Index[] indexes, int schemaId, 
-		PhysicalType physicalType, bool baseline, bool active, bool cached, bool readonlyTable) : base(id, name, description, active, baseline)
+		Relation[] relations, Field[] fields, int [] recordIndexes, IColumn[] columns, Index[] indexes, int schemaId,
+		PhysicalType physicalType, int objectIndex, bool baseline, bool active, bool cached, bool readonlyTable) 
+		: base(id, name, description, active, baseline)
 	{
 		Type = type;
 		Fields = fields;
@@ -42,12 +43,8 @@ internal sealed class Table : BaseEntity
 		PhysicalName = physicalName;
 		PhysicalType = physicalType;
 		Cached = cached;
+		ObjectIndex = objectIndex;
 	}
-
-	/// <summary>
-	/// 	Assign only once the property
-	/// </summary>
-	internal void SetObjectIndex(int objectIndex) { }
 
 #if DEBUG
 	public override string ToString() => $"{Id} - {Name} ({ObjectIndex})";

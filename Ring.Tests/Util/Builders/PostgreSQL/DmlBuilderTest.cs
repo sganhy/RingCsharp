@@ -23,7 +23,7 @@ public class DmlBuilderTest : BaseBuilderTest
         _schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql) ??
             Meta.GetEmptySchema(meta, DatabaseProvider.PostgreSql);
         _sut = new DmlBuilder();
-        _sut.Init(_schema, _schema.GetTableIndex());
+        _sut.Init(_schema);
     }
 
     [Fact]
@@ -78,7 +78,7 @@ public class DmlBuilderTest : BaseBuilderTest
         // act 
         Assert.NotNull(schema);
         Assert.NotNull(tableTest);
-        sut.Init(schema, schema.GetTableIndex());
+        sut.Init(schema);
         var result = sut.Insert(tableTest);
 
         // assert
@@ -117,7 +117,7 @@ public class DmlBuilderTest : BaseBuilderTest
         // act 
         Assert.NotNull(schema);
         Assert.NotNull(table);
-        sut.Init(schema, schema.GetTableIndex());
+        sut.Init(schema);
         var result = sut.Insert(table);
 
         // assert
@@ -139,7 +139,7 @@ public class DmlBuilderTest : BaseBuilderTest
         // act 
         Assert.NotNull(schema);
         Assert.NotNull(table);
-        sut.Init(schema, schema.GetTableIndex());
+        sut.Init(schema);
         var result = sut.Insert(table);
 
         // assert
@@ -197,7 +197,7 @@ public class DmlBuilderTest : BaseBuilderTest
         // act 
         Assert.NotNull(schema);
         Assert.NotNull(table);
-        sut.Init(schema, schema.GetTableIndex());
+        sut.Init(schema);
         var result = sut.Delete(table);
 
         // assert
@@ -219,7 +219,7 @@ public class DmlBuilderTest : BaseBuilderTest
         // act 
         Assert.NotNull(schema);
         Assert.NotNull(table);
-        sut.Init(schema, schema.GetTableIndex());
+        sut.Init(schema);
         var result = sut.Delete(table);
 
         // assert
@@ -258,7 +258,7 @@ public class DmlBuilderTest : BaseBuilderTest
         // act 
         Assert.NotNull(schema);
         Assert.NotNull(table);
-        sut.Init(schema, schema.GetTableIndex());
+        sut.Init(schema);
         var result = sut.Update(table);
 
         // assert
@@ -280,7 +280,7 @@ public class DmlBuilderTest : BaseBuilderTest
         // act 
         Assert.NotNull(schema);
         Assert.NotNull(table);
-        sut.Init(schema, schema.GetTableIndex());
+        sut.Init(schema);
         var result = sut.Update(table);
 
         // assert

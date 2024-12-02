@@ -93,7 +93,7 @@ internal sealed class TableBuilder
 	}
 
 #pragma warning disable CA1822, S2325 // Mark members as static
-	internal Table GetMtm(Table partialTable, string physicalName) {
+	internal Table GetMtm(Table partialTable, string physicalName, int objectIndex) {
 #pragma warning restore CA1822, S2325
 		// add @ prefix to logical name
 		var metaTable = new Meta(0, (byte)EntityType.Table, 0, (int)TableType.Mtm, 0L, TableType.Mtm.GetLogicalName(partialTable.Name), 
@@ -106,11 +106,11 @@ internal sealed class TableBuilder
 		var metaIndex = new Meta(0, (byte)EntityType.Index, 0, 0, flags, partialTable.Name, null, value, true);
 		var metaArr = new Meta[] { metaRelation, metaRelation, metaIndex };
 		var segMent = new ArraySegment<Meta>(metaArr, 0, 3);
-		var result = metaTable.ToTable(segMent, PhysicalType.Table, physicalName) ?? partialTable;
+		var result = metaTable.ToTable(segMent, PhysicalType.Table, physicalName, objectIndex) ?? partialTable;
 		result.RecordIndexes[0]=0; // columnMapper 4 Mtm table is always {0,1}
 		result.RecordIndexes[1]=1; // columnMapper 4 Mtm table is always {0,1}
 		return result;
-	}  
+	}
 
 	#region private methods 
 
@@ -122,7 +122,7 @@ internal sealed class TableBuilder
 		var spanMeta = metaArray.AsSpan();
 		for (var i=0; i< spanMeta.Length; ++i) spanMeta[i] = Meta.Create(i,spanMeta[i]);
 		return metaTable.ToTable(new ArraySegment<Meta>(metaArray, 0, metaArray.Length),
-				physicalType ?? PhysicalType.Table, ddlBuilder.GetPhysicalName(emptyTable, emptySchema)) ?? emptyTable;
+				physicalType ?? PhysicalType.Table, ddlBuilder.GetPhysicalName(emptyTable, emptySchema),0) ?? emptyTable;
 	}
 
 	private static Meta GetTable(int id, string name, TableType tableType) {

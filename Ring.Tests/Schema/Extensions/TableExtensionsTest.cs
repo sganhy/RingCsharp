@@ -353,7 +353,7 @@ public class TableExtensionsTest : BaseTest
         var meta2 = table1.ToMeta(schema.Id);
         var metaTable = Meta.FirstOrDefault(meta2, EntityType.Table);
         Assert.NotNull(metaTable);
-        var table2 = metaTable.Value.ToTable(new ArraySegment<Meta>(meta2), table1.PhysicalType, table1.PhysicalName);
+        var table2 = metaTable.Value.ToTable(new ArraySegment<Meta>(meta2), table1.PhysicalType, table1.PhysicalName,0);
         Assert.NotNull(table2);
         // copy relations
         for (var i = 0; i < table2.Relations.Length; ++i) table2.Relations[i] = table1.Relations[i];

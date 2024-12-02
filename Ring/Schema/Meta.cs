@@ -175,7 +175,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	internal static Table GetEmptyTable(Meta meta) =>
 		new(meta.Id, meta.Name, meta.Description, meta.Value, string.Empty,
 			meta.DataType.ToTableType(), Array.Empty<Relation>(), Array.Empty<Field>(), Array.Empty<int>(), Array.Empty<IColumn>(),
-			Array.Empty<Index>(), meta.ReferenceId, PhysicalType.Table, meta.IsEntityBaseline, meta.Active,
+			Array.Empty<Index>(), meta.ReferenceId, PhysicalType.Table, -1, meta.IsEntityBaseline, meta.Active,
 			meta.IsTableCached, meta.IsTableReadonly);
 
 	internal static Relation GetEmptyRelation(Meta meta, RelationType relationType, TableType toTableType) =>
@@ -186,6 +186,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	internal static Field GetEmptyField(Meta meta, FieldType fieldType) =>
 		new(meta.Id, meta.Name, meta.Description, fieldType, 0, null, true, false,
 			false, false, true);
+
 	internal static Meta? FirstOrDefault(Meta[] metas, EntityType entityType) 
 	{
 		Meta? result=null;
@@ -233,32 +234,29 @@ internal readonly struct Meta : IEquatable<Meta>
 		{
 			var metaValue = meta.Value;
 			var ddlBuilder = provider.GetDdlBuilder();
-			var parameters = GetParameters(schema);
-			var lexicons = new List<Lexicon>();
+            var mtmCount = GetMtmCount(schema);
+            var tableCount = GetTableCount(schema);
+            var parameters = GetParameters(schema);
+            var lexicons = new List<Lexicon>();
 			var sequences = new List<Sequence>();
-			var tableByName = GetTables(schema, ddlBuilder, metaValue, provider);
+			var tableByName = GetTables(schema, ddlBuilder, metaValue, provider, mtmCount);
 			var tableById = ShallowCopy(tableByName);
 			var tableSpaces = GetTableSpaces(schema);
-			var objectCount = -1;
 
 			// sort arrays - already pre-sorted by name
 			Array.Sort(parameters, (x, y) => x.Id.CompareTo(y.Id));
 			Array.Sort(tableById, (x, y) => x.Id.CompareTo(y.Id));
 
-			// build schema Step 1 to result1
-			var result1 = new DbSchema(meta.Value.Id, metaValue.Name, metaValue.Description, parameters, lexicons.ToArray(), 
+			// build schema to result
+			var result = new DbSchema(meta.Value.Id, metaValue.Name, metaValue.Description, parameters, lexicons.ToArray(), 
 				loadType, type, sequences.ToArray(), tableById.ToArray(), tableByName.ToArray(), tableSpaces.ToArray(),
-				provider, objectCount, metaValue.Active, metaValue.IsEntityBaseline);
+				provider, tableCount + mtmCount, metaValue.Active, metaValue.IsEntityBaseline);
 
-			result1.LoadRelations(schema);
-			result1.LoadColumnMappers(); // load column mapper on tables
-			result1.LoadRecordIndexes(); // load record indexes on relations
+			result.LoadRelations(schema, mtmCount);
+			result.LoadColumnMappers(); // load column mapper on tables
+			result.LoadRecordIndexes(); // load record indexes on relations
 
-			// build schema Step 2
-			objectCount = result1.GetObjectCount(); // should be compute after LoadRelations()
-			var result2 = result1.SetObjectCount(objectCount);
-			result2.LoadObjectIndexes();
-            return result2;
+            return result;
 		}
 		return null;
 	}
@@ -280,7 +278,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	/// <summary>
 	/// 	Create a instance of table, relation assigned later by schema creation
 	/// </summary>
-	internal Table? ToTable(ArraySegment<Meta> tableItems, PhysicalType physicalType, string physicalName)
+	internal Table? ToTable(ArraySegment<Meta> tableItems, PhysicalType physicalType, string physicalName, int objectIndex)
 	{
 		if (IsTable)
 		{
@@ -295,8 +293,8 @@ internal readonly struct Meta : IEquatable<Meta>
 			Array.Sort(indexes, (x, y) => string.CompareOrdinal(x.Name, y.Name));
 
 			return new Table(Id, Name, Description, Value, physicalName,
-				tableType, relations, fields, new int[columnMapperSize], new IColumn[columnMapperSize], indexes, 
-				ReferenceId, physicalType, IsEntityBaseline, Active, IsTableCached, IsTableReadonly);
+				tableType, relations, fields, new int[columnMapperSize], new IColumn[columnMapperSize], indexes,
+				ReferenceId, physicalType, objectIndex, IsEntityBaseline, Active, IsTableCached, IsTableReadonly);
 		}
 		return null;
 	}
@@ -347,9 +345,23 @@ internal readonly struct Meta : IEquatable<Meta>
 	public override string ToString() => string.IsNullOrEmpty(Name) ? string.Empty : $"{Id} - {Name}";
 #endif
 
-	#region private methods 
+    #region private methods 
 
-	private static long WriteFlag(long flags, byte bitPosition, bool value)
+    private static int GetTableCount(ReadOnlySpan<Meta> schema)
+    {
+		var result = 0;
+		foreach (var meta in schema) if (meta.IsTable) ++result;
+        return result;
+    }
+
+    private static int GetMtmCount(ReadOnlySpan<Meta> schema)
+    {
+        var result = 0;
+        foreach (var meta in schema) if (meta.IsRelation && meta.GetRelationType()==RelationType.Mtm) ++result;
+        return result >> 1; // divided by 2
+    }
+
+    private static long WriteFlag(long flags, byte bitPosition, bool value)
 	{
 		if (bitPosition < 65)
 		{
@@ -457,7 +469,8 @@ internal readonly struct Meta : IEquatable<Meta>
 		return null;
 	}
 
-	private static Table[] GetTables(Meta[] schema, IDdlBuilder ddlBuilder, Meta metaSchema, DatabaseProvider provider)
+	private static Table[] GetTables(Meta[] schema, IDdlBuilder ddlBuilder, Meta metaSchema, DatabaseProvider provider,
+		int mtmCount)
 	{
 		int startIndex, count, i = 0;
 		var metaCount = schema.Length;
@@ -480,6 +493,7 @@ internal readonly struct Meta : IEquatable<Meta>
 
 		//pass 2: create tableArray
 		var result = new List<Table>(dico.Count);
+		var tableIndex = 0;
 		foreach (var meta in schemaSpan)
 		{
 			if (meta.IsTable)
@@ -489,11 +503,12 @@ internal readonly struct Meta : IEquatable<Meta>
 				var segment = dico.ContainsKey(meta.Id) ?
 					new ArraySegment<Meta>(schema, dico[meta.Id].Item1, dico[meta.Id].Item2) :
 					new ArraySegment<Meta>(schema, 0, 0);
-				var table = meta.ToTable(segment, PhysicalType.Table, physicalName);
+				var table = meta.ToTable(segment, PhysicalType.Table, physicalName, mtmCount+ tableIndex);
 #pragma warning disable CS8604 // Possible null reference argument.
 				result.Add(table);
 #pragma warning restore CS8604
-			}
+				++tableIndex;
+            }
 		}
 		return result.ToArray();
 	}

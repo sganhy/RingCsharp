@@ -15,7 +15,7 @@ public abstract class BaseExtensionsTest
         var metaItems = Array.Empty<Meta>();
         var segment = new ArraySegment<Meta>(metaItems, 0, metaItems.Length);
         var physicalName = $"{schemaName}.{tableName}";
-        return meta.ToTable(segment, PhysicalType.Table, physicalName); 
+        return meta.ToTable(segment, PhysicalType.Table, physicalName,0); 
     }
 
 }

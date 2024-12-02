@@ -19,7 +19,7 @@ internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
         _ddlBuilder = Provider.GetDdlBuilder();
     }
 
-    public void Init(DbSchema schema, string[] tableIndex)
+    public void Init(DbSchema schema)
     {
         _tableSelect = GetTableSelect(schema);   // pre load selection for all tables
     }
