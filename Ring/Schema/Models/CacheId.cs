@@ -1,11 +1,11 @@
 ﻿namespace Ring.Schema.Models;
 
-internal struct CacheId
+internal sealed class CacheId
 {
 	internal readonly object SyncRoot;
 	internal long CurrentId;
 	internal long MaximumId;
-	internal int ReservedRange;  // cache a range of id 
+	internal int ReservedRange;     // cache a range of id 
 
 	/// <summary>
 	/// 	Ctor

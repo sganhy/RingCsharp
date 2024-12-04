@@ -246,7 +246,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
     protected abstract string EndPhysicalNameDelimiter { get; }
     public virtual string Create(Index index, Table table, TableSpace? tablespace = null)
     {
-        // CREATE INDEX title_idx ON films (title) WITH (deduplicate_items = off);
+        // CREATE INDEX title_idx ON films (title) WITH (deduplicate_items = off)
         var result = new StringBuilder();
         result.Append(DdlCreate);
         if (index.Unique) result.Append(DdlUnique);

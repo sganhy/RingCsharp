@@ -7,13 +7,13 @@
  		<LangVersion>10.0</LangVersion>
 		<Platforms>x64</Platforms>
 		<AnalysisLevel>6.0-all</AnalysisLevel>
-		<AssemblyVersion>1.0.1.168</AssemblyVersion>
-		<FileVersion>1.0.1.168</FileVersion>
+		<AssemblyVersion>1.0.0.168</AssemblyVersion>
+		<FileVersion>1.0.0.168</FileVersion>
 		<RepositoryType>https://github.com/sganhy/RingCsharp.git</RepositoryType>
 		<RepositoryUrl>https://github.com/sganhy/RingCsharp</RepositoryUrl>
-		<Description>Ring</Description>
-		<Title>Ring</Title>
-		<Version>1.0.1-beta</Version>
+		<Description>Ring Zero</Description>
+		<Title>Ring 0</Title>
+		<Version>1.0.0-beta</Version>
 		<IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
 		<NoWarn>CA1307;CA1802;S3267;IDE0066</NoWarn>
 		<PublishTrimmed>True</PublishTrimmed>
@@ -22,6 +22,9 @@
 		<SignAssembly>True</SignAssembly>
 		<AssemblyOriginatorKeyFile>Ring.snk</AssemblyOriginatorKeyFile>
 		<Copyright>Copyright © 2025</Copyright>
+		<NuGetAuditLevel>critical</NuGetAuditLevel>
+		<Product>Ring Zero</Product>
+		<EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
