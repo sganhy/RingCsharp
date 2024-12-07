@@ -3,7 +3,7 @@ using Ring.Schema.Extensions;
 
 namespace Ring.Tests.Schema.Extensions;
 
-public class TableTypeExtensionsTest : BaseTest
+public class TableTypeExtensionsTest
 {
     [Theory]
     [InlineData(TableType.Meta, "@meta")]

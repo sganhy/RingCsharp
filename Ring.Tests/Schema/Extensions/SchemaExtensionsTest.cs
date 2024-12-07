@@ -2,6 +2,7 @@
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
+using Xunit.Abstractions;
 using DbSchema = Ring.Schema.Models.Schema;
 
 namespace Ring.Tests.Schema.Extensions;
@@ -10,7 +11,7 @@ public class SchemaExtensionsTest : BaseTest
 {
     private readonly DbSchema _schema ;
 
-    public SchemaExtensionsTest()
+    public SchemaExtensionsTest(ITestOutputHelper output) : base(output)
     {
         var metaList = GetSchema1();
         var meta = new Meta("Test");

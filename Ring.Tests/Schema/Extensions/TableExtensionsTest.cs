@@ -4,11 +4,15 @@ using Ring.Schema.Builders;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using System.Globalization;
+using System.Linq.Expressions;
+using Xunit.Abstractions;
 
 namespace Ring.Tests.Schema.Extensions;
 
 public class TableExtensionsTest : BaseTest
 {
+    public TableExtensionsTest(ITestOutputHelper output) : base(output) => Expression.Empty();
+
     [Fact]
     internal void GetField_AnonymousTable_FieldObject()
     {

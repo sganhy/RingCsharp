@@ -1,10 +1,14 @@
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
+using System.Linq.Expressions;
+using Xunit.Abstractions;
 
 namespace Ring.Tests.Schema.Extensions;
 
 public sealed class IntExtensionsTest : BaseTest
 {
+    public IntExtensionsTest(ITestOutputHelper output) : base(output) => Expression.Empty();
+
     [Fact]
     public void ToRelationType_AllExistingEnumId_Enum()
     {

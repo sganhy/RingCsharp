@@ -4,12 +4,15 @@ using System.Reflection;
 using Ring.Schema;
 using Bogus;
 using Ring.Schema.Models;
+using Xunit.Abstractions;
+using System.Linq.Expressions;
 
 namespace Ring.Tests.Schema;
 
 public sealed class MetaTest : BaseTest
 {
-    private readonly Faker _faker = new();
+
+    public MetaTest(ITestOutputHelper output) : base(output) => Expression.Empty();
 
 
     [Theory]

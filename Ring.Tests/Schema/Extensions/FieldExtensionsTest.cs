@@ -2,12 +2,14 @@
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
+using System.Linq.Expressions;
+using Xunit.Abstractions;
 
 namespace Ring.Tests.Schema.Extensions;
 
 public class FieldExtensionsTest : BaseTest
 {
-    private readonly Faker _faker = new();
+    public FieldExtensionsTest(ITestOutputHelper output) : base(output) => Expression.Empty();
 
     [Fact]
     internal void ToMeta_Field1_MetaValue()

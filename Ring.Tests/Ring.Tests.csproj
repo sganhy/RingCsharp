@@ -1,43 +1,43 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-	<LangVersion>11.0</LangVersion>
-	<Platforms>x64</Platforms>
-	<PlatformTarget>x64</PlatformTarget>
-	<SignAssembly>True</SignAssembly>
-	<AssemblyOriginatorKeyFile>Ring.Tests.snk</AssemblyOriginatorKeyFile>
-	<NoWarn>RCS1196</NoWarn>
-   </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<LangVersion>11.0</LangVersion>
+		<Platforms>x64</Platforms>
+		<PlatformTarget>x64</PlatformTarget>
+		<SignAssembly>True</SignAssembly>
+		<AssemblyOriginatorKeyFile>Ring.Tests.snk</AssemblyOriginatorKeyFile>
+		<NoWarn>RCS1196</NoWarn>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <None Remove="Resources\meta.csv" />
-  </ItemGroup>
+	<ItemGroup>
+		<None Remove="Resources\meta.csv" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <EmbeddedResource Include="Resources\meta.csv" />
-  </ItemGroup>
+	<ItemGroup>
+		<EmbeddedResource Include="Resources\meta.csv" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <None Include="..\.editorconfig" Link=".editorconfig" />
-  </ItemGroup>
+	<ItemGroup>
+		<None Include="..\.editorconfig" Link=".editorconfig" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Bogus" Version="35.6.1" />
-    <PackageReference Include="Microsoft.DotNet.ILCompiler" Version="9.0.0" />
-    <PackageReference Include="Microsoft.NET.ILLink.Tasks" Version="9.0.0" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
-    <PackageReference Include="xunit" Version="2.9.2" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Bogus" Version="35.6.1" />
+		<PackageReference Include="Microsoft.DotNet.ILCompiler" Version="9.0.0" />
+		<PackageReference Include="Microsoft.NET.ILLink.Tasks" Version="9.0.0" />
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+		<PackageReference Include="xunit" Version="2.9.2" />
+		<PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+			<PrivateAssets>all</PrivateAssets>
+		</PackageReference>
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Ring\Ring.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\Ring\Ring.csproj" />
+	</ItemGroup>
 
 </Project>

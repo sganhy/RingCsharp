@@ -2,6 +2,7 @@
 using Ring.Schema;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
+using Xunit.Abstractions;
 using DbSchema = Ring.Schema.Models.Schema;
 using Record = Ring.Data.Record;
 
@@ -11,7 +12,7 @@ public class BulkSaveTest : BaseTest
 {
     private readonly DbSchema _schema;
     
-    public BulkSaveTest()
+    public BulkSaveTest(ITestOutputHelper output) : base(output)
     {
         var metaList = GetSchema1();
         var meta = new Meta("Test");

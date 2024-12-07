@@ -2,6 +2,8 @@
 using Ring.Schema;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
+using System.Linq.Expressions;
+using Xunit.Abstractions;
 
 using Index = Ring.Schema.Models.Index;
 
@@ -9,7 +11,7 @@ namespace Ring.Tests.Schema.Extensions;
 
 public sealed class IndexExtensionsTest : BaseTest
 {
-    private readonly Faker _faker = new();
+    public IndexExtensionsTest(ITestOutputHelper output) : base(output) => Expression.Empty();
 
     [Fact]
     public void ToMeta_Index1_MetaObject()

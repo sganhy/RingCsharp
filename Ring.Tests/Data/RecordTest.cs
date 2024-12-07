@@ -11,16 +11,15 @@ using Ring.Data.Enums;
 using Ring.Util.Builders.MySQL;
 using Ring.Data.Models;
 using Bogus;
+using Xunit.Abstractions;
 
 namespace Ring.Tests.Data;
 
 public sealed class RecordTest : BaseTest
 {
     private readonly DbSchema _schema;
-    private readonly Faker _faker = new();
 
-
-    public RecordTest()
+    public RecordTest(ITestOutputHelper output) : base(output)
     {
         var metaList = GetSchema1();
         var meta = new Meta("Test");

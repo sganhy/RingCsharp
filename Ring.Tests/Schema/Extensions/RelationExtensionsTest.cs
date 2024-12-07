@@ -2,12 +2,14 @@
 using Ring.Schema;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
+using System.Linq.Expressions;
+using Xunit.Abstractions;
 
 namespace Ring.Tests.Schema.Extensions;
 
 public class RelationExtensionsTest : BaseTest
 {
-    private readonly Faker _faker = new();
+    public RelationExtensionsTest(ITestOutputHelper output) : base(output) => Expression.Empty();
 
     [Fact]
     public void ToMeta_Relation1_MetaObject()
