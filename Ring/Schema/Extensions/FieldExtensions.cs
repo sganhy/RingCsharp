@@ -10,6 +10,8 @@ namespace Ring.Schema.Extensions;
 internal static class FieldExtensions
 {
 	private const char HashCodeSeparator = (char)3333;
+
+#pragma warning disable RCS1187 // Use constant instead of field
 	private static readonly string PrimaryKeyFieldName = "id";
 	private static readonly string PrimaryKeyDescription = "Internal record number";
 	private static readonly string NumberDefaultValue = "0";
@@ -21,11 +23,11 @@ internal static class FieldExtensions
 		new(0, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Short, 0, NumberDefaultValue, false, true, true, true, false);
 	private static readonly Field _defaultPrimaryKeyInt08 =
 		new(0, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Byte, 0, NumberDefaultValue, false, true, true, true, false);
+#pragma warning restore RCS1187
 
 	internal static bool IsValid(this Field field) => IsPrimaryKey(field) || field.Id > 0; 
 	internal static bool IsDateTime(this Field field) => field.Type == FieldType.DateTime ||
-														field.Type == FieldType.ShortDateTime ||
-														field.Type == FieldType.LongDateTime;
+		field.Type == FieldType.ShortDateTime || field.Type == FieldType.LongDateTime;
 	internal static bool IsNumeric(this Field field) => field.Type == FieldType.Long || field.Type == FieldType.Int ||
 		field.Type == FieldType.Short || field.Type == FieldType.Byte || field.Type == FieldType.Float ||
 		field.Type == FieldType.Double;
@@ -55,7 +57,7 @@ internal static class FieldExtensions
 		return result.ToString();
 	}
 
-	internal static Meta ToMeta(this Field field, int tableId, FieldType? newFieldType=null) 
+	internal static Meta ToMeta(this Field field, int tableId, FieldType? newFieldType=null)
 	{
 		var flags = 0L;
 		flags = Meta.SetEntityBaseline(flags,field.Baseline);
@@ -65,9 +67,7 @@ internal static class FieldExtensions
 		flags = Meta.SetFieldSize(flags, field.Size);
 		var dataType = 0 ;
 		dataType = Meta.SetFieldType(dataType, newFieldType ?? field.Type);
-		string? value = null;
-		var meta = new Meta(field.Id, (byte)EntityType.Field, tableId, dataType, flags, field.Name, field.Description, value, field.Active);
-		return meta;
+		return new (field.Id, (byte)EntityType.Field, tableId, dataType, flags, field.Name, field.Description, null, field.Active);
 	}
 
 	internal static Field? GetDefaultPrimaryKey(this Field? _, FieldType fieldType)
@@ -108,4 +108,3 @@ internal static class FieldExtensions
 		return result.ToString();
 	}
 }
-

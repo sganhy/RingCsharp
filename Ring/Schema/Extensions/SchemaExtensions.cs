@@ -115,8 +115,8 @@ internal static class SchemaExtensions
 		foreach (var tbl in new Span<Table>(schema.TablesByName)) tbl.LoadRelationRecordIndex();
 	}
 
-    #region private methods 
-    private static void LoadInverseRelations(this DbSchema schema, ReadOnlySpan<Meta> schemaItems)
+	#region private methods 
+	private static void LoadInverseRelations(this DbSchema schema, ReadOnlySpan<Meta> schemaItems)
 	{
 		foreach (var meta in schemaItems)
 		{
@@ -154,7 +154,7 @@ internal static class SchemaExtensions
 					var physicalName = ddlBuilder.GetPhysicalName(emptyTable, schema);
 					var inverseRelation = relation.InverseRelation;
 
-					if (!mtm.ContainsKey(physicalName))
+                    if (!mtm.ContainsKey(physicalName))
 					{
 						mtmTable = tableBuilder.GetMtm(emptyTable, physicalName, mtm.Count);
 						//  step 2 - load relations - sort relation

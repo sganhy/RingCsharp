@@ -213,7 +213,7 @@ internal static class TableExtensions
 		var meta = new Meta(table.Id, (byte)EntityType.Table, schemaId, (int)table.Type, flags, table.Name, table.Description, null, table.Active);
 		// first - define Object type
 		result.Add(meta);
-		return result.ToArray(); 
+		return result.ToArray();
 	}
 
 	/// <summary>

@@ -18,7 +18,7 @@ internal sealed class Lexicon : BaseEntity
 		Table table, Field field, Relation? relation,string? relationValue,
 		Language language, Guid guid, bool upperCaseSearch, bool active, bool baseline)
 		: base(id, name, description, active, baseline)
-    {
+	{
 		SchemaId = schemaId;
 		Table = table;
 		Relation = relation;
