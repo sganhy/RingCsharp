@@ -11,6 +11,7 @@ using Serilog.Events;
 using Serilog.Extensions.Logging;
 using Serilog.Formatting.Json;
 using Ring.Schema.Extensions;
+using System.Diagnostics;
 
 var logger = new LoggerConfiguration()
                           // add console as logging target
@@ -37,45 +38,12 @@ Log.Warning("Warning accrued at {now}", DateTime.Now);
 Log.Error("Error accrued at {now}", DateTime.Now);
 Log.Fatal("Problem with car car accrued at {now}", DateTime.Now);
 
-SpanList<Meta> testlst = new SpanList<Meta>(3);
-testlst.Add(new Meta("1"));
-testlst.Add(new Meta("2"));
-testlst.Add(new Meta("3"));
-testlst.Add(new Meta("4"));
-testlst.Add(new Meta("5"));
-testlst.Add(new Meta("6"));
-testlst.Add(new Meta("7"));
-testlst.Add(new Meta("8"));
-testlst.Add(new Meta("9"));
-
 // call difference trougth interface and and base class
 var builder = new SchemaBuilder();
-var config = new Configuration() { DefaultSchema = "test", MaxConnectionPoolSize = 20 };
+var config = new Configuration() { DefaultSchema = "public", MaxConnectionPoolSize = 20 };
 var schema = builder.GetMeta(DatabaseProvider.PostgreSql, config);
 var metaTable = schema.GetTable("@meta");
 
-IDmlBuilder iDmlBuilder = schema.DmlBuiler;
-var dt = DateTime.Now;
-var sql = string.Empty;
-for (var i = 0; i < 10_000_000; ++i)
-{
-    sql = iDmlBuilder.Insert(metaTable);
-}
-Console.Write("IDmlBuilder index: ");
-Console.WriteLine(DateTime.Now-dt);
-
-BaseDmlBuilder bDmlBuilder = new DmlBuilder();
-bDmlBuilder.Init(schema);
-
-dt = DateTime.Now;
-for (var i = 0; i < 10_000_000; ++i)
-{
-    sql = bDmlBuilder.Insert(metaTable);
-}
-Console.Write("BaseDmlBuilder index: ");
-Console.WriteLine(DateTime.Now - dt);
-
-/*
 List<int> testh= new List<int>();
 testh.Sort();
 
@@ -83,28 +51,37 @@ var POSTGRE_CONN_STRING1 = "User ID=postgres; Password=sa;Host=localhost;Port=54
 
 var configuration = new Configuration { ConnectionString = POSTGRE_CONN_STRING1, LoggerFactory = microsoftLoggerFactory };
 IRingConnection conn = new Ring.PostgreSQL.Connection(configuration);
-
-
-
 conn.Open();
 
-var builder = new SchemaBuilder();
-var config = new Configuration
+Process proc = Process.GetCurrentProcess();
+Console.WriteLine("proc.PrivateMemorySize64=" + ((double)proc.PrivateMemorySize64) / (1024 * 1024) + "MB");
+
+
+BulkSave bs = new(schema);
+
+for (var i = 0; i < 10_000; ++i)
 {
-    ConnectionString = POSTGRE_CONN_STRING1,
-    DefaultSchema = "public",
-    MinConnectionPoolSize = 1,
-    MaxConnectionPoolSize = 4,
-    DefaultTableStorage = "ring_data",
-    DefaultIndexStorage = "ring_index"
-};
+    var rcd = new Record(metaTable);
+    rcd.SetField("id", i);
+    rcd.SetField("schema_id", 1);
+    rcd.SetField("object_type", 0);
+    rcd.SetField("reference_id", 0);
+    rcd.SetField("data_type", 332);
+    rcd.SetField("flags", -332784545);
+    rcd.SetField("name", "test");
+    //rcd.SetField("description", "test desc");
+    rcd.SetField("value", "test value");
+    rcd.SetField("active", true);
+    bs.InsertRecord(rcd);
+}
+var checkTime = DateTime.Now;
+Console.WriteLine("Start - bs.Save(conn);");
+bs.Save(conn, true);
+Console.WriteLine("End - " + (DateTime.Now - checkTime));
 
-var schema = builder.GetMeta(Ring.Schema.Enums.DatabaseProvider.PostgreSql, config);
+proc = Process.GetCurrentProcess();
+Console.WriteLine("proc.PrivateMemorySize64=" + ((double)proc.PrivateMemorySize64)/(1024*1024) + "MB");
+Console.WriteLine("Version test 3");
 
-BulkAlter ba = new(schema);
-ba.CreateTable("@meta");
-ba.CreateTable("@meta_id");
-ba.CreateTable("@log");
-ba.Apply(conn);
-
-*/
+int oi = 0;
+++oi;

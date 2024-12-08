@@ -16,10 +16,4 @@ internal static class SaveQueryTypeExtensions
 		return SaveQueryType.Undefined;
 	}
 
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static bool IsCancelled(this SaveQueryType operation)
-		=> operation == SaveQueryType.CancelledDeleteRecord ||
-			operation == SaveQueryType.CancelledInsertRecord ||
-			operation == SaveQueryType.CancelledUpdateRecord;
-
 }

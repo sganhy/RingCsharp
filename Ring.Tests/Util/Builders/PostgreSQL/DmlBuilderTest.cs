@@ -31,7 +31,7 @@ public class DmlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var table = _schema.GetTable("skill");
-        var expectedResult = "INSERT INTO rpg_sheet.t_skill (id,name,skill2ability,sub_name,is_group,category,armor_penality,trained_only,try_again) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)";
+        var expectedResult = "INSERT INTO rpg_sheet.t_skill (id,name,skill2ability,sub_name,is_group,category,armor_penality,trained_only,try_again) VALUES (:p1,:p2,:p3,:p4,:p5,:p6,:p7,:p8,:p9)";
 
         // act 
         Assert.NotNull(table);
@@ -50,7 +50,7 @@ public class DmlBuilderTest : BaseBuilderTest
         var table = _schema.GetTable(1021); // get book
         var relation = table?.GetRelation("book2class");
         var mtmTable = relation?.ToTable;
-        var expectedResult = "INSERT INTO rpg_sheet.\"@mtm_01021_01031_009\" (book2class,class2book) VALUES ($1,$2)";
+        var expectedResult = "INSERT INTO rpg_sheet.\"@mtm_01021_01031_009\" (book2class,class2book) VALUES (:p1,:p2)";
 
         // act 
         Assert.NotNull(mtmTable);
@@ -90,7 +90,7 @@ public class DmlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var table = _schema.GetTable("deity");
-        var expectedResult = "INSERT INTO rpg_sheet.t_deity (id,deity2alignment,name,deity2gender,nickname,portfolio,symbol) VALUES ($1,$2,$3,$4,$5,$6,$7)";
+        var expectedResult = "INSERT INTO rpg_sheet.t_deity (id,deity2alignment,name,deity2gender,nickname,portfolio,symbol) VALUES (:p1,:p2,:p3,:p4,:p5,:p6,:p7)";
 
         // act 
         Assert.NotNull(table);
@@ -112,7 +112,7 @@ public class DmlBuilderTest : BaseBuilderTest
         var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
         var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
         var table = schema.GetTable("@meta");
-        var expectedResult = "INSERT INTO \"@test\".\"@meta\" (id,schema_id,object_type,reference_id,data_type,flags,name,description,value,active) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)";
+        var expectedResult = "INSERT INTO \"@test\".\"@meta\" (id,schema_id,object_type,reference_id,data_type,flags,name,description,value,active) VALUES (:p1,:p2,:p3,:p4,:p5,:p6,:p7,:p8,:p9,:p10)";
 
         // act 
         Assert.NotNull(schema);
@@ -134,7 +134,7 @@ public class DmlBuilderTest : BaseBuilderTest
         var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
         var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
         var table = schema.GetTable("@meta_id"); 
-        var expectedResult = "INSERT INTO \"@test\".\"@meta_id\" (id,schema_id,object_type,value) VALUES ($1,$2,$3,$4)";
+        var expectedResult = "INSERT INTO \"@test\".\"@meta_id\" (id,schema_id,object_type,value) VALUES (:p1,:p2,:p3,:p4)";
 
         // act 
         Assert.NotNull(schema);
@@ -151,7 +151,7 @@ public class DmlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var table = _schema.GetTable("skill");
-        var expectedResult = "DELETE FROM rpg_sheet.t_skill WHERE id=$1";
+        var expectedResult = "DELETE FROM rpg_sheet.t_skill WHERE id=:p1";
 
         // act 
         Assert.NotNull(table);
@@ -170,7 +170,7 @@ public class DmlBuilderTest : BaseBuilderTest
         var table = _schema.GetTable(1021); // get book
         var relation = table?.GetRelation("book2class");
         var mtmTable = relation?.ToTable;
-        var expectedResult = "DELETE FROM rpg_sheet.\"@mtm_01021_01031_009\" WHERE book2class=$1 AND class2book=$2";
+        var expectedResult = "DELETE FROM rpg_sheet.\"@mtm_01021_01031_009\" WHERE book2class=:p1 AND class2book=:p2";
 
         // act 
         Assert.NotNull(mtmTable);
@@ -192,7 +192,7 @@ public class DmlBuilderTest : BaseBuilderTest
         var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
         var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
         var table = schema.GetTable("@meta");
-        var expectedResult = "DELETE FROM \"@test\".\"@meta\" WHERE id=$1 AND schema_id=$2 AND object_type=$3 AND reference_id=$4";
+        var expectedResult = "DELETE FROM \"@test\".\"@meta\" WHERE id=:p1 AND schema_id=:p2 AND object_type=:p3 AND reference_id=:p4";
 
         // act 
         Assert.NotNull(schema);
@@ -214,7 +214,7 @@ public class DmlBuilderTest : BaseBuilderTest
         var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
         var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
         var table = schema.GetTable("@meta_id");
-        var expectedResult = "DELETE FROM \"@test\".\"@meta_id\" WHERE id=$1 AND schema_id=$2 AND object_type=$3";
+        var expectedResult = "DELETE FROM \"@test\".\"@meta_id\" WHERE id=:p1 AND schema_id=:p2 AND object_type=:p3";
 
         // act 
         Assert.NotNull(schema);
@@ -231,7 +231,7 @@ public class DmlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var table = _schema.GetTable("armor");
-        var expectedResult = "UPDATE rpg_sheet.t_armor SET {0} WHERE id=$1";
+        var expectedResult = "UPDATE rpg_sheet.t_armor SET {0} WHERE id=:p1";
 
         // act 
         Assert.NotNull(table);
@@ -253,7 +253,7 @@ public class DmlBuilderTest : BaseBuilderTest
         var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
         var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
         var table = schema.GetTable("@meta");
-        var expectedResult = "UPDATE \"@test\".\"@meta\" SET {0} WHERE id=$1 AND schema_id=$2 AND object_type=$3 AND reference_id=$4";
+        var expectedResult = "UPDATE \"@test\".\"@meta\" SET {0} WHERE id=:p1 AND schema_id=:p2 AND object_type=:p3 AND reference_id=:p4";
 
         // act 
         Assert.NotNull(schema);
@@ -275,7 +275,7 @@ public class DmlBuilderTest : BaseBuilderTest
         var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
         var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
         var table = schema.GetTable("@meta_id");
-        var expectedResult = "UPDATE \"@test\".\"@meta_id\" SET {0} WHERE id=$1 AND schema_id=$2 AND object_type=$3";
+        var expectedResult = "UPDATE \"@test\".\"@meta_id\" SET {0} WHERE id=:p1 AND schema_id=:p2 AND object_type=:p3";
 
         // act 
         Assert.NotNull(schema);

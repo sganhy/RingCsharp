@@ -10,6 +10,13 @@ using Ring.Util.Enums;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 using Ring.Data.Enums;
 using Ring.Schema.Models;
+using NpgsqlTypes;
+using Ring.PostgreSQL.Extensions;
+using Ring.Schema.Enums;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Xml.Linq;
+using System;
 
 namespace Ring.PostgreSQL;
 
@@ -18,10 +25,15 @@ public sealed class Connection : IRingConnection
     private readonly static Dictionary<string, int> _connectionCounts = new(); // <connectionString.ToUpper(), connectionCount>
     private readonly static string ActionMessage = "{Message}";
     private readonly static NpgsqlParameter [] DefaultParameterArray = Array.Empty<NpgsqlParameter>();
+    private readonly static CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
     private readonly static LogBuilder _logBuilder = new();
     private readonly static string?[] EmptyResult = Array.Empty<string?>();
     private readonly static object _syncRoot = new();
     private readonly static string _ddlOperationType = nameof(AlterQueryType);
+    private readonly static int BindVariableNameCacheSize = 1024;
+    private readonly static string[] BindVariableName = GetBindVariable();
+    private const string BindVariablePrefix = "p";
+    private readonly static string BooleanTrue = true.ToString(DefaultCulture);
     private readonly IConfiguration _configuration;
     private readonly ILogger<Connection> _logger;
     private readonly int _id;
@@ -221,7 +233,7 @@ public sealed class Connection : IRingConnection
 
     public long Execute(in SaveQuery query)
     {
-        if (_informationEnabled) _lastExecutionTime = DateTime.Now;
+        //if (_informationEnabled) _lastExecutionTime = DateTime.Now;
         int returnValue;
         var sql = query.ToSql();
         if (sql == null)
@@ -242,29 +254,81 @@ public sealed class Connection : IRingConnection
         catch (Exception ex)
         {
             LogDmlException(ex, query);
-            returnValue = 0;
+returnValue = 0;
         }
 #pragma warning restore CA1031, CA2100
         cmd.Connection = null;
-        cmd.Dispose();
+cmd.Dispose();
 
-        if (returnValue > 0 && _informationEnabled) LogOperationPerformed(query, DateTime.Now - _lastExecutionTime);
-        return 2;
+        //if (returnValue > 0 && _informationEnabled) LogOperationPerformed(query, DateTime.Now - _lastExecutionTime);
+        return returnValue;
     }
 
     #region private methods 
 
+    private static string[] GetBindVariable()
+    {
+        var result = new string[BindVariableNameCacheSize];
+        var count = BindVariableNameCacheSize;
+        for (var i = 0; i < count; ++i) result[i] = BindVariablePrefix + (i + 1).ToString(DefaultCulture);
+        return result;
+    }
+
     private static NpgsqlParameter[] Getparameters(in SaveQuery saveQuery)
     {
         NpgsqlParameter[] result = DefaultParameterArray;
+        var bindVariableNameCacheSize = BindVariableNameCacheSize;
+
         if (saveQuery.Type == SaveQueryType.InsertRecord)
         {
-            // use a pool
-            result = new NpgsqlParameter[saveQuery.Table.RecordSize - 1];
+            // use an array pool
             var span = new ReadOnlySpan<IColumn>(saveQuery.Table.Columns);
-            foreach (var col in span)
-            {
+            var spanCount = span.Length;
+            var recordIndexes = saveQuery.Table.RecordIndexes;
+            var data = saveQuery.Data;
 
+            result = new NpgsqlParameter[spanCount];
+            for (var i=0; i< spanCount; ++i)
+            {
+                var column = span[i];
+                var value = data[recordIndexes[i]];
+                var variableName = i < bindVariableNameCacheSize ? BindVariableName[i] : BindVariablePrefix + (i + 1).ToString(DefaultCulture);
+                var dbType = column.FieldType.ToNpgsqlDbType();
+
+                if (value == null)
+                {
+                    result[i] = new NpgsqlParameter(variableName, dbType)
+                    {
+                        Value = DBNull.Value
+                    };
+                    continue;
+                }
+                switch (column.FieldType)
+                {
+                    case FieldType.Long:
+                    case FieldType.Int:
+                    case FieldType.Short:
+                    case FieldType.Byte:
+                        result[i] = new NpgsqlParameter<long>(variableName, dbType)
+                        {
+                            Value = long.Parse(value, DefaultCulture)
+                        };
+                        break;
+                    case FieldType.String:
+                    case FieldType.LongString:
+                        result[i] = new NpgsqlParameter<string>(variableName, dbType)
+                        {
+                            Value = value,
+                        };
+                        break;
+                    case FieldType.Boolean:
+                        result[i] = new NpgsqlParameter<bool>(variableName, dbType)
+                        {
+                            Value = string.Equals(BooleanTrue, value, StringComparison.Ordinal)
+                        };
+                        break;
+                }
+                
             }
         }
         else if (saveQuery.Type == SaveQueryType.UpdateRecord)

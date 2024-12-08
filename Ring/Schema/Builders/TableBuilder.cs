@@ -37,8 +37,8 @@ internal sealed class TableBuilder
 			GetField(FieldDataType, FieldType.Int),
 			GetField(FieldFlags, FieldType.Long),
 			GetField(FieldName, FieldType.String,30),
-			GetField(FieldDescription, FieldType.String,false),
-			GetField(FieldValue, FieldType.String,false),
+			GetField(FieldDescription, FieldType.LongString,false),
+			GetField(FieldValue, FieldType.LongString,false),
 			GetField(FieldActive, FieldType.Boolean)
 		};
 		metaList.Add(GetIndex(true, new [] { metaList[0], metaList[1], metaList[2], metaList[3] }));

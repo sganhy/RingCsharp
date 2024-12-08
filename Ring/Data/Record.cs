@@ -201,6 +201,7 @@ public struct Record : IEquatable<Record>
 			switch (type)
 			{
 				case FieldType.String: SetStringField(_type.Fields[fieldId].Size, fieldId, value); break;
+				case FieldType.LongString: SetData(fieldId, value); break; // no size check!
 				case FieldType.Byte:
 				case FieldType.Short:
 				case FieldType.Int:

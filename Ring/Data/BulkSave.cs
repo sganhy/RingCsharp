@@ -158,21 +158,21 @@ public readonly struct BulkSave : IBulkSave
 
 	}
 
-	internal void Save(IRingConnection connection)
+	internal void Save(IRingConnection connection, bool noTransaction=false)
 	{
-		if (_info.Queries.Count == 0) return;
+		var queryCount = _info.Queries.Count;
+
+        if (queryCount == 0) return;
 
 		//  generate id
 		if (_info.IdCount > 0) GenerateId(connection);
 
 		//TODO if more than 100K multiple transactions
 		//TODO throw exception ==> invalid insert into with id==0
-		if (_info.Queries.Count == 1) SaveWithoutTransactions(connection);
-		/*
-		if (_data.Count > 1) SaveWithTransaction(connection);
-		if (isIdGenerate) GenerateMissingId();
-		*/
-		// clear pipe 
+		if (queryCount == 1 || noTransaction) SaveWithoutTransactions(connection);
+		else if (queryCount > 1) SaveWithTransaction(connection);
+		
+		// clear bucket 
 		Clear(); 
 	}
 
@@ -199,10 +199,30 @@ public readonly struct BulkSave : IBulkSave
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private void SaveWithoutTransactions(IRingConnection connection)
 	{
-		foreach (var query in _info.Queries.AsReadOnlySpan()) if (!query.Type.IsCancelled()) connection.Execute(query);
+		foreach (var query in _info.Queries.AsReadOnlySpan())
+		{
+			var type = query.Type;
+            if (type == SaveQueryType.InsertRecord || 
+				type == SaveQueryType.UpdateRecord || 
+				type == SaveQueryType.UpdateReturningRecord)
+				connection.Execute(query);
+		}
 	}
 
-	private static Table GetDefaultType()
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void SaveWithTransaction(IRingConnection connection)
+    {
+        foreach (var query in _info.Queries.AsReadOnlySpan())
+        {
+            var type = query.Type;
+            if (type == SaveQueryType.InsertRecord ||
+                type == SaveQueryType.UpdateRecord ||
+                type == SaveQueryType.UpdateReturningRecord)
+                connection.Execute(query);
+        }
+    }
+
+    private static Table GetDefaultType()
 	{
 		var metaTable = new Meta(-1, (byte)EntityType.Table, 0, (int)TableType.Undefined, 0L, string.Empty, null, null, true);
 		var metaArray = new Meta[] { new(0, (byte)EntityType.Field, 0, 0, 0L, string.Empty, null, null, true) };

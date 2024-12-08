@@ -85,7 +85,11 @@ internal struct SpanList<T> where T : struct
 	#endregion
 
 #pragma warning disable IDE0251 // Make member 'readonly'
-	internal void Sort(Comparison<T> comparison) => Array.Sort(_buffer, comparison);
+	internal void Sort(Comparison<T> comparison)
+	{
+		var span = new Span<T>(_buffer, 0, _count);
+        span.Sort(comparison);
+	}
 #pragma warning restore IDE0251
 
 	#region private methods 
