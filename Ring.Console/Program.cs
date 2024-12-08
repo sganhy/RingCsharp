@@ -1,11 +1,8 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
 using Ring.Data;
-using Ring.Schema;
 using Ring.Schema.Builders;
 using Ring.Schema.Enums;
-using Ring.Util.Builders;
-using Ring.Util.Builders.PostgreSQL;
 using Serilog;
 using Serilog.Events;
 using Serilog.Extensions.Logging;
@@ -43,6 +40,7 @@ var builder = new SchemaBuilder();
 var config = new Configuration() { DefaultSchema = "public", MaxConnectionPoolSize = 20 };
 var schema = builder.GetMeta(DatabaseProvider.PostgreSql, config);
 var metaTable = schema.GetTable("@meta");
+//var lexiconTable = schema.GetTable("@lexicon");
 
 List<int> testh= new List<int>();
 testh.Sort();
@@ -54,8 +52,13 @@ IRingConnection conn = new Ring.PostgreSQL.Connection(configuration);
 conn.Open();
 
 Process proc = Process.GetCurrentProcess();
-Console.WriteLine("proc.PrivateMemorySize64=" + ((double)proc.PrivateMemorySize64) / (1024 * 1024) + "MB");
+Console.WriteLine("proc.PrivateMemorySize64=" + ((double)proc.PrivateMemorySize64) / (1024 * 1024) + " MB");
 
+/*
+BulkAlter ba = new(schema);
+ba.CreateTable("@log");
+ba.Apply(conn);
+*/
 
 BulkSave bs = new(schema);
 
@@ -80,7 +83,7 @@ bs.Save(conn, true);
 Console.WriteLine("End - " + (DateTime.Now - checkTime));
 
 proc = Process.GetCurrentProcess();
-Console.WriteLine("proc.PrivateMemorySize64=" + ((double)proc.PrivateMemorySize64)/(1024*1024) + "MB");
+Console.WriteLine("proc.PrivateMemorySize64=" + ((double)proc.PrivateMemorySize64)/(1024*1024) + " MB");
 Console.WriteLine("Version test 3");
 
 int oi = 0;

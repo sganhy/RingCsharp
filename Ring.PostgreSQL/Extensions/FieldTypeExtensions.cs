@@ -14,7 +14,7 @@ internal static class FieldTypeExtensions
         {
             case FieldType.Long: return NpgsqlDbType.Bigint;
             case FieldType.Int: return NpgsqlDbType.Integer;
-            case FieldType.Short: return NpgsqlDbType.Smallint;
+            case FieldType.Short:
             case FieldType.Byte: return NpgsqlDbType.Smallint;
             case FieldType.Float: return NpgsqlDbType.Real;
             case FieldType.Double: return NpgsqlDbType.Double;

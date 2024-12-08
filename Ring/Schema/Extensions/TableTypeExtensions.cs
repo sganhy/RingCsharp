@@ -18,6 +18,7 @@ internal static class TableTypeExtensions
                 return SystemTablePrefix + partialName;
             case TableType.Meta:
             case TableType.Log:
+            case TableType.Test:
                 return SystemTablePrefix + tableType.ToString().ToLowerInvariant();
             case TableType.MetaId: 
                 return SystemTablePrefix + NamingConvention.ToSnakeCase(tableType.ToString());

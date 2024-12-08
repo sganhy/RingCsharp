@@ -14,7 +14,8 @@ internal sealed class TableBuilder
 	internal static readonly string FieldDataType = "data_type";
 	internal static readonly string FieldFlags = "flags";
 	internal static readonly string FieldName = "name";
-	internal static readonly string FieldActive = "active";
+    internal static readonly string FieldTestPrefix = "test_";
+    internal static readonly string FieldActive = "active";
 	internal static readonly string FieldDescription = "description";
 	internal static readonly string FieldLevelId = "level_id";
 	internal static readonly string FieldEntryTime = "entry_time";
@@ -82,7 +83,21 @@ internal sealed class TableBuilder
 	}
 
 #pragma warning disable CA1822, S2325 // Mark members as static
-	internal Table GetCatalog(EntityType entityType, DatabaseProvider provider) {
+    internal Table GetTest(string schemaName, DatabaseProvider provider)
+    {
+#pragma warning restore CA1822, S2325
+		var metaList = new List<Meta>();
+        var values = Enum.GetValues<FieldType>();
+		var i = 0;
+        foreach(var fieldType in values)
+            if (fieldType != FieldType.Undefined)
+				metaList.Add(GetField(FieldTestPrefix + i++, fieldType));
+        var metaTest = GetTable((int)TableType.Test, TableType.Test.GetLogicalName(), TableType.Logical, false);
+        return GetTable(schemaName, provider, metaList.ToArray(), metaTest);
+    }
+
+#pragma warning disable CA1822, S2325 // Mark members as static
+    internal Table GetCatalog(EntityType entityType, DatabaseProvider provider) {
 #pragma warning restore CA1822, S2325
 		var tableType = entityType.ToTableType();
 		var metaList = new List<Meta>(){ GetField(provider.GetSchemaFieldName(entityType), FieldType.String) };
@@ -125,10 +140,10 @@ internal sealed class TableBuilder
 				physicalType ?? PhysicalType.Table, ddlBuilder.GetPhysicalName(emptyTable, emptySchema),0) ?? emptyTable;
 	}
 
-	private static Meta GetTable(int id, string name, TableType tableType) {
+	private static Meta GetTable(int id, string name, TableType tableType, bool active=true) {
 		var flags = 0L;
 		flags = Meta.SetEntityBaseline(flags, true);
-		return new(id, (byte)EntityType.Table, 0, (int)tableType, flags, name, null, null, true);
+		return new(id, (byte)EntityType.Table, 0, (int)tableType, flags, name, null, null, active);
 	}
 	private static Meta GetSchema(int id, string name) => new(id, (byte)EntityType.Schema, 0, 0, 0L, name, null, null, true);
 	private static Meta GetField(string name, FieldType fieldType, bool notNull)
