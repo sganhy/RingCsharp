@@ -12,7 +12,6 @@ using Ring.Data.Enums;
 using Ring.Schema.Models;
 using Ring.PostgreSQL.Extensions;
 using Ring.Schema.Enums;
-using static Npgsql.Replication.PgOutput.Messages.RelationMessage;
 using NpgsqlTypes;
 using System.Runtime.CompilerServices;
 
@@ -255,6 +254,9 @@ public sealed class Connection : IRingConnection
         }
         catch (Exception ex)
         {
+            Console.WriteLine("Error: ");
+            Console.WriteLine(ex.Message);
+            Console.WriteLine(ex.StackTrace);
             LogDmlException(ex, query);
             returnValue = 0;
         }
@@ -297,9 +299,10 @@ cmd.Dispose();
             {
                 var column = span[i];
                 var value = data[recordIndexes[i]+ saveQuery.Offset];
-                var variableName = i < bindVariableNameCacheSize ? BindVariableName[i] : bindVariablePrefix + (i + 1).ToString(DefaultCulture);
+                var variableName = i < bindVariableNameCacheSize ? BindVariableName[i] :
+                    bindVariablePrefix + (i + 1).ToString(DefaultCulture);
                 var dbType = column.FieldType.ToNpgsqlDbType();
-                result[i] = Getparameter(variableName, dbType, column.FieldType, value);
+                result[i] = GetParameter(variableName, dbType, column.FieldType, value);
             }
         }
         else if (saveQuery.Type == SaveQueryType.UpdateRecord)
@@ -314,7 +317,7 @@ cmd.Dispose();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static NpgsqlParameter Getparameter(string variableName, NpgsqlDbType dbType, FieldType fieldType, string? value)
+    private static NpgsqlParameter GetParameter(string variableName, NpgsqlDbType dbType, FieldType fieldType, string? value)
     {
         if (value == null)
         {

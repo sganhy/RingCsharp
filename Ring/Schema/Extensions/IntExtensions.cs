@@ -43,7 +43,8 @@ internal static class IntExtensions
 	private const int TableTypeFakeId = (int)TableType.Fake;
 	private const int TableTypeMtmId = (int)TableType.Mtm;
 	private const int TableTypeLogId = (int)TableType.Log;
-	private const int TableTypeLexiconId = (int)TableType.Lexicon;
+    private const int TableTypeTestId = (int)TableType.Test;
+    private const int TableTypeLexiconId = (int)TableType.Lexicon;
 	private const int TableTypeLexiconItemId = (int)TableType.LexiconItem;
 	private const int TableTypeSchemaCatalogId = (int)TableType.SchemaCatalog;
 	private const int TableTypeTableCatalogId = (int)TableType.TableCatalog;
@@ -82,7 +83,8 @@ internal static class IntExtensions
 			case TableTypeFakeId: return TableType.Fake;
 			case TableTypeMtmId: return TableType.Mtm;
 			case TableTypeLogId: return TableType.Log;
-			case TableTypeLexiconId: return TableType.Lexicon;
+            case TableTypeTestId: return TableType.Test;
+            case TableTypeLexiconId: return TableType.Lexicon;
 			case TableTypeLexiconItemId: return TableType.LexiconItem;
 			case TableTypeSchemaCatalogId: return TableType.SchemaCatalog;
 			case TableTypeTableCatalogId: return TableType.TableCatalog;

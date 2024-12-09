@@ -158,6 +158,35 @@ public class DdlBuilderTest : BaseBuilderTest
     }
 
     [Fact]
+    public void Create_TestTable_DdlQuery()
+    {
+        // arrange 
+        var tablespaceName = _faker.Random.String();
+        var tablespace = GetAnonymousTableSpace(tablespaceName);
+        var builder = new SchemaBuilder();
+        var config = new Configuration() { DefaultSchema = "test", MaxConnectionPoolSize = 1 };
+        var schema = builder.GetMeta(DatabaseProvider.PostgreSql, config);
+        var metaTable = schema.GetTable("@test");
+
+#pragma warning disable CS8602
+        var expectedSql = $"CREATE TABLE test.\"@test\" (\n" + "    test_0 int8,\n" +
+                "    test_1 int4,\n" + "    test_2 int2,\n" + "    test_3 int2,\n" +
+                "    test_4 float4,\n" + "    test_5 float8,\n" + "    test_6 varchar(512) COLLATE \"C\",\n" +
+                "    test_7 date,\n" + "    test_8 timestamp without time zone,\n    test_9 timestamp with time zone,\n" +
+                "    test_10 bytea,\n" + "    test_11 bool,\n    test_12 text COLLATE \"C\")" +
+                $" TABLESPACE {tablespaceName}";
+        Assert.NotNull(metaTable);
+
+        // act 
+        var ddl = _sut.Create(metaTable, tablespace);
+
+#pragma warning restore  CS8602
+
+        // assert
+        Assert.Equal(expectedSql, ddl);
+    }
+
+    [Fact]
     public void Create_TableSpace1_DdlQuery()
     {
         // arrange 

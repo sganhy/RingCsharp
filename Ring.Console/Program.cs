@@ -40,6 +40,7 @@ var builder = new SchemaBuilder();
 var config = new Configuration() { DefaultSchema = "public", MaxConnectionPoolSize = 20 };
 var schema = builder.GetMeta(DatabaseProvider.PostgreSql, config);
 var metaTable = schema.GetTable("@meta");
+var metaTest = schema.GetTable("@test");
 //var lexiconTable = schema.GetTable("@lexicon");
 
 List<int> testh= new List<int>();
@@ -56,16 +57,39 @@ Console.WriteLine("proc.PrivateMemorySize64=" + ((double)proc.PrivateMemorySize6
 
 /*
 BulkAlter ba = new(schema);
-ba.CreateTable("@log");
+ba.CreateTable("@test");
 ba.Apply(conn);
 */
 
 BulkSave bs = new(schema);
 
-for (var i = 0; i < 10_000; ++i)
+var rcd = new Record(metaTest);
+rcd.SetField("test_0", 0);
+rcd.SetField("test_1", 1);
+rcd.SetField("test_2", 2);
+rcd.SetField("test_3", 3);
+rcd.SetField("test_4", 4.4);
+rcd.SetField("test_5", 5.55);
+rcd.SetField("test_6", "test_6");
+/*
+    test_7 date,
+    test_8 timestamp without time zone,
+    test_9 timestamp with time zone,
+    test_10 bytea,
+*/
+rcd.SetField("test_7", null);
+rcd.SetField("test_8", null);
+rcd.SetField("test_9", null);
+rcd.SetField("test_10", null);
+rcd.SetField("test_11", false);
+rcd.SetField("test_12", "test_12");
+bs.InsertRecord(rcd);
+bs.Save(conn, true);
+
+/*for (var i = 0; i < 10_000; ++i)
 {
     var rcd = new Record(metaTable);
-    rcd.SetField("id", i);
+    rcd.SetField("test_0", i);
     rcd.SetField("schema_id", 1);
     rcd.SetField("object_type", 0);
     rcd.SetField("reference_id", 0);
@@ -77,6 +101,7 @@ for (var i = 0; i < 10_000; ++i)
     rcd.SetField("active", true);
     bs.InsertRecord(rcd);
 }
+*/
 var checkTime = DateTime.Now;
 Console.WriteLine("Start - bs.Save(conn);");
 bs.Save(conn, true);

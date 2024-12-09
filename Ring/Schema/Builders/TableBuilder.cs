@@ -89,10 +89,14 @@ internal sealed class TableBuilder
 		var metaList = new List<Meta>();
         var values = Enum.GetValues<FieldType>();
 		var i = 0;
-        foreach(var fieldType in values)
-            if (fieldType != FieldType.Undefined)
-				metaList.Add(GetField(FieldTestPrefix + i++, fieldType));
-        var metaTest = GetTable((int)TableType.Test, TableType.Test.GetLogicalName(), TableType.Logical, false);
+		foreach (var fieldType in values)
+		{
+			if (fieldType == FieldType.Undefined) continue;
+			if (fieldType == FieldType.String)
+                metaList.Add(GetField(FieldTestPrefix + i++, fieldType,512,false));
+            else metaList.Add(GetField(FieldTestPrefix + i++, fieldType,false));
+		}
+		var metaTest = GetTable((int)TableType.Test, TableType.Test.GetLogicalName(), TableType.Logical, false);
         return GetTable(schemaName, provider, metaList.ToArray(), metaTest);
     }
 

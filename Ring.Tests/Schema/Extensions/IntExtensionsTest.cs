@@ -61,8 +61,7 @@ public sealed class IntExtensionsTest : BaseTest
     public void ToTableType_AllExistingEnumId_Enum()
     {
         // arrange 
-        var tableTypes = Enum.GetValues<TableType>();
-        foreach (var tableType in tableTypes)
+        foreach (var tableType in Enum.GetValues<TableType>())
         {
             // act 
             var tableTypeResult = IntExtensions.ToTableType((int)tableType);

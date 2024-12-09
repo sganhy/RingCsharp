@@ -37,4 +37,8 @@ internal sealed class Field : BaseEntity, IColumn
 	RelationType IColumn.RelationType => RelationType.Undefined;
 	EntityType IColumn.Type => EntityType.Field;
 	string IColumn.Name => Name;
+
+#if DEBUG
+	public override string ToString() => $"{Id} - {Name} ({Type})";
+#endif
 }

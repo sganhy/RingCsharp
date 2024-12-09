@@ -21,6 +21,10 @@ internal static class FieldTypeExtensions
             case FieldType.String: return NpgsqlDbType.Varchar;
             case FieldType.LongString: return NpgsqlDbType.Text;
             case FieldType.Boolean: return NpgsqlDbType.Boolean;
+            case FieldType.ShortDateTime: return NpgsqlDbType.Date;
+            case FieldType.DateTime: return NpgsqlDbType.Timestamp;
+            case FieldType.LongDateTime: return NpgsqlDbType.TimestampTz;
+            case FieldType.ByteArray: return NpgsqlDbType.Bytea;
         }
         throw new ArgumentException($"Field type '{fieldType}' is not supported.");
     }

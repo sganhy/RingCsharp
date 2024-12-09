@@ -1,9 +1,7 @@
 ﻿using Ring.Data;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Xml.Linq;
 using DbSchema = Ring.Schema.Models.Schema;
 
 namespace Ring.Schema.Builders;
@@ -13,11 +11,11 @@ internal sealed class SchemaBuilder
 	private readonly TableBuilder _tableBuilder = new();
 	private readonly ParameterBuilder _parameterBuilder = new();
 
-	internal DbSchema GetMeta(DatabaseProvider provider, IConfiguration configuration)
+	internal DbSchema GetMeta(DatabaseProvider provider, IConfiguration configuration, bool includeInactive=true)
 	{
 		var metaList = new List<Meta>();
-		var type = SchemaType.Static;
-		var loadType = SchemaLoadType.Full;
+        const SchemaType type = SchemaType.Static;
+        const SchemaLoadType loadType = SchemaLoadType.Full;
 		var schemaInfo = GetMetaWSchemaInfo(configuration.DefaultSchema);
 		var minConnectionPoolSize = int.Max(configuration.MinConnectionPoolSize,1);
 		var maxConnectionPoolSize = int.Max(configuration.MaxConnectionPoolSize,1);
@@ -29,13 +27,14 @@ internal sealed class SchemaBuilder
 			minConnectionPoolSize.ToString(CultureInfo.InvariantCulture), 0).ToMeta());
 		metaList.Add(_parameterBuilder.GetParameter(ParameterType.MaxPoolSize,
 			maxConnectionPoolSize.ToString(CultureInfo.InvariantCulture),0).ToMeta());
-		metaList.Add(_parameterBuilder.GetParameter(ParameterType.DbConnectionString, 
+		metaList.Add(_parameterBuilder.GetParameter(ParameterType.DbConnectionString,
 			configuration.ConnectionString, 0).ToMeta());
 
 		metaList.AddRange(_tableBuilder.GetMeta(configuration.DefaultSchema, provider).ToMeta(0));
 		metaList.AddRange(_tableBuilder.GetMetaId(configuration.DefaultSchema, provider).ToMeta(0));
 		metaList.AddRange(_tableBuilder.GetLog(configuration.DefaultSchema, provider).ToMeta(0));
-        metaList.AddRange(_tableBuilder.GetTest(configuration.DefaultSchema, provider).ToMeta(0));
+		if (includeInactive)
+			metaList.AddRange(_tableBuilder.GetTest(configuration.DefaultSchema, provider).ToMeta(0));
 
         // load tablespace info
         if (!string.IsNullOrWhiteSpace(configuration.DefaultTableStorage))
