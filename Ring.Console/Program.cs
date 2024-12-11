@@ -55,11 +55,9 @@ conn.Open();
 Process proc = Process.GetCurrentProcess();
 Console.WriteLine("proc.PrivateMemorySize64=" + ((double)proc.PrivateMemorySize64) / (1024 * 1024) + " MB");
 
-/*
 BulkAlter ba = new(schema);
 ba.CreateTable("@test");
 ba.Apply(conn);
-*/
 
 BulkSave bs = new(schema);
 
@@ -72,13 +70,12 @@ rcd.SetField("test_4", 4.4);
 rcd.SetField("test_5", 5.55);
 rcd.SetField("test_6", "test_6");
 /*
-    test_7 date,
     test_8 timestamp without time zone,
     test_9 timestamp with time zone,
     test_10 bytea,
 */
-rcd.SetField("test_7", null);
-rcd.SetField("test_8", null);
+rcd.SetField("test_7", DateTime.MaxValue);
+rcd.SetField("test_8", DateTime.Now);
 rcd.SetField("test_9", null);
 rcd.SetField("test_10", null);
 rcd.SetField("test_11", false);

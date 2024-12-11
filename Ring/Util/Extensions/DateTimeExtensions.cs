@@ -20,7 +20,8 @@ internal static class DateTimeExtensions
         var template = DateTimeTemplates[(byte)fieldType];
         var count = template.Length;
         var result = new char[count];
-        var dateToConv = fieldType == FieldType.DateTime || offset==null? value.ToUniversalTime() : value;
+        var dateToConv = fieldType == FieldType.DateTime || (offset==null && fieldType != FieldType.ShortDateTime) ? 
+            value.ToUniversalTime() : value;
         Array.Copy(template, result, count);
         SetDateTime(result, 4, dateToConv.Year, 3);
         SetDateTime(result, 2, dateToConv.Month, 6);

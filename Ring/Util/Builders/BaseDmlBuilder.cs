@@ -2,6 +2,7 @@
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
+using System;
 using System.Globalization;
 using System.Text;
 using DbSchema = Ring.Schema.Models.Schema;
@@ -37,6 +38,7 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
     }
 
     public abstract string VariableNameTemplate { get; }
+    protected abstract string WrapVariable(string variable, FieldType fieldType);
 
     public void Init(DbSchema schema)
     {
@@ -85,12 +87,15 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
     private string BuildInsert(Table table)
     {
         var result = new StringBuilder();
+        var spanColumns = new ReadOnlySpan<IColumn>(table.Columns);
+
         var columnCount = table.Columns.Length;
 
         result.Append(DmlInsert);
         result.Append(table.PhysicalName);
         result.Append(SqlSpace);
         result.Append(StartParenthesis);
+        // === fields 
         for (var i = 0; i<columnCount; ++i)
         {
             var column = table.Columns[i];
@@ -99,10 +104,13 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
             result.Append(ColumnDelimiter);
         }
         if (columnCount>0) --result.Length;
+        // === values
         result.Append(DmlValues);
-        for (var i=1; i<=columnCount; ++i)
+        for (var i=0; i<columnCount; ++i)
         {
-            result.AppendFormat(CultureInfo.InvariantCulture, VariableNameTemplate, i.ToString(CultureInfo.InvariantCulture));
+            var column = spanColumns[i];
+            var variable = string.Format(CultureInfo.InvariantCulture, VariableNameTemplate, (i + 1).ToString(CultureInfo.InvariantCulture));
+            result.Append(WrapVariable(variable, column.FieldType));
             result.Append(ColumnDelimiter);
         }
         if (columnCount > 0) --result.Length;

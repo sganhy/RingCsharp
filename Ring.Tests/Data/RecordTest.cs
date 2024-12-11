@@ -171,7 +171,7 @@ public sealed class RecordTest : BaseTest
 #pragma warning restore CS8620
 
         // act 
-        var result = rcd1.Equals(saveQuery);
+        var result = rcd1.EqualTo(saveQuery);
 
         // assert
         Assert.True(result);
@@ -195,7 +195,7 @@ public sealed class RecordTest : BaseTest
 #pragma warning restore CS8620
 
         // act 
-        var result = rcd1.Equals(saveQuery);
+        var result = rcd1.EqualTo(saveQuery);
 
         // assert
         Assert.False(result);

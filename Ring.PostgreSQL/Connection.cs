@@ -344,6 +344,7 @@ cmd.Dispose();
                 break;
             case FieldType.String:
             case FieldType.LongString:
+            case FieldType.ShortDateTime:
                 result = new NpgsqlParameter(variableName, dbType)
                 {
                     Value = value,

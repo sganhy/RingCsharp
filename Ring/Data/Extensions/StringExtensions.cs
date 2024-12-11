@@ -1,4 +1,5 @@
-﻿using Ring.Util.Enums;
+﻿using Ring.Schema.Enums;
+using Ring.Util.Enums;
 using Ring.Util.Helpers;
 using System.Globalization;
 using System.Runtime.CompilerServices;
@@ -11,7 +12,8 @@ internal static class StringExtensions
     private static readonly string Date4Suffix = "-01-01";
     private static readonly string Date7Suffix = "-01";
     private static readonly string ZuluTimeStrSuffix = ZuluTimeSuffix.ToString();
-    private readonly static CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
+    private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
+    private static readonly NumberStyles DefaultNumberStyle = NumberStyles.Integer;
 
     // Number of 100ns ticks per time unit - year info 
     private static readonly Dictionary<string, string> DateTimeTemplate = new() {
@@ -147,6 +149,28 @@ internal static class StringExtensions
         // If we got here, then the value is a valid base64 string
         return true;
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static DateTime ToDateTime(this string value, FieldType fieldType)
+    {
+        var year = int.Parse(value.AsSpan(0, 4), DefaultCulture);
+        var month = int.Parse(value.AsSpan(5, 2), DefaultNumberStyle, DefaultCulture);
+        var day = int.Parse(value.AsSpan(8, 2), DefaultNumberStyle, DefaultCulture);
+        if (fieldType == FieldType.ShortDateTime)
+        {
+            return new DateTime(year, month, day, 0, 0, 0, DateTimeKind.Local);
+        }
+        else
+        {
+            var hour = int.Parse(value.AsSpan(11, 2), DefaultNumberStyle, DefaultCulture);
+            var minute = int.Parse(value.AsSpan(14, 2), DefaultNumberStyle, DefaultCulture);
+            var second = int.Parse(value.AsSpan(17, 2), DefaultNumberStyle, DefaultCulture);
+            var milliSecond = int.Parse(value.AsSpan(20, 3), DefaultNumberStyle, DefaultCulture);
+            if (fieldType == FieldType.DateTime) return new DateTime(year, month, day, hour, minute, second, milliSecond, DateTimeKind.Utc);
+        }
+        return DateTime.MinValue;
+    }
+
 
     #region private methods 
 

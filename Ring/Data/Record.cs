@@ -168,22 +168,8 @@ public struct Record : IEquatable<Record>
 			ThrowImpossibleConversion(fieldType, FieldType.DateTime);
 		var result = _data[fieldId + _offset] ?? field.DefaultValue;
 		if (result == null) return;
-		var year = int.Parse(result.AsSpan(0, 4), DefaultCulture);
-		var month = int.Parse(result.AsSpan(5, 2), DefaultNumberStyle, DefaultCulture);
-		var day = int.Parse(result.AsSpan(8, 2), DefaultNumberStyle, DefaultCulture);
-		if (fieldType == FieldType.ShortDateTime)
-		{
-			value = new DateTime(year, month, day, 0, 0, 0, DateTimeKind.Utc);
-		}
-		else
-		{
-			var hour = int.Parse(result.AsSpan(11, 2), DefaultNumberStyle, DefaultCulture);
-			var minute = int.Parse(result.AsSpan(14, 2), DefaultNumberStyle, DefaultCulture);
-			var second = int.Parse(result.AsSpan(17, 2), DefaultNumberStyle, DefaultCulture);
-			var milliSecond = int.Parse(result.AsSpan(20, 3), DefaultNumberStyle, DefaultCulture);
-			if (fieldType == FieldType.DateTime) value = new DateTime(year, month, day, hour, minute, second, milliSecond, DateTimeKind.Utc);
-		}
-	}
+		value = result.ToDateTime(fieldType);
+    }
 
 	/// <summary>
 	/// 	Set field value
@@ -346,7 +332,7 @@ public struct Record : IEquatable<Record>
 		HashHelper.Djb2X(result.ToString(), out int hash);
 		return hash;
 	}
-	internal readonly bool Equals(SaveQuery obj) => ReferenceEquals(obj.Data, _data) && obj.Offset == _offset;
+	internal readonly bool EqualTo(SaveQuery obj) => ReferenceEquals(obj.Data, _data) && obj.Offset == _offset;
 	internal readonly bool IsFieldChanged(string name)
 	{
 		if (_type.Id == -1) ThrowRecordUnknownRecordType();

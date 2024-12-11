@@ -37,7 +37,7 @@ public readonly struct BulkSave : IBulkSave
 		{
 			var count = _info.Queries.Count;
 			for (var i=0; i<count; ++i)
-				if (recordToCancel.Equals(_info.Queries[i]))
+				if (recordToCancel.Value.EqualTo(_info.Queries[i]))
 					ReplaceQueryType(i, _info.Queries[i].Type.CancelOperation());
 		}
 	}
