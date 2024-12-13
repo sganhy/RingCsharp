@@ -324,6 +324,7 @@ cmd.Dispose();
             return new (variableName, dbType)  { Value = DBNull.Value };
         }
         NpgsqlParameter result;
+#pragma warning disable IDE0066 // Convert switch statement to expression
         switch (fieldType)
         {
             case FieldType.Long:
@@ -356,9 +357,22 @@ cmd.Dispose();
                     Value = string.Equals(BooleanTrue, value, StringComparison.Ordinal) ? VariableValueTrue : VariableValueFalse
                 };
                 break;
-            default: result = null; // throw exception here
+            case FieldType.ByteArray:
+                result = new NpgsqlParameter(variableName, dbType)
+                {
+                    // TODO: provide better options than base64
+                    Value = Convert.FromBase64String(value)
+                };
+                break;
+            case FieldType.DateTime:
+            case FieldType.LongDateTime:
+                result = null;
+                break;
+            default:
+                result = null;
                 break;
         }
+#pragma warning restore IDE0066 // Convert switch statement to expression
         return result;
     }
 

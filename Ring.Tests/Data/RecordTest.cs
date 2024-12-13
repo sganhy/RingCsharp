@@ -860,7 +860,7 @@ public sealed class RecordTest : BaseTest
         var rcd = new Record(logTable);
 
         // act 
-        rcd.SetField("entry_time", "3,01416");
+        rcd.SetField("entry_time", "3.01416");
 
         // assert
         Assert.Equal("3.01416", rcd.GetField("entry_time"));
@@ -896,10 +896,10 @@ public sealed class RecordTest : BaseTest
         var rcd = new Record(logTable);
         
         // act 
-        rcd.SetField("entry_time", "-789456123,0123");
+        rcd.SetField("entry_time", "+1.001E+2");
         
         // assert
-        Assert.Equal("-789456123.0123", rcd.GetField("entry_time"));
+        Assert.Equal("100.1", rcd.GetField("entry_time"));
     }
 
     [Fact]

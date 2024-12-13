@@ -12,15 +12,15 @@ internal static class DateTimeExtensions
       { (byte)FieldType.LongDateTime, new char[] {'0','0','0','0','-','0','0','-','0','0','T','0','0',':',
           '0','0',':','0','0','.','0','0','0','0','0','0','0','+','0','0',':','0','0' } }
     };
-    private readonly static int DecimalSys = 10;
-    
+    private const int DecimalSys = 10;
+
     internal static string ToString(this DateTime value, FieldType fieldType, TimeSpan? offset)
     {
         // IS0-8601 ==> "YYYY-MM-DDTHH:MM:SS.mmmZ" eg. 2005-12-12T18:17:16.015+04:00; lenght max ==> 30
         var template = DateTimeTemplates[(byte)fieldType];
         var count = template.Length;
         var result = new char[count];
-        var dateToConv = fieldType == FieldType.DateTime || (offset==null && fieldType != FieldType.ShortDateTime) ? 
+        var dateToConv = fieldType == FieldType.DateTime || (offset==null && fieldType != FieldType.ShortDateTime) ?
             value.ToUniversalTime() : value;
         Array.Copy(template, result, count);
         SetDateTime(result, 4, dateToConv.Year, 3);
@@ -49,7 +49,7 @@ internal static class DateTimeExtensions
         return new string(result);
     }
 
-    #region private methods 
+    #region private methods
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void SetDateTime(char[] input, int size, int value, int lastPosition)

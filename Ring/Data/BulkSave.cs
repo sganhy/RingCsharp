@@ -149,13 +149,12 @@ public readonly struct BulkSave : IBulkSave
 		// remove all  references to array
 		for (var i = 0; i < count; ++i) span[i] = EmptySaveQuery;
 		// reset Queries._count
-		_info.Queries.Clear(); 
+		_info.Queries.Clear();
 		_info.IdCount = 0;
 	}
 
 	public void Save()
-	{ 
-
+	{	
 	}
 
 	internal void Save(IRingConnection connection, bool noTransaction=false)
@@ -173,7 +172,7 @@ public readonly struct BulkSave : IBulkSave
 		else if (queryCount > 1) SaveWithTransaction(connection);
 		
 		// clear bucket 
-		Clear(); 
+		Clear();
 	}
 
 	#region private methods
@@ -182,13 +181,13 @@ public readonly struct BulkSave : IBulkSave
 #pragma warning restore IDE0251
 	{
 		var prevQuery = _info.Queries[index];
-		var newQuery = new SaveQuery(prevQuery.Table, saveQueryType, prevQuery.Builder, prevQuery.Data, prevQuery.Offset);
-		_info.Queries[index] = newQuery;
-	}
+		_info.Queries[index] = new SaveQuery(prevQuery.Table, saveQueryType, prevQuery.Builder,
+			prevQuery.Data, prevQuery.Offset);
+    }
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
-	private static void ThrowRecordUnknownRecordType() => 
+	private static void ThrowRecordUnknownRecordType() =>
 		throw new ArgumentException(ResourceHelper.GetErrorMessage(ResourceType.RecordUnkownRecordType));
 
 	private void GenerateId(IRingConnection connection)
@@ -202,8 +201,8 @@ public readonly struct BulkSave : IBulkSave
 		foreach (var query in _info.Queries.AsReadOnlySpan())
 		{
 			var type = query.Type;
-            if (type == SaveQueryType.InsertRecord || 
-				type == SaveQueryType.UpdateRecord || 
+            if (type == SaveQueryType.InsertRecord ||
+				type == SaveQueryType.UpdateRecord ||
 				type == SaveQueryType.UpdateReturningRecord)
 				connection.Execute(query);
 		}

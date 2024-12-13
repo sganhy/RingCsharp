@@ -6,6 +6,5 @@ internal sealed class DmlBuilder : BaseDmlBuilder
 {
     public override DatabaseProvider Provider => DatabaseProvider.SqlServer;
     public override string VariableNameTemplate => "@";
-    public DmlBuilder() : base() { }
-    protected override string WrapVariable(string variable, FieldType fieldType) => variable;
+    protected override string WrapVariable(string variable, FieldType fieldType, int clauseId) => variable;
 }

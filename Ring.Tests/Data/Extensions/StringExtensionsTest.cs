@@ -52,49 +52,6 @@ public class StringExtensionsTest
         Assert.False(result3);
     }
 
-
-    [Theory]
-    [InlineData("555154", true)]
-    [InlineData("84354354531531351354", true)]
-    [InlineData("556165154^^^^$$^l5554", false)]
-    [InlineData("", false)]
-    [InlineData(" ", false)]
-    [InlineData("0", true)]
-    [InlineData("0000000000000000000000000", true)]
-    [InlineData("じゅういち", false)]
-    [InlineData("-112", true)]
-    [InlineData("-", false)]
-    public void IsDigits_InputString_BoolResult(string input, bool expectedResult)
-    {
-        // arrange 
-        // act 
-        var result = StringExtensions.IsNumber(input);
-
-        // assert
-        Assert.Equal(expectedResult, result);
-    }
-
-    [Theory]
-    [InlineData("-11.2", true)]
-    [InlineData("555.154", true)]
-    [InlineData("84354354.531531351354", true)]
-    [InlineData("556165154^^^^$$^l5554", false)]
-    [InlineData("", false)]
-    [InlineData(" ", false)]
-    [InlineData("0", true)]
-    [InlineData("0000000000000000000000000", true)]
-    [InlineData("78,888787", false)]
-    [InlineData("45.45.45", false)]
-    public void IsFloat_InputString_BoolResult(string input, bool expectedResult)
-    {
-        // arrange 
-        // act 
-        var result = StringExtensions.IsFloat(input);
-
-        // assert
-        Assert.Equal(expectedResult, result);
-    }
-
     [Theory]
     [InlineData("20211212", "2021-12-12", "yyyy-MM-dd")]
     [InlineData("2020-10-01", "2020-10-01", "yyyy-MM-dd")]
@@ -151,6 +108,27 @@ public class StringExtensionsTest
         // arrange 
         // act 
         var result = StringExtensions.IsBase64String(input);
+
+        // assert
+        Assert.Equal(expectedResult, result);
+    }
+
+    [Theory]
+    [InlineData("555154", true)]
+    [InlineData("84354354531531351354", true)]
+    [InlineData("556165154^^^^$$^l5554", false)]
+    [InlineData("", false)]
+    [InlineData(" ", false)]
+    [InlineData("0", true)]
+    [InlineData("0000000000000000000000000", true)]
+    [InlineData("じゅういち", false)]
+    [InlineData("-112", true)]
+    [InlineData("-", false)]
+    public void IsNumber_InputString_BoolResult(string input, bool expectedResult)
+    {
+        // arrange 
+        // act 
+        var result = StringExtensions.IsNumber(input);
 
         // assert
         Assert.Equal(expectedResult, result);

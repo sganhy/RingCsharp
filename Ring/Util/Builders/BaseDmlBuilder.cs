@@ -2,7 +2,6 @@
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
-using System;
 using System.Globalization;
 using System.Text;
 using DbSchema = Ring.Schema.Models.Schema;
@@ -22,6 +21,12 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
     private static readonly string DmlAnd = " AND ";
     private static readonly string FirstParameter = @"1";
 
+    // clause Id
+    protected const int InsertClauseId = 44;
+    protected const int SelectClauseId = 55;
+    protected const int UpdateClauseId = 66;
+
+
     private string?[] _tableDelete;
     private string?[] _tableInsert;
     private string?[] _tableUpdate;
@@ -38,7 +43,7 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
     }
 
     public abstract string VariableNameTemplate { get; }
-    protected abstract string WrapVariable(string variable, FieldType fieldType);
+    protected abstract string WrapVariable(string variable, FieldType fieldType, int clauseId);
 
     public void Init(DbSchema schema)
     {
@@ -109,8 +114,9 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
         for (var i=0; i<columnCount; ++i)
         {
             var column = spanColumns[i];
-            var variable = string.Format(CultureInfo.InvariantCulture, VariableNameTemplate, (i + 1).ToString(CultureInfo.InvariantCulture));
-            result.Append(WrapVariable(variable, column.FieldType));
+            var variable = string.Format(CultureInfo.InvariantCulture, VariableNameTemplate, 
+                (i + 1).ToString(CultureInfo.InvariantCulture));
+            result.Append(WrapVariable(variable, column.FieldType, InsertClauseId));
             result.Append(ColumnDelimiter);
         }
         if (columnCount > 0) --result.Length;

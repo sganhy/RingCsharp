@@ -7,6 +7,7 @@ using Ring.Schema.Models;
 using Ring.Util.Enums;
 using Ring.Util.Extensions;
 using Ring.Util.Helpers;
+using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.CompilerServices;
@@ -17,12 +18,12 @@ namespace Ring.Data;
 public struct Record : IEquatable<Record>
 {
 	private const char HashCodeSeparator = (char)3753;// end of text character
-	private const decimal MaxIntValue = int.MaxValue;
-	private const decimal MinIntValue = int.MinValue;
-	private const decimal MaxShortValue = short.MaxValue;
-	private const decimal MinShortValue = short.MinValue;
-	private const decimal MaxByteValue = sbyte.MaxValue;
-	private const decimal MinByteValue = sbyte.MinValue;
+	private const long MaxIntValue = int.MaxValue;
+	private const long MinIntValue = int.MinValue;
+	private const long MaxShortValue = short.MaxValue;
+	private const long MinShortValue = short.MinValue;
+	private const long MaxByteValue = sbyte.MaxValue;
+	private const long MinByteValue = sbyte.MinValue;
 #pragma warning disable RCS1187 // Use constant instead of field
 	private static readonly string[] DefaultData = new string[2]; // 1 field + state info
 	private static readonly Table DefaultType = GetDefaultType();
@@ -31,7 +32,7 @@ public struct Record : IEquatable<Record>
 	private static readonly string DefaultPrimaryKeyValue = "0";
 	private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
 	private static readonly NumberStyles DefaultNumberStyle = NumberStyles.Integer;
-	private static readonly NumberStyles DefaultFloatStyle = NumberStyles.AllowDecimalPoint | NumberStyles.Float;
+	private static readonly NumberStyles DefaultFloatStyle = NumberStyles.Float;
 	private static readonly string BooleanTrue = true.ToString(DefaultCulture);
 	private static readonly string BooleanFalse = false.ToString(DefaultCulture);
 #pragma warning restore RCS1187
@@ -174,19 +175,19 @@ public struct Record : IEquatable<Record>
 	/// <summary>
 	/// 	Set field value
 	/// </summary>
-	/// <param name="name">field name</param>
-	/// <param name="value">field value</param>
 	public void SetField(string name, string? value)
 	{
+		// Code size: 221 (0xdd)
 		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = _type.GetFieldIndex(name);
 		if (fieldId == -1) ThrowRecordUnknownFieldName(name);
-		var type = _type.Fields[fieldId].Type;
+		var field = _type.Fields[fieldId];
+		var type = field.Type;
 #pragma warning disable RCS1003 // Add braces to if-else (when expression spans over multiple lines)
 		if (value != null)
 			switch (type)
 			{
-				case FieldType.String: SetStringField(_type.Fields[fieldId].Size, fieldId, value); break;
+				case FieldType.String: SetStringField(field.Size, fieldId, value); break;
 				case FieldType.LongString: SetData(fieldId, value); break; // no size check!
 				case FieldType.Byte:
 				case FieldType.Short:
@@ -395,22 +396,26 @@ public struct Record : IEquatable<Record>
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private void SetIntegerField(int fieldId, FieldType numberType, string value) {
+		// Code size: 124 (0x7c)
+#pragma warning disable RCS1003 // Add braces to if-else (when expression spans over multiple lines)
 		if (!value.IsNumber()) ThrowWrongStringFormat();
-		else if (long.TryParse(value, DefaultNumberStyle, DefaultCulture, out long lng) && (
+		else if (long.TryParse(value, DefaultNumberStyle, DefaultCulture, out long lng) &&
+				(numberType == FieldType.Long ||
 				(numberType == FieldType.Int && lng <= MaxIntValue && lng >= MinIntValue) ||
 				(numberType == FieldType.Short && lng <= MaxShortValue && lng >= MinShortValue) ||
 				(numberType == FieldType.Byte && lng <= MaxByteValue && lng >= MinByteValue)))
 			SetData(fieldId, lng.ToString(DefaultCulture));
 		else ThrowValueTooLarge(numberType);
+#pragma warning restore RCS1003
 	}
 
 	private void SetFloatField(FieldType fieldType, int fieldId, string value)
 	{
-		if (value.Contains(',')) value = value.Replace(',', '.');
-		if (value.IsFloat())
+        // see. ISO 6093:1985
+        // Code size: 103 (0x67)
+        if (double.TryParse(value, DefaultFloatStyle, DefaultCulture, out double dbl))
 		{
-			if (fieldType == FieldType.Double && double.TryParse(value, DefaultFloatStyle, DefaultCulture, out double dbl))
-				SetData(fieldId, dbl.ToString(DefaultCulture));
+            if (fieldType == FieldType.Double) SetData(fieldId, dbl.ToString(DefaultCulture));
 			else if (fieldType == FieldType.Float && float.TryParse(value, DefaultFloatStyle, DefaultCulture, out float flt))
 				SetData(fieldId, flt.ToString(DefaultCulture));
 			else ThrowValueTooLarge(fieldType);

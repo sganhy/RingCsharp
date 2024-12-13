@@ -62,12 +62,12 @@ ba.Apply(conn);
 BulkSave bs = new(schema);
 
 var rcd = new Record(metaTest);
-rcd.SetField("test_0", 0);
+rcd.SetField("test_0", long.MinValue.ToString());
 rcd.SetField("test_1", 1);
 rcd.SetField("test_2", 2);
 rcd.SetField("test_3", 3);
 rcd.SetField("test_4", 4.4);
-rcd.SetField("test_5", 5.55);
+rcd.SetField("test_5", "1E+2");
 rcd.SetField("test_6", "test_6");
 /*
     test_8 timestamp without time zone,
@@ -75,9 +75,9 @@ rcd.SetField("test_6", "test_6");
     test_10 bytea,
 */
 rcd.SetField("test_7", DateTime.MaxValue);
-rcd.SetField("test_8", DateTime.Now);
+rcd.SetField("test_8", null);
 rcd.SetField("test_9", null);
-rcd.SetField("test_10", null);
+rcd.SetField("test_10", new byte[] { 1, 2, 3 });
 rcd.SetField("test_11", false);
 rcd.SetField("test_12", "test_12");
 bs.InsertRecord(rcd);
