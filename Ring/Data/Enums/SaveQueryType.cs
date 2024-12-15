@@ -7,9 +7,11 @@ internal enum SaveQueryType : byte
 	UpdateRecord = 2,
 	UpdateReturningRecord = 3,
 
-	CancelledDeleteRecord = 65,
-	CancelledInsertRecord = 66,
-	CancelledUpdateRecord = 67,
+	// above 100, reserved for cancel operations
+	FirstCancelOperation = 101,
+	CancelledDeleteRecord = 105,
+	CancelledInsertRecord = 106,
+	CancelledUpdateRecord = 107,
 
 	// 126 reserved for unit tests
 	Undefined = 127

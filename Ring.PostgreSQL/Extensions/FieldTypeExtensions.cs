@@ -22,7 +22,7 @@ internal static class FieldTypeExtensions
             case FieldType.LongString: return NpgsqlDbType.Text;
             case FieldType.Boolean: return NpgsqlDbType.Boolean;
             case FieldType.ShortDateTime: return NpgsqlDbType.Varchar;
-            case FieldType.DateTime: return NpgsqlDbType.Timestamp;
+            case FieldType.DateTime: return NpgsqlDbType.Varchar;
             case FieldType.LongDateTime: return NpgsqlDbType.TimestampTz;
             case FieldType.ByteArray: return NpgsqlDbType.Bytea;
         }

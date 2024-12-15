@@ -29,7 +29,7 @@ internal static class RelationExtensions
 	{
 		// mtm relation already computed - find previous table_id
 		var toTableId = relation.ToTable.Type == TableType.Mtm? 
-			(relation.ToTable.GetRelation(relation.Name) ?? relation).ToTable.Id :  relation.ToTable.Id;
+			(relation.ToTable.GetRelation(relation.Name) ?? relation).ToTable.Id : relation.ToTable.Id;
 		var fromTableId = relation.InverseRelation.ToTable.Id;
 		var sfromTableId = fromTableId.ToString(CultureInfo.InvariantCulture)?.PadLeft(5, PaddingChar);
 		var sToTableId = toTableId.ToString(CultureInfo.InvariantCulture)?.PadLeft(5, PaddingChar);
@@ -77,6 +77,7 @@ internal static class RelationExtensions
 
 	internal static string GetStringCode(this Relation relation)
 	{
+		// Code size: 280 (0x118)
 		/*
 		 * Relation InverseRelation
 		 * readonly bool HasConstraint

@@ -86,6 +86,27 @@ public class DmlBuilderTest : BaseBuilderTest
     }
 
     [Fact]
+    internal void Insert_TestTable_InsertSql()
+    {
+        var sut = new DmlBuilder();
+        var schBuilder = new SchemaBuilder();
+        var schemaName = "@Test";
+        var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
+        var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
+        var table = schema.GetTable("@test");
+        var expectedResult = "INSERT INTO \"@test\".\"@meta\" (id,schema_id,object_type,reference_id,data_type,flags,name,description,value,active) VALUES (:p1,:p2,:p3,:p4,:p5,:p6,:p7,:p8,:p9,:p10)";
+
+        // act 
+        Assert.NotNull(schema);
+        Assert.NotNull(table);
+        sut.Init(schema);
+        var result = sut.Insert(table);
+
+        // assert
+        Assert.Equal(expectedResult, result);
+    }
+
+    [Fact]
     internal void Insert_Table2WithRel_InsertSql()
     {
         // arrange 
@@ -103,7 +124,7 @@ public class DmlBuilderTest : BaseBuilderTest
     }
 
     [Fact]
-    internal void Insert_TableMeta_InsertSql()
+    internal void Insert_MetaTable_InsertSql()
     {
         // arrange 
         var sut = new DmlBuilder();

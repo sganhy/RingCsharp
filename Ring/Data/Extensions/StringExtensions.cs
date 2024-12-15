@@ -15,32 +15,6 @@ internal static class StringExtensions
 	private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
 	private static readonly NumberStyles DefaultNumberStyle = NumberStyles.Integer;
 
-	// Number of 100ns ticks per time unit - year info 
-	private static readonly Dictionary<string, string> DateTimeTemplate = new() {
-		{ "9999-99-99",		"yyyy-MM-dd"},
-		{ "99999999",		  "yyyyMMdd"},
-		{ "9999-99",		   "yyyy-MM-dd"},
-		{ "9999",			  "yyyy-MM-dd"},
-		{ "T99",			   "THH"},
-		{ "T99:99",			"THH:mm"},
-		{ "T99:99:99",		 "THH:mm:ss"},
-		{ "T99:99:99.9",	   "THH:mm:ss.f"},
-		{ "T99:99:99.99",	  "THH:mm:ss.ff"},
-		{ "T99:99:99.999",	 "THH:mm:ss.fff"},
-		{ "T99:99:99.9999",	"THH:mm:ss.ffff"},
-		{ "T99:99:99.99999",   "THH:mm:ss.fffff"},
-		{ "T99:99:99.999999",  "THH:mm:ss.ffffff"},
-		{ "T99:99:99.9999999", "THH:mm:ss.fffffff"},
-		{ "T9999",	  "THHmm"},
-		{ "T999999",	"THHmmss"},
-		{ "+99:99",	 "zzz"},
-		{ "-99:99",	 "zzz"},
-		{ "-9999",	  "zzz"},
-		{ "+9999",	  "zzz"},
-		{ "+99",		 "zz"},
-		{ "-99",		 "zz"}
-	};
-
 	/// <summary>
 	/// Read a bit from a string
 	/// </summary>
@@ -72,10 +46,12 @@ internal static class StringExtensions
 
 	internal static DateTimeOffset ParseIso8601Date(this string value)
 	{
-		var stringSize = value.Length;
+		// Code size: 259 (0x103)
+		var spanValue = value.AsSpan();
+		var stringSize = spanValue.Length;
 		var i = 0;
 		var preTemplate = new char[stringSize];
-		while (i < stringSize) if ((value[i] ^ '0') > 9) preTemplate[i] = value[i++]; else preTemplate[i++] = '9';
+		while (i < stringSize) if ((spanValue[i] ^ '0') > 9) preTemplate[i] = spanValue[i++]; else preTemplate[i++] = '9';
 		var template = new string(preTemplate);
 		var valueSuffix = string.Empty;
 		if (stringSize == 4) valueSuffix = Date4Suffix;
@@ -165,8 +141,18 @@ internal static class StringExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static string? GetDateTemplate(string template, int timeIndex)
 	{
-		var result = timeIndex > 0 ? template[..timeIndex] : template;
-		return DateTimeTemplate.ContainsKey(result) ? DateTimeTemplate[result] : null;
+		// Code size: 84 (0x54)
+		var subDateTime = timeIndex > 0 ? template[..timeIndex] : template;
+		switch (subDateTime)
+		{
+			case "9999-99-99":
+			case "9999-99":
+			case "9999":
+				return "yyyy-MM-dd";
+			case "99999999":
+				return "yyyyMMdd";
+		}
+		return null;
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -186,12 +172,27 @@ internal static class StringExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static string? GetTimeTemplate(string template, int timeIndex, int timeZoneIndex)
 	{
+		// Code size: 445 (0x1bd)
 		if (timeIndex > 0)
 		{
-			string result = template;
-			if (timeZoneIndex > 0) result = result[..timeZoneIndex];
-			result = result[timeIndex..];
-			return DateTimeTemplate.ContainsKey(result) ? DateTimeTemplate[result] : null;
+			var time = template.AsSpan();
+			if (timeZoneIndex > 0) time = time[..timeZoneIndex];
+			time = time[timeIndex..];
+			switch (time.ToString())
+			{
+				case "T99": return "THH";
+				case "T99:99": return "THH:mm";
+				case "T99:99:99": return "THH:mm:ss";
+				case "T99:99:99.9": return "THH:mm:ss.f";
+				case "T99:99:99.99": return "THH:mm:ss.ff";
+				case "T99:99:99.999": return "THH:mm:ss.fff";
+				case "T99:99:99.9999": return "THH:mm:ss.ffff";
+				case "T99:99:99.99999": return "THH:mm:ss.fffff";
+				case "T99:99:99.999999": return "THH:mm:ss.ffffff";
+				case "T99:99:99.9999999": return "THH:mm:ss.fffffff";
+				case "T9999": return "THHmm";
+				case "T999999": return "THHmmss";
+			}
 		}
 		return null;
 	}
@@ -199,11 +200,24 @@ internal static class StringExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static string? GetTimeZoneTemplate(string template, int timeIndex, int timeZoneIndex)
 	{
+		// Code size: 169 (0xa9)
 		if (timeIndex > 0 && timeZoneIndex > 0)
 		{
-			if (timeZoneIndex >= template.Length - 1) return ZuluTimeStrSuffix;
-			var result = template[timeZoneIndex..];
-			return DateTimeTemplate.ContainsKey(result) ? DateTimeTemplate[result] : null;
+			var spanTemlate = template.AsSpan();
+			if (timeZoneIndex >= spanTemlate.Length - 1) return ZuluTimeStrSuffix;
+			var subTimeZone = spanTemlate[timeZoneIndex..].ToString();
+			switch (subTimeZone)
+			{
+				case "+99:99":
+				case "-99:99":
+				case "-9999":
+				case "+9999":
+					return "zzz";
+				case "+99":
+				case "-99":
+					return "zz";
+
+			}
 		}
 		return null;
 	}

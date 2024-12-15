@@ -38,6 +38,7 @@ public sealed class Connection : IRingConnection
     private readonly int _id;
     private readonly DateTime _creationTime;
     private readonly bool _informationEnabled; // logging level information enabled ?
+    private NpgsqlTransaction? _currentTransaction;
     private NpgsqlConnection _connection;
     private DateTime _lastConnectionTime = DateTime.MinValue;
     private DateTime _lastExecutionTime = DateTime.MinValue;
@@ -54,6 +55,7 @@ public sealed class Connection : IRingConnection
     public Connection(IConfiguration configuration)
     {
         _configuration = configuration;
+        _currentTransaction = null;
         _logger = _configuration.LoggerFactory.CreateLogger<Connection>();
         _informationEnabled = _logger.IsEnabled(LogLevel.Information);
         _connection = new NpgsqlConnection(_configuration.ConnectionString);
@@ -112,6 +114,7 @@ public sealed class Connection : IRingConnection
 
     public void Dispose()
     {
+        _currentTransaction?.Dispose();
         _connection?.Dispose();
     }
 
@@ -235,7 +238,7 @@ public sealed class Connection : IRingConnection
     public long Execute(in SaveQuery query)
     {
         //if (_informationEnabled) _lastExecutionTime = DateTime.Now;
-        int returnValue;
+        long returnValue;
         var sql = query.ToSql();
         if (sql == null)
         {
@@ -248,6 +251,7 @@ public sealed class Connection : IRingConnection
         var cmd = new NpgsqlCommand(sql, _connection);
         try
         {
+            cmd.Transaction = _currentTransaction;
             cmd.Parameters.AddRange(Getparameters(query));
             cmd.ExecuteNonQuery();
             returnValue = 1;
@@ -258,14 +262,45 @@ public sealed class Connection : IRingConnection
             Console.WriteLine(ex.Message);
             Console.WriteLine(ex.StackTrace);
             LogDmlException(ex, query);
-            returnValue = 0;
+            returnValue = -1L;
         }
 #pragma warning restore CA1031, CA2100
         cmd.Connection = null;
-cmd.Dispose();
+        cmd.Dispose(); // always dispose here
 
         //if (returnValue > 0 && _informationEnabled) LogOperationPerformed(query, DateTime.Now - _lastExecutionTime);
         return returnValue;
+    }
+
+    public void BeginTransaction()
+    {
+        // Code size: 18 (0x12)
+        // phantom rows are not detected on generated queries by PostgreSQL.BaseDmlBuilder.
+        _currentTransaction = _connection.BeginTransaction(IsolationLevel.ReadUncommitted);
+    }
+
+    public void Commit()
+    {
+        // Code size: 30 (0x1e)
+        var trans = _currentTransaction;
+        _currentTransaction = null; // always asign null to _currentTransaction, even if trans.Commit() crash!
+        if (trans != null)
+        {
+            trans.Commit();
+            trans.Dispose();
+        }
+    }
+
+    public void Rollback()
+    {
+        // Code size: 30 (0x1e)
+        var trans = _currentTransaction;
+        _currentTransaction = null;
+        if (trans != null)
+        {
+            trans.Rollback();
+            trans.Dispose();
+        }
     }
 
     #region private methods 
@@ -319,6 +354,7 @@ cmd.Dispose();
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static NpgsqlParameter GetParameter(string variableName, NpgsqlDbType dbType, FieldType fieldType, string? value)
     {
+        // Code size: 268 (0x10c)
         if (value == null)
         {
             return new (variableName, dbType)  { Value = DBNull.Value };
@@ -343,6 +379,12 @@ cmd.Dispose();
                     TypedValue = double.Parse(value, DefaultCulture)
                 };
                 break;
+            case FieldType.DateTime:
+                result = new NpgsqlParameter(variableName, dbType)
+                {
+                    Value = value.DateTimeValue(),
+                };
+                break;
             case FieldType.String:
             case FieldType.LongString:
             case FieldType.ShortDateTime:
@@ -364,7 +406,6 @@ cmd.Dispose();
                     Value = Convert.FromBase64String(value)
                 };
                 break;
-            case FieldType.DateTime:
             case FieldType.LongDateTime:
                 result = null;
                 break;
@@ -403,5 +444,5 @@ cmd.Dispose();
     private void LogOperationPerformed(SaveQuery query, TimeSpan ts) =>
         _logOperationPerformed(_logger, string.Empty, null);
 
-    #endregion 
+    #endregion
 }

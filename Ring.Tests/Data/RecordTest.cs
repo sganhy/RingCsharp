@@ -946,6 +946,22 @@ public sealed class RecordTest : BaseTest
     }
 
     [Fact]
+    public void SetField_Double3_ThrowWrongStringFormat()
+    {
+        // arrange 
+        var table = _schema.GetTable("book");
+        Assert.NotNull(table);
+        var rcd = new Record(table);
+        var dd = 1154.65554D;
+
+        // act 
+        var ex = Assert.Throws<ArgumentException>(() => rcd.SetField("id", dd));
+
+        // assert
+        Assert.Equal("Cannot implicitly convert type 'Double' to 'Int32'.", ex.Message);
+    }
+
+    [Fact]
     public void SetField_ByteArray1_ReturnArray()
     {
         // arrange 

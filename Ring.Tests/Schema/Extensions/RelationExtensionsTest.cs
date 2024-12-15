@@ -263,22 +263,32 @@ public class RelationExtensionsTest : BaseTest
     internal void GetHashCode_RelationHashEqual_False()
     {
         // arrange -- TODO faile sometimes , to be investigated!!! 3 times already
-        var metaName = _faker.Random.String();
+        var metaName = _faker.Random.String(15,'A','z');
         var meta1 = new Meta(metaName);
         var meta2 = new Meta(metaName);
         var meta3 = new Meta(metaName + metaName);
+        
         var relation1 = Meta.GetEmptyRelation(meta1, RelationType.Mto, TableType.Fake);
+        LogAssert($"relation1 = {relation1.Name} - {relation1.Type}");
         var relation2 = Meta.GetEmptyRelation(meta2, RelationType.Mtm, TableType.Fake);
+        LogAssert($"relation2 = {relation2.Name} - {relation2.Type}");
         var relation3 = Meta.GetEmptyRelation(meta3, RelationType.Mtm, TableType.Fake);
+        LogAssert($"relation3 = {relation3.Name} - {relation3.Type}");
 
         // act 
         var hash1 = RelationExtensions.GetHashCode(relation1);
+        LogAssert($"hash1 = {hash1}");
         var hash2 = RelationExtensions.GetHashCode(relation2);
+        LogAssert($"hash2 = {hash2}");
         var hash3 = RelationExtensions.GetHashCode(relation3);
+        LogAssert($"hash3 = {hash3}");
 
         // assert
         Assert.NotEqual(hash1, hash2);
+        LogAssert($"{hash1} != {hash2}");
         Assert.NotEqual(hash1, hash3);
+        LogAssert($"{hash1} != {hash3}");
         Assert.NotEqual(hash2, hash3);
+        LogAssert($"{hash2} != {hash3}");
     }
 }

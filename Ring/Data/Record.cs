@@ -78,6 +78,7 @@ public struct Record : IEquatable<Record>
 	public readonly bool IsDirty => _data[_type.RecordSize-1+_offset] != null;
 	public readonly bool IsNew
 	{
+		// Code size: 59 (0x3b)
 		get
 		{
 			if (_type.Id==-1) ThrowRecordUnknownRecordType();
@@ -106,6 +107,7 @@ public struct Record : IEquatable<Record>
 	/// </summary>
 	public readonly string? GetField(string name)
 	{
+		// Code size: 83 (0x53)
 		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = _type.GetFieldIndex(name);
 		if (fieldId > -1) return _data[fieldId + _offset] ?? _type.Fields[fieldId].DefaultValue;
@@ -115,11 +117,13 @@ public struct Record : IEquatable<Record>
 
 	public readonly void GetField(string name, out bool? value)
 	{
+		// Code size: 164 (0xa4)
 		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = _type.GetFieldIndex(name);
 		if (fieldId <= -1) ThrowRecordUnknownFieldName(name);
 		var field = _type.Fields[fieldId];
-		if (field.Type != FieldType.Boolean) ThrowImpossibleConversion(field.Type, FieldType.Boolean);
+		var type = field.Type;
+		if (type != FieldType.Boolean) ThrowImpossibleConversion(type, FieldType.Boolean);
 		value = null;
 		//BooleanTrue: BooleanFalse
 		var result = _data[fieldId + _offset] ?? field.DefaultValue;
@@ -170,7 +174,7 @@ public struct Record : IEquatable<Record>
 		var result = _data[fieldId + _offset] ?? field.DefaultValue;
 		if (result == null) return;
 		value = result.ToDateTime(fieldType);
-    }
+	}
 
 	/// <summary>
 	/// 	Set field value
@@ -205,8 +209,10 @@ public struct Record : IEquatable<Record>
 #pragma warning restore RCS1003
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal void SetField(string name, long value, FieldType fieldType)
 	{
+		// Code size: 277 (0x115)
 		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = _type.GetFieldIndex(name);
 		if (fieldId == -1) ThrowRecordUnknownFieldName(name);
@@ -238,17 +244,13 @@ public struct Record : IEquatable<Record>
 		}
 	}
 
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public void SetField(string name, long value) => SetField(name, value, FieldType.Long);
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public void SetField(string name, int value) => SetField(name, value, FieldType.Int);
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public void SetField(string name, short value) => SetField(name, value, FieldType.Short);
 	public void SetField(string name, sbyte value) => SetField(name, value, FieldType.Byte);
 	public void SetField(string name, bool value)
 	{
+		// Code size: 99 (0x63)
 		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = _type.GetFieldIndex(name);
 		if (fieldId == -1) ThrowRecordUnknownFieldName(name);
@@ -258,6 +260,7 @@ public struct Record : IEquatable<Record>
 	}
 	public void SetField(string name, DateTime value)
 	{
+		// Code size: 79 (0x4f) 
 		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = _type.GetFieldIndex(name);
 		if (fieldId == -1) ThrowRecordUnknownFieldName(name);
@@ -265,31 +268,30 @@ public struct Record : IEquatable<Record>
 	}
 	public void SetField(string name, DateTimeOffset value)
 	{
+		// Code size: 88 (0x58)
 		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = _type.GetFieldIndex(name);
 		if (fieldId == -1) ThrowRecordUnknownFieldName(name);
 		SetDateTimeField(fieldId, _type.Fields[fieldId].Type, value.DateTime, value.Offset);
 	}
-	public void SetField(string name, double value)
+	public void SetField(string name, double value) => SetField(name, value, FieldType.Double);
+	public void SetField(string name, float value) => SetField(name, (double)value, FieldType.Float);
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal void SetField(string name, double value, FieldType fieldType)
 	{
+		// Code size: 99 (0x63)
 		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = _type.GetFieldIndex(name);
 		if (fieldId == -1) ThrowRecordUnknownFieldName(name);
-		var fieldType = _type.Fields[fieldId].Type;
-		if (fieldType != FieldType.Float && fieldType != FieldType.Double) ThrowImpossibleConversion(FieldType.Double, fieldType);
+		var type = _type.Fields[fieldId].Type;
+		if (type != FieldType.Float && type != FieldType.Double) ThrowImpossibleConversion(fieldType, type);
 		SetData(fieldId, value.ToString(DefaultCulture));
 	}
-	public void SetField(string name, float value)
-	{
-		if (_type.Id == -1) ThrowRecordUnknownRecordType();
-		var fieldId = _type.GetFieldIndex(name);
-		if (fieldId == -1) ThrowRecordUnknownFieldName(name);
-		var fieldType = _type.Fields[fieldId].Type;
-		if (fieldType != FieldType.Float && fieldType != FieldType.Double) ThrowImpossibleConversion(FieldType.Float, fieldType);
-		SetData(fieldId, value.ToString(DefaultCulture));
-	}
+
 	public void SetField<T>(string name, T value) where T : IEnumerable<byte>
 	{
+		// Code size: 99 (0x63)
 		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = _type.GetFieldIndex(name);
 		if (fieldId == -1) ThrowRecordUnknownFieldName(name);
@@ -302,6 +304,7 @@ public struct Record : IEquatable<Record>
 	public override readonly bool Equals(object? obj) => obj is Record record && Equals(record);
 	public readonly bool Equals(Record other)
 	{
+		// Code size: 88 (0x58)
 		if (ReferenceEquals(_type, other._type))
 		{
 			var i = 0;
@@ -336,6 +339,7 @@ public struct Record : IEquatable<Record>
 	internal readonly bool EqualTo(SaveQuery obj) => ReferenceEquals(obj.Data, _data) && obj.Offset == _offset;
 	internal readonly bool IsFieldChanged(string name)
 	{
+		// Code size: 87 (0x57)
 		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var index = _type.GetFieldIndex(name);
 		var trackerIndex = _offset + _type.RecordSize - 1;
@@ -348,6 +352,7 @@ public struct Record : IEquatable<Record>
 
 	internal readonly bool IsRelationChanged(string name)
 	{
+		// Code size: 95 (0x5f)
 		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var relation = _type.GetRelation(name);
 		var trackerIndex = _offset + _type.RecordSize - 1;
@@ -366,6 +371,7 @@ public struct Record : IEquatable<Record>
 	/// <returns>relation ID value;if not defined return null</returns>
 	internal readonly long? GetRelation(string name)
 	{
+		// Code size: 109 (0x6d)
 		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var relation = _type.GetRelation(name);
 		if (relation == null) ThrowRecordUnknownRelationName(name);
@@ -377,6 +383,7 @@ public struct Record : IEquatable<Record>
 
 	internal void SetRelation(string name, long? value)
 	{
+		// Code size: 99 (0x63)
 		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var relation = _type.GetRelation(name);
 		if (relation == null) ThrowRecordUnknownRelationName(name);
@@ -390,6 +397,7 @@ public struct Record : IEquatable<Record>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private void SetStringField(int fieldSize, int fieldId, string value)
 	{
+		// Code size: 33 (0x21)
 		if (value.Length <= fieldSize) SetData(fieldId, value);
 		else SetData(fieldId, value.Truncate(fieldSize)); // truncate or exception ?? // replace by Span<T>
 	}
@@ -411,11 +419,11 @@ public struct Record : IEquatable<Record>
 
 	private void SetFloatField(FieldType fieldType, int fieldId, string value)
 	{
-        // see. ISO 6093:1985
-        // Code size: 103 (0x67)
-        if (double.TryParse(value, DefaultFloatStyle, DefaultCulture, out double dbl))
+		// see. ISO 6093:1985
+		// Code size: 103 (0x67)
+		if (double.TryParse(value, DefaultFloatStyle, DefaultCulture, out double dbl))
 		{
-            if (fieldType == FieldType.Double) SetData(fieldId, dbl.ToString(DefaultCulture));
+			if (fieldType == FieldType.Double) SetData(fieldId, dbl.ToString(DefaultCulture));
 			else if (fieldType == FieldType.Float && float.TryParse(value, DefaultFloatStyle, DefaultCulture, out float flt))
 				SetData(fieldId, flt.ToString(DefaultCulture));
 			else ThrowValueTooLarge(fieldType);
@@ -432,6 +440,7 @@ public struct Record : IEquatable<Record>
 
 	private void SetBooleanField(int fieldId, string value)
 	{
+		// Code size: 40 (0x28)
 		if (bool.TryParse(value, out bool result)) SetData(fieldId, result ? BooleanTrue : BooleanFalse);
 		else ThrowWrongBooleanValue(value);
 	}
@@ -444,6 +453,7 @@ public struct Record : IEquatable<Record>
 
 	private void SetDateTimeField(int fieldId, FieldType fieldType, DateTime value, TimeSpan? offset)
 	{
+		// Code size: 51 (0x33)
 		if (fieldType == FieldType.DateTime || fieldType == FieldType.LongDateTime || fieldType == FieldType.ShortDateTime)
 			SetData(fieldId, new string(value.ToString(fieldType, offset)));
 		else ThrowImpossibleConversion(FieldType.DateTime, fieldType);
@@ -457,11 +467,14 @@ public struct Record : IEquatable<Record>
 		}
 	}
 
+#pragma warning disable IDE0251 // Make member 'readonly'
 	private void InitializeTracking(int trackerIndex) => _data[trackerIndex] = new string(new char[(_type.Fields.Length >> 4) + 1]);
+#pragma warning restore IDE0251
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private void SetData(int fieldId, string? value)
 	{
+		// Code size: 118 (0x76)
 		var fieldIndex = fieldId + _offset;
 		var trackerIndex = _type.RecordSize -1 +_offset;
 		if (string.CompareOrdinal(_data[fieldIndex], value) == 0) return; // detect no change
@@ -538,6 +551,7 @@ public struct Record : IEquatable<Record>
 
 	private static Table GetDefaultType()
 	{
+		// Code size: 77 (0x4d)
 		var metaTable = new Meta(-1, (byte)EntityType.Table, 0, (int)TableType.Undefined, 0L, string.Empty, null, null, true);
 		var metaArray = new Meta[] { new(0, (byte)EntityType.Field, 0, 0, 0L, string.Empty, null, null, true) };
 		return metaTable.ToTable(new ArraySegment<Meta>(metaArray), PhysicalType.Undefined, string.Empty,1)!; // cannot be null here!!

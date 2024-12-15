@@ -5,11 +5,14 @@ namespace Ring.Data;
 
 public interface IRingConnection : IDisposable
 {
-	int Id { get; }
+    void BeginTransaction();
+	void Commit();
+    void Rollback();
+    int Id { get; }
 	string ConnectionString { get; }
 	DateTime CreationTime { get; }
 	DateTime? LastConnectionTime { get; }
-	ConnectionState State { get; }
+    ConnectionState State { get; }
 	void Open();
 	Task OpenAsync(CancellationToken cancellationToken);
 	void Close();

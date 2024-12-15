@@ -15,7 +15,8 @@ namespace Ring.Data;
 
 public readonly struct BulkSave : IBulkSave
 {
-	private static readonly SaveQuery EmptySaveQuery = new SaveQuery(GetDefaultType(), SaveQueryType.Undefined, GetDefaultDmlBuilder(), Array.Empty<string?>(), 0);
+	private const byte FirstCancelOperationId = (byte)SaveQueryType.FirstCancelOperation;
+	private static readonly SaveQuery EmptySaveQuery = new(GetDefaultType(), SaveQueryType.Undefined, GetDefaultDmlBuilder(), Array.Empty<string?>(), 0);
 	private readonly BulkSaveInfo _info;
 
 	/// <summary>
@@ -144,7 +145,8 @@ public readonly struct BulkSave : IBulkSave
 
 	public void Clear()
 	{
-		var count = _info.Queries.Count;
+        // Code size: 93 (0x5d)
+        var count = _info.Queries.Count;
 		var span = _info.Queries.AsSpan();
 		// remove all  references to array
 		for (var i = 0; i < count; ++i) span[i] = EmptySaveQuery;
@@ -159,11 +161,12 @@ public readonly struct BulkSave : IBulkSave
 
 	internal void Save(IRingConnection connection, bool noTransaction=false)
 	{
-		var queryCount = _info.Queries.Count;
+        // Code size: 77 (0x4d)
+        var queryCount = _info.Queries.Count;
 
-        if (queryCount == 0) return;
+		if (queryCount == 0) return;
 
-		//  generate id
+		// generate id
 		if (_info.IdCount > 0) GenerateId(connection);
 
 		//TODO if more than 100K multiple transactions
@@ -183,7 +186,7 @@ public readonly struct BulkSave : IBulkSave
 		var prevQuery = _info.Queries[index];
 		_info.Queries[index] = new SaveQuery(prevQuery.Table, saveQueryType, prevQuery.Builder,
 			prevQuery.Data, prevQuery.Offset);
-    }
+	}
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
@@ -198,30 +201,36 @@ public readonly struct BulkSave : IBulkSave
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private void SaveWithoutTransactions(IRingConnection connection)
 	{
+		// Code size: 69 (0x45)
 		foreach (var query in _info.Queries.AsReadOnlySpan())
 		{
 			var type = query.Type;
-            if (type == SaveQueryType.InsertRecord ||
-				type == SaveQueryType.UpdateRecord ||
-				type == SaveQueryType.UpdateReturningRecord)
-				connection.Execute(query);
+			var typeId = (byte)type;
+			// callvirt instance int64 Ring.Data.IRingConnection::Execute
+			if (typeId < FirstCancelOperationId) connection.Execute(query); 
 		}
 	}
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void SaveWithTransaction(IRingConnection connection)
-    {
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private void SaveWithTransaction(IRingConnection connection)
+	{
+        // Code size: 90 (0x5a)
+        connection.BeginTransaction();
         foreach (var query in _info.Queries.AsReadOnlySpan())
-        {
+		{
             var type = query.Type;
-            if (type == SaveQueryType.InsertRecord ||
-                type == SaveQueryType.UpdateRecord ||
-                type == SaveQueryType.UpdateReturningRecord)
-                connection.Execute(query);
+            var typeId = (byte)type;
+			// callvirt instance int64 Ring.Data.IRingConnection::Execute
+			if (typeId < FirstCancelOperationId)
+			{
+				var returnValue = connection.Execute(query);
+				if (returnValue<0L) connection.Rollback();
+            }
         }
+		connection.Commit();
     }
 
-    private static Table GetDefaultType()
+	private static Table GetDefaultType()
 	{
 		var metaTable = new Meta(-1, (byte)EntityType.Table, 0, (int)TableType.Undefined, 0L, string.Empty, null, null, true);
 		var metaArray = new Meta[] { new(0, (byte)EntityType.Field, 0, 0, 0L, string.Empty, null, null, true) };
