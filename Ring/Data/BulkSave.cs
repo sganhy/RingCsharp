@@ -214,17 +214,21 @@ public readonly struct BulkSave : IBulkSave
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private void SaveWithTransaction(IRingConnection connection)
 	{
-        // Code size: 90 (0x5a)
+        // Code size: 91 (0x5b)
         connection.BeginTransaction();
         foreach (var query in _info.Queries.AsReadOnlySpan())
 		{
             var type = query.Type;
             var typeId = (byte)type;
-			// callvirt instance int64 Ring.Data.IRingConnection::Execute
 			if (typeId < FirstCancelOperationId)
 			{
-				var returnValue = connection.Execute(query);
-				if (returnValue<0L) connection.Rollback();
+                // callvirt instance int64 Ring.Data.IRingConnection::Execute
+                var returnValue = connection.Execute(query);
+				if (returnValue < 0L)
+				{
+					connection.Rollback();
+					return;
+				}
             }
         }
 		connection.Commit();

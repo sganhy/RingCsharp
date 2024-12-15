@@ -75,7 +75,7 @@ rcd.SetField("test_6", "test_6");
     test_10 bytea,
 */
 rcd.SetField("test_7", "2022-12-12");
-rcd.SetField("test_8", DateTime.Now);
+rcd.SetField("test_8", null);
 rcd.SetField("test_9", null);
 rcd.SetField("test_10", new byte[] { 1, 2, 3 });
 rcd.SetField("test_11", true);
