@@ -14,9 +14,11 @@ internal static class DateTimeExtensions
     };
     private const int DecimalSys = 10;
 
+
+    //TODO unitest please !!
     internal static string ToString(this DateTime value, FieldType fieldType, TimeSpan? offset)
     {
-        // IS0-8601 ==> "YYYY-MM-DDTHH:MM:SS.mmmZ" eg. 2005-12-12T18:17:16.015+04:00; lenght max ==> 30
+        // IS0-8601 ==> "YYYY-MM-DDTHH:MM:SS.mmmmmZ" eg. 2005-12-12T18:17:16.015+04:00; lenght max ==> 30
         var template = DateTimeTemplates[(byte)fieldType];
         var count = template.Length;
         var result = new char[count];
@@ -44,7 +46,7 @@ internal static class DateTimeExtensions
                 SetDateTime(result, 2, hours, 29);
                 SetDateTime(result, 2, offset?.Minutes ?? 0, 31);
             }
-            else SetDateTime(result, 3, dateToConv.Millisecond, 22);
+            else SetDateTime(result, 6, dateToConv.Microsecond, 22);
         }
         return new string(result);
     }
@@ -52,9 +54,10 @@ internal static class DateTimeExtensions
     #region private methods
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void SetDateTime(char[] input, int size, int value, int lastPosition)
+    private static void SetDateTime(Span<char> input, int size, int value, int lastPosition)
     {
-        var i=0;
+        // Code size: 42 (0x2a)
+        var i =0;
         while (i<size)
         {
             input[lastPosition--] += (char)(value%DecimalSys);

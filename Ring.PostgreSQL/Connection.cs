@@ -258,6 +258,8 @@ public sealed class Connection : IRingConnection
         }
         catch (Exception ex)
         {
+            Console.WriteLine("SQL: ");
+            Console.WriteLine(sql);
             Console.WriteLine("Error: ");
             Console.WriteLine(ex.Message);
             Console.WriteLine(ex.StackTrace);

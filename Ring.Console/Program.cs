@@ -75,7 +75,7 @@ rcd.SetField("test_6", "test_6");
     test_10 bytea,
 */
 rcd.SetField("test_7", "2022-12-12");
-rcd.SetField("test_8", null);
+rcd.SetField("test_8", DateTime.Now);
 rcd.SetField("test_9", null);
 rcd.SetField("test_10", new byte[] { 1, 2, 3 });
 rcd.SetField("test_11", true);
@@ -92,11 +92,11 @@ rcd2.SetField("test_5", "1E+2");
 rcd2.SetField("test_6", "test_6");
 rcd2.SetField("test_7", "2022-12-12");
 rcd2.SetField("test_8", DateTime.Now);
-rcd2.SetField("test_9", "2022-12-12");
+rcd2.SetField("test_9", null);
 rcd2.SetField("test_10", new byte[] { 1, 2, 3 });
 rcd2.SetField("test_11", true);
 rcd2.SetField("test_12", "test_12");
-bs.InsertRecord(rcd);
+bs.InsertRecord(rcd2);
 
 bs.Save(conn, false);
 
