@@ -234,10 +234,10 @@ internal readonly struct Meta : IEquatable<Meta>
 		{
 			var metaValue = meta.Value;
 			var ddlBuilder = provider.GetDdlBuilder();
-            var mtmCount = GetMtmCount(schema);
-            var tableCount = GetTableCount(schema);
-            var parameters = GetParameters(schema);
-            var lexicons = new List<Lexicon>();
+			var mtmCount = GetMtmCount(schema);
+			var tableCount = GetTableCount(schema);
+			var parameters = GetParameters(schema);
+			var lexicons = new List<Lexicon>();
 			var sequences = new List<Sequence>();
 			var tableByName = GetTables(schema, ddlBuilder, metaValue, provider, mtmCount);
 			var tableById = ShallowCopy(tableByName);
@@ -256,7 +256,7 @@ internal readonly struct Meta : IEquatable<Meta>
 			result.LoadColumnMappers(); // load column mapper on tables
 			result.LoadRecordIndexes(); // load record indexes on relations
 
-            return result;
+			return result;
 		}
 		return null;
 	}
@@ -345,23 +345,23 @@ internal readonly struct Meta : IEquatable<Meta>
 	public override string ToString() => string.IsNullOrEmpty(Name) ? string.Empty : $"{Id} - {Name}";
 #endif
 
-    #region private methods 
+	#region private methods 
 
-    private static int GetTableCount(ReadOnlySpan<Meta> schema)
-    {
+	private static int GetTableCount(ReadOnlySpan<Meta> schema)
+	{
 		var result = 0;
 		foreach (var meta in schema) if (meta.IsTable) ++result;
-        return result;
-    }
+		return result;
+	}
 
-    private static int GetMtmCount(ReadOnlySpan<Meta> schema)
-    {
-        var result = 0;
-        foreach (var meta in schema) if (meta.IsRelation && meta.GetRelationType()==RelationType.Mtm) ++result;
-        return result >> 1; // divided by 2
-    }
+	private static int GetMtmCount(ReadOnlySpan<Meta> schema)
+	{
+		var result = 0;
+		foreach (var meta in schema) if (meta.IsRelation && meta.GetRelationType()==RelationType.Mtm) ++result;
+		return result >> 1; // divided by 2
+	}
 
-    private static long WriteFlag(long flags, byte bitPosition, bool value)
+	private static long WriteFlag(long flags, byte bitPosition, bool value)
 	{
 		if (bitPosition < 65)
 		{
@@ -508,7 +508,7 @@ internal readonly struct Meta : IEquatable<Meta>
 				result.Add(table);
 #pragma warning restore CS8604
 				++tableIndex;
-            }
+			}
 		}
 		return result.ToArray();
 	}

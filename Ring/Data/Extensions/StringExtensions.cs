@@ -18,11 +18,10 @@ internal static class StringExtensions
 	/// <summary>
 	/// Read a bit from a string
 	/// </summary>
-	/// <param name="value"></param>
-	/// <param name="position">First bit equal to 0 position</param>
 	internal static bool GetBitValue(this string value, int position)
-	{
-		var index = position >> 4; // divide by 16 (16 bits by char)
+    {
+		// Code size: 36 (0x24)
+        var index = position >> 4; // divide by 16 (16 bits by char)
 		if (index > value.Length) return false;
 		return ((value[index] >> (position & 0xF)) & 1) > 0; // index + (position modulo 16)
 	}
@@ -32,7 +31,8 @@ internal static class StringExtensions
 	/// </summary>
 	internal static void SetBitValue(this string value, int position)
 	{
-		var index = position >> 4; // divide by 16 (16 bits by char)
+        // Code size: 68 (0x44)
+        var index = position >> 4; // divide by 16 (16 bits by char)
 		// avoid to get troubles with pointer in unsafe mode
 		if (index >= value.Length) throw new ArgumentOutOfRangeException(string.Empty);
 		var mask = (char)1;
@@ -78,8 +78,9 @@ internal static class StringExtensions
 	/// <returns>Boolean value, true if the string is base64, otherwise false</returns>
 	internal static bool IsBase64String(this string? value)
 	{
+        // Code size: 161 (0xa1)
 #pragma warning disable RCS1113 // Use 'string.IsNullOrEmpty' method
-		if (value == null || value.Length == 0 || value.Length % 4 != 0
+        if (value == null || value.Length == 0 || value.Length % 4 != 0
 			|| value.Contains(' ') || value.Contains('\t') || value.Contains('\r') || value.Contains('\n')) return false;
 #pragma warning restore RCS1113
 		var index = value.Length - 1;
@@ -142,8 +143,7 @@ internal static class StringExtensions
 	private static string? GetDateTemplate(string template, int timeIndex)
 	{
 		// Code size: 84 (0x54)
-		var subDateTime = timeIndex > 0 ? template[..timeIndex] : template;
-		switch (subDateTime)
+		switch (timeIndex > 0 ? template[..timeIndex] : template)
 		{
 			case "9999-99-99":
 			case "9999-99":
@@ -205,8 +205,7 @@ internal static class StringExtensions
 		{
 			var spanTemlate = template.AsSpan();
 			if (timeZoneIndex >= spanTemlate.Length - 1) return ZuluTimeStrSuffix;
-			var subTimeZone = spanTemlate[timeZoneIndex..].ToString();
-			switch (subTimeZone)
+			switch (spanTemlate[timeZoneIndex..].ToString())
 			{
 				case "+99:99":
 				case "-99:99":

@@ -7,7 +7,6 @@ using Ring.Schema.Models;
 using Ring.Util.Enums;
 using Ring.Util.Extensions;
 using Ring.Util.Helpers;
-using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.CompilerServices;
@@ -99,7 +98,7 @@ public struct Record : IEquatable<Record>
 	/// <summary>
 	/// 	Get primary key value (Field name ID)
 	/// </summary>
-	internal readonly long GetField()
+	internal readonly long GetField()   // Code size: 47 (0x2f)
 		=> long.Parse(_data[_type.RecordIndexes[0]+_offset] ?? DefaultPrimaryKeyValue, DefaultCulture);
 
 	/// <summary>
@@ -133,6 +132,7 @@ public struct Record : IEquatable<Record>
 
 	public readonly void GetField(string name, out byte[]? value)
 	{
+		// Code size: 118 (0x76)
 		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = _type.GetFieldIndex(name);
 		if (fieldId <= -1) ThrowRecordUnknownFieldName(name);
@@ -146,6 +146,7 @@ public struct Record : IEquatable<Record>
 
 	public readonly void GetField(string name, out long? value)
 	{
+		// Code size: 145 (0x91)
 		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = _type.GetFieldIndex(name);
 		if (fieldId <= -1) ThrowRecordUnknownFieldName(name);
@@ -163,7 +164,8 @@ public struct Record : IEquatable<Record>
 	/// </summary>
 	public readonly void GetField(string name, out DateTime? value)
 	{
-		if (_type.Id == -1) ThrowRecordUnknownRecordType();
+        // Code size: 143 (0x8f)
+        if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = _type.GetFieldIndex(name);
 		if (fieldId <= -1) ThrowRecordUnknownFieldName(name);
 		value = null;
@@ -244,10 +246,10 @@ public struct Record : IEquatable<Record>
 		}
 	}
 
-	public void SetField(string name, long value) => SetField(name, value, FieldType.Long);
-	public void SetField(string name, int value) => SetField(name, value, FieldType.Int);
-	public void SetField(string name, short value) => SetField(name, value, FieldType.Short);
-	public void SetField(string name, sbyte value) => SetField(name, value, FieldType.Byte);
+	public void SetField(string name, long value) => SetField(name, value, FieldType.Long);	  // Code size: 10 (0xa)
+	public void SetField(string name, int value) => SetField(name, value, FieldType.Int);     // Code size: 11 (0xb)
+	public void SetField(string name, short value) => SetField(name, value, FieldType.Short); // Code size: 11 (0xb)
+	public void SetField(string name, sbyte value) => SetField(name, value, FieldType.Byte);  // Code size: 11 (0xb)
 	public void SetField(string name, bool value)
 	{
 		// Code size: 99 (0x63)
@@ -274,8 +276,8 @@ public struct Record : IEquatable<Record>
 		if (fieldId == -1) ThrowRecordUnknownFieldName(name);
 		SetDateTimeField(fieldId, _type.Fields[fieldId].Type, value.DateTime, value.Offset);
 	}
-	public void SetField(string name, double value) => SetField(name, value, FieldType.Double);
-	public void SetField(string name, float value) => SetField(name, (double)value, FieldType.Float);
+	public void SetField(string name, double value) => SetField(name, value, FieldType.Double);       // Code size: 11 (0xb)
+	public void SetField(string name, float value) => SetField(name, (double)value, FieldType.Float); // Code size: 12 (0xc)
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal void SetField(string name, double value, FieldType fieldType)
@@ -322,6 +324,7 @@ public struct Record : IEquatable<Record>
 	}
 	public override readonly int GetHashCode()
 	{
+		// Code size: 110 (0x6e)
 		var result = new StringBuilder();
 		result.Append(_type.PhysicalName);
 		var i = _offset;
@@ -336,7 +339,7 @@ public struct Record : IEquatable<Record>
 		HashHelper.Djb2X(result.ToString(), out int hash);
 		return hash;
 	}
-	internal readonly bool EqualTo(SaveQuery obj) => ReferenceEquals(obj.Data, _data) && obj.Offset == _offset;
+	internal readonly bool EqualTo(SaveQuery obj) => ReferenceEquals(obj.Data, _data) && obj.Offset == _offset; // Code size: 31 (0x1f)
 	internal readonly bool IsFieldChanged(string name)
 	{
 		// Code size: 87 (0x57)
@@ -348,7 +351,7 @@ public struct Record : IEquatable<Record>
 		return false;
 	}
 
-	internal readonly bool IsFieldExist(string name) => _type.GetFieldIndex(name) != -1;
+	internal readonly bool IsFieldExist(string name) => _type.GetFieldIndex(name) != -1; // Code size: 19 (0x13)
 
 	internal readonly bool IsRelationChanged(string name)
 	{
@@ -362,7 +365,7 @@ public struct Record : IEquatable<Record>
 		return false;
 	}
 
-	internal readonly bool IsRelationExist(string name) => _type.GetRelationIndex(name) != -1;
+	internal readonly bool IsRelationExist(string name) => _type.GetRelationIndex(name) != -1; // Code size: 19 (0x13)
 
 	/// <summary>
 	/// 	Return relation ID value by name
