@@ -34,6 +34,7 @@ internal sealed class DdlBuilder : BaseDdlBuilder
     }
     public override DatabaseProvider Provider => DatabaseProvider.SqlServer;
     protected override string MtmPrefix => "@mtm_";
+    protected override string? TimeZoneOffsetPrefix => null;
     protected override Dictionary<FieldType, string> DataType => _dataType;
     protected override int VarcharMaxSize => -1;
     protected override string StringCollateInformation => throw new NotImplementedException();
@@ -41,5 +42,5 @@ internal sealed class DdlBuilder : BaseDdlBuilder
     protected override string StartPhysicalNameDelimiter => "[";
     protected override string EndPhysicalNameDelimiter => "]";
     protected override string TablePrefix => DefaultTablePrefix;
-
+    protected override string SearchableFieldPrefix => "s_";
 }

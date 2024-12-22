@@ -731,7 +731,7 @@ public sealed class RecordTest : BaseTest
         rcd.SetField("entry_time", dt);
 
         // assert
-        Assert.Equal("2005-12-12T14:17:16.015Z", rcd.GetField("entry_time"));
+        Assert.Equal("2005-12-12T14:17:16.015000Z", rcd.GetField("entry_time"));
     }
 
     [Fact]
@@ -747,7 +747,7 @@ public sealed class RecordTest : BaseTest
         rcd.SetField("entry_time", dt);
 
         // assert
-        Assert.Equal("2006-10-14T14:18:19.015Z", rcd.GetField("entry_time"));
+        Assert.Equal("2006-10-14T14:18:19.015000Z", rcd.GetField("entry_time"));
     }
 
     [Fact]
@@ -763,7 +763,7 @@ public sealed class RecordTest : BaseTest
         rcd.SetField("entry_time", dt);
 
         // assert
-        Assert.Equal(dt.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"), rcd.GetField("entry_time"));
+        Assert.Equal(dt.ToString("yyyy-MM-ddTHH:mm:ss.ffffffZ"), rcd.GetField("entry_time"));
     }
 
     [Fact]
@@ -835,8 +835,8 @@ public sealed class RecordTest : BaseTest
         var newField = meta?.ToField();
         logTable.Fields[index] = newField ?? logTable.Fields[0];
         var rcd = new Record(logTable);
-        var dt = DateTimeOffset.ParseExact("2005-12-12T18:17:16.015116-07:00", "yyyy-MM-ddTHH:mm:ss.ffffffzzz", CultureInfo.InvariantCulture);
-        const string expectedResult=@"2005-12-12T18:17:16.0151160-07:00";
+        var dt = DateTimeOffset.ParseExact("2005-12-12T18:17:16.015116-07:45", "yyyy-MM-ddTHH:mm:ss.ffffffzzz", CultureInfo.InvariantCulture);
+        const string expectedResult=@"2005-12-12T18:17:16.015116-07:45";
 
         // act
         rcd.SetField("entry_time", dt);

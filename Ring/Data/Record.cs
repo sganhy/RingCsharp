@@ -324,16 +324,15 @@ public struct Record : IEquatable<Record>
 	}
 	public override readonly int GetHashCode()
 	{
-		// Code size: 110 (0x6e)
-		var result = new StringBuilder();
+        // Code size: 108 (0x6c)
+        var result = new StringBuilder();
 		result.Append(_type.PhysicalName);
 		var i = _offset;
 		var columnCount = _type.RecordSize - 1;
 		columnCount += i;
 		while (i < columnCount)
 		{
-			result.Append(_data[i] ?? NullField);
-			result.Append(HashCodeSeparator);
+			result.Append(_data[i] ?? NullField).Append(HashCodeSeparator);
 			++i;
 		}
 		HashHelper.Djb2X(result.ToString(), out int hash);

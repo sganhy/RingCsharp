@@ -36,11 +36,14 @@ internal sealed class DdlBuilder : BaseDdlBuilder
     }
     public override DatabaseProvider Provider => _currentProvider;
     protected override string MtmPrefix => "@mtm_";
+    protected override string? TimeZoneOffsetPrefix => null;
     protected override int VarcharMaxSize => -1;
     protected override string SchemaSeparator => ".";
     protected override string StringCollateInformation => string.Empty;
     protected override string StartPhysicalNameDelimiter => "\"";
     protected override string EndPhysicalNameDelimiter => StartPhysicalNameDelimiter;
     protected override string TablePrefix => DefaultTablePrefix;
+    protected override string SearchableFieldPrefix => "s_";
+
 
 }

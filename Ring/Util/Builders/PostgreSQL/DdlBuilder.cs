@@ -28,6 +28,7 @@ internal sealed class DdlBuilder : BaseDdlBuilder
     public override DatabaseProvider Provider => DatabaseProvider.PostgreSql;
     protected override string StringCollateInformation => @"COLLATE ""C""";
     protected override string MtmPrefix => "@mtm_";
+    protected override string TimeZoneOffsetPrefix => "@tz_offset_";
     protected override int VarcharMaxSize => 65535;
 
     public override string Create(TableSpace tablespace)
@@ -48,6 +49,6 @@ internal sealed class DdlBuilder : BaseDdlBuilder
     protected override string StartPhysicalNameDelimiter => "\"";
     protected override string EndPhysicalNameDelimiter => StartPhysicalNameDelimiter;
     protected override string TablePrefix => DefaultTablePrefix;
-
+    protected override string SearchableFieldPrefix => "s_";
 
 }

@@ -36,16 +36,18 @@ internal static class DateTimeExtensions
             SetDateTime(result, 3, dateToConv.Millisecond, 22);
             SetDateTime(result, 3, dateToConv.Microsecond, 25);
 
-            if (fieldType == FieldType.LongDateTime)
+            if (fieldType == FieldType.LongDateTime && offset!=null)
             {
-                var hours = offset?.Hours ?? 0;
+                int hours = offset.Value.Hours;
+                int minutes = offset.Value.Minutes;
                 if (hours < 0)
                 {
                     result[26] = '-';
                     hours *= -1;
+                    minutes *= -1;
                 }
-                SetDateTime(result, 2, hours, 27);
-                SetDateTime(result, 2, offset?.Minutes ?? 0, 30);
+                SetDateTime(result, 2, hours, 28);
+                SetDateTime(result, 2, minutes, 31);
             }
         }
         return new string(result);

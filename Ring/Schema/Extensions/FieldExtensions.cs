@@ -90,21 +90,22 @@ internal static class FieldExtensions
 
 	internal static string GetStringCode(this Field field)
 	{
+		// Code size: 164 (0xa4)
 		var result = new StringBuilder();
-		result.Append(field.CaseSensitive);
-		result.Append(HashCodeSeparator);
-		result.Append(field.DefaultValue);
-		result.Append(HashCodeSeparator);
-		result.Append(field.Multilingual);
-		result.Append(HashCodeSeparator);
-		result.Append(field.NotNull);
-		result.Append(HashCodeSeparator);
-		result.Append(field.Size);
-		result.Append(HashCodeSeparator);
-		result.Append(field.Type.ToString());
-		result.Append(HashCodeSeparator);
-		// BaseEntity
-		result.Append(BaseEntityExtensions.GetStringCode(field));
+		result.Append(field.CaseSensitive)
+			.Append(HashCodeSeparator)
+			.Append(field.DefaultValue)
+			.Append(HashCodeSeparator)
+			.Append(field.Multilingual)
+			.Append(HashCodeSeparator)
+			.Append(field.NotNull)
+			.Append(HashCodeSeparator)
+			.Append(field.Size)
+			.Append(HashCodeSeparator)
+			.Append(field.Type.ToString())
+			.Append(HashCodeSeparator)
+			// BaseEntity
+			.Append(BaseEntityExtensions.GetStringCode(field));
 		return result.ToString();
 	}
 }

@@ -28,6 +28,7 @@ internal sealed class DdlBuilder : BaseDdlBuilder
     public override string Create(TableSpace tablespace) => tablespace.Name;
     public override DatabaseProvider Provider => _currentProvider;
     protected override string MtmPrefix => "@mtm_";
+    protected override string? TimeZoneOffsetPrefix => null;
     protected override Dictionary<FieldType, string> DataType => _dataType;
     protected override int VarcharMaxSize => 65535;
     protected override string StringCollateInformation => throw new NotImplementedException();
@@ -36,5 +37,7 @@ internal sealed class DdlBuilder : BaseDdlBuilder
     protected override string StartPhysicalNameDelimiter => "`";
     protected override string EndPhysicalNameDelimiter => StartPhysicalNameDelimiter;
     protected override string TablePrefix => DefaultTablePrefix;
+    protected override string SearchableFieldPrefix => "s_";
+
 
 }

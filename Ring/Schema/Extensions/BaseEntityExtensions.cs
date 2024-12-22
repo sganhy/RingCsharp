@@ -9,16 +9,17 @@ internal static class BaseEntityExtensions
 
 	internal static string GetStringCode(this BaseEntity baseEntity)
 	{
-		var result = new StringBuilder();
-		result.Append(baseEntity.Active);
-		result.Append(HashCodeSeparator);
-		result.Append(baseEntity.Baseline);
-		result.Append(HashCodeSeparator);
-		result.Append(baseEntity.Description);
-		result.Append(HashCodeSeparator);
-		result.Append(baseEntity.Id);
-		result.Append(HashCodeSeparator);
-		result.Append(baseEntity.Name);
+        // Code size: 108 (0x6c)
+        var result = new StringBuilder();
+		result.Append(baseEntity.Active)
+			.Append(HashCodeSeparator)
+			.Append(baseEntity.Baseline)
+			.Append(HashCodeSeparator)
+			.Append(baseEntity.Description)
+			.Append(HashCodeSeparator)
+			.Append(baseEntity.Id)
+			.Append(HashCodeSeparator)
+			.Append(baseEntity.Name);
 		return result.ToString();
 	}
 

@@ -47,7 +47,7 @@ public class DdlBuilderTest : BaseBuilderTest
     }
 
     [Fact]
-    public void Create_Table2_DdlQuery()
+    public void Create_BusinessTable_DdlQuery()
     {
         // arrange 
         var metaTable = GetMeta2Table(TableType.Business);
@@ -60,10 +60,11 @@ public class DdlBuilderTest : BaseBuilderTest
         table2.Relations[0] = GetAnonymousRelation(RelationType.Mtm, 8, @"ability2book");
         table2.LoadColumnMapper();
         table2.LoadRelationRecordIndex();
-        var expectedSql = $"CREATE TABLE {physicalName} (\n" + "    id int2 NOT NULL,\n    skill2book int8,\n" +
-                "    name varchar(80) COLLATE \"C\",\n" + "    sub_name varchar(30) COLLATE \"C\",\n" + "    is_group bool,\n" +
-                "    category varchar(8) COLLATE \"C\",\n" + "    armor_penality int2,\n" + "    trained_only bool,\n" +
-                "    try_again bool)";
+        var expectedSql = $"CREATE TABLE {physicalName} (\n" + "\tid int2 NOT NULL,\n\tskill2book int8,\n" +
+                "\tname varchar(80) COLLATE \"C\",\n" + "\ts_name varchar(80) COLLATE \"C\",\n" + 
+                "\tsub_name varchar(30) COLLATE \"C\",\n" + "\tis_group bool,\n" +
+                "\tcategory varchar(8) COLLATE \"C\",\n" + "\tarmor_penality int2,\n" + "\ttrained_only bool,\n" +
+                "\ttry_again bool)";
 
         // act 
         var ddl = _sut.Create(table2);
@@ -74,7 +75,7 @@ public class DdlBuilderTest : BaseBuilderTest
     }
 
     [Fact]
-    public void Create_Table3_DdlQuery()
+    public void Create_LexiconTable_DdlQuery()
     {
         // arrange 
         var metaTable = GetMeta2Table(TableType.Lexicon);
@@ -86,10 +87,11 @@ public class DdlBuilderTest : BaseBuilderTest
         table3.Relations[0] = GetAnonymousRelation(RelationType.Mto, 11, @"skill2book", true);
         table3.LoadColumnMapper();
         table3.LoadRelationRecordIndex();
-        var expectedSql = $"CREATE TABLE {physicalName} (\n" + "    id int2 NOT NULL,\n" +
-                "    name varchar(80) COLLATE \"C\" NOT NULL,\n" + "    sub_name varchar(30) COLLATE \"C\",\n" + "    is_group bool NOT NULL,\n" +
-                "    category varchar(8) COLLATE \"C\",\n" + "    armor_penality int2 NOT NULL,\n" + "    trained_only bool NOT NULL,\n" +
-                "    try_again bool NOT NULL,\n" + "    skill2book int8 NOT NULL)";
+        var expectedSql = $"CREATE TABLE {physicalName} (\n" + "\tid int2 NOT NULL,\n" +
+                "\tname varchar(80) COLLATE \"C\" NOT NULL,\n" + "\ts_name varchar(80) COLLATE \"C\" NOT NULL,\n" +
+                "\tsub_name varchar(30) COLLATE \"C\",\n" + "\tis_group bool NOT NULL,\n" +
+                "\tcategory varchar(8) COLLATE \"C\",\n" + "\tarmor_penality int2 NOT NULL,\n" + "\ttrained_only bool NOT NULL,\n" +
+                "\ttry_again bool NOT NULL,\n" + "\tskill2book int8 NOT NULL)";
 
         // act 
         var ddl = _sut.Create(table3);
@@ -101,7 +103,7 @@ public class DdlBuilderTest : BaseBuilderTest
     }
 
     [Fact]
-    public void Create_Table4_DdlQuery()
+    public void Create_LogTable_DdlQuery()
     {
         // arrange 
         var metaTable = GetMeta2Table(TableType.Log);
@@ -116,10 +118,11 @@ public class DdlBuilderTest : BaseBuilderTest
         table4.Relations[0] = GetAnonymousRelation(RelationType.Mto, 11, @"skill2book", false);
         table4.LoadColumnMapper();
         table4.LoadRelationRecordIndex();
-        var expectedSql = $"CREATE TABLE {physicalName} (\n" + "    id int2 NOT NULL,\n" +
-                "    name varchar(80) COLLATE \"C\" NOT NULL,\n" + "    sub_name varchar(30) COLLATE \"C\",\n" + "    is_group bool NOT NULL,\n" +
-                "    category varchar(8) COLLATE \"C\",\n" + "    armor_penality int2 NOT NULL,\n" + "    trained_only bool NOT NULL,\n" +
-                "    try_again bool NOT NULL,\n" + $"    skill2book int8) TABLESPACE {tablespaceName}";
+        var expectedSql = $"CREATE TABLE {physicalName} (\n" + "\tid int2 NOT NULL,\n" +
+                "\tname varchar(80) COLLATE \"C\" NOT NULL,\n" + "\ts_name varchar(80) COLLATE \"C\" NOT NULL,\n" +
+                "\tsub_name varchar(30) COLLATE \"C\",\n" + "\tis_group bool NOT NULL,\n" +
+                "\tcategory varchar(8) COLLATE \"C\",\n" + "\tarmor_penality int2 NOT NULL,\n" + "\ttrained_only bool NOT NULL,\n" +
+                "\ttry_again bool NOT NULL,\n" + $"\tskill2book int8) TABLESPACE {tablespaceName}";
 
         // act 
         var ddl = _sut.Create(table4, tablespace);
@@ -142,10 +145,10 @@ public class DdlBuilderTest : BaseBuilderTest
         var metaTable = schema.GetTable("@meta");
         
 #pragma warning disable CS8602
-        var expectedSql = $"CREATE TABLE test.\"@meta\" (\n" + "    id int4 NOT NULL,\n" +
-                "    schema_id int4 NOT NULL,\n" + "    object_type int2 NOT NULL,\n" + "    reference_id int4 NOT NULL,\n" +
-                "    data_type int4 NOT NULL,\n" + "    flags int8 NOT NULL,\n" + "    name varchar(30) COLLATE \"C\" NOT NULL,\n" +
-                "    description text COLLATE \"C\",\n" + $"    value text COLLATE \"C\",\n    active bool NOT NULL) TABLESPACE {tablespaceName}";
+        var expectedSql = $"CREATE TABLE test.\"@meta\" (\n" + "\tid int4 NOT NULL,\n" +
+                "\tschema_id int4 NOT NULL,\n" + "\tobject_type int2 NOT NULL,\n" + "\treference_id int4 NOT NULL,\n" +
+                "\tdata_type int4 NOT NULL,\n" + "\tflags int8 NOT NULL,\n" + "\tname varchar(30) COLLATE \"C\" NOT NULL,\n" +
+                "\tdescription text COLLATE \"C\",\n" + $"\tvalue text COLLATE \"C\",\n\tactive bool NOT NULL) TABLESPACE {tablespaceName}";
         Assert.NotNull(metaTable);
 
         // act 
@@ -167,20 +170,17 @@ public class DdlBuilderTest : BaseBuilderTest
         var config = new Configuration() { DefaultSchema = "test", MaxConnectionPoolSize = 1 };
         var schema = builder.GetMeta(DatabaseProvider.PostgreSql, config);
         var metaTable = schema.GetTable("@test");
-
-#pragma warning disable CS8602
-        var expectedSql = $"CREATE TABLE test.\"@test\" (\n" + "    test_0 int8,\n" +
-                "    test_1 int4,\n" + "    test_2 int2,\n" + "    test_3 int2,\n" +
-                "    test_4 float4,\n" + "    test_5 float8,\n" + "    test_6 varchar(512) COLLATE \"C\",\n" +
-                "    test_7 date,\n" + "    test_8 timestamp without time zone,\n    test_9 timestamp with time zone,\n" +
-                "    test_10 bytea,\n" + "    test_11 bool,\n    test_12 text COLLATE \"C\")" +
+        var expectedSql = $"CREATE TABLE test.\"@test\" (\n" + "\ttest_0 int8,\n" +
+                "\ttest_1 int4,\n" + "\ttest_2 int2,\n" + "\ttest_3 int2,\n" +
+                "\ttest_4 float4,\n" + "\ttest_5 float8,\n" + "\ttest_6 varchar(16) COLLATE \"C\",\n" + "\ttest_7 varchar(512) COLLATE \"C\",\n" +
+                "\ts_test_7 varchar(512) COLLATE \"C\",\n" + "\ttest_8 varchar(64) COLLATE \"C\",\n" + "\ts_test_8 varchar(64) COLLATE \"C\",\n" +
+                "\ttest_9 date,\n" + "\ttest_10 timestamp without time zone,\n\ttest_11 timestamp with time zone,\n" +
+                "\ttest_12 bytea,\n" + "\ttest_13 bool,\n\ttest_14 text COLLATE \"C\")" +
                 $" TABLESPACE {tablespaceName}";
         Assert.NotNull(metaTable);
 
         // act 
         var ddl = _sut.Create(metaTable, tablespace);
-
-#pragma warning restore  CS8602
 
         // assert
         Assert.Equal(expectedSql, ddl);

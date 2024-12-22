@@ -29,8 +29,8 @@ internal sealed class TableBuilder
 #pragma warning disable CA1822, S2325
 	internal Table GetMeta(string schemaName, DatabaseProvider provider) {
 #pragma warning restore CA1822, S2325
-
-		var metaList = new List<Meta> {
+        // Code size: 301 (0x12d)
+        var metaList = new List<Meta> {
 			GetField(FieldId, FieldType.Int),
 			GetField(FieldSchemaId, FieldType.Int),
 			GetField(FieldObjectType, FieldType.Byte),
@@ -48,9 +48,11 @@ internal sealed class TableBuilder
 	}
 
 #pragma warning disable CA1822, S2325 // Mark members as static
-	internal Table GetMetaId(string schemaName, DatabaseProvider provider) {
+	internal Table GetMetaId(string schemaName, DatabaseProvider provider) 
+	{
+        // Code size: 177 (0xb1)
 #pragma warning restore CA1822, S2325
-		var metaList = new List<Meta> {
+        var metaList = new List<Meta> {
 			GetField(FieldId, FieldType.Int),
 			GetField(FieldSchemaId, FieldType.Int),
 			GetField(FieldObjectType, FieldType.Byte),
@@ -62,21 +64,23 @@ internal sealed class TableBuilder
 	}
 
 #pragma warning disable CA1822, S2325 // Mark members as static
-	internal Table GetLog(string schemaName, DatabaseProvider provider) {
+	internal Table GetLog(string schemaName, DatabaseProvider provider) 
+	{
+        // Code size: 300 (0x12c)
 #pragma warning restore CA1822, S2325
-		var metaList = new List<Meta> {
+        var metaList = new List<Meta> {
 			GetField(FieldId, FieldType.Long),
 			GetField(FieldEntryTime, FieldType.DateTime),
 			GetField(FieldLevelId, FieldType.Short),
 			GetField(FieldSchemaId, FieldType.Int),
 			GetField(FieldThreadId, FieldType.Int,false),
-			GetField(FieldCallSite, FieldType.String,255, false),
+			GetField(FieldCallSite, FieldType.String,255, false, true),
 			GetField(FieldJobId, FieldType.Long, false),
-			GetField(FieldMethod, FieldType.String, 80, false),
-			GetField(FieldLineNumber, FieldType.Int, 80, false),
-			GetField(FieldMessage, FieldType.String, 255, false),
-			GetField(FieldDescription, FieldType.String, 0, false),
-		};
+			GetField(FieldMethod, FieldType.String, 80, false, true),
+            GetField(FieldLineNumber, FieldType.Int, 80, false, true),
+            GetField(FieldMessage, FieldType.String, 255, false, true),
+            GetField(FieldDescription, FieldType.String, 0, false, true)
+        };
 		var metaTable = GetTable((int)TableType.Log, TableType.Log.GetLogicalName(), TableType.Log);
 		metaList.Add(GetIndex(false, new[] { metaList[1] }));
 		return GetTable(schemaName, provider, metaList.ToArray(), metaTable);
@@ -85,25 +89,34 @@ internal sealed class TableBuilder
 #pragma warning disable CA1822, S2325 // Mark members as static
     internal Table GetTest(string schemaName, DatabaseProvider provider)
     {
+        // Code size: 272 (0x110)
 #pragma warning restore CA1822, S2325
-		var metaList = new List<Meta>();
+        var metaList = new List<Meta>();
         var values = Enum.GetValues<FieldType>();
 		var i = 0;
 		foreach (var fieldType in values)
 		{
 			if (fieldType == FieldType.Undefined) continue;
 			if (fieldType == FieldType.String)
-                metaList.Add(GetField(FieldTestPrefix + i++, fieldType,512,false));
-            else metaList.Add(GetField(FieldTestPrefix + i++, fieldType,false));
+			{
+                // add 1 non searchable field 
+                metaList.Add(GetField(FieldTestPrefix + i++, fieldType, 16, false, true));
+                // add 2 searchable field 
+                metaList.Add(GetField(FieldTestPrefix + i++, fieldType, 512, false, false));
+                metaList.Add(GetField(FieldTestPrefix + i++, fieldType, 64, false, false));
+            }
+			else metaList.Add(GetField(FieldTestPrefix + i++, fieldType, false));
 		}
 		var metaTest = GetTable((int)TableType.Test, TableType.Test.GetLogicalName(), TableType.Logical, false);
         return GetTable(schemaName, provider, metaList.ToArray(), metaTest);
     }
 
 #pragma warning disable CA1822, S2325 // Mark members as static
-    internal Table GetCatalog(EntityType entityType, DatabaseProvider provider) {
+    internal Table GetCatalog(EntityType entityType, DatabaseProvider provider) 
+	{
+        // Code size: 99 (0x63)
 #pragma warning restore CA1822, S2325
-		var tableType = entityType.ToTableType();
+        var tableType = entityType.ToTableType();
 		var metaList = new List<Meta>(){ GetField(provider.GetSchemaFieldName(entityType), FieldType.String) };
 		if (entityType != EntityType.Schema)
 			metaList.Add(GetField(provider.GetEntityFieldName(entityType), FieldType.String));
@@ -112,10 +125,12 @@ internal sealed class TableBuilder
 	}
 
 #pragma warning disable CA1822, S2325 // Mark members as static
-	internal Table GetMtm(Table partialTable, string physicalName, int objectIndex) {
+	internal Table GetMtm(Table partialTable, string physicalName, int objectIndex) 
+	{
+        // Code size: 194 (0xc2)
 #pragma warning restore CA1822, S2325
-		// add @ prefix to logical name
-		var metaTable = new Meta(0, (byte)EntityType.Table, 0, (int)TableType.Mtm, 0L, TableType.Mtm.GetLogicalName(partialTable.Name), 
+        // add @ prefix to logical name
+        var metaTable = new Meta(0, (byte)EntityType.Table, 0, (int)TableType.Mtm, 0L, TableType.Mtm.GetLogicalName(partialTable.Name), 
 				null,null,true);
 		var metaRelation = new Meta(0, (byte)EntityType.Relation, 0, 0, 0L, partialTable.Name, null, null, true);
 		// add index 
@@ -135,7 +150,8 @@ internal sealed class TableBuilder
 
 	private static Table GetTable(string schemaName, DatabaseProvider provider, Meta[] metaArray, Meta metaTable, PhysicalType? physicalType=null)
 	{
-		var ddlBuilder = provider.GetDdlBuilder();
+        // Code size: 127 (0x7f)
+        var ddlBuilder = provider.GetDdlBuilder();
 		var emptyTable = Meta.GetEmptyTable(metaTable);
 		var emptySchema = Meta.GetEmptySchema(GetSchema(0, schemaName), provider);
 		var spanMeta = metaArray.AsSpan();
@@ -151,16 +167,16 @@ internal sealed class TableBuilder
 	}
 	private static Meta GetSchema(int id, string name) => new(id, (byte)EntityType.Schema, 0, 0, 0L, name, null, null, true);
 	private static Meta GetField(string name, FieldType fieldType, bool notNull)
-		=> GetField(name, fieldType, 0, notNull);
+		=> GetField(name, fieldType, 0, notNull, true);
 	private static Meta GetField(string name, FieldType fieldType, int fieldSize)
-		=> GetField(name, fieldType, fieldSize, true);
+		=> GetField(name, fieldType, fieldSize, true, true);
 	private static Meta GetField(string name, FieldType fieldType)
-		=> GetField(name, fieldType, 0, true);
-	private static Meta GetField(string name, FieldType fieldType, int fieldSize, bool notNull)
+		=> GetField(name, fieldType, 0, true,true);
+	private static Meta GetField(string name, FieldType fieldType, int fieldSize, bool notNull, bool caseSensitive)
 	{
 		var flags = 0L;
 		var dataType = 0;
-		flags = Meta.SetFieldCaseSensitive(flags, true);
+		flags = Meta.SetFieldCaseSensitive(flags, caseSensitive);
 		flags = Meta.SetFieldNotNull(flags, notNull);
 		flags = Meta.SetFieldSize(flags, fieldSize);
 		flags = Meta.SetEntityBaseline(flags, true);

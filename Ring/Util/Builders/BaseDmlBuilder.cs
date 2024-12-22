@@ -2,6 +2,7 @@
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
+using System.Data.Common;
 using System.Globalization;
 using System.Text;
 using DbSchema = Ring.Schema.Models.Schema;
@@ -85,35 +86,59 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 
     private string BuildInsert(Table table)
     {
-        // Code size: 333 (0x14d)
+        // Code size: 449 (0x1c1)
         var result = new StringBuilder();
+        var resultValues = new StringBuilder();
         var spanColumns = new ReadOnlySpan<IColumn>(table.Columns);
         var columnCount = table.Columns.Length;
+        var variableId = 1;
 
         result.Append(DmlInsert);
         result.Append(table.PhysicalName);
         result.Append(SqlSpace);
         result.Append(StartParenthesis);
-        // === fields 
-        for (var i = 0; i<columnCount; ++i)
+        
+        for (var i = 0; i<columnCount; ++i, ++variableId)
         {
             var column = table.Columns[i];
             if (column.Type == EntityType.Relation) result.Append(_ddlBuilder.GetPhysicalName((Relation)column));
-            else result.Append(_ddlBuilder.GetPhysicalName((Field)column));
+            else
+            {
+                var field = (Field)column;
+                result.Append(_ddlBuilder.GetPhysicalName(field));
+                #region  add searchable field 
+                if (field.Type == FieldType.String && !field.CaseSensitive)
+                {
+                    result.Append(ColumnDelimiter);
+                    result.Append(_ddlBuilder.GetPhysicalName(field,false));
+                    AppendVariable(resultValues, VariableNameTemplate, variableId++, false, column.FieldType);
+                }
+                #endregion
+                #region time zone extra field?
+                if (field.Type == FieldType.LongDateTime) 
+                {
+                    var timeZoneField = _ddlBuilder.GetPhysicalName(field, false);
+                    if (!string.IsNullOrEmpty(timeZoneField))
+                    {
+                        result.Append(ColumnDelimiter);
+                        result.Append(timeZoneField); 
+                        resultValues.Append(string.Format(CultureInfo.InvariantCulture, VariableNameTemplate,
+                        (variableId).ToString(CultureInfo.InvariantCulture)));
+                        ++variableId;
+                    }
+                }
+                #endregion 
+            }
+            AppendVariable(resultValues, VariableNameTemplate, variableId, true, column.FieldType);
             result.Append(ColumnDelimiter);
         }
-        if (columnCount>0) --result.Length;
-        // === values
-        result.Append(DmlValues);
-        for (var i=0; i<columnCount; ++i)
+        if (columnCount>0)
         {
-            var column = spanColumns[i];
-            var variable = string.Format(CultureInfo.InvariantCulture, VariableNameTemplate, 
-                (i + 1).ToString(CultureInfo.InvariantCulture));
-            result.Append(WrapVariable(variable, column.FieldType));
-            result.Append(ColumnDelimiter);
-        }
-        if (columnCount > 0) --result.Length;
+            --result.Length;
+            --resultValues.Length;
+        } 
+        result.Append(DmlValues);
+        result.Append(resultValues);
         result.Append(EndParenthesis);
         return result.ToString();
     }
@@ -183,6 +208,15 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
         return result.ToString();
     }
 
+    private void AppendVariable(StringBuilder subResult, string variableNameTemplate, int id, bool callWrap, FieldType fieldType)
+    {
+        // Code size: 65 (0x41)
+        var variable = string.Format(CultureInfo.InvariantCulture, variableNameTemplate, (id).ToString(CultureInfo.InvariantCulture));
+        if (callWrap) subResult.Append(WrapVariable(variable, fieldType));
+        else subResult.Append(variable);
+        subResult.Append(ColumnDelimiter);
+    }
+    
     #endregion 
 
 }
