@@ -320,24 +320,25 @@ internal readonly struct Meta : IEquatable<Meta>
 	}
 	internal readonly string GetStringCode()
 	{
-		var result = new StringBuilder();
-		result.Append(Id);
-		result.Append(HashCodeSeparator);
-		result.Append(ObjectType);
-		result.Append(HashCodeSeparator);
-		result.Append(ReferenceId);
-		result.Append(HashCodeSeparator);
-		result.Append(DataType);
-		result.Append(HashCodeSeparator);
-		result.Append(Flags);
-		result.Append(HashCodeSeparator);
-		result.Append(Name);
-		result.Append(HashCodeSeparator);
-		result.Append(Description);
-		result.Append(HashCodeSeparator);
-		result.Append(Value);
-		result.Append(HashCodeSeparator);
-		result.Append(Active);
+        // Code size: 192 (0xc0)
+        var result = new StringBuilder();
+		result.Append(Id)
+			.Append(HashCodeSeparator)
+			.Append(ObjectType)
+			.Append(HashCodeSeparator)
+			.Append(ReferenceId)
+			.Append(HashCodeSeparator)
+			.Append(DataType)
+			.Append(HashCodeSeparator)
+			.Append(Flags)
+			.Append(HashCodeSeparator)
+			.Append(Name)
+			.Append(HashCodeSeparator)
+			.Append(Description)
+			.Append(HashCodeSeparator)
+			.Append(Value)
+			.Append(HashCodeSeparator)
+			.Append(Active);
 		return result.ToString();
 	}
 

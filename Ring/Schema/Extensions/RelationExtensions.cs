@@ -77,7 +77,7 @@ internal static class RelationExtensions
 
 	internal static string GetStringCode(this Relation relation)
 	{
-		// Code size: 280 (0x118)
+		// Code size: 250 (0xfa)
 		/*
 		 * Relation InverseRelation
 		 * readonly bool HasConstraint
@@ -87,23 +87,23 @@ internal static class RelationExtensions
 		 * readonly FieldType FieldType
 		 */
 		var result = new StringBuilder();
-		result.Append(relation.InverseRelation.Name);
-		result.Append(relation.InverseRelation.Id);
-		result.Append(HashCodeSeparator);
-		result.Append(relation.InverseRelation.Type.ToString());
-		result.Append(HashCodeSeparator);
-		result.Append(relation.HasConstraint);
-		result.Append(HashCodeSeparator);
-		result.Append(relation.NotNull);
-		result.Append(HashCodeSeparator);
-		result.Append(relation.ToTable.Id);
-		result.Append(relation.ToTable.Name);
-		result.Append(HashCodeSeparator);
-		result.Append(relation.Type.ToString());
-		result.Append(HashCodeSeparator);
-		result.Append(relation.FieldType.ToString());
-		// BaseEntity
-		result.Append(BaseEntityExtensions.GetStringCode(relation));
+		result.Append(relation.InverseRelation.Name)
+			.Append(relation.InverseRelation.Id)
+			.Append(HashCodeSeparator)
+			.Append(relation.InverseRelation.Type.ToString())
+			.Append(HashCodeSeparator)
+			.Append(relation.HasConstraint)
+			.Append(HashCodeSeparator)
+			.Append(relation.NotNull)
+			.Append(HashCodeSeparator)
+			.Append(relation.ToTable.Id)
+			.Append(relation.ToTable.Name)
+			.Append(HashCodeSeparator)
+			.Append(relation.Type.ToString())
+			.Append(HashCodeSeparator)
+			.Append(relation.FieldType.ToString())
+			// BaseEntity
+			.Append(BaseEntityExtensions.GetStringCode(relation));
 		return result.ToString();
 	}
 

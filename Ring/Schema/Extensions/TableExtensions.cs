@@ -289,6 +289,7 @@ internal static class TableExtensions
 
 	internal static string GetStringCode(this Table table)
 	{
+		// Code size: 305 (0x131)
 		/*
 		* readonly bool Cached
 		* readonly Field[] Fields
@@ -306,32 +307,32 @@ internal static class TableExtensions
 		* readonly bool Readonly
 		*/
 		var result = new StringBuilder();
-		result.Append(table.Cached);
-		result.Append(HashCodeSeparator);
-		result.Append(GetStringCode(table.Fields));
-		result.Append(HashCodeSeparator);
-		result.Append(GetStringCode(table.Relations));
-		result.Append(HashCodeSeparator);
-		result.Append(GetStringCode(table.Indexes));
-		result.Append(HashCodeSeparator);
-		result.AppendJoin(HashCodeSeparator, table.RecordIndexes);		 // int[] RecordIndexes
-		result.Append(HashCodeSeparator);
-		result.Append(table.RecordSize);
-		result.Append(HashCodeSeparator);
+		result.Append(table.Cached)
+			.Append(HashCodeSeparator)
+			.Append(GetStringCode(table.Fields))
+			.Append(HashCodeSeparator)
+			.Append(GetStringCode(table.Relations))
+			.Append(HashCodeSeparator)
+			.Append(GetStringCode(table.Indexes))
+			.Append(HashCodeSeparator)
+			.AppendJoin(HashCodeSeparator, table.RecordIndexes)		 // int[] RecordIndexes
+			.Append(HashCodeSeparator)
+			.Append(table.RecordSize)
+			.Append(HashCodeSeparator)
 		// IColumn[] Columns - removed from computing !!
-		result.Append(table.PhysicalName);
-		result.Append(HashCodeSeparator);
-		result.Append(table.Type.ToString());
-		result.Append(HashCodeSeparator);
-		result.Append(table.SchemaId);
-		result.Append(HashCodeSeparator);
-		result.Append(table.PhysicalType);
-		result.Append(HashCodeSeparator);
-		result.Append(table.Subject);
-		result.Append(HashCodeSeparator);
-		result.Append(table.Readonly);
+			.Append(table.PhysicalName)
+			.Append(HashCodeSeparator)
+			.Append(table.Type.ToString())
+			.Append(HashCodeSeparator)
+			.Append(table.SchemaId)
+			.Append(HashCodeSeparator)
+			.Append(table.PhysicalType)
+			.Append(HashCodeSeparator)
+			.Append(table.Subject)
+			.Append(HashCodeSeparator)
+			.Append(table.Readonly)
 		// BaseEntity
-		result.Append(BaseEntityExtensions.GetStringCode(table));
+			.Append(BaseEntityExtensions.GetStringCode(table));
 		return result.ToString();
 	}
 

@@ -53,20 +53,21 @@ internal static class IndexExtensions
 
 	internal static string GetStringCode(this Index index)
 	{
+		// Code size: 97 (0x61)
 		/*
 		* readonly bool Bitmap
 		* readonly string[] Columns
 		* readonly bool Unique
 		*/
 		var result = new StringBuilder();
-		result.Append(index.Bitmap);
-		result.Append(HashCodeSeparator);
-		result.Append(string.Join(HashCodeSeparator, index.Columns));
-		result.Append(HashCodeSeparator);
-		result.Append(index.Unique);
-		result.Append(HashCodeSeparator);
+		result.Append(index.Bitmap)
+			.Append(HashCodeSeparator)
+			.Append(string.Join(HashCodeSeparator, index.Columns))
+			.Append(HashCodeSeparator)
+			.Append(index.Unique)
+			.Append(HashCodeSeparator)
 		// BaseEntity
-		result.Append(BaseEntityExtensions.GetStringCode(index));
+			.Append(BaseEntityExtensions.GetStringCode(index));
 		return result.ToString();
 	}
 
