@@ -9,8 +9,8 @@ internal static class BaseEntityExtensions
 
 	internal static string GetStringCode(this BaseEntity baseEntity)
 	{
-        // Code size: 108 (0x6c)
-        var result = new StringBuilder();
+		// Code size: 108 (0x6c)
+		var result = new StringBuilder();
 		result.Append(baseEntity.Active)
 			.Append(HashCodeSeparator)
 			.Append(baseEntity.Baseline)
