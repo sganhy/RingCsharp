@@ -169,18 +169,22 @@ public class DdlBuilderTest : BaseBuilderTest
         var builder = new SchemaBuilder();
         var config = new Configuration() { DefaultSchema = "test", MaxConnectionPoolSize = 1 };
         var schema = builder.GetMeta(DatabaseProvider.PostgreSql, config);
-        var metaTable = schema.GetTable("@test");
+        var testTable = schema.GetTable("@test");
+        // change test_11 field to not null!
+        Assert.NotNull(testTable);
+        var field11 = testTable.GetField("test_11");
+        Assert.NotNull(field11);
+        testTable.Columns[11] = new Field(field11.Id, field11.Name, null, field11.Type, 0, null, true, true, true, true, true); // replace field
         var expectedSql = $"CREATE TABLE test.\"@test\" (\n" + "\ttest_0 int8,\n" +
                 "\ttest_1 int4,\n" + "\ttest_2 int2,\n" + "\ttest_3 int2,\n" +
                 "\ttest_4 float4,\n" + "\ttest_5 float8,\n" + "\ttest_6 varchar(16) COLLATE \"C\",\n" + "\ttest_7 varchar(512) COLLATE \"C\",\n" +
                 "\ts_test_7 varchar(512) COLLATE \"C\",\n" + "\ttest_8 varchar(64) COLLATE \"C\",\n" + "\ts_test_8 varchar(64) COLLATE \"C\",\n" +
-                "\ttest_9 date,\n" + "\ttest_10 timestamp without time zone,\n\ttest_11 timestamp with time zone,\n" +
-                "\ttest_12 bytea,\n" + "\ttest_13 bool,\n\ttest_14 text COLLATE \"C\")" +
+                "\ttest_9 date,\n" + "\ttest_10 timestamp without time zone,\n\ttest_11 timestamp without time zone NOT NULL,\n" +
+                "\t\"@tz_offset_11\" int2 NOT NULL,\n" + "\ttest_12 bytea,\n" + "\ttest_13 bool,\n\ttest_14 text COLLATE \"C\")" +
                 $" TABLESPACE {tablespaceName}";
-        Assert.NotNull(metaTable);
 
         // act 
-        var ddl = _sut.Create(metaTable, tablespace);
+        var ddl = _sut.Create(testTable, tablespace);
 
         // assert
         Assert.Equal(expectedSql, ddl);

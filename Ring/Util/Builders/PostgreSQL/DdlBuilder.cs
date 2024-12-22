@@ -20,7 +20,7 @@ internal sealed class DdlBuilder : BaseDdlBuilder
         { FieldType.ShortDateTime, "date"    },
         { FieldType.ByteArray,     "bytea"   },
         { FieldType.DateTime,      "timestamp without time zone" },
-        { FieldType.LongDateTime,  "timestamp with time zone" }
+        { FieldType.LongDateTime,  "timestamp without time zone" }
     };
 
     public DdlBuilder() : base() { }

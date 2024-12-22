@@ -67,7 +67,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 			.Append(DdlAdd)
 			.Append(GetPhysicalName(field))
 			.Append(SqlSpace)
-			.Append(GetDataType(field));
+			.Append(GetDataType(field, true));
 		return result.ToString();
 	}
 
@@ -248,10 +248,14 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	}
 
 	protected abstract string MtmPrefix { get; }
-	protected string GetDataType(Field field) =>
-			GetDataType(DataType[field.Type], field.Type, field.Size, VarcharMaxSize,
-				field.Type == FieldType.String || field.Type == FieldType.LongString ?
-				StringCollateInformation : null);
+	protected string GetDataType(Field field, bool firstColumn)
+	{
+        // Code size: 96 (0x60)
+        if (!firstColumn && field.Type == FieldType.LongDateTime) return DataType[FieldType.Short];
+        return GetDataType(DataType[field.Type], field.Type, field.Size, VarcharMaxSize,
+			field.Type == FieldType.String || field.Type == FieldType.LongString ?
+			StringCollateInformation : null);
+	}
 	protected string GetDataType(Relation relation)
 	{
 		// Code size: 43 (0x2b)
@@ -375,23 +379,25 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	#region private methods 
 	private static string GetSizeInfo(int size) => $"({size})";
 
-	private void Create(StringBuilder subResult, Table table, Field field, bool firstColumn=true)
+	private void Create(StringBuilder subResult, Table table, Field field, bool firstColumn = true)
 	{
-		// Code size: 140 (0x8c)
-		subResult.Append(Indent)
+        // Code size: 160 (0xa0)
+        subResult.Append(Indent)
 			.Append(GetPhysicalName(field, firstColumn))
 			.Append(SqlSpace)
-			.Append(GetDataType(field));
-		if ((field.IsPrimaryKey() || table.Type != TableType.Business) && field.NotNull)
+			.Append(GetDataType(field, firstColumn));
+        if ((field.IsPrimaryKey() || table.Type != TableType.Business) && field.NotNull)
 		{
 			subResult.Append(SqlSpace).Append(DdlNotNull);
 		}
-		subResult.Append(',').Append(SqlLineFeed);
-		if (field.Type == FieldType.String && !field.CaseSensitive && firstColumn)
-		{
-			// recursive call !!
-			Create(subResult, table, field, false);
-		}
+        subResult.Append(',').Append(SqlLineFeed);
+        if (firstColumn)
+			if ((field.Type == FieldType.String && !field.CaseSensitive) ||
+				(field.Type == FieldType.LongDateTime && !string.IsNullOrEmpty(TimeZoneOffsetPrefix)))
+			{
+				// recursive call !!
+				Create(subResult, table, field, false);
+			}
 	}
 	private void Create(StringBuilder stringBuilder, Table table, Relation relation)
 	{
