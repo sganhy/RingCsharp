@@ -90,11 +90,12 @@ public class DmlBuilderTest : BaseBuilderTest
     {
         var sut = new DmlBuilder();
         var schBuilder = new SchemaBuilder();
-        var schemaName = "@Test";
+        const string schemaName = "@Test";
         var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
         var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
         var table = schema.GetTable("@test");
-        var expectedResult = "INSERT INTO \"@test\".\"@meta\" (id,schema_id,object_type,reference_id,data_type,flags,name,description,value,active) VALUES (:p1,:p2,:p3,:p4,:p5,:p6,:p7,:p8,:p9,:p10)";
+        const string expectedResult = "INSERT INTO \"@test\".\"@test\" (test_0,test_1,test_2,test_3,test_4,test_5,test_6,test_7,s_test_7,test_8,s_test_8,test_9,test_10,test_11,\"@tz_offset_11\",test_12,test_13,test_14) " +
+            "VALUES (:p1,:p2,:p3,:p4,:p5,:p6,:p7,:p8,:p9,:p10,:p11,to_date(:p12,'YYYY-MM-DD'),to_timestamp(:p13,'YYYY-MM-DD HH24:MI:SS.US'),:p14:p15,:p16,:p17,:p18)";
 
         // act 
         Assert.NotNull(schema);
