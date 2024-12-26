@@ -88,11 +88,10 @@ internal static class FieldExtensions
 		return hash;
 	}
 
+	// Code size: 162 (0xa2)
 	internal static string GetStringCode(this Field field)
-	{
-		// Code size: 164 (0xa4)
-		var result = new StringBuilder();
-		result.Append(field.CaseSensitive)
+		=> new StringBuilder()
+			.Append(field.CaseSensitive)
 			.Append(HashCodeSeparator)
 			.Append(field.DefaultValue)
 			.Append(HashCodeSeparator)
@@ -104,8 +103,7 @@ internal static class FieldExtensions
 			.Append(HashCodeSeparator)
 			.Append(field.Type.ToString())
 			.Append(HashCodeSeparator)
-			// BaseEntity
-			.Append(BaseEntityExtensions.GetStringCode(field));
-		return result.ToString();
-	}
+			.Append(BaseEntityExtensions.GetStringCode(field)) // + BaseEntity string code
+			.ToString();
+
 }

@@ -20,6 +20,7 @@ internal static class TableExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static Field? GetField(this Table table, string name)
 	{
+		// Code size: 92 (0x5c) - no callvirt
 		var span = new ReadOnlySpan<Field>(table.Fields);
 		int indexerLeft = 0, indexerRight = span.Length - 1, indexerMiddle, indexerCompare;
 		while (indexerLeft <= indexerRight)
@@ -73,6 +74,7 @@ internal static class TableExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static int GetFieldIndex(this Table table, string name)
 	{
+		// Code size: 84 (0x54) - no callvirt
 		var span = new ReadOnlySpan<Field>(table.Fields);
 		int indexerLeft = 0, indexerRight = span.Length - 1, indexerMiddle, indexerCompare;
 		while (indexerLeft <= indexerRight)
@@ -146,6 +148,7 @@ internal static class TableExtensions
 	/// <returns>Field index or -1 if not found</returns>
 	internal static int GetRelationIndex(this Table table, string name)
 	{
+		// Code size: 84 (0x54)
 		var span = new ReadOnlySpan<Relation>(table.Relations);
 		int indexerLeft = 0, indexerRight = span.Length - 1, indexerMiddle, indexerCompare;
 		while (indexerLeft <= indexerRight)
@@ -166,6 +169,7 @@ internal static class TableExtensions
 	/// <returns>Index object</returns>
 	internal static Index? GetIndex(this Table table, string name)
 	{
+		// Code size: 92 (0x5c)
 		var span = new ReadOnlySpan<Index>(table.Indexes);
 		int indexerLeft = 0, indexerRight = span.Length - 1, indexerMiddle, indexerCompare;
 		while (indexerLeft <= indexerRight)
@@ -289,7 +293,7 @@ internal static class TableExtensions
 
 	internal static string GetStringCode(this Table table)
 	{
-		// Code size: 305 (0x131)
+		// Code size: 303 (0x12f)
 		/*
 		* readonly bool Cached
 		* readonly Field[] Fields
@@ -306,8 +310,8 @@ internal static class TableExtensions
 		* readonly CacheId CacheId
 		* readonly bool Readonly
 		*/
-		var result = new StringBuilder();
-		result.Append(table.Cached)
+		return new StringBuilder()
+			.Append(table.Cached)
 			.Append(HashCodeSeparator)
 			.Append(GetStringCode(table.Fields))
 			.Append(HashCodeSeparator)
@@ -319,7 +323,7 @@ internal static class TableExtensions
 			.Append(HashCodeSeparator)
 			.Append(table.RecordSize)
 			.Append(HashCodeSeparator)
-		// IColumn[] Columns - removed from computing !!
+		/* IColumn[] Columns - removed from computing !! */
 			.Append(table.PhysicalName)
 			.Append(HashCodeSeparator)
 			.Append(table.Type.ToString())
@@ -331,9 +335,9 @@ internal static class TableExtensions
 			.Append(table.Subject)
 			.Append(HashCodeSeparator)
 			.Append(table.Readonly)
-		// BaseEntity
-			.Append(BaseEntityExtensions.GetStringCode(table));
-		return result.ToString();
+		/* + BaseEntity string code */
+			.Append(BaseEntityExtensions.GetStringCode(table))
+			.ToString();
 	}
 
 

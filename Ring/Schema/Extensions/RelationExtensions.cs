@@ -77,7 +77,7 @@ internal static class RelationExtensions
 
 	internal static string GetStringCode(this Relation relation)
 	{
-		// Code size: 250 (0xfa)
+		// Code size: 248 (0xf8)
 		/*
 		 * Relation InverseRelation
 		 * readonly bool HasConstraint
@@ -86,8 +86,8 @@ internal static class RelationExtensions
 		 * readonly RelationType Type
 		 * readonly FieldType FieldType
 		 */
-		var result = new StringBuilder();
-		result.Append(relation.InverseRelation.Name)
+		return new StringBuilder() 
+			.Append(relation.InverseRelation.Name)
 			.Append(relation.InverseRelation.Id)
 			.Append(HashCodeSeparator)
 			.Append(relation.InverseRelation.Type.ToString())
@@ -102,9 +102,9 @@ internal static class RelationExtensions
 			.Append(relation.Type.ToString())
 			.Append(HashCodeSeparator)
 			.Append(relation.FieldType.ToString())
-			// BaseEntity
-			.Append(BaseEntityExtensions.GetStringCode(relation));
-		return result.ToString();
+		/* + BaseEntity string code */
+			.Append(BaseEntityExtensions.GetStringCode(relation))
+			.ToString();
 	}
 
 	internal static Relation SetRecordIndex(this Relation relation, int recordIndex)

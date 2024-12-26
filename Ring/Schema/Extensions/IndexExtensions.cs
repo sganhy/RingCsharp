@@ -28,6 +28,7 @@ internal static class IndexExtensions
 
 	internal static bool IsPrimaryKey(this Index index, Table table)
 	{
+		// Code size: 130 (0x82)
 		var result = false;
 		if (index.Unique)
 		{
@@ -53,22 +54,22 @@ internal static class IndexExtensions
 
 	internal static string GetStringCode(this Index index)
 	{
-		// Code size: 97 (0x61)
+		// Code size: 95 (0x5f)
 		/*
 		* readonly bool Bitmap
 		* readonly string[] Columns
 		* readonly bool Unique
 		*/
-		var result = new StringBuilder();
-		result.Append(index.Bitmap)
+		return new StringBuilder()
+			.Append(index.Bitmap)
 			.Append(HashCodeSeparator)
 			.Append(string.Join(HashCodeSeparator, index.Columns))
 			.Append(HashCodeSeparator)
 			.Append(index.Unique)
 			.Append(HashCodeSeparator)
-		// BaseEntity
-			.Append(BaseEntityExtensions.GetStringCode(index));
-		return result.ToString();
+		/* + BaseEntity string code */
+			.Append(BaseEntityExtensions.GetStringCode(index))
+			.ToString();
 	}
 
 }
