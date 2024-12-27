@@ -16,13 +16,13 @@ internal static class FieldExtensions
 	private static readonly string PrimaryKeyDescription = "Internal record number";
 	private static readonly string NumberDefaultValue = "0";
 	private static readonly Field _defaultPrimaryKeyInt64 =
-		new(0, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Long, 0, NumberDefaultValue, false, true, true, true, false);
+		new(0, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Long, 0, NumberDefaultValue, SearchableType.None, true, true, false, true);
 	private static readonly Field _defaultPrimaryKeyInt32 =
-		new(0, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Int, 0, NumberDefaultValue, false, true, true, true, false);
+		new(0, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Int, 0, NumberDefaultValue, SearchableType.None, true, true, false, true);
 	private static readonly Field _defaultPrimaryKeyInt16 =
-		new(0, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Short, 0, NumberDefaultValue, false, true, true, true, false);
+		new(0, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Short, 0, NumberDefaultValue, SearchableType.None, true, true, false, true);
 	private static readonly Field _defaultPrimaryKeyInt08 =
-		new(0, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Byte, 0, NumberDefaultValue, false, true, true, true, false);
+		new(0, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Byte, 0, NumberDefaultValue, SearchableType.None, true, true, false, true);
 #pragma warning restore RCS1187
 
 	internal static bool IsValid(this Field field) => IsPrimaryKey(field) || field.Id > 0; 
@@ -63,7 +63,7 @@ internal static class FieldExtensions
 		flags = Meta.SetEntityBaseline(flags,field.Baseline);
 		flags = Meta.SetFieldNotNull(flags, field.NotNull);
 		flags = Meta.SetFieldMultilingual(flags, field.Multilingual);
-		flags = Meta.SetFieldCaseSensitive(flags, field.CaseSensitive);
+		flags = Meta.SetSearchableType(flags, field.SearchableType);
 		flags = Meta.SetFieldSize(flags, field.Size);
 		var dataType = 0 ;
 		dataType = Meta.SetFieldType(dataType, newFieldType ?? field.Type);
@@ -88,10 +88,10 @@ internal static class FieldExtensions
 		return hash;
 	}
 
-	// Code size: 162 (0xa2)
-	internal static string GetStringCode(this Field field)
+    // Code size: 148 (0x94)
+    internal static string GetStringCode(this Field field)
 		=> new StringBuilder()
-			.Append(field.CaseSensitive)
+			.Append((int)field.SearchableType)
 			.Append(HashCodeSeparator)
 			.Append(field.DefaultValue)
 			.Append(HashCodeSeparator)
@@ -101,7 +101,7 @@ internal static class FieldExtensions
 			.Append(HashCodeSeparator)
 			.Append(field.Size)
 			.Append(HashCodeSeparator)
-			.Append(field.Type.ToString())
+			.Append((int)field.Type)
 			.Append(HashCodeSeparator)
 			.Append(BaseEntityExtensions.GetStringCode(field)) // + BaseEntity string code
 			.ToString();

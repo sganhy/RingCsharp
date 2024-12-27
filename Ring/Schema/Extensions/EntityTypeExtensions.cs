@@ -6,6 +6,7 @@ internal static class EntityTypeExtensions
 {
 	internal static TableType ToTableType(this EntityType entityType)
 	{
+		// Code size: 34 (0x22)
 		TableType result;
 		switch (entityType)
 		{

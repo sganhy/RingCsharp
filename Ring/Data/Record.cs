@@ -90,7 +90,8 @@ public struct Record : IEquatable<Record>
 
 	internal void ClearData()
 	{
-		var span = _data.AsSpan();
+        // Code size: 59 (0x3b)
+        var span = _data.AsSpan();
 		var lastIndex = _type.RecordSize + _offset;
 		for (var i=_offset;i<lastIndex;++i) span[i] = null;
 	}

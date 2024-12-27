@@ -57,7 +57,7 @@ Console.WriteLine("proc.PrivateMemorySize64=" + ((double)proc.PrivateMemorySize6
 
 BulkAlter ba = new(schema);
 ba.CreateTable("@test");
-ba.Apply(conn);
+//ba.Apply(conn);
 
 BulkSave bs = new(schema);
 
@@ -75,28 +75,12 @@ rcd.SetField("test_6", "test_6");
     test_10 bytea,
 */
 rcd.SetField("test_7", "2022-12-12");
-rcd.SetField("test_8", DateTime.Now);
-rcd.SetField("test_9", null);
-rcd.SetField("test_10", new byte[] { 1, 2, 3 });
-rcd.SetField("test_11", true);
-rcd.SetField("test_12", "test_12");
+rcd.SetField("test_8", null);
+rcd.SetField("test_9", DateTime.Now);
+rcd.SetField("test_12", new byte[] { 1, 2, 3 });
+rcd.SetField("test_13", true);
+rcd.SetField("test_14", "test_14");
 bs.InsertRecord(rcd);
-
-var rcd2 = new Record(metaTest);
-rcd2.SetField("test_0", long.MinValue.ToString());
-rcd2.SetField("test_1", 1);
-rcd2.SetField("test_2", 2);
-rcd2.SetField("test_3", 3);
-rcd2.SetField("test_4", 4.4);
-rcd2.SetField("test_5", "1E+2");
-rcd2.SetField("test_6", "test_6");
-rcd2.SetField("test_7", "2022-12-12");
-rcd2.SetField("test_8", DateTime.Now);
-rcd2.SetField("test_9", null);
-rcd2.SetField("test_10", new byte[] { 1, 2, 3 });
-rcd2.SetField("test_11", true);
-rcd2.SetField("test_12", "test_12");
-bs.InsertRecord(rcd2);
 
 bs.Save(conn, false);
 

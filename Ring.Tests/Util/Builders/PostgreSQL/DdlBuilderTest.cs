@@ -174,7 +174,7 @@ public class DdlBuilderTest : BaseBuilderTest
         Assert.NotNull(testTable);
         var field11 = testTable.GetField("test_11");
         Assert.NotNull(field11);
-        testTable.Columns[11] = new Field(field11.Id, field11.Name, null, field11.Type, 0, null, true, true, true, true, true); // replace field
+        testTable.Columns[11] = new Field(field11.Id, field11.Name, null, field11.Type, 0, null, SearchableType.None, true, true, true, true); // replace field
         var expectedSql = $"CREATE TABLE test.\"@test\" (\n" + "\ttest_0 int8,\n" +
                 "\ttest_1 int4,\n" + "\ttest_2 int2,\n" + "\ttest_3 int2,\n" +
                 "\ttest_4 float4,\n" + "\ttest_5 float8,\n" + "\ttest_6 varchar(16) COLLATE \"C\",\n" + "\ttest_7 varchar(512) COLLATE \"C\",\n" +

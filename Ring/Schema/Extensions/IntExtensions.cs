@@ -20,8 +20,12 @@ internal static class IntExtensions
 	private const int AliasId = (int)EntityType.Alias;
 	private const int ConstraintId = (int)EntityType.Constraint;
 
-	// field types constants
-	private const int FieldTypeLongId = (int)FieldType.Long;
+    // field searchable constants
+    private const int FieldStIgnoreCaseId = (int)SearchableType.IngoreCase;
+    private const int FieldStIngoreCaseAndDiacriticsId = (int)SearchableType.IngoreCaseAndDiacritics;
+
+    // field types constants
+    private const int FieldTypeLongId = (int)FieldType.Long;
 	private const int FieldTypeIntId = (int)FieldType.Int;
 	private const int FieldTypeShortId = (int)FieldType.Short;
 	private const int FieldTypeByteId = (int)FieldType.Byte;
@@ -43,8 +47,8 @@ internal static class IntExtensions
 	private const int TableTypeFakeId = (int)TableType.Fake;
 	private const int TableTypeMtmId = (int)TableType.Mtm;
 	private const int TableTypeLogId = (int)TableType.Log;
-    private const int TableTypeTestId = (int)TableType.Test;
-    private const int TableTypeLexiconId = (int)TableType.Lexicon;
+	private const int TableTypeTestId = (int)TableType.Test;
+	private const int TableTypeLexiconId = (int)TableType.Lexicon;
 	private const int TableTypeLexiconItemId = (int)TableType.LexiconItem;
 	private const int TableTypeSchemaCatalogId = (int)TableType.SchemaCatalog;
 	private const int TableTypeTableCatalogId = (int)TableType.TableCatalog;
@@ -74,7 +78,7 @@ internal static class IntExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static TableType ToTableType(this int dataType)
 	{
-        switch (dataType)
+		switch (dataType)
 		{
 			case TableTypeBusinessId: return TableType.Business;
 			case TableTypeBusinessLogId: return TableType.BusinessLog;
@@ -83,15 +87,15 @@ internal static class IntExtensions
 			case TableTypeFakeId: return TableType.Fake;
 			case TableTypeMtmId: return TableType.Mtm;
 			case TableTypeLogId: return TableType.Log;
-            case TableTypeTestId: return TableType.Test;
-            case TableTypeLexiconId: return TableType.Lexicon;
+			case TableTypeTestId: return TableType.Test;
+			case TableTypeLexiconId: return TableType.Lexicon;
 			case TableTypeLexiconItemId: return TableType.LexiconItem;
 			case TableTypeSchemaCatalogId: return TableType.SchemaCatalog;
 			case TableTypeTableCatalogId: return TableType.TableCatalog;
 			case TableTypeTableSpaceCatalogId: return TableType.TableSpaceCatalog;
 			case TableTypeLogicalId: return TableType.Logical;
 		}
-        return TableType.Undefined;
+		return TableType.Undefined;
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -119,7 +123,19 @@ internal static class IntExtensions
 		return FieldType.Undefined;
 	}
 
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static SearchableType ToSearchableType(this int value)
+    {
+		switch (value)
+        {
+            case FieldStIgnoreCaseId: return SearchableType.IngoreCase;
+            case FieldStIngoreCaseAndDiacriticsId: return SearchableType.IngoreCaseAndDiacritics;
+        }
+        return SearchableType.None;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static RelationType ToRelationType(this int flags)
 	{
 		// avoid boxing operation

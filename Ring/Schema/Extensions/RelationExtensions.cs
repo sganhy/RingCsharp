@@ -77,8 +77,8 @@ internal static class RelationExtensions
 
 	internal static string GetStringCode(this Relation relation)
 	{
-		// Code size: 248 (0xf8)
-		/*
+        // Code size: 206 (0xce)
+        /*
 		 * Relation InverseRelation
 		 * readonly bool HasConstraint
 		 * readonly bool NotNull
@@ -86,11 +86,11 @@ internal static class RelationExtensions
 		 * readonly RelationType Type
 		 * readonly FieldType FieldType
 		 */
-		return new StringBuilder() 
+        return new StringBuilder() 
 			.Append(relation.InverseRelation.Name)
 			.Append(relation.InverseRelation.Id)
 			.Append(HashCodeSeparator)
-			.Append(relation.InverseRelation.Type.ToString())
+			.Append((int)relation.InverseRelation.Type)
 			.Append(HashCodeSeparator)
 			.Append(relation.HasConstraint)
 			.Append(HashCodeSeparator)
@@ -99,9 +99,9 @@ internal static class RelationExtensions
 			.Append(relation.ToTable.Id)
 			.Append(relation.ToTable.Name)
 			.Append(HashCodeSeparator)
-			.Append(relation.Type.ToString())
+			.Append((int)relation.Type)
 			.Append(HashCodeSeparator)
-			.Append(relation.FieldType.ToString())
+			.Append((int)relation.FieldType)
 		/* + BaseEntity string code */
 			.Append(BaseEntityExtensions.GetStringCode(relation))
 			.ToString();

@@ -7,7 +7,7 @@ namespace Ring.Schema.Models;
 /// </summary>
 internal sealed class Field : BaseEntity, IColumn
 {
-	internal readonly bool CaseSensitive;
+	internal readonly SearchableType SearchableType;
 	internal readonly string? DefaultValue;
 	internal readonly bool Multilingual;
 	internal readonly bool NotNull;
@@ -17,15 +17,15 @@ internal sealed class Field : BaseEntity, IColumn
 	/// <summary>
 	/// 	Ctor
 	/// </summary>
-	internal Field(int id, string name, string? description, FieldType type, int size, string? defaultValue,
-		bool baseline, bool notNull, bool caseSensitif, bool multilingual, bool active)
+	internal Field(int id, string name, string? description, FieldType type, int size, string? defaultValue, SearchableType searchableType,
+		bool baseline, bool notNull, bool multilingual, bool active)
 		: base(id, name, description, active, baseline)
 	{
 		Type = type;
 		Size = size;
 		DefaultValue = defaultValue;
 		NotNull = notNull;
-		CaseSensitive = caseSensitif;
+		SearchableType = searchableType;
 		Multilingual = multilingual;
 	}
 

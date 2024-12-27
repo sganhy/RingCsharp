@@ -15,7 +15,8 @@ internal enum EntityType : byte
 	Tablespace = 18,
 	Parameter = 23,
 	Alias = 25,
-	Constraint = 101, // not stored in @meta table
+	// not stored in @meta table
+	Constraint = 101,
 	// 125 reserved for unit tests
 	Undefined = 127
 }

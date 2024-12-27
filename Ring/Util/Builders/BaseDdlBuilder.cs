@@ -152,7 +152,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 		// Code size: 259 (0x103)
 		var wrap = Provider.IsReservedWord(field.Name) ^ field.Name.StartsWith(SpecialEntityPrefix);
 		if (firstColumn) return wrap ? string.Join(null, StartPhysicalNameDelimiter, field.Name, EndPhysicalNameDelimiter) : field.Name;
-		if (!field.CaseSensitive && field.Type == FieldType.String) // not optimal !
+		if (field.Type == FieldType.String && field.SearchableType != SearchableType.None) // not optimal !
 			return wrap ? string.Join(null, StartPhysicalNameDelimiter, SearchableFieldPrefix, field.Name, EndPhysicalNameDelimiter) : 
 			SearchableFieldPrefix + field.Name;
 		if (TimeZoneOffsetPrefix != null && field.Type == FieldType.LongDateTime)
@@ -392,7 +392,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 		}
         subResult.Append(',').Append(SqlLineFeed);
         if (firstColumn)
-			if ((field.Type == FieldType.String && !field.CaseSensitive) ||
+			if ((field.Type == FieldType.String && field.SearchableType != SearchableType.None) ||
 				(field.Type == FieldType.LongDateTime && !string.IsNullOrEmpty(TimeZoneOffsetPrefix)))
 			{
 				// recursive call !!

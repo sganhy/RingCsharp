@@ -74,12 +74,12 @@ internal sealed class TableBuilder
 			GetField(FieldLevelId, FieldType.Short),
 			GetField(FieldSchemaId, FieldType.Int),
 			GetField(FieldThreadId, FieldType.Int,false),
-			GetField(FieldCallSite, FieldType.String,255, false, true),
+			GetField(FieldCallSite, FieldType.String,255, false, SearchableType.None),
 			GetField(FieldJobId, FieldType.Long, false),
-			GetField(FieldMethod, FieldType.String, 80, false, true),
-            GetField(FieldLineNumber, FieldType.Int, 80, false, true),
-            GetField(FieldMessage, FieldType.String, 255, false, true),
-            GetField(FieldDescription, FieldType.String, 0, false, true)
+			GetField(FieldMethod, FieldType.String, 80, false, SearchableType.None),
+            GetField(FieldLineNumber, FieldType.Int, 80, false, SearchableType.None),
+            GetField(FieldMessage, FieldType.String, 255, false, SearchableType.None),
+            GetField(FieldDescription, FieldType.String, 0, false, SearchableType.None)
         };
 		var metaTable = GetTable((int)TableType.Log, TableType.Log.GetLogicalName(), TableType.Log);
 		metaList.Add(GetIndex(false, new[] { metaList[1] }));
@@ -100,10 +100,10 @@ internal sealed class TableBuilder
 			if (fieldType == FieldType.String)
 			{
                 // add 1 non searchable field 
-                metaList.Add(GetField(FieldTestPrefix + i++, fieldType, 16, false, true));
+                metaList.Add(GetField(FieldTestPrefix + i++, fieldType, 16, false, SearchableType.None));
                 // add 2 searchable field 
-                metaList.Add(GetField(FieldTestPrefix + i++, fieldType, 512, false, false));
-                metaList.Add(GetField(FieldTestPrefix + i++, fieldType, 64, false, false));
+                metaList.Add(GetField(FieldTestPrefix + i++, fieldType, 512, false, SearchableType.IngoreCase));
+                metaList.Add(GetField(FieldTestPrefix + i++, fieldType, 64, false, SearchableType.IngoreCaseAndDiacritics));
             }
 			else metaList.Add(GetField(FieldTestPrefix + i++, fieldType, false));
 		}
@@ -167,19 +167,19 @@ internal sealed class TableBuilder
 	}
 	private static Meta GetSchema(int id, string name) => new(id, (byte)EntityType.Schema, 0, 0, 0L, name, null, null, true);
 	private static Meta GetField(string name, FieldType fieldType, bool notNull)
-		=> GetField(name, fieldType, 0, notNull, true);
+		=> GetField(name, fieldType, 0, notNull, SearchableType.None);
 	private static Meta GetField(string name, FieldType fieldType, int fieldSize)
-		=> GetField(name, fieldType, fieldSize, true, true);
+		=> GetField(name, fieldType, fieldSize, true, SearchableType.None);
 	private static Meta GetField(string name, FieldType fieldType)
-		=> GetField(name, fieldType, 0, true,true);
-	private static Meta GetField(string name, FieldType fieldType, int fieldSize, bool notNull, bool caseSensitive)
+		=> GetField(name, fieldType, 0, true,SearchableType.None);
+	private static Meta GetField(string name, FieldType fieldType, int fieldSize, bool notNull, SearchableType searchableType)
 	{
 		var flags = 0L;
 		var dataType = 0;
-		flags = Meta.SetFieldCaseSensitive(flags, caseSensitive);
 		flags = Meta.SetFieldNotNull(flags, notNull);
 		flags = Meta.SetFieldSize(flags, fieldSize);
-		flags = Meta.SetEntityBaseline(flags, true);
+		flags = Meta.SetSearchableType(flags, searchableType);
+        flags = Meta.SetEntityBaseline(flags, true);
 		dataType = Meta.SetFieldType(dataType, fieldType);
 		return new (0, (byte)EntityType.Field, 0, dataType, flags, name, null, null, true);
 	}

@@ -332,14 +332,17 @@ public sealed class Connection : IRingConnection
             var data = saveQuery.Data;
 
             result = new NpgsqlParameter[spanCount];
-            for (var i=0; i< spanCount; ++i)
+            var i = 0;
+            while (i<spanCount)
             {
                 var column = span[i];
                 var value = data[recordIndexes[i]+ saveQuery.Offset];
                 var variableName = i < bindVariableNameCacheSize ? BindVariableName[i] :
                     bindVariablePrefix + (i + 1).ToString(DefaultCulture);
-                var dbType = column.FieldType.ToNpgsqlDbType();
-                result[i] = GetParameter(variableName, dbType, column.FieldType, value);
+                var fieldType = column.FieldType;
+                var dbType = fieldType.ToNpgsqlDbType();
+                result[i] = GetParameter(variableName, dbType, fieldType, value);
+                ++i;
             }
         }
         else if (saveQuery.Type == SaveQueryType.UpdateRecord)
@@ -388,6 +391,11 @@ public sealed class Connection : IRingConnection
                 };
                 break;
             case FieldType.String:
+                result = new NpgsqlParameter(variableName, dbType)
+                {
+                    Value = value,
+                };
+                break;
             case FieldType.LongString:
             case FieldType.ShortDateTime:
                 result = new NpgsqlParameter(variableName, dbType)

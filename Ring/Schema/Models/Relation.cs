@@ -40,4 +40,5 @@ internal sealed class Relation : BaseEntity, IColumn
 	string IColumn.Name => Name;
 	RelationType IColumn.RelationType => Type;
 	EntityType IColumn.Type => EntityType.Relation;
+
 }

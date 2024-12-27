@@ -107,7 +107,7 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 				var field = (Field)column;
 				result.Append(_ddlBuilder.GetPhysicalName(field));
 				#region  add searchable field 
-				if (field.Type == FieldType.String && !field.CaseSensitive)
+				if (field.Type == FieldType.String && field.SearchableType != SearchableType.None)
 				{
 					result.Append(ColumnDelimiter);
 					result.Append(_ddlBuilder.GetPhysicalName(field,false));

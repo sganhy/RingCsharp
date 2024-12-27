@@ -88,7 +88,7 @@
 1,0,2,1041,1021,786456,feat2book,,book2feat,true
 2,0,1,1051,16,10493964,name,,,true
 2,0,3,1053,0,8704,name,,name,true
-2,0,1,1061,16,10493964,name,,,true
+2,0,1,1061,16,10493996,name,,,true
 5,0,2,1061,1031,786448,skill2class,,class2skill,true
 10,0,1,1071,23,6,martial,,,true
 11,0,1,1071,23,6,exotic,,,true
@@ -120,7 +120,7 @@
 8,0,1,1031,3,8198,hit_die,,,true
 3,0,3,1031,0,8192,base,,base,true
 3,0,1,1034,16,10493960,short_name,,,true
-2,0,1,1037,16,5251084,name,,,true
+2,0,1,1037,16,5251100,name,,,true
 3,0,1,1041,23,8198,fighter,,,true
 4,0,2,1041,1041,524304,feat2child_feat,,feat2parent_feat,true
 1053,0,0,1,1,8704,gender,,,true

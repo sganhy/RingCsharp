@@ -28,13 +28,13 @@ internal readonly struct Meta : IEquatable<Meta>
 	private const char HashCodeSeparator = (char)7777;
 
 	// flags bit positions
-	private const byte BitPositionFieldCaseSensitive = 2;
-	private const byte BitPositionFieldNotNull = 3;
-	private const byte BitPositionFieldMultilingual = 4;
-	private const byte BitPositionIndexBitmap = 9;
+	private const byte BitPositionFieldSearchableType = 5; // first position [bit 5,bit 10]
+    private const byte BitPositionFieldNotNull = 3;
+    private const byte BitPositionFieldMultilingual = 4;
+    private const byte BitPositionIndexBitmap = 9;
 	private const byte BitPositionIndexUnique = 10;
 	private const byte BitPositionEntityBaseline = 14;
-	private const byte BitPositionFirstPositionSize = 17;
+	private const byte BitPositionFirstPositionSize = 18;
 	private const byte BitPositionFirstPositionRelType = 18;
 	private const byte BitPositionRelationNotNull = 4;
 	private const byte BitPositionRelationConstraint = 5;
@@ -87,11 +87,11 @@ internal readonly struct Meta : IEquatable<Meta>
 	#region field methods
 	internal FieldType GetFieldType() => (DataType & 127).ToFieldType();
 	internal bool IsFieldNotNull() => ReadFlag(BitPositionFieldNotNull);
-	internal bool IsFieldCaseSensitive() => ReadFlag(BitPositionFieldCaseSensitive);
 	internal bool IsFieldMultilingual() => ReadFlag(BitPositionFieldMultilingual);
-	internal int GetFieldSize() => (int)((Flags >> BitPositionFirstPositionSize) & (int.MaxValue));
+	internal int GetFieldSize() => (int)((Flags >> (BitPositionFirstPositionSize-1)) & (int.MaxValue)); // Code size: 18 (0x12)
+    internal SearchableType GetSearchableType() => ((int)((Flags >> (BitPositionFieldSearchableType-1)) & 0x3F)).ToSearchableType(); // Code size: 19 (0x13)
 
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal string? GetFieldDefaultValue()
 	{
 		if (!string.IsNullOrEmpty(Value)) return Value;
@@ -106,20 +106,28 @@ internal readonly struct Meta : IEquatable<Meta>
 	}
 	// field flags 
 	internal static long SetFieldNotNull(long flags, bool value) => WriteFlag(flags, BitPositionFieldNotNull, value);
-	internal static long SetFieldCaseSensitive(long flags, bool value) => WriteFlag(flags, BitPositionFieldCaseSensitive, value);
 	internal static long SetFieldMultilingual(long flags, bool value) => WriteFlag(flags, BitPositionFieldMultilingual, value);
 	internal static long SetFieldSize(long flags, int size)
 	{
-		var temp = (long)size;
+        // Code size: 15 (0xf)
+        var temp = (long)size;
 		// apply a mask here !!
-		temp <<= BitPositionFirstPositionSize;
+		temp <<= BitPositionFirstPositionSize-1;
 		flags += temp;
 		return flags;
 	}
-	#endregion
+    internal static long SetSearchableType(long flags, SearchableType searchableType) {
+        var temp = (int)searchableType;
+		// apply a mask here !!
+		temp <<= BitPositionFieldSearchableType-1;
+		flags += temp;
+		return flags;
+	}
 
-	#region relation methods
-	internal bool IsRelationNotNull => ReadFlag(BitPositionRelationNotNull);
+    #endregion
+
+    #region relation methods
+    internal bool IsRelationNotNull => ReadFlag(BitPositionRelationNotNull);
 	internal bool HasRelationConstraint => ReadFlag(BitPositionRelationConstraint);
 	internal RelationType GetRelationType() => ((int)((Flags>>BitPositionFirstPositionRelType) & 127)).ToRelationType();
 	internal static long SetRelationdNotNull(long flags, bool value) => WriteFlag(flags, BitPositionRelationNotNull, value);
@@ -184,7 +192,7 @@ internal readonly struct Meta : IEquatable<Meta>
 			meta.Name,null, null, false)), -1, FieldType.Undefined, false, false, true, true);
 
 	internal static Field GetEmptyField(Meta meta, FieldType fieldType) =>
-		new(meta.Id, meta.Name, meta.Description, fieldType, 0, null, true, false,
+		new(meta.Id, meta.Name, meta.Description, fieldType, 0, null, SearchableType.None, true,
 			false, false, true);
 
 	internal static Meta? FirstOrDefault(Meta[] metas, EntityType entityType) 
@@ -219,10 +227,10 @@ internal readonly struct Meta : IEquatable<Meta>
 		}
 		return null;
 	}
-
-	internal Field? ToField()
-		=> IsField ? new Field(Id, Name, Description, GetFieldType(), GetFieldSize(), GetFieldDefaultValue(), IsEntityBaseline,
-			IsFieldNotNull(), IsFieldCaseSensitive(), IsFieldMultilingual(), Active) : null;
+    
+    internal Field? ToField() // Code size: 82 (0x52)
+        => IsField ? new Field(Id, Name, Description, GetFieldType(), GetFieldSize(), GetFieldDefaultValue(), GetSearchableType(), IsEntityBaseline,
+			IsFieldNotNull(), IsFieldMultilingual(), Active) : null;
 
 	internal static DbSchema? ToSchema(Meta[] schema, DatabaseProvider provider,
 		SchemaType type = SchemaType.Static, SchemaLoadType loadType = SchemaLoadType.Full)
@@ -315,14 +323,15 @@ internal readonly struct Meta : IEquatable<Meta>
 	public override readonly bool Equals(object? obj) => obj is Record record && Equals(record);
 	public override readonly int GetHashCode()
 	{
+		// Code size: 15 (0xf)
 		HashHelper.Djb2X(GetStringCode(), out int hash);
 		return hash;
 	}
+
+	// Code size: 190 (0xbe)
 	internal readonly string GetStringCode()
-	{
-        // Code size: 192 (0xc0)
-        var result = new StringBuilder();
-		result.Append(Id)
+		=> new StringBuilder()
+			.Append(Id)
 			.Append(HashCodeSeparator)
 			.Append(ObjectType)
 			.Append(HashCodeSeparator)
@@ -338,9 +347,7 @@ internal readonly struct Meta : IEquatable<Meta>
 			.Append(HashCodeSeparator)
 			.Append(Value)
 			.Append(HashCodeSeparator)
-			.Append(Active);
-		return result.ToString();
-	}
+			.Append(Active).ToString();
 
 #if DEBUG
 	public override string ToString() => string.IsNullOrEmpty(Name) ? string.Empty : $"{Id} - {Name}";
@@ -541,10 +548,15 @@ internal readonly struct Meta : IEquatable<Meta>
 				if (relationType == RelationType.Mto || relationType == RelationType.Otop)
 					++result;
 			}
+			if (item.IsField)
+			{
+				// has searchable field?
+
+			}
 		}
 		return result;
 	}
 		
-		#endregion
+	#endregion
 
 }

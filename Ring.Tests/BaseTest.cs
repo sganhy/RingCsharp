@@ -55,7 +55,7 @@ public abstract class BaseTest
     internal Field GetAnonymousField(char minChar = char.MinValue, char maxChar = char.MaxValue) =>
         new(_faker.Random.Number(int.MinValue, int.MaxValue), _faker.Random.String(null, minChar, maxChar),
             _faker.Random.String(), _faker.PickRandom<FieldType>(), _faker.Random.Number(int.MinValue, int.MaxValue),
-            _faker.Random.String(), _faker.Random.Bool(), _faker.Random.Bool(), _faker.Random.Bool(),
+            _faker.Random.String(), _faker.PickRandom<SearchableType>(), _faker.Random.Bool(), _faker.Random.Bool(),
             _faker.Random.Bool(), _faker.Random.Bool());
 
     internal Relation GetAnonymousRelation(string? name = null, char minChar = char.MinValue, char maxChar = char.MaxValue)

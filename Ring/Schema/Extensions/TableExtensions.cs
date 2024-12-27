@@ -54,6 +54,7 @@ internal static class TableExtensions
 	/// </summary>
 	internal static Field? GetField(this Table table, int id)
 	{
+		// Code size: 43 (0x2b)
 		var i = 0;
 		var fieldCount = table.Fields.Length;
 		while (i < fieldCount)
@@ -98,6 +99,7 @@ internal static class TableExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static Relation? GetRelation(this Table table, string name)
 	{
+		// Code size: 92 (0x5c)
 		var span = new ReadOnlySpan<Relation>(table.Relations);
 		int indexerLeft = 0, indexerRight = span.Length - 1, indexerMiddle, indexerCompare;
 		while (indexerLeft <= indexerRight)
@@ -287,14 +289,15 @@ internal static class TableExtensions
 
 	internal static long GetHashCode(this Table table)
 	{
+		// Code size: 15 (0xf)
 		HashHelper.Djb2X(table.GetStringCode(), out long hash);
 		return hash;
 	}
 
 	internal static string GetStringCode(this Table table)
 	{
-		// Code size: 303 (0x12f)
-		/*
+        // Code size: 284 (0x11c)
+        /*
 		* readonly bool Cached
 		* readonly Field[] Fields
 		* readonly Relation[] Relations
@@ -310,7 +313,7 @@ internal static class TableExtensions
 		* readonly CacheId CacheId
 		* readonly bool Readonly
 		*/
-		return new StringBuilder()
+        return new StringBuilder()
 			.Append(table.Cached)
 			.Append(HashCodeSeparator)
 			.Append(GetStringCode(table.Fields))
@@ -326,11 +329,11 @@ internal static class TableExtensions
 		/* IColumn[] Columns - removed from computing !! */
 			.Append(table.PhysicalName)
 			.Append(HashCodeSeparator)
-			.Append(table.Type.ToString())
+			.Append((int)table.Type)
 			.Append(HashCodeSeparator)
 			.Append(table.SchemaId)
 			.Append(HashCodeSeparator)
-			.Append(table.PhysicalType)
+			.Append((int)table.PhysicalType) // avoid boxing here !! cast to int
 			.Append(HashCodeSeparator)
 			.Append(table.Subject)
 			.Append(HashCodeSeparator)
@@ -362,6 +365,7 @@ internal static class TableExtensions
 
 	private static string GetStringCode(Field[] fields)
 	{
+		// Code size: 73 (0x49)
 		var span = fields.AsSpan();
 		var result = new StringBuilder();
 		foreach (var field in span)
@@ -374,6 +378,7 @@ internal static class TableExtensions
 
 	private static string GetStringCode(Relation[] relations)
 	{
+		// Code size: 73 (0x49)
 		var span = relations.AsSpan();
 		var result = new StringBuilder();
 		foreach (var relation in span)
@@ -386,6 +391,7 @@ internal static class TableExtensions
 
 	private static string GetStringCode(Index[] indexes)
 	{
+		// Code size: 73 (0x49)
 		var span = indexes.AsSpan();
 		var result = new StringBuilder();
 		foreach (var index in span)
