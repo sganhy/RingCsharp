@@ -12,9 +12,9 @@ internal sealed class Parameter : BaseEntity
 	internal readonly int ReferenceId;
 	internal readonly long Hash;
 
-	internal Parameter(int id, string name, string? description, ParameterType type, FieldType valueType,
-		string value, string? defaultValue, int referenceId, bool baseline, bool active) 
-		: base(id, name, description, active, baseline)
+	internal Parameter(int id, string name, string physicalName, string? description, ParameterType type, FieldType valueType,
+		string value, string? defaultValue, int referenceId, bool baseline, bool active)
+		: base(id, name, physicalName, description, baseline, active)
 	{
 		Hash = ParameterExtensions.GetParameterHash(null, type, referenceId);
 		ReferenceId = referenceId;

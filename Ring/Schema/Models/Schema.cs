@@ -24,9 +24,10 @@ internal sealed class Schema : BaseEntity
 	/// <summary>
 	/// 	Ctor
 	/// </summary>
-	internal Schema(int id, string name, string? description, Parameter[] parameters, Lexicon[] lexicons, SchemaLoadType loadType,
+	internal Schema(int id, string name, string physicalName, string? description, Parameter[] parameters, Lexicon[] lexicons, SchemaLoadType loadType,
 		SchemaType type, Sequence[] sequences, Table[] tablesById, Table[] tablesByName, TableSpace[] tableSpaces, DatabaseProvider provider,
-		int objectCount, bool active, bool baseline) : base(id, name, description, active, baseline)
+		int objectCount, bool active, bool baseline)
+		: base(id, name, physicalName, description, baseline, active)
 	{
 		Connections = new ConnectionPool(id, parameters.GetMinPoolSize(id), parameters.GetMaxPoolSize(id),
 		parameters.GetDbConnectionString(id));

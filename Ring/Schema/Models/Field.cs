@@ -3,7 +3,7 @@
 namespace Ring.Schema.Models;
 
 /// <summary>
-/// 	Logical field sourceType (64 bytes by fields)
+/// 	Logical field sourceType
 /// </summary>
 internal sealed class Field : BaseEntity, IColumn
 {
@@ -17,9 +17,9 @@ internal sealed class Field : BaseEntity, IColumn
 	/// <summary>
 	/// 	Ctor
 	/// </summary>
-	internal Field(int id, string name, string? description, FieldType type, int size, string? defaultValue, SearchableType searchableType,
-		bool baseline, bool notNull, bool multilingual, bool active)
-		: base(id, name, description, active, baseline)
+	internal Field(int id, string name, string physicalName, string? description, FieldType type, int size, string? defaultValue,
+		SearchableType searchableType, bool baseline, bool notNull, bool multilingual, bool active)
+		: base(id, name, physicalName, description, baseline, active)
 	{
 		Type = type;
 		Size = size;
@@ -37,6 +37,7 @@ internal sealed class Field : BaseEntity, IColumn
 	RelationType IColumn.RelationType => RelationType.Undefined;
 	EntityType IColumn.Type => EntityType.Field;
 	string IColumn.Name => Name;
+	string IColumn.PhysicalName => PhysicalName;
 
 #if DEBUG
 	public override string ToString() => $"{Id} - {Name} ({Type})";

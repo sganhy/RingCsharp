@@ -8,9 +8,9 @@ internal sealed class TableSpace : BaseEntity
 	internal readonly bool Table;
 	internal readonly bool Constraint;
 
-	internal TableSpace(int id, string name, string? description, bool isIndex, bool isTable, bool isConstraint, string[] tableName,
+	internal TableSpace(int id, string name, string physicalName, string? description, bool isIndex, bool isTable, bool isConstraint, string[] tableName,
 		string fileName, bool active, bool baseline)
-		: base(id, name, description, active, baseline)
+		: base(id, name, physicalName, description, baseline, active)
 	{
 		Index = isIndex;
 		Table = isTable;

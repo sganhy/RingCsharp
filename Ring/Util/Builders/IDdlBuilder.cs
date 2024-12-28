@@ -1,6 +1,7 @@
 ﻿using Ring.Schema.Models;
 using Index = Ring.Schema.Models.Index;
 using DbSchema = Ring.Schema.Models.Schema;
+using Ring.Schema.Enums;
 
 namespace Ring.Util.Builders;
 
@@ -17,10 +18,8 @@ internal interface IDdlBuilder : ISqlBuilder
     string AlterDropColumn(Table table, Field field);
     string AlterDropColumn(Table table, Relation relation);
     string Truncate(Table table);
-    string GetPhysicalName(DbSchema schema);
     string GetPhysicalName(Table table, DbSchema schema);
     string GetPhysicalName(Field field, bool firstColumn=true); // some fields are defined on 2 columns
-    string GetPhysicalName(Relation relation);
-    string GetPhysicalName(Constraint constraint);
     string GetPhysicalName(Index index, Table table);
+    string GetPhysicalName(EntityType entityType, string name);
 }

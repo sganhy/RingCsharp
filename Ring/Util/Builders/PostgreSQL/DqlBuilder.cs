@@ -31,5 +31,5 @@ internal sealed class DqlBuilder : BaseDqlBuilder
             default: return _ddlBuilder.GetPhysicalName(field);
         }
     }
-    protected override string GetSelection(Relation relation) => _ddlBuilder.GetPhysicalName(relation);
+    protected sealed override string GetSelection(Relation relation) => relation.PhysicalName;
 }

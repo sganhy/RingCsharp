@@ -1,6 +1,7 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
+using Ring.Util.Builders;
 
 namespace Ring.Schema.Builders;
 
@@ -115,7 +116,6 @@ internal sealed class TableBuilder
     internal Table GetCatalog(EntityType entityType, DatabaseProvider provider) 
 	{
         // Code size: 99 (0x63)
-#pragma warning restore CA1822, S2325
         var tableType = entityType.ToTableType();
 		var metaList = new List<Meta>(){ GetField(provider.GetSchemaFieldName(entityType), FieldType.String) };
 		if (entityType != EntityType.Schema)
@@ -123,12 +123,12 @@ internal sealed class TableBuilder
 		var catalog = GetTable((int)tableType, provider.GetCatalogViewName(entityType), tableType);
 		return GetTable(provider.GetCatalogSchema(), provider, metaList.ToArray(), catalog, PhysicalType.View);
 	}
+#pragma warning restore CA1822, S2325
 
 #pragma warning disable CA1822, S2325 // Mark members as static
-	internal Table GetMtm(Table partialTable, string physicalName, int objectIndex) 
+    internal Table GetMtm(Table partialTable, IDdlBuilder ddlBuilder, int objectIndex) 
 	{
         // Code size: 194 (0xc2)
-#pragma warning restore CA1822, S2325
         // add @ prefix to logical name
         var metaTable = new Meta(0, (byte)EntityType.Table, 0, (int)TableType.Mtm, 0L, TableType.Mtm.GetLogicalName(partialTable.Name), 
 				null,null,true);
@@ -140,15 +140,16 @@ internal sealed class TableBuilder
 		var metaIndex = new Meta(0, (byte)EntityType.Index, 0, 0, flags, partialTable.Name, null, value, true);
 		var metaArr = new Meta[] { metaRelation, metaRelation, metaIndex };
 		var segMent = new ArraySegment<Meta>(metaArr, 0, 3);
-		var result = metaTable.ToTable(segMent, PhysicalType.Table, physicalName, objectIndex) ?? partialTable;
+		var result = metaTable.ToTable(segMent, PhysicalType.Table, ddlBuilder, objectIndex) ?? partialTable;
 		result.RecordIndexes[0]=0; // columnMapper 4 Mtm table is always {0,1}
 		result.RecordIndexes[1]=1; // columnMapper 4 Mtm table is always {0,1}
 		return result;
 	}
+#pragma warning restore CA1822, S2325
 
-	#region private methods 
+    #region private methods 
 
-	private static Table GetTable(string schemaName, DatabaseProvider provider, Meta[] metaArray, Meta metaTable, PhysicalType? physicalType=null)
+    private static Table GetTable(string schemaName, DatabaseProvider provider, Meta[] metaArray, Meta metaTable, PhysicalType? physicalType=null)
 	{
         // Code size: 127 (0x7f)
         var ddlBuilder = provider.GetDdlBuilder();
@@ -157,7 +158,7 @@ internal sealed class TableBuilder
 		var spanMeta = metaArray.AsSpan();
 		for (var i=0; i< spanMeta.Length; ++i) spanMeta[i] = Meta.Create(i,spanMeta[i]);
 		return metaTable.ToTable(new ArraySegment<Meta>(metaArray, 0, metaArray.Length),
-				physicalType ?? PhysicalType.Table, ddlBuilder.GetPhysicalName(emptyTable, emptySchema),0) ?? emptyTable;
+				physicalType ?? PhysicalType.Table, ddlBuilder, 0) ?? emptyTable;
 	}
 
 	private static Meta GetTable(int id, string name, TableType tableType, bool active=true) {
@@ -178,7 +179,7 @@ internal sealed class TableBuilder
 		var dataType = 0;
 		flags = Meta.SetFieldNotNull(flags, notNull);
 		flags = Meta.SetFieldSize(flags, fieldSize);
-		flags = Meta.SetSearchableType(flags, searchableType);
+		if (fieldType == FieldType.String) flags = Meta.SetSearchableType(flags, searchableType);
         flags = Meta.SetEntityBaseline(flags, true);
 		dataType = Meta.SetFieldType(dataType, fieldType);
 		return new (0, (byte)EntityType.Field, 0, dataType, flags, name, null, null, true);

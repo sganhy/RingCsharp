@@ -28,12 +28,6 @@ internal sealed class DdlBuilder : BaseDdlBuilder
     public override string Create(TableSpace tablespace) => string.Empty; // no tablespace on SQLite
 
     protected override Dictionary<FieldType, string> DataType => _dataType;
-
-
-    protected override string GetPhysicalName(TableSpace tablespace)
-    {
-        throw new NotImplementedException();
-    }
     public override DatabaseProvider Provider => _currentProvider;
     protected override string MtmPrefix => "@mtm_";
     protected override string? TimeZoneOffsetPrefix => null;

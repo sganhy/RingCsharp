@@ -28,10 +28,6 @@ internal sealed class DdlBuilder : BaseDdlBuilder
     {
         throw new NotImplementedException();
     }
-    protected override string GetPhysicalName(TableSpace tablespace)
-    {
-        throw new NotImplementedException();
-    }
     public override DatabaseProvider Provider => DatabaseProvider.SqlServer;
     protected override string MtmPrefix => "@mtm_";
     protected override string? TimeZoneOffsetPrefix => null;

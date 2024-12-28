@@ -82,7 +82,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 				.Append(table.PhysicalName)
 				.Append(SqlSpace)
 				.Append(DdlAdd)
-				.Append(GetPhysicalName(relation))
+				.Append(relation.PhysicalName)
 				.Append(SqlSpace)
 				.Append(GetDataType(relation));
 		}
@@ -113,7 +113,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 			.Append(SqlSpace)
 			.Append(DdlDrop)
 			.Append(DdlColumn)
-			.Append(GetPhysicalName(relation));
+			.Append(relation.PhysicalName);
 		return result.ToString();
 	}
 
@@ -136,17 +136,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 			.Append(table.PhysicalName);
 		return result.ToString();
 	}
-
-	public string GetPhysicalName(DbSchema schema)
-	{
-		// Code size: 102 (0x66)
-#pragma warning disable CA1308 // Normalize strings to uppercase
-		var physicalName = NamingConvention.ToSnakeCase(schema.Name)?.ToLowerInvariant()??string.Empty;
-#pragma warning restore CA1308
-		return schema.Name.StartsWith(SpecialEntityPrefix) || Provider.IsReservedWord(physicalName) ?
-			string.Join(null, StartPhysicalNameDelimiter, physicalName, EndPhysicalNameDelimiter) :
-			physicalName;
-	}
+		
 	public string GetPhysicalName(Field field, bool firstColumn = true)
 	{
 		// Code size: 259 (0x103)
@@ -159,11 +149,27 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 			return string.Join(null, StartPhysicalNameDelimiter, TimeZoneOffsetPrefix, field.Id.ToString(DefaultCulture), EndPhysicalNameDelimiter) ;
 		return string.Empty; // a crash will be better here
 	}
-	public string GetPhysicalName(Relation relation) =>
-		Provider.IsReservedWord(relation.Name) ?
-		string.Join(null, StartPhysicalNameDelimiter, relation.Name, EndPhysicalNameDelimiter) : relation.Name;
 
-	public string GetPhysicalName(Index index, Table table)
+    public string GetPhysicalName(EntityType entityType, string name)
+    {
+        switch (entityType)
+        {
+            case EntityType.Schema:
+            case EntityType.Tablespace:
+            case EntityType.Relation:
+#pragma warning disable CA1308 // Normalize strings to uppercase
+                // build different convention connected to ==> Provider
+                var physicalName = NamingConvention.ToSnakeCase(name)?.ToLowerInvariant() ?? string.Empty;
+#pragma warning restore CA1308
+                return name.StartsWith(SpecialEntityPrefix) ^ Provider.IsReservedWord(physicalName) ?
+                    string.Join(null, StartPhysicalNameDelimiter, physicalName, EndPhysicalNameDelimiter) : physicalName;
+
+        }
+        return string.Empty;
+    }
+
+
+    public string GetPhysicalName(Index index, Table table)
 	{
 		// Code size: 139 (0x8b)
 		var result = new StringBuilder(33); 
@@ -196,7 +202,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 #pragma warning disable CA1308 // Normalize strings to uppercase
 		var tableName = NamingConvention.ToSnakeCase(table.Name)?.ToLowerInvariant();
 #pragma warning restore CA1308 
-		result.Append(GetPhysicalName(schema))
+		result.Append(GetPhysicalName(EntityType.Schema, schema.Name))
 			.Append(SchemaSeparator);
 
 		switch (table.Type)
@@ -263,7 +269,6 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 			return GetDataType(DataType[relation.FieldType], FieldType.Long, 0, 0);
 		return string.Empty;
 	}
-	protected abstract string GetPhysicalName(TableSpace tablespace);
 	public abstract string Create(TableSpace tablespace);
 	protected abstract Dictionary<FieldType, string> DataType { get; }
 	protected abstract int VarcharMaxSize { get; }
@@ -343,7 +348,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 		var result = new StringBuilder();
 		result.Append(DdlCreate)
 			.Append(DdlSchema)
-			.Append(GetPhysicalName(schema));
+			.Append(schema.PhysicalName);
 		return result.ToString();
 	}
 	public string Create(Table table, TableSpace? tablespace = null)
@@ -371,7 +376,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 		{
 			result.Append(SqlSpace)
 				.Append(DdlTableSpace)
-				.Append(GetPhysicalName(tablespace));
+				.Append(tablespace.PhysicalName);
 		}
 		return result.ToString();
 	}
@@ -402,7 +407,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	private void Create(StringBuilder stringBuilder, Table table, Relation relation)
 	{
 		stringBuilder.Append(Indent)
-			.Append(GetPhysicalName(relation))
+			.Append(relation.PhysicalName)
 			.Append(SqlSpace)
 			.Append(GetDataType(relation));
 		if (table.Type != TableType.Business && relation.NotNull)
@@ -424,8 +429,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 		return result.ToString();
 	}
 
-
-	#endregion
+    #endregion
 
 }
 

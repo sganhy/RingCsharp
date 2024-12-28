@@ -238,12 +238,13 @@ public readonly struct BulkSave : IBulkSave
 	{
 		var metaTable = new Meta(-1, (byte)EntityType.Table, 0, (int)TableType.Undefined, 0L, string.Empty, null, null, true);
 		var metaArray = new Meta[] { new(0, (byte)EntityType.Field, 0, 0, 0L, string.Empty, null, null, true) };
-		return metaTable.ToTable(new ArraySegment<Meta>(metaArray), PhysicalType.Undefined, string.Empty,-1) !; // cannot be null here!!
+		return metaTable.ToTable(new ArraySegment<Meta>(metaArray), PhysicalType.Undefined, GetDefaultDdlBuilder(), -1) !; // cannot be null here!!
 	}
 
 	private static IDmlBuilder GetDefaultDmlBuilder() => new Ring.Util.Builders.PostgreSQL.DmlBuilder();
+    private static IDdlBuilder GetDefaultDdlBuilder() => new Ring.Util.Builders.PostgreSQL.DdlBuilder();
 
-	private static int GetHashCode(in BulkSave bulkSave)
+    private static int GetHashCode(in BulkSave bulkSave)
 	{
 		var span = bulkSave._info.Queries.AsReadOnlySpan();
 		var hash = 0;

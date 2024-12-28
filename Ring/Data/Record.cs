@@ -4,6 +4,7 @@ using Ring.Schema;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
+using Ring.Util.Builders;
 using Ring.Util.Enums;
 using Ring.Util.Extensions;
 using Ring.Util.Helpers;
@@ -88,18 +89,20 @@ public struct Record : IEquatable<Record>
 	}
 	internal readonly Table Table => _type;
 
+#pragma warning disable IDE0251 // Make member 'readonly'
 	internal void ClearData()
 	{
-        // Code size: 59 (0x3b)
-        var span = _data.AsSpan();
+		// Code size: 59 (0x3b)
+		var span = _data.AsSpan();
 		var lastIndex = _type.RecordSize + _offset;
 		for (var i=_offset;i<lastIndex;++i) span[i] = null;
 	}
+#pragma warning restore IDE0251
 
 	/// <summary>
 	/// 	Get primary key value (Field name ID)
 	/// </summary>
-	internal readonly long GetField()   // Code size: 47 (0x2f)
+	internal readonly long GetField()	// Code size: 47 (0x2f)
 		=> long.Parse(_data[_type.RecordIndexes[0]+_offset] ?? DefaultPrimaryKeyValue, DefaultCulture);
 
 	/// <summary>
@@ -133,7 +136,7 @@ public struct Record : IEquatable<Record>
 
 	public readonly void GetField(string name, out byte[]? value)
 	{
-		// Code size: 118 (0x76)
+		// Code size: 118 (0x76) - no callvirt
 		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = _type.GetFieldIndex(name);
 		if (fieldId <= -1) ThrowRecordUnknownFieldName(name);
@@ -147,7 +150,7 @@ public struct Record : IEquatable<Record>
 
 	public readonly void GetField(string name, out long? value)
 	{
-		// Code size: 145 (0x91)
+		// Code size: 145 (0x91) - no callvirt
 		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = _type.GetFieldIndex(name);
 		if (fieldId <= -1) ThrowRecordUnknownFieldName(name);
@@ -165,8 +168,8 @@ public struct Record : IEquatable<Record>
 	/// </summary>
 	public readonly void GetField(string name, out DateTime? value)
 	{
-        // Code size: 143 (0x8f)
-        if (_type.Id == -1) ThrowRecordUnknownRecordType();
+		// Code size: 143 (0x8f) - no callvirt
+		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = _type.GetFieldIndex(name);
 		if (fieldId <= -1) ThrowRecordUnknownFieldName(name);
 		value = null;
@@ -248,7 +251,7 @@ public struct Record : IEquatable<Record>
 	}
 
 	public void SetField(string name, long value) => SetField(name, value, FieldType.Long);	  // Code size: 10 (0xa)
-	public void SetField(string name, int value) => SetField(name, value, FieldType.Int);     // Code size: 11 (0xb)
+	public void SetField(string name, int value) => SetField(name, value, FieldType.Int);	  // Code size: 11 (0xb)
 	public void SetField(string name, short value) => SetField(name, value, FieldType.Short); // Code size: 11 (0xb)
 	public void SetField(string name, sbyte value) => SetField(name, value, FieldType.Byte);  // Code size: 11 (0xb)
 	public void SetField(string name, bool value)
@@ -277,7 +280,7 @@ public struct Record : IEquatable<Record>
 		if (fieldId == -1) ThrowRecordUnknownFieldName(name);
 		SetDateTimeField(fieldId, _type.Fields[fieldId].Type, value.DateTime, value.Offset);
 	}
-	public void SetField(string name, double value) => SetField(name, value, FieldType.Double);       // Code size: 11 (0xb)
+	public void SetField(string name, double value) => SetField(name, value, FieldType.Double);		 // Code size: 11 (0xb)
 	public void SetField(string name, float value) => SetField(name, (double)value, FieldType.Float); // Code size: 12 (0xc)
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -325,8 +328,8 @@ public struct Record : IEquatable<Record>
 	}
 	public override readonly int GetHashCode()
 	{
-        // Code size: 108 (0x6c)
-        var result = new StringBuilder();
+		  // Code size: 108 (0x6c)
+		  var result = new StringBuilder();
 		result.Append(_type.PhysicalName);
 		var i = _offset;
 		var columnCount = _type.RecordSize - 1;
@@ -552,12 +555,14 @@ public struct Record : IEquatable<Record>
 	private static void ThrowInvalidBase64String() =>
 		throw new FormatException(ResourceHelper.GetErrorMessage(ResourceType.InvalidBase64String));
 
-	private static Table GetDefaultType()
+    private static IDdlBuilder GetDefaultDdlBuilder() => new Ring.Util.Builders.PostgreSQL.DdlBuilder();
+
+    private static Table GetDefaultType()
 	{
 		// Code size: 77 (0x4d)
 		var metaTable = new Meta(-1, (byte)EntityType.Table, 0, (int)TableType.Undefined, 0L, string.Empty, null, null, true);
 		var metaArray = new Meta[] { new(0, (byte)EntityType.Field, 0, 0, 0L, string.Empty, null, null, true) };
-		return metaTable.ToTable(new ArraySegment<Meta>(metaArray), PhysicalType.Undefined, string.Empty,1)!; // cannot be null here!!
+		return metaTable.ToTable(new ArraySegment<Meta>(metaArray), PhysicalType.Undefined, GetDefaultDdlBuilder(), 1)!; // cannot be null here!!
 	}
 
 	#endregion

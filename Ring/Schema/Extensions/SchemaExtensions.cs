@@ -1,6 +1,7 @@
 ﻿using Ring.Schema.Builders;
 using Ring.Schema.Enums;
 using Ring.Schema.Models;
+using Ring.Util.Builders;
 using System.Runtime.CompilerServices;
 using DbSchema = Ring.Schema.Models.Schema;
 
@@ -75,7 +76,7 @@ internal static class SchemaExtensions
 	/// </summary>
 	/// <param name="schema">Partial built in schema</param>
 	/// <param name="schemaItems">Should be sorted by name</param>
-	internal static void LoadRelations(this DbSchema schema, ReadOnlySpan<Meta> schemaItems, int mtmCount)
+	internal static void LoadRelations(this DbSchema schema, ReadOnlySpan<Meta> schemaItems, int mtmCount, IDdlBuilder ddlBuilder)
 	{
 		var relationDicoIndex = new Dictionary<int,int>(schema.TablesById.Length*2); // (tableId, relation index)
 	
@@ -91,7 +92,7 @@ internal static class SchemaExtensions
 				var toTable = schema.GetTable(meta.DataType);
 				if (toTable != null && fromTable!=null)
 				{
-					var relation = meta.ToRelation(toTable);
+					var relation = meta.ToRelation(toTable, ddlBuilder.GetPhysicalName(EntityType.Relation, meta.Name));
 #pragma warning disable CS8601 // Possible null reference assignment. Cannot be null here !!
 					fromTable.Relations[relationDicoIndex[fromTable.Id]] = relation;
 #pragma warning restore CS8601 
@@ -138,7 +139,7 @@ internal static class SchemaExtensions
 		var ddlBuilder = schema.Provider.GetDdlBuilder();
 		var tableBuilder = new TableBuilder();
 		var span = new Span<Table>(schema.TablesById);
-		Table mtmTable;
+        Table mtmTable;
 		var mtm = new Dictionary<string,Table>(mtmCount * 2); // store mtm physical name
 		foreach (var table in span)
 		{
@@ -156,7 +157,7 @@ internal static class SchemaExtensions
 
                     if (!mtm.ContainsKey(physicalName))
 					{
-						mtmTable = tableBuilder.GetMtm(emptyTable, physicalName, mtm.Count);
+						mtmTable = tableBuilder.GetMtm(emptyTable, ddlBuilder, mtm.Count);
 						//  step 2 - load relations - sort relation
 						if (string.CompareOrdinal(relation.Name, inverseRelation.Name) < 0)
 						{
@@ -176,17 +177,17 @@ internal static class SchemaExtensions
 					}
 					else mtmTable = mtm[physicalName];
 					// step 3 - create two new relations
-					table.Relations[j] = CreateMtmRelation(relation, mtmTable);
+					table.Relations[j] = CreateMtmRelation(relation, mtmTable, ddlBuilder);
 					table.Relations[j].SetInverseRelation(inverseRelation);
 				}
 			}
 		}
 	}
 
-	private static Relation CreateMtmRelation(Relation relation, Table mtmTable)
+	private static Relation CreateMtmRelation(Relation relation, Table mtmTable, IDdlBuilder ddlBuilder)
 	{
 		var meta = relation.ToMeta(0);
-		return meta.ToRelation(mtmTable);
+		return meta.ToRelation(mtmTable, ddlBuilder.GetPhysicalName(EntityType.Relation, meta.Name));
 	}
 
 	#endregion 

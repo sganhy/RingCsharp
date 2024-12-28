@@ -2,27 +2,30 @@
 
 internal abstract class BaseEntity
 {
-	internal readonly bool Active;
-	internal readonly bool Baseline;
-	internal readonly string? Description;
 	internal readonly int Id;
 	internal readonly string Name;
+	internal readonly string PhysicalName;
+	internal readonly string? Description;
+	internal readonly bool Baseline;
+	internal readonly bool Active;
 
 	/// <summary>
-	///     Ctor
+	/// 	Ctor
 	/// </summary>
 	/// <param name="id">BaseEntity id</param>
-	/// <param name="name">BaseEntity name</param>
+	/// <param name="name">BaseEntity logical name</param>
+	/// <param name="name">BaseEntity physical name</param>
 	/// <param name="description">BaseEntity description</param>
 	/// <param name="active">Is entity enabled</param>
 	/// <param name="baseline">Is entity baselined</param>
-	protected BaseEntity(int id, string name, string? description, bool active, bool baseline)
+	protected BaseEntity(int id, string name, string physicalName, string? description, bool baseline, bool active)
 	{
 		Id = id;
 		Name = name;
+		PhysicalName = physicalName;
 		Description = description;
-		Active = active;
 		Baseline = baseline;
+		Active = active;
 	}
 
 #if DEBUG

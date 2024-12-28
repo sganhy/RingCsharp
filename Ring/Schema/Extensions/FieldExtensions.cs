@@ -16,13 +16,13 @@ internal static class FieldExtensions
 	private static readonly string PrimaryKeyDescription = "Internal record number";
 	private static readonly string NumberDefaultValue = "0";
 	private static readonly Field _defaultPrimaryKeyInt64 =
-		new(0, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Long, 0, NumberDefaultValue, SearchableType.None, true, true, false, true);
+		new(0, PrimaryKeyFieldName, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Long, 0, NumberDefaultValue, SearchableType.None, true, true, false, true);
 	private static readonly Field _defaultPrimaryKeyInt32 =
-		new(0, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Int, 0, NumberDefaultValue, SearchableType.None, true, true, false, true);
+		new(0, PrimaryKeyFieldName, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Int, 0, NumberDefaultValue, SearchableType.None, true, true, false, true);
 	private static readonly Field _defaultPrimaryKeyInt16 =
-		new(0, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Short, 0, NumberDefaultValue, SearchableType.None, true, true, false, true);
+		new(0, PrimaryKeyFieldName, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Short, 0, NumberDefaultValue, SearchableType.None, true, true, false, true);
 	private static readonly Field _defaultPrimaryKeyInt08 =
-		new(0, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Byte, 0, NumberDefaultValue, SearchableType.None, true, true, false, true);
+		new(0, PrimaryKeyFieldName, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Byte, 0, NumberDefaultValue, SearchableType.None, true, true, false, true);
 #pragma warning restore RCS1187
 
 	internal static bool IsValid(this Field field) => IsPrimaryKey(field) || field.Id > 0; 
@@ -59,11 +59,12 @@ internal static class FieldExtensions
 
 	internal static Meta ToMeta(this Field field, int tableId, FieldType? newFieldType=null)
 	{
+		// Code size: 148 (0x94)
 		var flags = 0L;
 		flags = Meta.SetEntityBaseline(flags,field.Baseline);
 		flags = Meta.SetFieldNotNull(flags, field.NotNull);
 		flags = Meta.SetFieldMultilingual(flags, field.Multilingual);
-		flags = Meta.SetSearchableType(flags, field.SearchableType);
+		if (field.Type == FieldType.String) flags = Meta.SetSearchableType(flags, field.SearchableType); // check data flags quality 
 		flags = Meta.SetFieldSize(flags, field.Size);
 		var dataType = 0 ;
 		dataType = Meta.SetFieldType(dataType, newFieldType ?? field.Type);
@@ -88,8 +89,8 @@ internal static class FieldExtensions
 		return hash;
 	}
 
-    // Code size: 148 (0x94)
-    internal static string GetStringCode(this Field field)
+	// Code size: 148 (0x94)
+	internal static string GetStringCode(this Field field)
 		=> new StringBuilder()
 			.Append((int)field.SearchableType)
 			.Append(HashCodeSeparator)

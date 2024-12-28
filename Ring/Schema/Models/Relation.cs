@@ -15,8 +15,9 @@ internal sealed class Relation : BaseEntity, IColumn
 	/// <summary>
 	/// 	Ctor
 	/// </summary>
-	internal Relation(int id, string name, string? description, RelationType type, Table toObject, int recordIndex, FieldType fieldType,
-		bool notnull, bool constraint, bool baseline, bool active) : base(id, name, description, active, baseline)
+	internal Relation(int id, string name, string physicalName, string? description, RelationType type, Table toObject, int recordIndex,
+		FieldType fieldType, bool notnull, bool constraint, bool baseline, bool active)
+		: base(id, name, physicalName, description, baseline, active)
 	{
 		Type = type;
 		ToTable = toObject;
@@ -40,5 +41,6 @@ internal sealed class Relation : BaseEntity, IColumn
 	string IColumn.Name => Name;
 	RelationType IColumn.RelationType => Type;
 	EntityType IColumn.Type => EntityType.Relation;
+	string IColumn.PhysicalName => PhysicalName;
 
 }

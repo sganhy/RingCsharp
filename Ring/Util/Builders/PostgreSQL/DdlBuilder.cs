@@ -36,7 +36,7 @@ internal sealed class DdlBuilder : BaseDdlBuilder
         var result = new StringBuilder();
         result.Append(DdlCreate)
             .Append(DdlTableSpace)
-            .Append(GetPhysicalName(tablespace))
+            .Append(tablespace.PhysicalName)
             .Append(@" LOCATION ")
             .Append('\'')
             .Append(tablespace.FileName)
@@ -45,7 +45,6 @@ internal sealed class DdlBuilder : BaseDdlBuilder
     }
     protected override Dictionary<FieldType, string> DataType => _dataType;
     protected override string SchemaSeparator => ".";
-    protected override string GetPhysicalName(TableSpace tablespace) => tablespace.Name;
     protected override string StartPhysicalNameDelimiter => "\"";
     protected override string EndPhysicalNameDelimiter => StartPhysicalNameDelimiter;
     protected override string TablePrefix => DefaultTablePrefix;

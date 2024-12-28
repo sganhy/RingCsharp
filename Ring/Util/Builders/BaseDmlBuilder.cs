@@ -101,7 +101,7 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 		for (var i = 0; i<columnCount; ++i, ++variableId)
 		{
 			var column = table.Columns[i];
-			if (column.Type == EntityType.Relation) result.Append(_ddlBuilder.GetPhysicalName((Relation)column));
+			if (column.Type == EntityType.Relation) result.Append(column.PhysicalName);
 			else
 			{
 				var field = (Field)column;
