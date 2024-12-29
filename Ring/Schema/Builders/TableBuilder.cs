@@ -126,7 +126,7 @@ internal sealed class TableBuilder
 #pragma warning restore CA1822, S2325
 
 #pragma warning disable CA1822, S2325 // Mark members as static
-    internal Table GetMtm(Table partialTable, IDdlBuilder ddlBuilder, int objectIndex) 
+    internal Table GetMtm(Table partialTable, IDdlBuilder ddlBuilder, string physicalName, int objectIndex) 
 	{
         // Code size: 194 (0xc2)
         // add @ prefix to logical name
@@ -140,7 +140,7 @@ internal sealed class TableBuilder
 		var metaIndex = new Meta(0, (byte)EntityType.Index, 0, 0, flags, partialTable.Name, null, value, true);
 		var metaArr = new Meta[] { metaRelation, metaRelation, metaIndex };
 		var segMent = new ArraySegment<Meta>(metaArr, 0, 3);
-		var result = metaTable.ToTable(segMent, PhysicalType.Table, ddlBuilder, objectIndex) ?? partialTable;
+		var result = metaTable.ToTable(segMent, PhysicalType.Table, ddlBuilder, physicalName, objectIndex) ?? partialTable;
 		result.RecordIndexes[0]=0; // columnMapper 4 Mtm table is always {0,1}
 		result.RecordIndexes[1]=1; // columnMapper 4 Mtm table is always {0,1}
 		return result;
@@ -155,10 +155,12 @@ internal sealed class TableBuilder
         var ddlBuilder = provider.GetDdlBuilder();
 		var emptyTable = Meta.GetEmptyTable(metaTable);
 		var emptySchema = Meta.GetEmptySchema(GetSchema(0, schemaName), provider);
-		var spanMeta = metaArray.AsSpan();
+		var physicalName = ddlBuilder.GetPhysicalName(emptyTable, emptySchema);
+
+        var spanMeta = metaArray.AsSpan();
 		for (var i=0; i< spanMeta.Length; ++i) spanMeta[i] = Meta.Create(i,spanMeta[i]);
 		return metaTable.ToTable(new ArraySegment<Meta>(metaArray, 0, metaArray.Length),
-				physicalType ?? PhysicalType.Table, ddlBuilder, 0) ?? emptyTable;
+				physicalType ?? PhysicalType.Table, ddlBuilder, physicalName, 0) ?? emptyTable;
 	}
 
 	private static Meta GetTable(int id, string name, TableType tableType, bool active=true) {

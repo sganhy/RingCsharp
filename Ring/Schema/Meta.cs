@@ -176,13 +176,13 @@ internal readonly struct Meta : IEquatable<Meta>
 	internal bool IsTablespaceIndex() => ReadFlag(BitPositionTablespaceIndex);
 	#endregion
 
-	internal static DbSchema GetEmptySchema(Meta meta, DatabaseProvider provider) =>
-		new(meta.Id, meta.Name, meta.Name, meta.Description, Array.Empty<Parameter>(),
-			Array.Empty<Lexicon>(), SchemaLoadType.Full, SchemaType.Undefined, Array.Empty<Sequence>(), Array.Empty<Table>(),
-			Array.Empty<Table>(), Array.Empty<TableSpace>(), provider, 0, meta.Active, meta.IsEntityBaseline);
+	internal static DbSchema GetEmptySchema(Meta meta, DatabaseProvider provider) // Code size: 90 (0x5a)
+		=> new(meta.Id, meta.Name, provider.GetDdlBuilder().GetPhysicalName(EntityType.Schema,meta.Name), meta.Description, 
+			Array.Empty<Parameter>(), Array.Empty<Lexicon>(), SchemaLoadType.Full, SchemaType.Undefined, Array.Empty<Sequence>(), 
+			Array.Empty<Table>(), Array.Empty<Table>(), Array.Empty<TableSpace>(), provider, 0, meta.Active, meta.IsEntityBaseline);
 
-	internal static Table GetEmptyTable(Meta meta) =>
-		new(meta.Id, meta.Name, meta.Description, meta.Value, string.Empty,
+	internal static Table GetEmptyTable(Meta meta) // Code size: 106 (0x6a)
+		=> new(meta.Id, meta.Name, meta.Description, meta.Value, string.Empty,
 			meta.DataType.ToTableType(), Array.Empty<Relation>(), Array.Empty<Field>(), Array.Empty<int>(), Array.Empty<IColumn>(),
 			Array.Empty<Index>(), meta.ReferenceId, PhysicalType.Table, -1, meta.IsEntityBaseline, meta.Active,
 			meta.IsTableCached, meta.IsTableReadonly);
@@ -218,20 +218,21 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	internal Relation? ToRelation(Table to, string physicalName)
 	{
+		// Code size: 134 (0x86)
 		if (IsRelation)
 		{
 			var fieldType = FieldType.Undefined;
 			if (to.Type == TableType.Business || to.Type == TableType.Lexicon)
 				fieldType = to.Fields[to.RecordIndexes[0]].Type;
-			return new Relation(Id, Name, physicalName, Description, GetRelationType(), to, -1, fieldType,
-				IsRelationNotNull, HasRelationConstraint, IsEntityBaseline, Active);
+			return new Relation(Id, Name, string.Equals(physicalName, Name, StringComparison.Ordinal) ? Name : physicalName, 
+				Description, GetRelationType(), to, -1, fieldType,IsRelationNotNull, HasRelationConstraint, IsEntityBaseline, Active);
 		}
 		return null;
 	}
 	
-	internal Field? ToField(string physicalName) // Code size: 82 (0x52)
-		=> IsField ? new Field(Id, Name, physicalName, Description, GetFieldType(), GetFieldSize(), GetFieldDefaultValue(), 
-			GetSearchableType(), IsEntityBaseline, IsFieldNotNull(), IsFieldMultilingual(), Active) : null;
+	internal Field? ToField(string physicalName) // Code size: 106 (0x6a)
+		=> IsField ? new Field(Id, Name, string.Equals(physicalName, Name, StringComparison.Ordinal)? Name: physicalName, Description, GetFieldType(), 
+			GetFieldSize(), GetFieldDefaultValue(), GetSearchableType(), IsEntityBaseline, IsFieldNotNull(), IsFieldMultilingual(), Active) : null;
 
 	internal static DbSchema? ToSchema(Meta[] schema, DatabaseProvider provider,
 		SchemaType type = SchemaType.Static, SchemaLoadType loadType = SchemaLoadType.Full)
@@ -252,8 +253,8 @@ internal readonly struct Meta : IEquatable<Meta>
 			var tableById = ShallowCopy(tableByName);
 			var tableSpaces = GetTableSpaces(schema, ddlBuilder);
 
-            // sort arrays - already pre-sorted by name
-            Array.Sort(parameters, (x, y) => x.Id.CompareTo(y.Id));
+			// sort arrays - already pre-sorted by name
+			Array.Sort(parameters, (x, y) => x.Id.CompareTo(y.Id));
 			Array.Sort(tableById, (x, y) => x.Id.CompareTo(y.Id));
 
 			// build schema to result
@@ -281,13 +282,13 @@ internal readonly struct Meta : IEquatable<Meta>
 				IsEntityBaseline, Active) : null;
 	}
 
-	internal Index? ToIndex(string physicalName) => IsIndex ? new Index(Id, Name, physicalName, Description, GetIndexedColumns(),
-		IsIndexUnique, IsIndexBitmap, Active, IsEntityBaseline) : null;
+	internal Index? ToIndex(string physicalName) // Code size: 65 (0x41)
+		=> IsIndex ? new Index(Id, Name, physicalName, Description, GetIndexedColumns(), IsIndexUnique, IsIndexBitmap, Active, IsEntityBaseline) : null;
 
 	/// <summary>
 	/// 	Create a instance of table, relation assigned later by schema creation
 	/// </summary>
-	internal Table? ToTable(ArraySegment<Meta> tableItems, PhysicalType physicalType, IDdlBuilder ddlBuilder, int objectIndex)
+	internal Table? ToTable(ArraySegment<Meta> tableItems, PhysicalType physicalType, IDdlBuilder ddlBuilder, string physicalName, int objectIndex)
 	{
 		if (IsTable)
 		{
@@ -296,10 +297,9 @@ internal readonly struct Meta : IEquatable<Meta>
 			var indexes = GetIndexes(tableItems, ddlBuilder);
 			var tableType = DataType.ToTableType();
 			var columnMapperSize = GetColumnMapperSize(tableItems, tableType, fields.Length);
-			var physicalName = ddlBuilder.GetPhysicalName(EntityType.Table, Name);
 
-            // sort arrays
-            Array.Sort(fields, (x, y) => string.CompareOrdinal(x.Name, y.Name));
+			// sort arrays
+			Array.Sort(fields, (x, y) => string.CompareOrdinal(x.Name, y.Name));
 			Array.Sort(indexes, (x, y) => string.CompareOrdinal(x.Name, y.Name));
 
 			return new Table(Id, Name, Description, Value, physicalName,
@@ -512,7 +512,8 @@ internal readonly struct Meta : IEquatable<Meta>
 				var segment = dico.ContainsKey(meta.Id) ?
 					new ArraySegment<Meta>(schema, dico[meta.Id].Item1, dico[meta.Id].Item2) :
 					new ArraySegment<Meta>(schema, 0, 0);
-				var table = meta.ToTable(segment, PhysicalType.Table, ddlBuilder, mtmCount+ tableIndex);
+				var physicalName = ddlBuilder.GetPhysicalName(GetEmptyTable(meta),emptySchema);
+				var table = meta.ToTable(segment, PhysicalType.Table, ddlBuilder, physicalName, mtmCount + tableIndex);
 #pragma warning disable CS8604 // Possible null reference argument.
 				result.Add(table);
 #pragma warning restore CS8604

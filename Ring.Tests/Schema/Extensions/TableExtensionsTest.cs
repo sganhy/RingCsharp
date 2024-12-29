@@ -6,6 +6,8 @@ using Ring.Schema.Extensions;
 using System.Globalization;
 using System.Linq.Expressions;
 using Xunit.Abstractions;
+using Xunit.Sdk;
+using PostGDdlBuilder = Ring.Util.Builders.PostgreSQL.DdlBuilder;
 
 namespace Ring.Tests.Schema.Extensions;
 
@@ -357,7 +359,7 @@ public class TableExtensionsTest : BaseTest
         var meta2 = table1.ToMeta(schema.Id);
         var metaTable = Meta.FirstOrDefault(meta2, EntityType.Table);
         Assert.NotNull(metaTable);
-        var table2 = metaTable.Value.ToTable(new ArraySegment<Meta>(meta2), table1.PhysicalType, table1.PhysicalName,0);
+        var table2 = metaTable.Value.ToTable(new ArraySegment<Meta>(meta2), table1.PhysicalType, new PostGDdlBuilder(), table1.PhysicalName, 0);
         Assert.NotNull(table2);
         // copy relations
         for (var i = 0; i < table2.Relations.Length; ++i) table2.Relations[i] = table1.Relations[i];

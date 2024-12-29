@@ -157,6 +157,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
             case EntityType.Schema:
             case EntityType.Tablespace:
             case EntityType.Relation:
+            case EntityType.Field:
 #pragma warning disable CA1308 // Normalize strings to uppercase
                 // build different convention connected to ==> Provider
                 var physicalName = NamingConvention.ToSnakeCase(name)?.ToLowerInvariant() ?? string.Empty;

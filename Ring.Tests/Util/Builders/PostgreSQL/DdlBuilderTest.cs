@@ -54,7 +54,7 @@ public class DdlBuilderTest : BaseBuilderTest
         var metaItems = GetMeta2TableItems(true);
         var physicalName = _faker.Random.String();
         var segment = new ArraySegment<Meta>(metaItems, 0, metaItems.Length);
-        var table2 = metaTable.ToTable(segment, PhysicalType.Table, physicalName, 0);
+        var table2 = metaTable.ToTable(segment, PhysicalType.Table, _sut, physicalName, 0);
         Assert.NotNull(table2);
         table2.Relations[1] = GetAnonymousRelation(RelationType.Mto, 1, @"skill2book");
         table2.Relations[0] = GetAnonymousRelation(RelationType.Mtm, 8, @"ability2book");
@@ -82,7 +82,7 @@ public class DdlBuilderTest : BaseBuilderTest
         var metaItems = GetMeta2TableItems(false);
         var physicalName = _faker.Random.String();
         var segment = new ArraySegment<Meta>(metaItems, 0, metaItems.Length);
-        var table3 = metaTable.ToTable(segment, PhysicalType.Table, physicalName, 0);
+        var table3 = metaTable.ToTable(segment, PhysicalType.Table, _sut, physicalName, 0);
 #pragma warning disable CS8602
         table3.Relations[0] = GetAnonymousRelation(RelationType.Mto, 11, @"skill2book", true);
         table3.LoadColumnMapper();
@@ -112,7 +112,7 @@ public class DdlBuilderTest : BaseBuilderTest
         var metaItems = GetMeta2TableItems(false);
         var physicalName = _faker.Random.String();
         var segment = new ArraySegment<Meta>(metaItems, 0, metaItems.Length);
-        var table4 = metaTable.ToTable(segment, PhysicalType.Table, physicalName,0);
+        var table4 = metaTable.ToTable(segment, PhysicalType.Table, _sut, physicalName, 0);
 
 #pragma warning disable CS8602
         table4.Relations[0] = GetAnonymousRelation(RelationType.Mto, 11, @"skill2book", false);
@@ -174,7 +174,7 @@ public class DdlBuilderTest : BaseBuilderTest
         Assert.NotNull(testTable);
         var field11 = testTable.GetField("test_11");
         Assert.NotNull(field11);
-        testTable.Columns[11] = new Field(field11.Id, field11.Name, null, field11.Type, 0, null, SearchableType.None, true, true, true, true); // replace field
+        testTable.Columns[11] = new Field(field11.Id, field11.Name, field11.Name, null, field11.Type, 0, null, SearchableType.None, true, true, true, true); // replace field
         var expectedSql = $"CREATE TABLE test.\"@test\" (\n" + "\ttest_0 int8,\n" +
                 "\ttest_1 int4,\n" + "\ttest_2 int2,\n" + "\ttest_3 int2,\n" +
                 "\ttest_4 float4,\n" + "\ttest_5 float8,\n" + "\ttest_6 varchar(16) COLLATE \"C\",\n" + "\ttest_7 varchar(512) COLLATE \"C\",\n" +
@@ -196,7 +196,7 @@ public class DdlBuilderTest : BaseBuilderTest
         // arrange 
         var fileName = _faker.Random.String();
         var tablespaceName = _faker.Random.String();
-        var tablespace = new TableSpace(_faker.Random.Number(int.MinValue,int.MaxValue), tablespaceName, _faker.Random.String(), true, true, true,
+        var tablespace = new TableSpace(_faker.Random.Number(int.MinValue,int.MaxValue), tablespaceName, tablespaceName, _faker.Random.String(), true, true, true,
             _faker.Random.WordsArray(11),
             fileName, true, true);
         var expectedSql = $"CREATE TABLESPACE {tablespaceName} LOCATION '{fileName}'";
@@ -368,10 +368,10 @@ public class DdlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var relation = GetAnonymousRelation(RelationType.Otop, 5, "rETURnINg", false);
-        var expectedSql = $"\"{relation.Name}\"";
+        var expectedSql = "r_e_t_u_rn_i_ng";
 
         // act 
-        var result = _sut.GetPhysicalName(relation);
+        var result = _sut.GetPhysicalName(EntityType.Relation, relation.Name);
 
         // assert
         Assert.Equal(expectedSql, result);
@@ -399,12 +399,12 @@ public class DdlBuilderTest : BaseBuilderTest
     public void GetPhysicalName_Schema1_SchemaName()
     {
         // arrange 
-        var meta = new Meta("rpg_sheet");
+        var meta = new Meta("RpgSheet");
         var schema = Meta.GetEmptySchema(meta, DatabaseProvider.PostgreSql);
         var expectedResult = "rpg_sheet";
 
         // act 
-        var result = _sut.GetPhysicalName(schema);
+        var result = _sut.GetPhysicalName(EntityType.Schema, meta.Name);
 
         // assert
         Assert.Equal(expectedResult, result);
@@ -419,7 +419,7 @@ public class DdlBuilderTest : BaseBuilderTest
         var expectedResult = "\"@test\"";
 
         // act 
-        var result = _sut.GetPhysicalName(schema);
+        var result = _sut.GetPhysicalName(EntityType.Schema, meta.Name);
 
         // assert
         Assert.Equal(expectedResult, result);

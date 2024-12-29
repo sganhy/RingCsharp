@@ -71,8 +71,8 @@ public sealed class IndexExtensionsTest : BaseTest
         var name = _faker.Random.String();
         var description = _faker.Random.String();
         var columns = _faker.Random.WordsArray(5).ToArray();
-        var index1 = new Index(id, name, description, columns, true, false, true, false);
-        var index2 = new Index(id, name, description, columns, true, false, true, false);
+        var index1 = new Index(id, name, name, description, columns, true, false, true, false);
+        var index2 = new Index(id, name, name, description, columns, true, false, true, false);
 
         // act 
         var hash1 = IndexExtensions.GetHashCode(index1);
@@ -91,9 +91,9 @@ public sealed class IndexExtensionsTest : BaseTest
         var description = _faker.Random.String();
         var columns = _faker.Random.WordsArray(5).ToArray();
         var columns2 = _faker.Random.WordsArray(7).ToArray();
-        var index1 = new Index(id, name, description, columns, true, false, true, false);
-        var index2 = new Index(id, name, description, columns2, true, false, true, false);
-        var index3 = new Index(id, name, description, columns, true, false, true, true);
+        var index1 = new Index(id, name, name, description, columns, true, false, true, false);
+        var index2 = new Index(id, name, name, description, columns2, true, false, true, false);
+        var index3 = new Index(id, name, name, description, columns, true, false, true, true);
 
         // act 
         var hash1 = IndexExtensions.GetHashCode(index1);

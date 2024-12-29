@@ -555,14 +555,14 @@ public struct Record : IEquatable<Record>
 	private static void ThrowInvalidBase64String() =>
 		throw new FormatException(ResourceHelper.GetErrorMessage(ResourceType.InvalidBase64String));
 
-    private static IDdlBuilder GetDefaultDdlBuilder() => new Ring.Util.Builders.PostgreSQL.DdlBuilder();
+	private static IDdlBuilder GetDefaultDdlBuilder() => new Ring.Util.Builders.PostgreSQL.DdlBuilder();
 
-    private static Table GetDefaultType()
+	private static Table GetDefaultType()
 	{
 		// Code size: 77 (0x4d)
 		var metaTable = new Meta(-1, (byte)EntityType.Table, 0, (int)TableType.Undefined, 0L, string.Empty, null, null, true);
 		var metaArray = new Meta[] { new(0, (byte)EntityType.Field, 0, 0, 0L, string.Empty, null, null, true) };
-		return metaTable.ToTable(new ArraySegment<Meta>(metaArray), PhysicalType.Undefined, GetDefaultDdlBuilder(), 1)!; // cannot be null here!!
+		return metaTable.ToTable(new ArraySegment<Meta>(metaArray), PhysicalType.Undefined, GetDefaultDdlBuilder(), string.Empty, 1)!; // cannot be null here!!
 	}
 
 	#endregion

@@ -12,6 +12,7 @@ using Ring.Util.Builders.MySQL;
 using Ring.Data.Models;
 using Bogus;
 using Xunit.Abstractions;
+using Bogus.DataSets;
 
 namespace Ring.Tests.Data;
 
@@ -673,7 +674,7 @@ public sealed class RecordTest : BaseTest
         var field = logTable.GetField("entry_time");
         var index = logTable.GetFieldIndex("entry_time");
         var meta = field?.ToMeta(99, FieldType.DateTime);
-        var newField = meta?.ToField();
+        var newField = meta?.ToField(_faker.Random.String());
         logTable.Fields[index] = newField ?? GetAnonymousField();
         var rcd = new Record(logTable, new string?[logTable.RecordSize*3], logTable.RecordSize);
 
@@ -807,7 +808,7 @@ public sealed class RecordTest : BaseTest
         var field = logTable.GetField("entry_time");
         var index = logTable.GetFieldIndex("entry_time");
         var meta = field?.ToMeta(99, FieldType.LongDateTime);
-        var newField = meta?.ToField();
+        var newField = meta?.ToField(_faker.Random.String());
         logTable.Fields[index] = newField ?? logTable.Fields[0];
         var rcd = new Record(logTable);
         var dt = DateTime.ParseExact("1992-09-28T01:02:03.099099", "yyyy-MM-ddTHH:mm:ss.ffffff", CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal);
@@ -832,7 +833,7 @@ public sealed class RecordTest : BaseTest
         var field = logTable.GetField("entry_time");
         var index = logTable.GetFieldIndex("entry_time");
         var meta = field?.ToMeta(99, FieldType.LongDateTime);
-        var newField = meta?.ToField();
+        var newField = meta?.ToField(_faker.Random.String());
         logTable.Fields[index] = newField ?? logTable.Fields[0];
         var rcd = new Record(logTable);
         var dt = DateTimeOffset.ParseExact("2005-12-12T18:17:16.015116-07:45", "yyyy-MM-ddTHH:mm:ss.ffffffzzz", CultureInfo.InvariantCulture);
@@ -855,7 +856,7 @@ public sealed class RecordTest : BaseTest
         var field = logTable.GetField("entry_time");
         var index = logTable.GetFieldIndex("entry_time");
         var meta = field?.ToMeta(99, FieldType.Float);
-        var newField = meta?.ToField();
+        var newField = meta?.ToField(_faker.Random.String());
         logTable.Fields[index] = newField ?? GetAnonymousField();
         var rcd = new Record(logTable);
 
@@ -891,7 +892,7 @@ public sealed class RecordTest : BaseTest
         var field = logTable.GetField("entry_time");
         var index = logTable.GetFieldIndex("entry_time");
         var meta = field?.ToMeta(99, FieldType.Double);
-        var newField = meta?.ToField();
+        var newField = meta?.ToField(_faker.Random.String());
         logTable.Fields[index] = newField ?? GetAnonymousField();
         var rcd = new Record(logTable);
         
@@ -911,7 +912,7 @@ public sealed class RecordTest : BaseTest
         var field = logTable.GetField("entry_time");
         var index = logTable.GetFieldIndex("entry_time");
         var meta = field?.ToMeta(99, FieldType.Double);
-        var newField = meta?.ToField();
+        var newField = meta?.ToField(_faker.Random.String());
         logTable.Fields[index] = newField ?? GetAnonymousField();
         var rcd = new Record(logTable);
 
@@ -933,7 +934,7 @@ public sealed class RecordTest : BaseTest
         var field = logTable.GetField("entry_time");
         var index = logTable.GetFieldIndex("entry_time");
         var meta = field?.ToMeta(99, FieldType.Double);
-        var newField = meta?.ToField();
+        var newField = meta?.ToField(_faker.Random.String());
         logTable.Fields[index] = newField ?? GetAnonymousField();
         var rcd = new Record(logTable);
         var dbl = 0.456D;
@@ -970,7 +971,7 @@ public sealed class RecordTest : BaseTest
         var field = logTable.GetField("entry_time");
         var index = logTable.GetFieldIndex("entry_time");
         var meta = field?.ToMeta(99, FieldType.ByteArray);
-        var newField = meta?.ToField();
+        var newField = meta?.ToField(_faker.Random.String());
         logTable.Fields[index] = newField ?? GetAnonymousField();
         var rcd = new Record(logTable);
         var byteArray = new byte[] { 1,2,3,4,5,6,7,8,9, byte.MinValue, byte.MaxValue };
@@ -1004,7 +1005,7 @@ public sealed class RecordTest : BaseTest
         var field = logTable.GetField("entry_time");
         var index = logTable.GetFieldIndex("entry_time");
         var meta = field?.ToMeta(99, FieldType.ByteArray);
-        var newField = meta?.ToField();
+        var newField = meta?.ToField(_faker.Random.String());
         logTable.Fields[index] = newField ?? GetAnonymousField();
         var rcd = new Record(logTable);
 
@@ -1025,7 +1026,7 @@ public sealed class RecordTest : BaseTest
         var field = logTable.GetField("entry_time");
         var index = logTable.GetFieldIndex("entry_time");
         var meta = field?.ToMeta(99, FieldType.ByteArray);
-        var newField = meta?.ToField();
+        var newField = meta?.ToField(_faker.Random.String());
         logTable.Fields[index] = newField ?? GetAnonymousField();
         var rcd = new Record(logTable);
 
@@ -1046,7 +1047,7 @@ public sealed class RecordTest : BaseTest
         var field = logTable.GetField("entry_time");
         var index = logTable.GetFieldIndex("entry_time");
         var meta = field?.ToMeta(99, FieldType.ByteArray);
-        var newField = meta?.ToField();
+        var newField = meta?.ToField(_faker.Random.String());
         logTable.Fields[index] = newField ?? GetAnonymousField();
         var rcd = new Record(logTable, new string?[logTable.RecordSize*3], logTable.RecordSize); // mutliple record 
         var byteArray = new byte[] { _faker.Random.Byte(), _faker.Random.Byte(), _faker.Random.Byte() };

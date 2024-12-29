@@ -6,6 +6,8 @@ using Bogus;
 using Ring.Schema.Models;
 using Xunit.Abstractions;
 using System.Linq.Expressions;
+using PostGDdlBuilder = Ring.Util.Builders.PostgreSQL.DdlBuilder;
+
 
 namespace Ring.Tests.Schema;
 
@@ -167,7 +169,7 @@ public sealed class MetaTest : BaseTest
         var exepectedFieldSize = 80;
 
         // act 
-        var field = meta.ToField();
+        var field = meta.ToField(_faker.Random.String());
 
         // assert
         Assert.NotNull(field);
@@ -196,7 +198,7 @@ public sealed class MetaTest : BaseTest
         var exepectedDefaultValue = "Test2";
 
         // act 
-        var field = meta.ToField();
+        var field = meta.ToField(_faker.Random.String());
 
         // assert
         Assert.NotNull(field);
@@ -224,7 +226,7 @@ public sealed class MetaTest : BaseTest
         var exepectedDefaultValue = "Test3";
 
         // act 
-        var field = meta.ToField();
+        var field = meta.ToField(_faker.Random.String());
 
         // assert
         Assert.NotNull(field);
@@ -249,7 +251,7 @@ public sealed class MetaTest : BaseTest
         var meta = new Meta(4, (byte)EntityType.Undefined, 1032, 2, 6, "status", _faker.Random.String(), "Test3", true);
     
         // act 
-        var field = meta.ToField();
+        var field = meta.ToField(_faker.Random.String());
 
         // assert
         Assert.Null(field);
@@ -274,7 +276,7 @@ public sealed class MetaTest : BaseTest
         var exepectedDefaultValue = "0";
 
         // act 
-        var field = meta.ToField();
+        var field = meta.ToField(_faker.Random.String());
 
         // assert
         Assert.NotNull(field);
@@ -329,7 +331,7 @@ public sealed class MetaTest : BaseTest
            name, _faker.Random.String(), "name;object2book", true);
 
         // act 
-        var index = meta.ToIndex();
+        var index = meta.ToIndex("idx_1071");
 
         // assert
         Assert.NotNull(index);
@@ -350,7 +352,7 @@ public sealed class MetaTest : BaseTest
             _faker.Random.String(), _faker.Random.String(), _faker.Random.String(), _faker.Random.Bool());
         
         // act 
-        var index = meta.ToIndex();
+        var index = meta.ToIndex(_faker.Random.String());
 
         // assert
         Assert.Null(index);
@@ -414,7 +416,7 @@ public sealed class MetaTest : BaseTest
         var exepectedRelType = RelationType.Mtm;
 
         // act 
-        var relation = meta.ToRelation(GetAnonymousTable(1,0));
+        var relation = meta.ToRelation(GetAnonymousTable(1,0), "ability2book");
 
         // assert
         Assert.NotNull(relation);
@@ -503,7 +505,7 @@ public sealed class MetaTest : BaseTest
             "c:\\temp\\rpg\\index", true);
         
         // act 
-        var tableSpace = meta.ToTableSpace();
+        var tableSpace = meta.ToTableSpace("rpg_index");
 
         // assert
         Assert.NotNull(tableSpace);
@@ -526,7 +528,7 @@ public sealed class MetaTest : BaseTest
         var segment = new ArraySegment<Meta>(metaItems, 0, metaItems.Length);
 
         // act 
-        var table = metaTable.ToTable(segment, PhysicalType.Table, physicalName,0);
+        var table = metaTable.ToTable(segment, PhysicalType.Table, new PostGDdlBuilder(), _faker.Random.String(), 0);
         var field = table?.GetField("name");
         var fieldPk = table?.GetField("id");
 
@@ -562,7 +564,7 @@ public sealed class MetaTest : BaseTest
         var segment = new ArraySegment<Meta>(metaItems, 0, metaItems.Length);
 
         // act 
-        var table = metaTable.ToTable(segment, PhysicalType.Table, physicalName,0);
+        var table = metaTable.ToTable(segment, PhysicalType.Table, new PostGDdlBuilder(), _faker.Random.String(), 0);
         var fieldPk = table?.GetField("id");
 
         // assert
@@ -640,7 +642,6 @@ public sealed class MetaTest : BaseTest
             }
         }
     }
-
 
     [Fact]
     internal void GetEmptyRelation_Meta_RelationObject()
