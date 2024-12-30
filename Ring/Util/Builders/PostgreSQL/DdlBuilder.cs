@@ -50,4 +50,7 @@ internal sealed class DdlBuilder : BaseDdlBuilder
     protected override string TablePrefix => DefaultTablePrefix;
     protected override string SearchableFieldPrefix => "s_";
 
+    public override string GetPhysicalName(EntityType entityType, string name)
+        => base.GetPhysicalName(entityType, name);
+
 }

@@ -1,4 +1,5 @@
 ﻿using Ring.Schema.Enums;
+using System.Drawing;
 
 namespace Ring.Schema.Models;
 
@@ -42,5 +43,6 @@ internal sealed class Relation : BaseEntity, IColumn
 	RelationType IColumn.RelationType => Type;
 	EntityType IColumn.Type => EntityType.Relation;
 	string IColumn.PhysicalName => PhysicalName;
+	int IColumn.Size => 0;
 
 }

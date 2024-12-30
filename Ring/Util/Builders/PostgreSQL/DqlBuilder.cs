@@ -20,16 +20,15 @@ internal sealed class DqlBuilder : BaseDqlBuilder
     public override DatabaseProvider Provider => DatabaseProvider.PostgreSql;
     public DqlBuilder() : base() {}
 
-    protected override string GetSelection(Field field)
+    protected override string GetSelection(IColumn column)
     {
-        switch (field.Type)
+        switch (column.FieldType)
         {
             case FieldType.ShortDateTime: 
-                return string.Format(CultureInfo.InvariantCulture, ShortDateFormat, _ddlBuilder.GetPhysicalName(field));
+                return string.Format(CultureInfo.InvariantCulture, ShortDateFormat, column.PhysicalName);
             case FieldType.DateTime: 
-                return string.Format(CultureInfo.InvariantCulture, DateTimeFormat, _ddlBuilder.GetPhysicalName(field));
-            default: return _ddlBuilder.GetPhysicalName(field);
+                return string.Format(CultureInfo.InvariantCulture, DateTimeFormat, column.PhysicalName);
+            default: return column.PhysicalName;
         }
     }
-    protected sealed override string GetSelection(Relation relation) => relation.PhysicalName;
 }

@@ -38,9 +38,7 @@ internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
         }
         return _catalogTable;
     }
-    protected abstract string GetSelection(Field field);
-
-    protected abstract string GetSelection(Relation relation);
+    protected abstract string GetSelection(IColumn column);
 
     #region private methods 
 
@@ -56,8 +54,7 @@ internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
         {
             var column = table.Columns[i];
             ++i; // just before continue
-            if (column.Type==EntityType.Relation) result.Append(GetSelection((Relation)column));
-            else result.Append(GetSelection((Field)column));
+            result.Append(GetSelection(column));
             result.Append(ColumnDelimiter);
         }
         --result.Length;

@@ -9,5 +9,6 @@ internal interface IColumn
 	FieldType FieldType { get; }
 	RelationType RelationType { get; }
 	EntityType Type { get; }
+	int Size { get; }
 	string PhysicalName { get; }
 }

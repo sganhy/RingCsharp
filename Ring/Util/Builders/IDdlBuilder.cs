@@ -13,14 +13,13 @@ internal interface IDdlBuilder : ISqlBuilder
     string Create(Index index, Table table, TableSpace? tablespace = null);
     string Create(Constraint constraint, TableSpace? tablespace = null);
     string Drop(Table table);
-    string AlterAddColumn(Table table, Field field);
-    string AlterAddColumn(Table table, Relation relation);
-    string AlterDropColumn(Table table, Field field);
-    string AlterDropColumn(Table table, Relation relation);
+    string AlterAddColumn(Table table, IColumn column);
+    string AlterDropColumn(Table table, IColumn column);
     string Truncate(Table table);
+    string GetSecondColumn(Field field); // some fields are defined onto 2 columns; return the physical name
+
     string GetPhysicalName(Constraint constraint);
     string GetPhysicalName(Table table, DbSchema schema);
-    string GetPhysicalName(Field field, bool firstColumn=true); // some fields are defined on 2 columns
     string GetPhysicalName(Index index, Table table);
     string GetPhysicalName(EntityType entityType, string name);
 }

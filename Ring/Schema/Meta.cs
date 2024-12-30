@@ -430,8 +430,9 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	private static Field[] GetFieldArray(ArraySegment<Meta> items, IDdlBuilder ddlBuilder)
 	{
-		// count element
-		int fieldCount = 0;
+        // Code size: 235 (0xeb)
+        // count element
+        int fieldCount = 0;
 		var primaryKey = FieldExtensions.GetDefaultPrimaryKey(null, FieldType.Int);
 		var span = items.AsSpan();
 		foreach (var item in span)

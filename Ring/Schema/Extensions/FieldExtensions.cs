@@ -37,6 +37,10 @@ internal static class FieldExtensions
 		ReferenceEquals(field, _defaultPrimaryKeyInt64) || ReferenceEquals(field, _defaultPrimaryKeyInt32) ||
 		ReferenceEquals(field, _defaultPrimaryKeyInt16) || ReferenceEquals(field, _defaultPrimaryKeyInt08);
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal static bool IsSearchable(this Field field) // Code size: 22 (0x16)
+		=> field.Type == FieldType.String && field.SearchableType != SearchableType.None;
+
 	/// <summary>
 	/// Calculate searchable field value (remove diacritic characters and value.ToUpper())
 	/// </summary>

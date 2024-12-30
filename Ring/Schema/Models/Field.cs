@@ -38,6 +38,7 @@ internal sealed class Field : BaseEntity, IColumn
 	EntityType IColumn.Type => EntityType.Field;
 	string IColumn.Name => Name;
 	string IColumn.PhysicalName => PhysicalName;
+	int IColumn.Size => Size;
 
 #if DEBUG
 	public override string ToString() => $"{Id} - {Name} ({Type})";

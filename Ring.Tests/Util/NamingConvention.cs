@@ -7,6 +7,7 @@ public class NamingConvention
     [InlineData("", "")]
     [InlineData("HelloWorld", "hello_world")]
     [InlineData("hello_world", "hello_world")]
+    [InlineData("hello_World", "hello_world")]
     [InlineData("HellOWorld", "hell_o_world")]
     [InlineData("Hello World", "hello_world")]
     [InlineData("@Meta", "@meta")]

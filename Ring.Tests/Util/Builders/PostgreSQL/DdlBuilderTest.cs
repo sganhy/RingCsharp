@@ -326,10 +326,10 @@ public class DdlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var field = GetAnonymousField(FieldType.DateTime, 12, 1, "liKe");
-        var expectedSql = $"\"{field.Name}\"";
+        var expectedSql = $"li_ke";
 
         // act 
-        var result = _sut.GetPhysicalName(field);
+        var result = _sut.GetPhysicalName(EntityType.Field, field.Name);
 
         // assert
         Assert.Equal(expectedSql, result);
@@ -339,11 +339,11 @@ public class DdlBuilderTest : BaseBuilderTest
     public void GetPhysicalName_Field2_FieldName()
     {
         // arrange 
-        var field = GetAnonymousField(FieldType.String, 12, 1, "Zorba_Le_Grec");
+        var field = GetAnonymousField(FieldType.String, 12, 1, "zorba_le_grec");
         var expectedSql = field.Name;
 
         // act 
-        var result = _sut.GetPhysicalName(field);
+        var result = _sut.GetPhysicalName(EntityType.Field, field.Name);
 
         // assert
         Assert.Equal(expectedSql, result);
@@ -357,7 +357,7 @@ public class DdlBuilderTest : BaseBuilderTest
         var expectedSql = $"\"{field.Name}\"";
 
         // act 
-        var result = _sut.GetPhysicalName(field);
+        var result = _sut.GetPhysicalName(EntityType.Field, field.Name);
 
         // assert
         Assert.Equal(expectedSql, result);

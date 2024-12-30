@@ -56,121 +56,75 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 
 	protected BaseDdlBuilder() {}
 
-	public string AlterAddColumn(Table table, Field field)
-	{
-		// Code size: 93 (0x5d)
-		var result = new StringBuilder();
-		result.Append(DdlAlter)
+	public string AlterAddColumn(Table table, IColumn column) // Code size: 90 (0x5a)
+		=> new StringBuilder()
+			.Append(DdlAlter)
 			.Append(DdlTable)
 			.Append(table.PhysicalName)
 			.Append(SqlSpace)
 			.Append(DdlAdd)
-			.Append(GetPhysicalName(field))
+			.Append(column.PhysicalName)
 			.Append(SqlSpace)
-			.Append(GetDataType(field, true));
-		return result.ToString();
-	}
-
-	public string AlterAddColumn(Table table, Relation relation)
-	{
-		// Code size: 113 (0x71)
-		var result = new StringBuilder();
-		if (relation.Type == RelationType.Mto || relation.Type == RelationType.Otop)
-		{
-			result.Append(DdlAlter)
-				.Append(DdlTable)
-				.Append(table.PhysicalName)
-				.Append(SqlSpace)
-				.Append(DdlAdd)
-				.Append(relation.PhysicalName)
-				.Append(SqlSpace)
-				.Append(GetDataType(relation));
-		}
-		return result.ToString();
-	}
-
-	public string AlterDropColumn(Table table, Field field)
-	{
-		// Code size: 84 (0x54)
-		var result = new StringBuilder();
-		result.Append(DdlAlter)
+			.Append(GetDataType(column, true))
+			.ToString();
+	
+	public string AlterDropColumn(Table table, IColumn column) // Code size: 80 (0x50)
+		=> new StringBuilder()
+			.Append(DdlAlter)
 			.Append(DdlTable)
 			.Append(table.PhysicalName)
 			.Append(SqlSpace)
 			.Append(DdlDrop)
 			.Append(DdlColumn)
-			.Append(GetPhysicalName(field));
-		return result.ToString();
-	}
+			.Append(column.PhysicalName)
+			.ToString();
 
-	public string AlterDropColumn(Table table, Relation relation)
-	{
-		// Code size: 83 (0x53)
-		var result = new StringBuilder();
-		result.Append(DdlAlter)
+	public string Drop(Table table) // Code size: 42 (0x2a)
+        => new StringBuilder()	
+			.Append(DdlDrop)
 			.Append(DdlTable)
 			.Append(table.PhysicalName)
-			.Append(SqlSpace)
-			.Append(DdlDrop)
-			.Append(DdlColumn)
-			.Append(relation.PhysicalName);
-		return result.ToString();
-	}
-
-	public string Drop(Table table)
-	{
-		// Code size: 44 (0x2c)
-		var result = new StringBuilder();
-		result.Append(DdlDrop)
-			.Append(DdlTable)
-			.Append(table.PhysicalName);
-		return result.ToString();
-	}
+			.ToString();
 
 	public string Truncate(Table table)
-	{
-		// Code size: 44 (0x2c)
-		var result = new StringBuilder();
-		result.Append(DdlTruncate)
+		=> new StringBuilder()
+			.Append(DdlTruncate)
 			.Append(DdlTable)
-			.Append(table.PhysicalName);
-		return result.ToString();
-	}
+			.Append(table.PhysicalName)
+			.ToString();
 		
-	public string GetPhysicalName(Field field, bool firstColumn = true)
+	public string GetSecondColumn(Field field)
 	{
-		// Code size: 259 (0x103)
-		var wrap = Provider.IsReservedWord(field.Name) ^ field.Name.StartsWith(SpecialEntityPrefix);
-		if (firstColumn) return wrap ? string.Join(null, StartPhysicalNameDelimiter, field.Name, EndPhysicalNameDelimiter) : field.Name;
-		if (field.Type == FieldType.String && field.SearchableType != SearchableType.None) // not optimal !
-			return wrap ? string.Join(null, StartPhysicalNameDelimiter, SearchableFieldPrefix, field.Name, EndPhysicalNameDelimiter) : 
+        // Code size: 194 (0xc2)
+        if (field.IsSearchable()) return Provider.IsReservedWord(field.Name) ^ field.Name.StartsWith(SpecialEntityPrefix) 
+				? string.Join(null, StartPhysicalNameDelimiter, SearchableFieldPrefix, field.Name, EndPhysicalNameDelimiter) : 
 			SearchableFieldPrefix + field.Name;
+		// check DatabaseProvider
 		if (TimeZoneOffsetPrefix != null && field.Type == FieldType.LongDateTime)
 			return string.Join(null, StartPhysicalNameDelimiter, TimeZoneOffsetPrefix, field.Id.ToString(DefaultCulture), EndPhysicalNameDelimiter) ;
 		return string.Empty; // a crash will be better here
 	}
 
-    public string GetPhysicalName(EntityType entityType, string name)
-    {
-        switch (entityType)
-        {
-            case EntityType.Schema:
-            case EntityType.Tablespace:
-            case EntityType.Relation:
+	public virtual string GetPhysicalName(EntityType entityType, string name)
+	{
+		switch (entityType)
+		{
+			case EntityType.Schema:
+			case EntityType.Tablespace:
+			case EntityType.Relation:
             case EntityType.Field:
 #pragma warning disable CA1308 // Normalize strings to uppercase
                 // build different convention connected to ==> Provider
                 var physicalName = NamingConvention.ToSnakeCase(name)?.ToLowerInvariant() ?? string.Empty;
 #pragma warning restore CA1308
-                return name.StartsWith(SpecialEntityPrefix) ^ Provider.IsReservedWord(physicalName) ?
-                    string.Join(null, StartPhysicalNameDelimiter, physicalName, EndPhysicalNameDelimiter) : physicalName;
+				return name.StartsWith(SpecialEntityPrefix) ^ Provider.IsReservedWord(physicalName) ?
+					string.Join(null, StartPhysicalNameDelimiter, physicalName, EndPhysicalNameDelimiter) : physicalName;
 
-        }
-        return string.Empty;
-    }
+		}
+		return string.Empty;
+	}
 
-
-    public string GetPhysicalName(Index index, Table table)
+	public string GetPhysicalName(Index index, Table table)
 	{
 		// Code size: 139 (0x8b)
 		var result = new StringBuilder(33); 
@@ -255,12 +209,13 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	}
 
 	protected abstract string MtmPrefix { get; }
-	protected string GetDataType(Field field, bool firstColumn)
+	protected string GetDataType(IColumn column, bool firstColumn)
 	{
-        // Code size: 96 (0x60)
-        if (!firstColumn && field.Type == FieldType.LongDateTime) return DataType[FieldType.Short];
-        return GetDataType(DataType[field.Type], field.Type, field.Size, VarcharMaxSize,
-			field.Type == FieldType.String || field.Type == FieldType.LongString ?
+		// Code size: 96 (0x60)
+		var fielType = column.FieldType;
+		if (!firstColumn && fielType == FieldType.LongDateTime) return DataType[FieldType.Short];
+		return GetDataType(DataType[fielType], fielType, column.Size, VarcharMaxSize,
+			fielType == FieldType.String || fielType == FieldType.LongString ?
 			StringCollateInformation : null);
 	}
 	protected string GetDataType(Relation relation)
@@ -294,8 +249,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 			.Append('(');
 		for (var i = 0; i<index.Columns.Length; ++i)
 		{
-			var meta = new Meta(index.Columns[i]);
-			result.Append(GetPhysicalName(Meta.GetEmptyField(meta, FieldType.String)))
+			result.Append(index.Columns[i])
 				.Append(',');
 		}
 		result.Length--;
@@ -387,19 +341,18 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 
 	private void Create(StringBuilder subResult, Table table, Field field, bool firstColumn = true)
 	{
-        // Code size: 160 (0xa0)
-        subResult.Append(Indent)
-			.Append(GetPhysicalName(field, firstColumn))
+		// Code size: 160 (0xa0)
+		subResult.Append(Indent)
+			.Append(firstColumn? field.PhysicalName : GetSecondColumn(field))
 			.Append(SqlSpace)
 			.Append(GetDataType(field, firstColumn));
-        if ((field.IsPrimaryKey() || table.Type != TableType.Business) && field.NotNull)
+		if ((field.IsPrimaryKey() || table.Type != TableType.Business) && field.NotNull)
 		{
 			subResult.Append(SqlSpace).Append(DdlNotNull);
 		}
-        subResult.Append(',').Append(SqlLineFeed);
-        if (firstColumn)
-			if ((field.Type == FieldType.String && field.SearchableType != SearchableType.None) ||
-				(field.Type == FieldType.LongDateTime && !string.IsNullOrEmpty(TimeZoneOffsetPrefix)))
+		subResult.Append(',').Append(SqlLineFeed);
+		if (firstColumn)
+			if (field.IsSearchable() || (field.Type == FieldType.LongDateTime && !string.IsNullOrEmpty(TimeZoneOffsetPrefix)))
 			{
 				// recursive call !!
 				Create(subResult, table, field, false);
@@ -430,7 +383,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 		return result.ToString();
 	}
 
-    #endregion
+	#endregion
 
 }
 

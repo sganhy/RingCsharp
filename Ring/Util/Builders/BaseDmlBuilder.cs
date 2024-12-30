@@ -86,8 +86,8 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 
 	private string BuildInsert(Table table)
 	{
-		// Code size: 449 (0x1c1)
-		var result = new StringBuilder();
+        // Code size: 430 (0x1ae)
+        var result = new StringBuilder();
 		var resultValues = new StringBuilder();
 		var spanColumns = new ReadOnlySpan<IColumn>(table.Columns);
 		var columnCount = table.Columns.Length;
@@ -100,24 +100,24 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 		
 		for (var i = 0; i<columnCount; ++i, ++variableId)
 		{
-			var column = table.Columns[i];
+			var column = spanColumns[i];
 			if (column.Type == EntityType.Relation) result.Append(column.PhysicalName);
 			else
 			{
 				var field = (Field)column;
-				result.Append(_ddlBuilder.GetPhysicalName(field));
+				result.Append(field.PhysicalName);
 				#region  add searchable field 
-				if (field.Type == FieldType.String && field.SearchableType != SearchableType.None)
+				if (field.IsSearchable())
 				{
 					result.Append(ColumnDelimiter);
-					result.Append(_ddlBuilder.GetPhysicalName(field,false));
+					result.Append(_ddlBuilder.GetSecondColumn(field));
 					AppendVariable(resultValues, VariableNameTemplate, variableId++, false, column.FieldType);
 				}
 				#endregion
 				#region time zone extra field?
 				if (field.Type == FieldType.LongDateTime) 
 				{
-					var timeZoneField = _ddlBuilder.GetPhysicalName(field, false);
+					var timeZoneField = _ddlBuilder.GetSecondColumn(field);
 					if (!string.IsNullOrEmpty(timeZoneField))
 					{
 						result.Append(ColumnDelimiter);
@@ -151,7 +151,7 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 			.Append(DmlWhere);
 		if (table.Type == TableType.Business || table.Type == TableType.Lexicon)
 		{
-			result.Append(_ddlBuilder.GetPhysicalName(table.Fields[table.RecordIndexes[0]] ?? _defaultField));
+			result.Append(table.Fields[table.RecordIndexes[0]].PhysicalName);
 			result.Append(DmlEqual);
 			result.AppendFormat(CultureInfo.InvariantCulture, VariableNameTemplate, FirstParameter);
 		}
@@ -164,7 +164,7 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 			for (var i=0; i<keyCount; ++i, ++variableIndex)
 			{
 				var column = Meta.GetEmptyField(new Meta(pk[i].Name),FieldType.Int);
-				result.Append(_ddlBuilder.GetPhysicalName(column));
+				result.Append(column.PhysicalName);
 				result.Append(DmlEqual);
 				result.AppendFormat(CultureInfo.InvariantCulture, VariableNameTemplate, 
 					variableIndex.ToString(CultureInfo.InvariantCulture));
@@ -186,7 +186,7 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 
 		if (table.Type == TableType.Business || table.Type == TableType.Lexicon)
 		{
-			result.Append(_ddlBuilder.GetPhysicalName(table.Fields[table.RecordIndexes[0]]))
+			result.Append(table.Fields[table.RecordIndexes[0]].PhysicalName)
 				.Append(DmlEqual)
 				.AppendFormat(CultureInfo.InvariantCulture, VariableNameTemplate, FirstParameter);
 		}
@@ -198,7 +198,7 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 			for (var i = 0; i < keyCount; ++i, ++variableIndex)
 			{
 				var column = Meta.GetEmptyField(new Meta(pk[i].Name), FieldType.Int);
-				result.Append(_ddlBuilder.GetPhysicalName(column))
+				result.Append(column.PhysicalName)
 					.Append(DmlEqual)
 					.AppendFormat(CultureInfo.InvariantCulture, VariableNameTemplate, 
 					variableIndex.ToString(CultureInfo.InvariantCulture));
