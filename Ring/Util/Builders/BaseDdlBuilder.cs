@@ -13,9 +13,10 @@ namespace Ring.Util.Builders;
 internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 {
 	protected static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
+	
 
-	// entity
-	protected static readonly string DdlView = @"VIEW";
+    // entity
+    protected static readonly string DdlView = @"VIEW";
 	protected static readonly string DdlTable = @"TABLE ";  // final space character needed !
 	protected static readonly string DdlConstraint = @"CONSTRAINT ";
 	protected static readonly string DdlIndex = @"INDEX ";
@@ -132,7 +133,8 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 		{
 			//name:  idx_{table_id}_{index_id}
 			case TableType.Business:
-				result.Append(DefaultIndexPrefix).Append(table.Id).Append('_').Append(index.Id);
+				result.Append(DefaultIndexPrefix).Append(table.Id).Append('_')
+					.Append(index.Id.ToString("X2", CultureInfo.InvariantCulture));
 				break;
 			//name:  idx_{from_table_id}_{to_table_id}_{from_relation_id}
 			case TableType.Mtm:

@@ -187,7 +187,11 @@ internal readonly struct Meta : IEquatable<Meta>
 			Array.Empty<Index>(), meta.ReferenceId, PhysicalType.Table, -1, meta.IsEntityBaseline, meta.Active,
 			meta.IsTableCached, meta.IsTableReadonly);
 
-	internal static Relation GetEmptyRelation(Meta meta, RelationType relationType, TableType toTableType) =>
+    internal static Index GetEmptyIndex(Meta meta) // Code size: 64 (0x40)
+        => new(meta.Id, meta.Name, meta.Name, meta.Description, meta.GetIndexedColumns(), meta.IsIndexUnique, meta.IsIndexBitmap, meta.Active,
+			meta.IsEntityBaseline);
+
+    internal static Relation GetEmptyRelation(Meta meta, RelationType relationType, TableType toTableType) =>
 		new(meta.Id, meta.Name, meta.Name, meta.Description, relationType,
 			GetEmptyTable(new Meta(0, (byte)EntityType.Table, 0, (int)toTableType, 0L,
 			meta.Name,null, null, false)), -1, FieldType.Undefined, false, false, true, true);
@@ -292,10 +296,10 @@ internal readonly struct Meta : IEquatable<Meta>
 	{
 		if (IsTable)
 		{
-			var fields = GetFieldArray(tableItems, ddlBuilder);
+            var tableType = DataType.ToTableType();
+            var fields = GetFieldArray(tableItems, ddlBuilder);
 			var relations = GetRelationArray(tableItems);
 			var indexes = GetIndexes(tableItems, ddlBuilder);
-			var tableType = DataType.ToTableType();
 			var columnMapperSize = GetColumnMapperSize(tableItems, tableType, fields.Length);
 
 			// sort arrays
@@ -386,12 +390,13 @@ internal readonly struct Meta : IEquatable<Meta>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private bool ReadFlag(byte bitPosition) => ((Flags >> (bitPosition - 1)) & 1) > 0;
 
-	private static Index[] GetIndexes(ArraySegment<Meta> items, IDdlBuilder ddlBuilder)
+	private Index[] GetIndexes(ArraySegment<Meta> items, IDdlBuilder ddlBuilder)
 	{
 		// count element
 		var indexCount = 0;
 		var span = items.AsSpan();
-		foreach (var item in span) if (item.IsIndex) ++indexCount;
+		var table = GetEmptyTable(this);
+        foreach (var item in span) if (item.IsIndex) ++indexCount;
 		if (indexCount <= 0) return Array.Empty<Index>();
 		var result = new Index[indexCount];
 		var fieldIndex = 0;
@@ -399,9 +404,10 @@ internal readonly struct Meta : IEquatable<Meta>
 		{
 			if (item.IsIndex)
 			{
-				// cannot be null here 
+				var tempIndex = GetEmptyIndex(item);
+                // cannot be null here 
 #pragma warning disable CS8601 // Possible null reference assignment.
-				result[fieldIndex] = item.ToIndex(ddlBuilder.GetPhysicalName(EntityType.Index, item.Name));
+                result[fieldIndex] = item.ToIndex(ddlBuilder.GetPhysicalName(tempIndex, table));
 #pragma warning restore CS8601
 				++fieldIndex;
 			}

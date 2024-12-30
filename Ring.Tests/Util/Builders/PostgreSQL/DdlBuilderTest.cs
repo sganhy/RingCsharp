@@ -215,7 +215,7 @@ public class DdlBuilderTest : BaseBuilderTest
         var metaList = GetSchema1();
         var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
         var table = schema?.GetTable("book");
-        var expectedResult = "CREATE INDEX idx_1021_2 ON rpg_sheet.t_book (title)";
+        var expectedResult = "CREATE INDEX idx_1021_02 ON rpg_sheet.t_book (title)";
 
         // act 
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
@@ -471,7 +471,7 @@ public class DdlBuilderTest : BaseBuilderTest
         var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
         var table = schema?.GetTable("deity");
         var ddlBuilder = DatabaseProvider.PostgreSql.GetDdlBuilder();
-        var expectedResult = "idx_1037_1";
+        var expectedResult = "idx_1037_01";
 
         // act 
 #pragma warning disable CS8602 // Dereference of a possibly null reference.

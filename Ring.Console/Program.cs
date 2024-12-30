@@ -9,6 +9,10 @@ using Serilog.Extensions.Logging;
 using Serilog.Formatting.Json;
 using Ring.Schema.Extensions;
 using System.Diagnostics;
+using System.Globalization;
+
+int op = 10;
+var tests = op.ToString("X2", CultureInfo.InvariantCulture); 
 
 var logger = new LoggerConfiguration()
                           // add console as logging target

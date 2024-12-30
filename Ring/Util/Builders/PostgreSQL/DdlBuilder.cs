@@ -6,51 +6,49 @@ namespace Ring.Util.Builders.PostgreSQL;
 
 internal sealed class DdlBuilder : BaseDdlBuilder
 {
-    private readonly static Dictionary<FieldType, string> _dataType = new()
-    {
-        { FieldType.String,        "varchar" },
-        { FieldType.LongString,    "text"    },
-        { FieldType.Double,        "float8"  },
-        { FieldType.Float,         "float4"  },
-        { FieldType.Long,          "int8"    },
-        { FieldType.Int,           "int4"    },
-        { FieldType.Short,         "int2"    },
-        { FieldType.Byte,          "int2"    },
-        { FieldType.Boolean,       "bool"    },
-        { FieldType.ShortDateTime, "date"    },
-        { FieldType.ByteArray,     "bytea"   },
-        { FieldType.DateTime,      "timestamp without time zone" },
-        { FieldType.LongDateTime,  "timestamp without time zone" }
-    };
+	private readonly static Dictionary<FieldType, string> _dataType = new()
+	{
+		{ FieldType.String,        "varchar"},
+		{ FieldType.LongString,    "text"},
+		{ FieldType.Double,        "float8"},
+		{ FieldType.Float,         "float4"},
+		{ FieldType.Long,          "int8"},
+		{ FieldType.Int,           "int4"},
+		{ FieldType.Short,         "int2"},
+		{ FieldType.Byte,          "int2"},
+		{ FieldType.Boolean,       "bool"},
+		{ FieldType.ShortDateTime, "date"},
+		{ FieldType.ByteArray,     "bytea"},
+		{ FieldType.DateTime,      "timestamp without time zone"},
+		{ FieldType.LongDateTime,  "timestamp without time zone"}
+	};
 
-    public DdlBuilder() : base() { }
+	public DdlBuilder() : base() { }
 
-    public override DatabaseProvider Provider => DatabaseProvider.PostgreSql;
-    protected override string StringCollateInformation => @"COLLATE ""C""";
-    protected override string MtmPrefix => "@mtm_";
-    protected override string TimeZoneOffsetPrefix => "@tz_offset_";
-    protected override int VarcharMaxSize => 65535;
+	public override DatabaseProvider Provider => DatabaseProvider.PostgreSql;
+	protected override string StringCollateInformation => @"COLLATE ""C""";
+	protected override string MtmPrefix => "@mtm_";
+	protected override string TimeZoneOffsetPrefix => "@tz_offset_";
+	protected override int VarcharMaxSize => 65535;
 
-    public override string Create(TableSpace tablespace)
-    {
-        var result = new StringBuilder();
-        result.Append(DdlCreate)
-            .Append(DdlTableSpace)
-            .Append(tablespace.PhysicalName)
-            .Append(@" LOCATION ")
-            .Append('\'')
-            .Append(tablespace.FileName)
-            .Append('\'');
-        return result.ToString();
-    }
-    protected override Dictionary<FieldType, string> DataType => _dataType;
-    protected override string SchemaSeparator => ".";
-    protected override string StartPhysicalNameDelimiter => "\"";
-    protected override string EndPhysicalNameDelimiter => StartPhysicalNameDelimiter;
-    protected override string TablePrefix => DefaultTablePrefix;
-    protected override string SearchableFieldPrefix => "s_";
+	public override string Create(TableSpace tablespace) // Code size: 77 (0x4d)
+		=> new StringBuilder()
+			.Append(DdlCreate)
+			.Append(DdlTableSpace)
+			.Append(tablespace.PhysicalName)
+			.Append(@" LOCATION ")
+			.Append('\'')
+			.Append(tablespace.FileName)
+			.Append('\'').ToString();
 
-    public override string GetPhysicalName(EntityType entityType, string name)
-        => base.GetPhysicalName(entityType, name);
+	protected override Dictionary<FieldType, string> DataType => _dataType;
+	protected override string SchemaSeparator => ".";
+	protected override string StartPhysicalNameDelimiter => "\"";
+	protected override string EndPhysicalNameDelimiter => StartPhysicalNameDelimiter;
+	protected override string TablePrefix => DefaultTablePrefix;
+	protected override string SearchableFieldPrefix => "s_";
+
+	public override string GetPhysicalName(EntityType entityType, string name)
+		=> base.GetPhysicalName(entityType, name);
 
 }
