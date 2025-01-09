@@ -104,19 +104,20 @@ internal static class StringExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static DateTime ToDateTime(this string value, FieldType fieldType)
 	{
-		var year = int.Parse(value.AsSpan(0, 4), DefaultCulture);
-		var month = int.Parse(value.AsSpan(5, 2), DefaultNumberStyle, DefaultCulture);
-		var day = int.Parse(value.AsSpan(8, 2), DefaultNumberStyle, DefaultCulture);
+        // Code size: 192 (0xc0)
+        var year = int.Parse(value.AsSpan(0, 4), DefaultCulture);
+		var month = int.Parse(value.AsSpan(5, 2), NumberStyles.Integer, DefaultCulture);
+		var day = int.Parse(value.AsSpan(8, 2), NumberStyles.Integer, DefaultCulture);
 		if (fieldType == FieldType.ShortDateTime)
 		{
 			return new DateTime(year, month, day, 0, 0, 0, DateTimeKind.Local);
 		}
 		else
 		{
-			var hour = int.Parse(value.AsSpan(11, 2), DefaultNumberStyle, DefaultCulture);
-			var minute = int.Parse(value.AsSpan(14, 2), DefaultNumberStyle, DefaultCulture);
-			var second = int.Parse(value.AsSpan(17, 2), DefaultNumberStyle, DefaultCulture);
-			var milliSecond = int.Parse(value.AsSpan(20, 3), DefaultNumberStyle, DefaultCulture);
+			var hour = int.Parse(value.AsSpan(11, 2), NumberStyles.Integer, DefaultCulture);
+			var minute = int.Parse(value.AsSpan(14, 2), NumberStyles.Integer, DefaultCulture);
+			var second = int.Parse(value.AsSpan(17, 2), NumberStyles.Integer, DefaultCulture);
+			var milliSecond = int.Parse(value.AsSpan(20, 3), NumberStyles.Integer, DefaultCulture);
 			if (fieldType == FieldType.DateTime) return new DateTime(year, month, day, hour, minute, second, milliSecond, DateTimeKind.Utc);
 		}
 		return DateTime.MinValue;

@@ -31,8 +31,6 @@ public struct Record : IEquatable<Record>
 	private static readonly string NullString = "<Null>";
 	private static readonly string DefaultPrimaryKeyValue = "0";
 	private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
-	private static readonly NumberStyles DefaultNumberStyle = NumberStyles.Integer;
-	private static readonly NumberStyles DefaultFloatStyle = NumberStyles.Float;
 	private static readonly string BooleanTrue = true.ToString(DefaultCulture);
 	private static readonly string BooleanFalse = false.ToString(DefaultCulture);
 #pragma warning restore RCS1187
@@ -328,8 +326,8 @@ public struct Record : IEquatable<Record>
 	}
 	public override readonly int GetHashCode()
 	{
-		  // Code size: 108 (0x6c)
-		  var result = new StringBuilder();
+		// Code size: 108 (0x6c)
+		var result = new StringBuilder();
 		result.Append(_type.PhysicalName);
 		var i = _offset;
 		var columnCount = _type.RecordSize - 1;
@@ -410,10 +408,10 @@ public struct Record : IEquatable<Record>
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private void SetIntegerField(int fieldId, FieldType numberType, string value) {
-		// Code size: 124 (0x7c)
+        // Code size: 120 (0x78)
 #pragma warning disable RCS1003 // Add braces to if-else (when expression spans over multiple lines)
-		if (!value.IsNumber()) ThrowWrongStringFormat();
-		else if (long.TryParse(value, DefaultNumberStyle, DefaultCulture, out long lng) &&
+        if (!value.IsNumber()) ThrowWrongStringFormat();
+		else if (long.TryParse(value, NumberStyles.Integer, DefaultCulture, out long lng) &&
 				(numberType == FieldType.Long ||
 				(numberType == FieldType.Int && lng <= MaxIntValue && lng >= MinIntValue) ||
 				(numberType == FieldType.Short && lng <= MaxShortValue && lng >= MinShortValue) ||
@@ -427,10 +425,10 @@ public struct Record : IEquatable<Record>
 	{
 		// see. ISO 6093:1985
 		// Code size: 103 (0x67)
-		if (double.TryParse(value, DefaultFloatStyle, DefaultCulture, out double dbl))
+		if (double.TryParse(value, NumberStyles.Float, DefaultCulture, out double dbl))
 		{
 			if (fieldType == FieldType.Double) SetData(fieldId, dbl.ToString(DefaultCulture));
-			else if (fieldType == FieldType.Float && float.TryParse(value, DefaultFloatStyle, DefaultCulture, out float flt))
+			else if (fieldType == FieldType.Float && float.TryParse(value, NumberStyles.Float, DefaultCulture, out float flt))
 				SetData(fieldId, flt.ToString(DefaultCulture));
 			else ThrowValueTooLarge(fieldType);
 			return;

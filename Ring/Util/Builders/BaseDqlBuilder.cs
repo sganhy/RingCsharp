@@ -44,7 +44,7 @@ internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
 
     private string BuildSelect(Table table)
     {
-        // Code size: 154 (0x9a)
+        // Code size: 117 (0x75)
         var result = new StringBuilder();
         var columnCount = table.Columns.Length;
         var i=0;
@@ -54,8 +54,7 @@ internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
         {
             var column = table.Columns[i];
             ++i; // just before continue
-            result.Append(GetSelection(column));
-            result.Append(ColumnDelimiter);
+            result.Append(GetSelection(column)).Append(ColumnDelimiter);
         }
         --result.Length;
         result.Append(SqlFrom).Append(table.PhysicalName);

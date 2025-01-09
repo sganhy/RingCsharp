@@ -29,8 +29,8 @@ internal static class AlterQueryExtensions
 
 	internal static string GetStringCode(this AlterQuery alterQuery)
 	{
-		// Code size: 128 (0x80)
-		/*
+        // Code size: 126 (0x7e)
+        /*
 		*  readonly int Id
 		*  readonly Table Table
 		*  readonly AlterQueryType Type
@@ -40,8 +40,8 @@ internal static class AlterQueryExtensions
 		*  readonly Index? Index
 		*  readonly TableSpace? TableSpace
 		*/
-		var result = new StringBuilder();
-		result.Append(alterQuery.Id)
+        return new StringBuilder()
+			.Append(alterQuery.Id)
 			.Append(HashCodeSeparator)
 			.Append(alterQuery.Table.PhysicalName)
 			.Append(HashCodeSeparator)
@@ -49,8 +49,7 @@ internal static class AlterQueryExtensions
 			.Append(HashCodeSeparator)
 			// ignore Builder
 			.Append(alterQuery.Column?.Name)
-			.Append(HashCodeSeparator);
-		return result.ToString();
+			.Append(HashCodeSeparator).ToString();
 	}
 
 }

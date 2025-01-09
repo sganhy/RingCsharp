@@ -18,7 +18,7 @@ internal static class SaveQueryExtensions
 
 	internal static string GetStringCode(this SaveQuery saveQuery)
 	{
-        // Code size: 85 (0x55)
+        // Code size: 83 (0x53)
         /*
 		*	readonly Table Table
 		*	readonly SaveQueryType Type
@@ -26,14 +26,13 @@ internal static class SaveQueryExtensions
 		*	readonly string?[] Data
 		*	readonly int Offset
 		*/
-        var result = new StringBuilder();
-		result.Append(saveQuery.Table.PhysicalName)
-			.Append(HashCodeSeparator)
-			.Append(saveQuery.Type.ToString())
-			// ignore Builder
-			.Append(HashCodeSeparator)
-			.Append(saveQuery.Offset);
-		return result.ToString();
+        return new StringBuilder()
+			.Append(saveQuery.Table.PhysicalName)
+            .Append(HashCodeSeparator)
+            .Append(saveQuery.Type.ToString())
+            // ignore Builder
+            .Append(HashCodeSeparator)
+            .Append(saveQuery.Offset).ToString();
 	}
 
 	internal static string? ToSql(this SaveQuery query)
