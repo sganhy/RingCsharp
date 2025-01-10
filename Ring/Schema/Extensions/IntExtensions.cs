@@ -65,11 +65,6 @@ internal static class IntExtensions
 
 	#endregion 
 
-	static IntExtensions()
-	{
-		// avoid The type initializer for 'Ring.Schema.Extensions.IntExtensions' threw an exception.
-	}
-
 	// cache of Ring.Schema.Enums.ParameterType
 	private static readonly Dictionary<int, ParameterType> ParameterTypeEnumsId = GetParameterTypeId();
 
@@ -79,7 +74,8 @@ internal static class IntExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static TableType ToTableType(this int dataType)
 	{
-		switch (dataType)
+        // Code size: 141 (0x8d)
+        switch (dataType)
 		{
 			case TableTypeBusinessId: return TableType.Business;
 			case TableTypeBusinessLogId: return TableType.BusinessLog;
@@ -102,9 +98,10 @@ internal static class IntExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static FieldType ToFieldType(this int dataType)
 	{
-		// high performance ! 
-		// avoid boxing operation - add unit test on all field type enum fields
-		switch (dataType)
+        // Code size: 127 (0x7f)
+        // high performance ! 
+        // avoid boxing operation - add unit test on all field type enum fields
+        switch (dataType)
 		{
 			case FieldTypeLongId: return FieldType.Long;
 			case FieldTypeIntId: return FieldType.Int;
@@ -119,7 +116,6 @@ internal static class IntExtensions
 			case FieldTypeByteArrayId: return FieldType.ByteArray;
 			case FieldTypeBooleanId: return FieldType.Boolean;
 			case FieldTypeLongStringId: return FieldType.LongString;
-			default: break;
 		}
 		return FieldType.Undefined;
 	}
@@ -139,15 +135,15 @@ internal static class IntExtensions
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static RelationType ToRelationType(this int flags)
 	{
-		// avoid boxing operation
-		switch (flags)
+        // Code size: 47 (0x2f)
+        // avoid boxing operation
+        switch (flags)
 		{
 			case RelationTypeOtopId: return RelationType.Otop;
 			case RelationTypeOtmId: return RelationType.Otm;
 			case RelationTypeMtmId: return RelationType.Mtm;
 			case RelationTypeMtoId: return RelationType.Mto;
 			case RelationTypeOtofId: return RelationType.Otof;
-			default: break;
 		}
 		return RelationType.Undefined;
 	}
@@ -158,9 +154,11 @@ internal static class IntExtensions
 	internal static ParameterType ToParameterType(this int id) =>
 		ParameterTypeEnumsId.ContainsKey(id) ? ParameterTypeEnumsId[id] : ParameterType.Undefined;
 
-	internal static EntityType ToEntityType(this int entityType) {
-		// avoid boxing operation
-		switch (entityType)
+	internal static EntityType ToEntityType(this int entityType) 
+	{
+        // Code size: 120 (0x78)
+        // avoid boxing operation
+        switch (entityType)
 		{
 			case TableId: return EntityType.Table;
 			case FieldId: return EntityType.Field;
@@ -174,7 +172,6 @@ internal static class IntExtensions
 			case ParameterId: return EntityType.Parameter;
 			case AliasId: return EntityType.Alias;
 			case ConstraintId: return EntityType.Constraint;
-			default: break;
 		}
 		return EntityType.Undefined;
 	}
