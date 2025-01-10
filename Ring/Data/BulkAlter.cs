@@ -33,11 +33,13 @@ internal struct BulkAlter : IEquatable<BulkAlter>
 
 	internal void CreateTable(string tableName)
 	{
-		// Code size: 86 (0x56)
+		// Code size: 118 (0x76)
 		var table = _schema.GetTable(tableName);
 		if (table == null) ThrowInvalidObjectType(tableName);
 		AppendDdlCommand(AlterQueryType.CreateTable, table);
-		if (table.HasPrimaryKey()) AppendDdlCommand(AlterQueryType.CreatePrimaryKey, table);
+		// create constraints 
+		foreach(var constraint in _schema.DdlBuiler.GetConstraints(table)) AppendDdlCommand(AlterQueryType.CreateTable, constraint);
+		// create indexes
 		foreach (var index in table.Indexes) AppendDdlCommand(AlterQueryType.CreateIndex, table, index);
 	}
 
@@ -83,8 +85,8 @@ internal struct BulkAlter : IEquatable<BulkAlter>
 	public override readonly bool Equals(object? obj) => obj is BulkAlter bulkAlter && Equals(bulkAlter);
 	public readonly bool Equals(BulkAlter other)
 	{
-        // Code size: 71 (0x47)
-        if (_schema.Id == other._schema.Id && _queries.Count == other._queries.Count)
+		// Code size: 71 (0x47)
+		if (_schema.Id == other._schema.Id && _queries.Count == other._queries.Count)
 		{
 			return GetHashCode(this) == GetHashCode(other);
 		}
@@ -93,14 +95,20 @@ internal struct BulkAlter : IEquatable<BulkAlter>
 
 	#region private methods
 
+	private void AppendDdlCommand(AlterQueryType type, Constraint constraint)
+	{
+        // Code size: 83 (0x53)
+        var table = constraint.ToTable;
+        if (type == AlterQueryType.CreateTable && constraint.Type == ConstraintType.PrimaryKey)
+			_queries.Add(new AlterQuery(table.Id, table, AlterQueryType.CreatePrimaryKey, _schema.DdlBuiler, null, constraint, null, 
+				GetTableSpace(table, EntityType.Constraint)));
+	}
+
 	private void AppendDdlCommand(AlterQueryType type, Table table, IColumn? column = null)
 	{
 		switch (type)
 		{
-			case AlterQueryType.CreatePrimaryKey:
-				_queries.Add(new AlterQuery(table.Id, table, type, _schema.DdlBuiler, null, 
-					new Constraint(type.ToConstraintType(), table), null, GetTableSpace(table, EntityType.Constraint)));
-					break;
+			
 			case AlterQueryType.CreateTable:
 				_queries.Add(new AlterQuery(table.Id, table, type, _schema.DdlBuiler, null,
 					null, null, GetTableSpace(table, EntityType.Table)));
@@ -123,21 +131,21 @@ internal struct BulkAlter : IEquatable<BulkAlter>
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
 	private static void ThrowInvalidObjectType(string objectType) =>
-        throw new ArgumentException(string.Format(DefaultCulture,
+		throw new ArgumentException(string.Format(DefaultCulture,
 				  ResourceHelper.GetErrorMessage(ResourceType.BulkAlterInvalidTableName), objectType));
 
 	//TODO - create a specific message for invalid index name
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    [DoesNotReturn]
-    private static void ThrowInvalidIndexName(string objectType, string indexName) =>
-        throw new ArgumentException(string.Format(DefaultCulture,
-                  ResourceHelper.GetErrorMessage(ResourceType.BulkAlterInvalidTableName), objectType));
+	[MethodImpl(MethodImplOptions.NoInlining)]
+	[DoesNotReturn]
+	private static void ThrowInvalidIndexName(string objectType, string indexName) =>
+		throw new ArgumentException(string.Format(DefaultCulture,
+				ResourceHelper.GetErrorMessage(ResourceType.BulkAlterInvalidTableName), objectType));
 
-    [MethodImpl(MethodImplOptions.NoInlining)]
+	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
 	private static void ThrowInvalidFieldName(string objectType, string fieldName) =>
-        throw new ArgumentException(string.Format(DefaultCulture,
-				  ResourceHelper.GetErrorMessage(ResourceType.BulkAlterInvalidFieldName), fieldName, objectType));
+		throw new ArgumentException(string.Format(DefaultCulture,
+				ResourceHelper.GetErrorMessage(ResourceType.BulkAlterInvalidFieldName), fieldName, objectType));
 
 	private readonly TableSpace? GetTableSpace(Table table, EntityType entityType)
 	{
@@ -155,8 +163,8 @@ internal struct BulkAlter : IEquatable<BulkAlter>
 
 	private static Dictionary<EntityType, Dictionary<string, TableSpace>> GetTableSpaceDictionary(Database schema)
 	{
-        // Code size: 239 (0xef)
-        var result = new Dictionary<EntityType, Dictionary<string, TableSpace>>()
+		// Code size: 239 (0xef)
+		var result = new Dictionary<EntityType, Dictionary<string, TableSpace>>()
 		{
 			{ EntityType.Index, new Dictionary<string, TableSpace>()},
 			{ EntityType.Table, new Dictionary<string, TableSpace>()},
@@ -176,15 +184,15 @@ internal struct BulkAlter : IEquatable<BulkAlter>
 				foreach (var table in new ReadOnlySpan<string>(tablespace.TableName))
 					AddTableSpace(result, tablespace, table);
 			}
-        }
+		}
 
 		// no tablespace for constraints use the index one
 		if (!result[EntityType.Constraint].ContainsKey(string.Empty) &&
 			result[EntityType.Index].ContainsKey(string.Empty))
-        {
-            result[EntityType.Constraint].Add(string.Empty, result[EntityType.Index][string.Empty]);
-        }
-        return result;
+		{
+			result[EntityType.Constraint].Add(string.Empty, result[EntityType.Index][string.Empty]);
+		}
+		return result;
 	}
 
 	private static void AddTableSpace(Dictionary<EntityType, Dictionary<string, TableSpace>> dico, TableSpace tablespace,

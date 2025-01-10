@@ -54,8 +54,9 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	protected readonly static char SpecialEntityPrefix = '@';
 	protected abstract string SearchableFieldPrefix { get; }
 	protected abstract string? TimeZoneOffsetPrefix { get; }
+	protected abstract string GetPhysicalName(Constraint constraint);
 
-	protected BaseDdlBuilder() {}
+    protected BaseDdlBuilder() {}
 
 	public string AlterAddColumn(Table table, IColumn column) // Code size: 90 (0x5a)
 		=> new StringBuilder()
@@ -192,24 +193,6 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 		return result.ToString();
 	}
 
-	public string GetPhysicalName(Constraint constraint)
-	{
-		// Code size: 197 (0xc5)
-		var result = new StringBuilder(31); // constraint name max length(30)
-		switch (constraint.Type)
-		{
-			//name:  pk_{table_name}
-			case ConstraintType.PrimaryKey:
-				// apply short version of prefix 'pk'
-				var prefix = constraint.ToTable.Name.Length > 27 ? DefaultPrimaryKeyPrefix[^1..] : DefaultPrimaryKeyPrefix;
-				if (constraint.ToTable.Name.StartsWith(SpecialEntityPrefix))
-					result.Append(string.Join(null, StartPhysicalNameDelimiter, prefix, constraint.ToTable.Name, EndPhysicalNameDelimiter));
-				else result.Append(string.Join(null, prefix, constraint.ToTable.Name));
-				break;
-		}
-		return result.ToString();
-	}
-
 	protected abstract string MtmPrefix { get; }
 	protected string GetDataType(IColumn column, bool firstColumn)
 	{
@@ -237,9 +220,9 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	protected abstract string EndPhysicalNameDelimiter { get; }
 	public virtual string Create(Index index, Table table, TableSpace? tablespace = null)
 	{
-		// Code size: 233 (0xe9)
-		// CREATE INDEX title_idx ON films (title) WITH (deduplicate_items = off)
-		var result = new StringBuilder();
+        // Code size: 211 (0xd3)
+        // CREATE INDEX title_idx ON films (title) WITH (deduplicate_items = off)
+        var result = new StringBuilder();
 		result.Append(DdlCreate);
 		if (index.Unique) result.Append(DdlUnique);
 		result.Append(DdlIndex)
@@ -266,14 +249,15 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	}
 	public string Create(Constraint constraint, TableSpace? tablespace = null)
 	{
-		var result = new StringBuilder();
+        // Code size: 255 (0xff)
+        var result = new StringBuilder();
 		result.Append(DdlAlter)
 					.Append(DdlTable)
 					.Append(constraint.ToTable.PhysicalName)
 					.Append(SqlSpace)
 					.Append(DdlAdd)
 					.Append(DdlConstraint)
-					.Append(GetPhysicalName(constraint))
+					.Append(constraint.PhysicalName)
 					.Append(SqlSpace);
 		switch (constraint.Type)
 		{
@@ -337,9 +321,16 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 		}
 		return result.ToString();
 	}
+	public Constraint[] GetConstraints(Table table) 
+	{
+		var result = new List<Constraint>();
+		if (table.HasPrimaryKey()) result.Add(GetPrimaryKey(table));
 
-	#region private methods 
-	private static string GetSizeInfo(int size) => $"({size})";
+        return result.ToArray();
+	}
+
+    #region private methods 
+    private static string GetSizeInfo(int size) => $"({size})";
 
 	private void Create(StringBuilder subResult, Table table, Field field, bool firstColumn = true)
 	{
@@ -356,7 +347,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 		if (firstColumn)
 			if (field.IsSearchable() || (field.Type == FieldType.LongDateTime && !string.IsNullOrEmpty(TimeZoneOffsetPrefix)))
 			{
-				// recursive call !!
+				// recursive call 4 searchable fields or longDateTime !!
 				Create(subResult, table, field, false);
 			}
 	}
@@ -377,7 +368,8 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 
 	private static string GetDataType(string dataType, FieldType fieldType, int size, int maxSize, string? collateInformation = null)
 	{
-		var result = new StringBuilder(dataType);
+        // Code size: 70 (0x46)
+        var result = new StringBuilder(dataType);
 		if (fieldType == FieldType.String && size > 0 && size <= maxSize)
 			result.Append(GetSizeInfo(size));
 		if ((fieldType == FieldType.String || fieldType == FieldType.LongString) && collateInformation != null)
@@ -385,7 +377,14 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 		return result.ToString();
 	}
 
-	#endregion
+	private Constraint GetPrimaryKey(Table table)
+	{
+        // Code size: 28 (0x1c)
+        var result =new Constraint(ConstraintType.PrimaryKey, table, string.Empty);
+        return new(ConstraintType.PrimaryKey, table, GetPhysicalName(result));
+    }
+
+    #endregion
 
 }
 

@@ -1,5 +1,6 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Models;
+using System.Text;
 
 namespace Ring.Util.Builders.MySQL;
 
@@ -37,4 +38,5 @@ internal sealed class DdlBuilder : BaseDdlBuilder
     protected override string EndPhysicalNameDelimiter => StartPhysicalNameDelimiter;
     protected override string TablePrefix => DefaultTablePrefix;
     protected override string SearchableFieldPrefix => "s_";
+    protected override string GetPhysicalName(Constraint constraint) => string.Empty;
 }

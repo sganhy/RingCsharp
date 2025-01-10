@@ -17,9 +17,8 @@ internal interface IDdlBuilder : ISqlBuilder
     string AlterDropColumn(Table table, IColumn column);
     string Truncate(Table table);
     string GetSecondColumn(Field field); // some fields are defined onto 2 columns; return the physical name
-
-    string GetPhysicalName(Constraint constraint);
     string GetPhysicalName(Table table, DbSchema schema);
     string GetPhysicalName(Index index, Table table);
     string GetPhysicalName(EntityType entityType, string name);
+    Constraint[] GetConstraints(Table table);
 }
