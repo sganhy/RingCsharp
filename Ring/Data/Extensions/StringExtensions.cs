@@ -9,11 +9,12 @@ namespace Ring.Data.Extensions;
 internal static class StringExtensions
 {
 	private const char ZuluTimeSuffix = 'Z';
-	private static readonly string Date4Suffix = "-01-01";
-	private static readonly string Date7Suffix = "-01";
-	private static readonly string ZuluTimeStrSuffix = ZuluTimeSuffix.ToString();
+#pragma warning disable RCS1187 // Use constant instead of field
+    private static readonly string Date4Suffix = "-01-01";
+    private static readonly string Date7Suffix = "-01";
+#pragma warning restore RCS1187
+    private static readonly string ZuluTimeStrSuffix = ZuluTimeSuffix.ToString();
 	private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
-	private static readonly NumberStyles DefaultNumberStyle = NumberStyles.Integer;
 
 	/// <summary>
 	/// Read a bit from a string

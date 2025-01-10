@@ -12,7 +12,8 @@ internal static class IntExtensions
 	private const int FieldId = (int)EntityType.Field;
 	private const int RelationId = (int)EntityType.Relation;
 	private const int IndexId = (int)EntityType.Index;
-	private const int SchemaId = (int)EntityType.Schema;
+    private const int ViewId = (int)EntityType.View;
+    private const int SchemaId = (int)EntityType.Schema;
 	private const int SequenceId = (int)EntityType.Sequence;
 	private const int LanguageId = (int)EntityType.Language;
 	private const int TablespaceId = (int)EntityType.Tablespace;
@@ -165,7 +166,8 @@ internal static class IntExtensions
 			case FieldId: return EntityType.Field;
 			case RelationId: return EntityType.Relation;
 			case IndexId: return EntityType.Index;
-			case SchemaId: return EntityType.Schema;
+            case ViewId: return EntityType.View;
+            case SchemaId: return EntityType.Schema;
 			case SequenceId: return EntityType.Sequence;
 			case LanguageId: return EntityType.Language;
 			case TablespaceId: return EntityType.Tablespace;

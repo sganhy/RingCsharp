@@ -63,17 +63,19 @@ public struct Record : IEquatable<Record>
 		_offset = offset;
 	}
 
-	internal string? this[int i]
+	internal readonly string? this[int i]
 	{
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		readonly get => _data[i + _offset];
+		get => _data[i + _offset];
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		set => _data[i + _offset] = value;
-	}
+    }
 
 	internal readonly string?[] Data => _data;
-	internal readonly int Offset => _offset;
-	public readonly bool IsDirty => _data[_type.RecordSize-1+_offset] != null;
+#pragma warning disable RCS1085 // Use auto-implemented property
+    internal readonly int Offset => _offset;
+#pragma warning restore RCS1085
+    public readonly bool IsDirty => _data[_type.RecordSize-1+_offset] != null;
 	public readonly bool IsNew
 	{
 		// Code size: 59 (0x3b)
@@ -155,8 +157,11 @@ public struct Record : IEquatable<Record>
 		value = null;
 		var field = _type.Fields[fieldId];
 		var fieldType = field.Type;
-		if (fieldType != FieldType.Byte && fieldType != FieldType.Short && fieldType != FieldType.Int && fieldType != FieldType.Long)
+#pragma warning disable RCS1001 // Add braces (when expression spans over multiple lines)
+		if (fieldType != FieldType.Byte && fieldType != FieldType.Short &&
+			fieldType != FieldType.Int && fieldType != FieldType.Long)
 			ThrowImpossibleConversion(fieldType, FieldType.Long);
+#pragma warning restore RCS1001
 		var result = _data[fieldId + _offset] ?? field.DefaultValue;
 		if (result != null) value = long.Parse(result, DefaultCulture);
 	}
@@ -248,10 +253,10 @@ public struct Record : IEquatable<Record>
 		}
 	}
 
-	public void SetField(string name, long value) => SetField(name, value, FieldType.Long);	  // Code size: 10 (0xa)
-	public void SetField(string name, int value) => SetField(name, value, FieldType.Int);	  // Code size: 11 (0xb)
+	public void SetField(string name, long value) => SetField(name, value, FieldType.Long); // Code size: 10 (0xa)
+	public void SetField(string name, int value) => SetField(name, value, FieldType.Int); // Code size: 11 (0xb)
 	public void SetField(string name, short value) => SetField(name, value, FieldType.Short); // Code size: 11 (0xb)
-	public void SetField(string name, sbyte value) => SetField(name, value, FieldType.Byte);  // Code size: 11 (0xb)
+	public void SetField(string name, sbyte value) => SetField(name, value, FieldType.Byte); // Code size: 11 (0xb)
 	public void SetField(string name, bool value)
 	{
 		// Code size: 99 (0x63)
@@ -278,7 +283,7 @@ public struct Record : IEquatable<Record>
 		if (fieldId == -1) ThrowRecordUnknownFieldName(name);
 		SetDateTimeField(fieldId, _type.Fields[fieldId].Type, value.DateTime, value.Offset);
 	}
-	public void SetField(string name, double value) => SetField(name, value, FieldType.Double);		 // Code size: 11 (0xb)
+	public void SetField(string name, double value) => SetField(name, value, FieldType.Double); // Code size: 11 (0xb)
 	public void SetField(string name, float value) => SetField(name, (double)value, FieldType.Float); // Code size: 12 (0xc)
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -408,9 +413,9 @@ public struct Record : IEquatable<Record>
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private void SetIntegerField(int fieldId, FieldType numberType, string value) {
-        // Code size: 120 (0x78)
+		// Code size: 120 (0x78)
 #pragma warning disable RCS1003 // Add braces to if-else (when expression spans over multiple lines)
-        if (!value.IsNumber()) ThrowWrongStringFormat();
+		if (!value.IsNumber()) ThrowWrongStringFormat();
 		else if (long.TryParse(value, NumberStyles.Integer, DefaultCulture, out long lng) &&
 				(numberType == FieldType.Long ||
 				(numberType == FieldType.Int && lng <= MaxIntValue && lng >= MinIntValue) ||
