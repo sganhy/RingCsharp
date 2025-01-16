@@ -277,7 +277,8 @@ public class DdlBuilderTest : BaseBuilderTest
         var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
         var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
         var table = schema.GetTable("@meta");
-        var pk = new Constraint(ConstraintType.PrimaryKey, table!);
+        Assert.NotNull(table);
+        var pk = ((IEnumerable<Constraint>)schema.DdlBuiler.GetConstraints(table)).First(p => p.Type == ConstraintType.PrimaryKey);
         var expectedSql = "ALTER TABLE \"@test\".\"@meta\" ADD CONSTRAINT \"pk_@meta\" PRIMARY KEY (id,schema_id,object_type,reference_id)";
 
         // act 
@@ -296,7 +297,8 @@ public class DdlBuilderTest : BaseBuilderTest
         var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
         var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
         var table = schema.GetTable("@meta_id");
-        var pk = new Constraint(ConstraintType.PrimaryKey, table!);
+        Assert.NotNull(table);
+        var pk = ((IEnumerable<Constraint>)schema.DdlBuiler.GetConstraints(table)).First(p => p.Type == ConstraintType.PrimaryKey);
         var expectedSql = "ALTER TABLE \"@test\".\"@meta_id\" ADD CONSTRAINT \"pk_@meta_id\" PRIMARY KEY (id,schema_id,object_type)";
 
         // act 
@@ -444,7 +446,7 @@ public class DdlBuilderTest : BaseBuilderTest
     }
 
     [Fact]
-    public void GetPhysicalName_PkConstraint1_ConstraintName()
+    public void GetConstraints_PkConstraint1_ConstraintName()
     {
         // arrange 
         var metaList = GetSchema1();
@@ -453,14 +455,14 @@ public class DdlBuilderTest : BaseBuilderTest
         var ddlBuilder = DatabaseProvider.PostgreSql.GetDdlBuilder();
         var expectedResult = "pk_feat";
 #pragma warning disable CS8604 // Possible null reference argument.
-        var constraint = new Constraint(ConstraintType.PrimaryKey, table);
+        var constraint = new Constraint(ConstraintType.PrimaryKey, table, string.Empty);
 #pragma warning restore CS8604 // Possible null reference argument.
-
+        
         // act 
-        var physicalName = ddlBuilder.GetPhysicalName(constraint);
+        var constraintPk = ((IEnumerable<Constraint>)ddlBuilder.GetConstraints(table)).First(p => p.Type == ConstraintType.PrimaryKey);
 
         // assert
-        Assert.Equal(expectedResult, physicalName);
+        Assert.Equal(expectedResult, constraintPk.PhysicalName);
     }
 
     [Fact]
