@@ -22,8 +22,8 @@ internal static class IntExtensions
 	private const int ConstraintId = (int)EntityType.Constraint;
 
     // field searchable constants
-    private const int FieldStIgnoreCaseId = (int)SearchableType.IngoreCase;
-    private const int FieldStIngoreCaseAndDiacriticsId = (int)SearchableType.IngoreCaseAndDiacritics;
+    private const int FieldStIgnoreCaseId = (int)SearchableType.IgnoreCase;
+    private const int FieldStIngoreCaseAndDiacriticsId = (int)SearchableType.IgnoreCaseAndDiacritics;
 
     // field types constants
     private const int FieldTypeLongId = (int)FieldType.Long;
@@ -126,8 +126,8 @@ internal static class IntExtensions
     {
 		switch (value)
         {
-            case FieldStIgnoreCaseId: return SearchableType.IngoreCase;
-            case FieldStIngoreCaseAndDiacriticsId: return SearchableType.IngoreCaseAndDiacritics;
+            case FieldStIgnoreCaseId: return SearchableType.IgnoreCase;
+            case FieldStIngoreCaseAndDiacriticsId: return SearchableType.IgnoreCaseAndDiacritics;
         }
         return SearchableType.None;
     }

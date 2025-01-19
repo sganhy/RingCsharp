@@ -46,21 +46,17 @@ internal static class FieldExtensions
 	/// </summary>
 	internal static string? GetSearchableValue(this Field? _, SearchableType searchableType, string? value)
 	{
-        // Code size: 102 (0x66)
+        // Code size: 117 (0x75)
         if (value == null) return null;
 		switch (searchableType)
 		{
-            case SearchableType.IngoreCase:
-				return value.ToUpperInvariant();
-            case SearchableType.IngoreCaseAndDiacritics:
-                var result = new StringBuilder();
-                var normalizedString = value.Normalize(NormalizationForm.FormD);
-                var count = normalizedString.Length;
-
-                for (var i = 0; i < count; ++i)
+			case SearchableType.IgnoreCase:	return value.ToUpperInvariant();
+			case SearchableType.IgnoreCaseAndDiacritics:
+                var normalizedString = value.Normalize(NormalizationForm.FormD).AsSpan();
+                var result = new StringBuilder(normalizedString.Length);
+                foreach (var c in normalizedString)
                 {
                     // CharUnicodeInfo.GetUnicodeCategory(c) <> UnicodeCategory.NonSpacingMark
-                    var c = normalizedString[i];
                     if (char.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
                         result.Append(char.ToUpper(c, CultureInfo.InvariantCulture));
                 }

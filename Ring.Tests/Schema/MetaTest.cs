@@ -180,7 +180,7 @@ public sealed class MetaTest : BaseTest
         Assert.Null(field.DefaultValue);
         Assert.Equal(field.Size, exepectedFieldSize);
         Assert.True(field.Active);
-        Assert.Equal(SearchableType.IngoreCase, field.SearchableType);
+        Assert.Equal(SearchableType.IgnoreCase, field.SearchableType);
         Assert.True(field.NotNull);
         Assert.True(field.Baseline);
         Assert.True(field.Multilingual);
@@ -209,7 +209,7 @@ public sealed class MetaTest : BaseTest
         Assert.Equal(field.DefaultValue, exepectedDefaultValue);
         Assert.Equal(field.Size, exepectedFieldSize);
         Assert.False(field.Active);
-        Assert.Equal(SearchableType.IngoreCase, field.SearchableType);
+        Assert.Equal(SearchableType.IgnoreCase, field.SearchableType);
         Assert.True(field.NotNull);
         Assert.True(field.Baseline);
         Assert.True(field.Multilingual);
@@ -237,7 +237,7 @@ public sealed class MetaTest : BaseTest
         Assert.Equal(field.DefaultValue, exepectedDefaultValue);
         Assert.Equal(field.Size, exepectedFieldSize);
         Assert.True(field.Active);
-        Assert.Equal(SearchableType.IngoreCaseAndDiacritics, field.SearchableType);
+        Assert.Equal(SearchableType.IgnoreCaseAndDiacritics, field.SearchableType);
         Assert.True(field.NotNull);
         Assert.False(field.Baseline);
         Assert.False(field.Multilingual);
@@ -265,7 +265,7 @@ public sealed class MetaTest : BaseTest
         var flags = 0L;
         flags = Meta.SetEntityBaseline(flags, false);
         flags = Meta.SetFieldSize(flags, 11);
-        flags = Meta.SetSearchableType(flags, SearchableType.IngoreCaseAndDiacritics);
+        flags = Meta.SetSearchableType(flags, SearchableType.IgnoreCaseAndDiacritics);
         flags = Meta.SetFieldNotNull(flags, true);
         flags = Meta.SetFieldMultilingual(flags, false);
         var dataType = 6;
@@ -287,7 +287,7 @@ public sealed class MetaTest : BaseTest
         Assert.Equal(field.DefaultValue, exepectedDefaultValue);
         Assert.Equal(field.Size, exepectedFieldSize);
         Assert.True(field.Active);
-        Assert.Equal(SearchableType.IngoreCaseAndDiacritics, field.SearchableType);
+        Assert.Equal(SearchableType.IgnoreCaseAndDiacritics, field.SearchableType);
         Assert.True(field.NotNull);
         Assert.False(field.Baseline);
         Assert.False(field.Multilingual);

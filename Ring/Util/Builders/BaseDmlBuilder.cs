@@ -113,23 +113,23 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 					result.Append(_ddlBuilder.GetSecondColumn(field));
 					AppendVariable(resultValues, VariableNameTemplate, variableId++, false, column.FieldType);
 				}
-				#endregion
-				#region time zone extra field?
-				if (field.Type == FieldType.LongDateTime) 
-				{
-					var timeZoneField = _ddlBuilder.GetSecondColumn(field);
-					if (!string.IsNullOrEmpty(timeZoneField))
-					{
-						result.Append(ColumnDelimiter);
-						result.Append(timeZoneField); 
-						resultValues.Append(string.Format(CultureInfo.InvariantCulture, VariableNameTemplate,
-						(variableId).ToString(CultureInfo.InvariantCulture)));
-						++variableId;
-					}
-				}
-				#endregion 
-			}
-			AppendVariable(resultValues, VariableNameTemplate, variableId, true, column.FieldType);
+                #endregion
+                #region time zone extra field?
+                if (field.Type == FieldType.LongDateTime)
+                {
+                    var timeZoneField = _ddlBuilder.GetSecondColumn(field);
+                    if (!string.IsNullOrEmpty(timeZoneField))
+                    {
+                        result.Append(ColumnDelimiter);
+                        result.Append(timeZoneField);
+                        resultValues.Append(string.Format(CultureInfo.InvariantCulture, VariableNameTemplate,
+                        (variableId).ToString(CultureInfo.InvariantCulture)));
+                        ++variableId;
+                    }
+                }
+                #endregion
+            }
+            AppendVariable(resultValues, VariableNameTemplate, variableId, true, column.FieldType);
 			result.Append(ColumnDelimiter);
 		}
 		if (columnCount>0)

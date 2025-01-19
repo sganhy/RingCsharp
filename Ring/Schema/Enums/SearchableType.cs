@@ -4,6 +4,6 @@
 internal enum SearchableType : byte
 {
 	None = 0, 
-	IngoreCase = 1,
-	IngoreCaseAndDiacritics = 2,
+	IgnoreCase = 1,
+	IgnoreCaseAndDiacritics = 2,
 }

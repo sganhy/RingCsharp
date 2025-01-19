@@ -51,7 +51,7 @@ public class FieldExtensionsTest : BaseTest
         var fieldType = _faker.PickRandom<FieldType>();
         var defaultValue = _faker.Random.Bool()? null: _faker.Random.String();
         var size = _faker.Random.Number(0,int.MaxValue);
-        var field = new Field(id, name, name, description, fieldType, size, defaultValue, SearchableType.IngoreCaseAndDiacritics, false, false, false, true);
+        var field = new Field(id, name, name, description, fieldType, size, defaultValue, SearchableType.IgnoreCaseAndDiacritics, false, false, false, true);
 
         // act 
         var meta = FieldExtensions.ToMeta(field, tableId);
@@ -79,8 +79,8 @@ public class FieldExtensionsTest : BaseTest
         var fieldType = _faker.PickRandom<FieldType>();
         var defaultValue = _faker.Random.Bool()? null: _faker.Random.String();
         var size = _faker.Random.Number(int.MinValue,int.MaxValue);
-        var field1 = new Field(id, name, name, description, fieldType, size, defaultValue, SearchableType.IngoreCaseAndDiacritics, false, false, false, true);
-        var field2 = new Field(id, name, name, description, fieldType, size, defaultValue, SearchableType.IngoreCaseAndDiacritics, false, false, false, true);
+        var field1 = new Field(id, name, name, description, fieldType, size, defaultValue, SearchableType.IgnoreCaseAndDiacritics, false, false, false, true);
+        var field2 = new Field(id, name, name, description, fieldType, size, defaultValue, SearchableType.IgnoreCaseAndDiacritics, false, false, false, true);
 
         // act 
         var hash1 = FieldExtensions.GetHashCode(field1);
@@ -100,9 +100,9 @@ public class FieldExtensionsTest : BaseTest
         var fieldType = _faker.PickRandom<FieldType>();
         var defaultValue = _faker.Random.Bool() ? null : _faker.Random.String();
         var size = _faker.Random.Number(int.MinValue,int.MaxValue);
-        var field1 = new Field(id, name, name, description, fieldType, size, defaultValue, SearchableType.IngoreCase, false, false, false, true);
-        var field2 = new Field(id, name, name, description, fieldType, size, defaultValue, SearchableType.IngoreCase, false, false, true, true);
-        var field3 = new Field(id, name, name, description, fieldType, size, defaultValue, SearchableType.IngoreCaseAndDiacritics, false, false, false, true);
+        var field1 = new Field(id, name, name, description, fieldType, size, defaultValue, SearchableType.IgnoreCase, false, false, false, true);
+        var field2 = new Field(id, name, name, description, fieldType, size, defaultValue, SearchableType.IgnoreCase, false, false, true, true);
+        var field3 = new Field(id, name, name, description, fieldType, size, defaultValue, SearchableType.IgnoreCaseAndDiacritics, false, false, false, true);
 
         // act 
         var hash1 = FieldExtensions.GetHashCode(field1);
@@ -113,6 +113,35 @@ public class FieldExtensionsTest : BaseTest
         Assert.NotEqual(hash1, hash2);
         Assert.NotEqual(hash1, hash3);
         Assert.NotEqual(hash2, hash3);
+    }
+
+    [Theory]
+    [InlineData(null, null)]
+    [InlineData("Français", "FRANCAIS")]
+    [InlineData("mulțumesc", "MULTUMESC")]
+    [InlineData("Zürich, Ökonom", "ZURICH, OKONOM")]
+    [InlineData("Åke ȘŠш", "AKE SSШ")]
+    internal void GetSearchableValue_IngoreCaseAndDiacritics(string? value, string? expectedValue)
+    {
+        // arrange 
+        // act 
+        var result = FieldExtensions.GetSearchableValue(null,SearchableType.IgnoreCaseAndDiacritics,value);
+
+        // assert
+        Assert.Equal(expectedValue, result);
+    }
+
+    [Theory]
+    [InlineData(null, null)]
+    [InlineData("Français", "FRANÇAIS")]
+    internal void GetSearchableValue_IngoreCase(string? value, string? expectedValue)
+    {
+        // arrange 
+        // act 
+        var result = FieldExtensions.GetSearchableValue(null, SearchableType.IgnoreCase, value);
+
+        // assert
+        Assert.Equal(expectedValue, result);
     }
 
 }
