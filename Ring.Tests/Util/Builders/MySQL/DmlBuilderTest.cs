@@ -60,6 +60,7 @@ public class DmlBuilderTest : BaseBuilderTest
         // assert
         Assert.Equal(expectedResult, result1);
         Assert.Equal(expectedResult, result2);
+        Assert.Equal(2, mtmTable.ColumnCount);
     }
 
     [Fact]
@@ -98,6 +99,7 @@ public class DmlBuilderTest : BaseBuilderTest
 
         // assert
         Assert.Equal(expectedResult, result);
+        Assert.Equal(9, table.ColumnCount);
     }
 
     [Fact]

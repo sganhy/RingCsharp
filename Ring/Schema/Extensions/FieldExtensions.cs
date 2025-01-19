@@ -44,21 +44,29 @@ internal static class FieldExtensions
 	/// <summary>
 	/// Calculate searchable field value (remove diacritic characters and value.ToUpper())
 	/// </summary>
-	internal static string? GetSearchableValue(this Field _, string value)
+	internal static string? GetSearchableValue(this Field? _, SearchableType searchableType, string? value)
 	{
-		if (value == null) return null;
-		var result = new StringBuilder();
-		var normalizedString = value.Normalize(NormalizationForm.FormD);
-		var count = normalizedString.Length;
-
-		for (var i = 0; i < count; ++i)
+        // Code size: 102 (0x66)
+        if (value == null) return null;
+		switch (searchableType)
 		{
-			// CharUnicodeInfo.GetUnicodeCategory(c) <> UnicodeCategory.NonSpacingMark
-			var c = normalizedString[i];
-			if (char.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
-				result.Append(char.ToUpper(c, CultureInfo.InvariantCulture));
-		}
-		return result.ToString();
+            case SearchableType.IngoreCase:
+				return value.ToUpperInvariant();
+            case SearchableType.IngoreCaseAndDiacritics:
+                var result = new StringBuilder();
+                var normalizedString = value.Normalize(NormalizationForm.FormD);
+                var count = normalizedString.Length;
+
+                for (var i = 0; i < count; ++i)
+                {
+                    // CharUnicodeInfo.GetUnicodeCategory(c) <> UnicodeCategory.NonSpacingMark
+                    var c = normalizedString[i];
+                    if (char.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+                        result.Append(char.ToUpper(c, CultureInfo.InvariantCulture));
+                }
+                return result.ToString();
+        }
+		return value;
 	}
 
 	internal static Meta ToMeta(this Field field, int tableId, FieldType? newFieldType=null)

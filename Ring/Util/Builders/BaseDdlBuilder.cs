@@ -53,8 +53,9 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	// conventions
 	protected readonly static char SpecialEntityPrefix = '@';
 	protected abstract string SearchableFieldPrefix { get; }
-	protected abstract string? TimeZoneOffsetPrefix { get; }
+    protected abstract string? TimeZoneOffsetPrefix { get; }
 	protected abstract string GetPhysicalName(Constraint constraint);
+	public bool HasTimeZoneOffsetColumn => TimeZoneOffsetPrefix != null;
 
     protected BaseDdlBuilder() {}
 

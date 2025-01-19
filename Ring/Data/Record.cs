@@ -18,7 +18,7 @@ namespace Ring.Data;
 public struct Record : IEquatable<Record>
 {
 	private const char HashCodeSeparator = (char)3753;// end of text character
-	private const long MaxIntValue = int.MaxValue;
+	private const long MaxIntValue = (long)int.MaxValue;
 	private const long MinIntValue = int.MinValue;
 	private const long MaxShortValue = short.MaxValue;
 	private const long MinShortValue = short.MinValue;
@@ -69,13 +69,13 @@ public struct Record : IEquatable<Record>
 		get => _data[i + _offset];
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		set => _data[i + _offset] = value;
-    }
+	}
 
 	internal readonly string?[] Data => _data;
 #pragma warning disable RCS1085 // Use auto-implemented property
-    internal readonly int Offset => _offset;
+	internal readonly int Offset => _offset;
 #pragma warning restore RCS1085
-    public readonly bool IsDirty => _data[_type.RecordSize-1+_offset] != null;
+	public readonly bool IsDirty => _data[_type.RecordSize-1+_offset] != null;
 	public readonly bool IsNew
 	{
 		// Code size: 59 (0x3b)
@@ -120,7 +120,7 @@ public struct Record : IEquatable<Record>
 
 	public readonly void GetField(string name, out bool? value)
 	{
-		// Code size: 164 (0xa4)
+		// Code size: 164 (0xa4) - no callvirt
 		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = _type.GetFieldIndex(name);
 		if (fieldId <= -1) ThrowRecordUnknownFieldName(name);
@@ -221,7 +221,7 @@ public struct Record : IEquatable<Record>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal void SetField(string name, long value, FieldType fieldType)
 	{
-		// Code size: 277 (0x115)
+		// Code size: 277 (0x115) - no callvirt
 		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = _type.GetFieldIndex(name);
 		if (fieldId == -1) ThrowRecordUnknownFieldName(name);
@@ -232,15 +232,15 @@ public struct Record : IEquatable<Record>
 				SetData(fieldId, value.ToString(DefaultCulture));
 				break;
 			case FieldType.Int:
-				if (value <= int.MaxValue && value >= int.MinValue) SetData(fieldId, value.ToString(DefaultCulture));
+				if (value <= MaxIntValue && value >= MinIntValue) SetData(fieldId, value.ToString(DefaultCulture));
 				else ThrowValueTooLarge(type);
 				break;
 			case FieldType.Short:
-				if (value <= short.MaxValue && value >= short.MinValue) SetData(fieldId, value.ToString(DefaultCulture));
+				if (value <= MaxShortValue && value >= MinShortValue) SetData(fieldId, value.ToString(DefaultCulture));
 				else ThrowValueTooLarge(type);
 				break;
 			case FieldType.Byte:
-				if (value <= sbyte.MaxValue && value >= sbyte.MinValue) SetData(fieldId, value.ToString(DefaultCulture));
+				if (value <= MaxByteValue && value >= MinByteValue) SetData(fieldId, value.ToString(DefaultCulture));
 				else ThrowValueTooLarge(type);
 				break;
 			case FieldType.Float:
@@ -361,7 +361,7 @@ public struct Record : IEquatable<Record>
 
 	internal readonly bool IsRelationChanged(string name)
 	{
-		// Code size: 95 (0x5f)
+		// Code size: 95 (0x5f) - no callvirt
 		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var relation = _type.GetRelation(name);
 		var trackerIndex = _offset + _type.RecordSize - 1;
@@ -392,7 +392,7 @@ public struct Record : IEquatable<Record>
 
 	internal void SetRelation(string name, long? value)
 	{
-		// Code size: 99 (0x63)
+		// Code size: 99 (0x63) - no callvirt
 		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var relation = _type.GetRelation(name);
 		if (relation == null) ThrowRecordUnknownRelationName(name);
@@ -429,7 +429,7 @@ public struct Record : IEquatable<Record>
 	private void SetFloatField(FieldType fieldType, int fieldId, string value)
 	{
 		// see. ISO 6093:1985
-		// Code size: 103 (0x67)
+		// Code size: 103 (0x67) - no callvirt
 		if (double.TryParse(value, NumberStyles.Float, DefaultCulture, out double dbl))
 		{
 			if (fieldType == FieldType.Double) SetData(fieldId, dbl.ToString(DefaultCulture));
@@ -493,13 +493,11 @@ public struct Record : IEquatable<Record>
 		_data[fieldIndex] = value;
 	}
 
-	// Dereference of a possibly null reference. - _data cannot be null here !!!
-	// Possible null reference argument. 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private readonly bool IsColumnChanged(int fieldId, int trackerIndex) => _data[trackerIndex]!.GetBitValue(fieldId); // cannot be null here 
+	private readonly bool IsColumnChanged(int fieldId, int trackerIndex) => _data[trackerIndex]!.GetBitValue(fieldId); // cannot be null here - Code size: 15 (0xf)
 
-	// exceptions 
-	[MethodImpl(MethodImplOptions.NoInlining)]
+    // exceptions 
+    [MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
 	private readonly void ThrowRecordUnknownFieldName(string fieldName) => 
 		throw new ArgumentException(string.Format(DefaultCulture,
@@ -558,9 +556,9 @@ public struct Record : IEquatable<Record>
 	private static void ThrowInvalidBase64String() =>
 		throw new FormatException(ResourceHelper.GetErrorMessage(ResourceType.InvalidBase64String));
 
-	private static IDdlBuilder GetDefaultDdlBuilder() => new Ring.Util.Builders.PostgreSQL.DdlBuilder();
+	private static IDdlBuilder GetDefaultDdlBuilder() => new Ring.Util.Builders.PostgreSQL.DdlBuilder(); // Code size: 6 (0x6)
 
-	private static Table GetDefaultType()
+    private static Table GetDefaultType()
 	{
 		// Code size: 77 (0x4d)
 		var metaTable = new Meta(-1, (byte)EntityType.Table, 0, (int)TableType.Undefined, 0L, string.Empty, null, null, true);

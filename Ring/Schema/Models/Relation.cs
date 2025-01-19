@@ -44,5 +44,6 @@ internal sealed class Relation : BaseEntity, IColumn
 	EntityType IColumn.Type => EntityType.Relation;
 	string IColumn.PhysicalName => PhysicalName;
 	int IColumn.Size => 0;
+	SearchableType IColumn.SearchableType => SearchableType.None;
 
 }

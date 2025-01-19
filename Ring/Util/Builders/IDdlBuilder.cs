@@ -7,6 +7,7 @@ namespace Ring.Util.Builders;
 
 internal interface IDdlBuilder : ISqlBuilder
 {
+    bool HasTimeZoneOffsetColumn{ get; }
     string Create(DbSchema schema);
     string Create(TableSpace tablespace);
     string Create(Table table, TableSpace? tablespace = null);

@@ -14,6 +14,7 @@ using Ring.PostgreSQL.Extensions;
 using Ring.Schema.Enums;
 using NpgsqlTypes;
 using System.Runtime.CompilerServices;
+using Ring.Schema.Extensions;
 
 namespace Ring.PostgreSQL;
 
@@ -317,6 +318,7 @@ public sealed class Connection : IRingConnection
 
     private static NpgsqlParameter[] Getparameters(in SaveQuery saveQuery)
     {
+        // Code size: 325 (0x145)
         NpgsqlParameter[] result = DefaultParameterArray;
         var bindVariableNameCacheSize = BindVariableNameCacheSize;
 #pragma warning disable RCS1118 // Mark local variable as const
@@ -331,17 +333,31 @@ public sealed class Connection : IRingConnection
             var recordIndexes = saveQuery.Table.RecordIndexes;
             var data = saveQuery.Data;
 
-            result = new NpgsqlParameter[spanCount];
+            result = new NpgsqlParameter[saveQuery.Table.ColumnCount];
             var i = 0;
+            var colIndex = 0;
             while (i<spanCount)
             {
                 var column = span[i];
-                var value = data[recordIndexes[i]+ saveQuery.Offset];
-                var variableName = i < bindVariableNameCacheSize ? BindVariableName[i] :
-                    bindVariablePrefix + (i + 1).ToString(DefaultCulture);
+                var value = data[recordIndexes[i] + saveQuery.Offset];
+                var variableName = colIndex < bindVariableNameCacheSize ? BindVariableName[colIndex] :
+                    bindVariablePrefix + (colIndex + 1).ToString(DefaultCulture);
                 var fieldType = column.FieldType;
                 var dbType = fieldType.ToNpgsqlDbType();
-                result[i] = GetParameter(variableName, dbType, fieldType, value);
+                result[colIndex] = GetParameter(variableName, dbType, fieldType, value);
+                ++colIndex;
+                // searchable fields
+                var searchableType = column.SearchableType;
+                if (searchableType != SearchableType.None) {
+                    result[colIndex] = GetParameter(variableName, dbType, fieldType, FieldExtensions.GetSearchableValue(null, searchableType,value));
+                    ++colIndex;
+                }
+                // LongDateTime
+                if (fieldType == FieldType.LongDateTime)
+                {
+                    result[colIndex] = GetParameter(variableName, NpgsqlDbType.Smallint, FieldType.Short, "60");
+                    ++colIndex;
+                }
                 ++i;
             }
         }
@@ -385,6 +401,7 @@ public sealed class Connection : IRingConnection
                 };
                 break;
             case FieldType.DateTime:
+            case FieldType.LongDateTime:
                 result = new NpgsqlParameter(variableName, dbType)
                 {
                     Value = value.DateTimeValue(),
@@ -395,6 +412,7 @@ public sealed class Connection : IRingConnection
                 {
                     Value = value,
                 };
+
                 break;
             case FieldType.LongString:
             case FieldType.ShortDateTime:
@@ -415,10 +433,7 @@ public sealed class Connection : IRingConnection
                     // TODO: provide better options than base64
                     Value = Convert.FromBase64String(value)
                 };
-                break;
-            case FieldType.LongDateTime:
-                result = null;
-                break;
+                break;            
             default:
                 result = null;
                 break;

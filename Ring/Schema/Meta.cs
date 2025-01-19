@@ -184,7 +184,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	internal static Table GetEmptyTable(Meta meta) // Code size: 106 (0x6a)
 		=> new(meta.Id, meta.Name, meta.Description, meta.Value, string.Empty,
 			meta.DataType.ToTableType(), Array.Empty<Relation>(), Array.Empty<Field>(), Array.Empty<int>(), Array.Empty<IColumn>(),
-			Array.Empty<Index>(), meta.ReferenceId, PhysicalType.Table, -1, meta.IsEntityBaseline, meta.Active,
+			Array.Empty<Index>(), meta.ReferenceId, PhysicalType.Table, -1, 0, meta.IsEntityBaseline, meta.Active,
 			meta.IsTableCached, meta.IsTableReadonly);
 
 	internal static Index GetEmptyIndex(Meta meta) // Code size: 64 (0x40)
@@ -301,14 +301,15 @@ internal readonly struct Meta : IEquatable<Meta>
 			var relations = GetRelationArray(tableItems);
 			var indexes = GetIndexes(tableItems, ddlBuilder);
 			var columnMapperSize = GetColumnMapperSize(tableItems, tableType, fields.Length);
+			var colCount = GetPhysColumnCount(fields, relations, ddlBuilder);
 
-			// sort arrays
-			Array.Sort(fields, (x, y) => string.CompareOrdinal(x.Name, y.Name));
+            // sort arrays
+            Array.Sort(fields, (x, y) => string.CompareOrdinal(x.Name, y.Name));
 			Array.Sort(indexes, (x, y) => string.CompareOrdinal(x.Name, y.Name));
 
 			return new Table(Id, Name, Description, Value, physicalName,
 				tableType, relations, fields, new int[columnMapperSize], new IColumn[columnMapperSize], indexes,
-				ReferenceId, physicalType, objectIndex, IsEntityBaseline, Active, IsTableCached, IsTableReadonly);
+				ReferenceId, physicalType, objectIndex, colCount, IsEntityBaseline, Active, IsTableCached, IsTableReadonly);
 		}
 		return null;
 	}
@@ -545,7 +546,22 @@ internal readonly struct Meta : IEquatable<Meta>
 		return string.CompareOrdinal(meta1.Name, meta2.Name);
 	}
 
-	private static int GetColumnMapperSize(ArraySegment<Meta> items, TableType tableType, int fieldCount)
+	private static int GetPhysColumnCount(ReadOnlySpan<Field> fields, ReadOnlySpan<Relation> relations, IDdlBuilder ddlBuilder)
+	{
+        // Code size: 99 (0x63)
+        var count = relations.Length + fields.Length;
+		var hasTimeZoneOffsetColumn = ddlBuilder.HasTimeZoneOffsetColumn;
+
+        foreach (var field in fields)
+		{
+			// searchable field ? 
+			if (field.Type == FieldType.String && field.SearchableType != SearchableType.None) ++count;
+            if (field.Type == FieldType.LongDateTime && hasTimeZoneOffsetColumn) ++count;
+        }
+		return count;
+	}
+
+    private static int GetColumnMapperSize(ArraySegment<Meta> items, TableType tableType, int fieldCount)
 	{
 		if (tableType == TableType.Mtm) return 2;
 		var result = fieldCount;

@@ -60,8 +60,8 @@ Process proc = Process.GetCurrentProcess();
 Console.WriteLine("proc.PrivateMemorySize64=" + ((double)proc.PrivateMemorySize64) / (1024 * 1024) + " MB");
 
 BulkAlter ba = new(schema);
-ba.CreateTable("@meta");
-ba.Apply(conn);
+ba.CreateTable("@test");
+//ba.Apply(conn);
 
 BulkSave bs = new(schema);
 
