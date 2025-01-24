@@ -2,7 +2,6 @@
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
-using System.Data.Common;
 using System.Globalization;
 using System.Text;
 using DbSchema = Ring.Schema.Models.Schema;
@@ -26,7 +25,6 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 	private string?[] _tableInsert;
 	private string?[] _tableUpdate;
 	private readonly IDdlBuilder _ddlBuilder;
-	private readonly Field _defaultField;
 
 	protected BaseDmlBuilder()
 	{
@@ -34,7 +32,6 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 		_tableInsert = Array.Empty<string?>();
 		_tableUpdate = Array.Empty<string?>();
 		_ddlBuilder = Provider.GetDdlBuilder();
-		_defaultField = Meta.GetEmptyField(new Meta(string.Empty), FieldType.Int);
 	}
 
 	public abstract string VariableNameTemplate { get; }
@@ -86,61 +83,49 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 
 	private string BuildInsert(Table table)
 	{
-        // Code size: 430 (0x1ae)
-        var result = new StringBuilder();
-		var resultValues = new StringBuilder();
+        // Code size: 409 (0x199)
+        var columns = new StringBuilder();
+		var values = new StringBuilder();
 		var spanColumns = new ReadOnlySpan<IColumn>(table.Columns);
 		var columnCount = table.Columns.Length;
 		var variableId = 1;
 
-		result.Append(DmlInsert)
-			.Append(table.PhysicalName)
-			.Append(SqlSpace)
-			.Append(StartParenthesis);
-		
 		for (var i = 0; i<columnCount; ++i, ++variableId)
 		{
 			var column = spanColumns[i];
-			if (column.Type == EntityType.Relation) result.Append(column.PhysicalName);
-			else
+			var fieldType = column.FieldType;
+
+            columns.Append(column.PhysicalName);
+            AppendVariable(values, VariableNameTemplate, variableId, true, fieldType);
+
+            #region  add searchable field 
+            if (column.SearchableType!=SearchableType.None)
 			{
-				var field = (Field)column;
-				result.Append(field.PhysicalName);
-				#region  add searchable field 
-				if (field.IsSearchable())
-				{
-					result.Append(ColumnDelimiter);
-					result.Append(_ddlBuilder.GetSecondColumn(field));
-					AppendVariable(resultValues, VariableNameTemplate, variableId++, false, column.FieldType);
-				}
-                #endregion
-                #region time zone extra field?
-                if (field.Type == FieldType.LongDateTime)
+                columns.Append(ColumnDelimiter);
+				columns.Append(_ddlBuilder.GetSecondColumn((Field)column));
+				AppendVariable(values, VariableNameTemplate, ++variableId, false, fieldType);
+			}
+            #endregion
+            #region time zone extra field?
+            if (fieldType == FieldType.LongDateTime)
+            {
+                var timeZoneField = _ddlBuilder.GetSecondColumn((Field)column);
+                if (!string.IsNullOrEmpty(timeZoneField))
                 {
-                    var timeZoneField = _ddlBuilder.GetSecondColumn(field);
-                    if (!string.IsNullOrEmpty(timeZoneField))
-                    {
-                        result.Append(ColumnDelimiter);
-                        result.Append(timeZoneField);
-                        resultValues.Append(string.Format(CultureInfo.InvariantCulture, VariableNameTemplate,
-                        (variableId).ToString(CultureInfo.InvariantCulture)));
-                        ++variableId;
-                    }
+                    columns.Append(ColumnDelimiter);
+                    columns.Append(timeZoneField);
+                    AppendVariable(values, VariableNameTemplate, ++variableId, false, FieldType.Short);
                 }
-                #endregion
             }
-            AppendVariable(resultValues, VariableNameTemplate, variableId, true, column.FieldType);
-			result.Append(ColumnDelimiter);
+            #endregion
+			columns.Append(ColumnDelimiter);
 		}
-		if (columnCount>0)
+		if (variableId > 1)
 		{
-			--result.Length;
-			--resultValues.Length;
-		} 
-		result.Append(DmlValues)
-			.Append(resultValues)
-			.Append(EndParenthesis);
-		return result.ToString();
+			--columns.Length;
+			--values.Length;
+		}
+        return $"{DmlInsert}{table.PhysicalName} {StartParenthesis}{columns}{DmlValues}{values}{EndParenthesis}";
 	}
 
 	private string BuildDelete(Table table)
@@ -217,7 +202,7 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 		else subResult.Append(variable);
 		subResult.Append(ColumnDelimiter);
 	}
-	
+
 	#endregion 
 
 }

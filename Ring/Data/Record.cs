@@ -18,7 +18,7 @@ namespace Ring.Data;
 public struct Record : IEquatable<Record>
 {
 	private const char HashCodeSeparator = (char)3753;// end of text character
-	private const long MaxIntValue = (long)int.MaxValue;
+	private const long MaxIntValue = int.MaxValue;
 	private const long MinIntValue = int.MinValue;
 	private const long MaxShortValue = short.MaxValue;
 	private const long MinShortValue = short.MinValue;
