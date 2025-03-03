@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFrameworks>net9.0;net8.0</TargetFrameworks>
@@ -25,6 +25,7 @@
 		<NuGetAuditLevel>critical</NuGetAuditLevel>
 		<Product>Ring Zero</Product>
 		<EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
+		<ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -70,9 +71,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.2" />
-		<PackageReference Include="Microsoft.DotNet.ILCompiler" Version="9.0.2" />
-		<PackageReference Include="Microsoft.NET.ILLink.Tasks" Version="9.0.2" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+		<PackageReference Include="Microsoft.DotNet.ILCompiler" />
+		<PackageReference Include="Microsoft.NET.ILLink.Tasks" />
 	</ItemGroup>
  
 </Project>
