@@ -16,13 +16,13 @@ internal static class FieldExtensions
 	private static readonly string PrimaryKeyDescription = "Internal record number";
 	private static readonly string NumberDefaultValue = "0";
 	private static readonly Field _defaultPrimaryKeyInt64 =
-		new(0, PrimaryKeyFieldName, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Long, 0, NumberDefaultValue, SearchableType.None, true, true, false, true);
+		new(0, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Long, 0, NumberDefaultValue, SearchableType.None, true, true, false, true);
 	private static readonly Field _defaultPrimaryKeyInt32 =
-		new(0, PrimaryKeyFieldName, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Int, 0, NumberDefaultValue, SearchableType.None, true, true, false, true);
+		new(0, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Int, 0, NumberDefaultValue, SearchableType.None, true, true, false, true);
 	private static readonly Field _defaultPrimaryKeyInt16 =
-		new(0, PrimaryKeyFieldName, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Short, 0, NumberDefaultValue, SearchableType.None, true, true, false, true);
+		new(0, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Short, 0, NumberDefaultValue, SearchableType.None, true, true, false, true);
 	private static readonly Field _defaultPrimaryKeyInt08 =
-		new(0, PrimaryKeyFieldName, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Byte, 0, NumberDefaultValue, SearchableType.None, true, true, false, true);
+		new(0, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Byte, 0, NumberDefaultValue, SearchableType.None, true, true, false, true);
 #pragma warning restore RCS1187
 
 	internal static bool IsValid(this Field field) => IsPrimaryKey(field) || field.Id > 0; 

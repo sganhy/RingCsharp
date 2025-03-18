@@ -14,10 +14,10 @@ internal sealed class Lexicon : BaseEntity
 	/// <summary>
 	/// 	Ctor
 	/// </summary>
-	internal Lexicon(int id, string name, string physicalName, string description, int schemaId,
+	internal Lexicon(int id, string name, string description, int schemaId,
 		Table table, Field field, Relation? relation,string? relationValue,
 		Language language, Guid guid, bool upperCaseSearch, bool active, bool baseline)
-		: base(id, name, physicalName, description, baseline, active)
+		: base(id, name, description, baseline, active)
 	{
 		SchemaId = schemaId;
 		Table = table;

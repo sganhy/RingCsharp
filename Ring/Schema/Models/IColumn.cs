@@ -10,6 +10,5 @@ internal interface IColumn
 	RelationType RelationType { get; }
 	EntityType Type { get; }
 	int Size { get; }
-	string PhysicalName { get; }
 	SearchableType SearchableType { get; }
 }

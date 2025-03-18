@@ -66,7 +66,7 @@ internal static class RelationExtensions
 	internal static Relation GetRelation(this Relation relation, RelationType relationType)
 	{
 		var meta = relation.ToMeta(-1, relationType);
-		return meta.ToRelation(relation.ToTable, relation.PhysicalName) ?? relation;
+		return meta.ToRelation(relation.ToTable) ?? relation;
 	}
 
 	internal static long GetHashCode(this Relation relation)
@@ -109,7 +109,7 @@ internal static class RelationExtensions
 
 	internal static Relation SetRecordIndex(this Relation relation, int recordIndex)
 	{
-		var result = new Relation(relation.Id, relation.Name, relation.PhysicalName, relation.Description, relation.Type, relation.ToTable, recordIndex,
+		var result = new Relation(relation.Id, relation.Name, relation.Description, relation.Type, relation.ToTable, recordIndex,
 			relation.FieldType, relation.NotNull, relation.HasConstraint, relation.Baseline, relation.Active);
 		// manage inverse relationship
 		result.SetInverseRelation(relation.InverseRelation);

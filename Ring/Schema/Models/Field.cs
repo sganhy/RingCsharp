@@ -17,9 +17,9 @@ internal sealed class Field : BaseEntity, IColumn
 	/// <summary>
 	/// 	Ctor
 	/// </summary>
-	internal Field(int id, string name, string physicalName, string? description, FieldType type, int size, string? defaultValue,
+	internal Field(int id, string name, string? description, FieldType type, int size, string? defaultValue,
 		SearchableType searchableType, bool baseline, bool notNull, bool multilingual, bool active)
-		: base(id, name, physicalName, description, baseline, active)
+		: base(id, name, description, baseline, active)
 	{
 		Type = type;
 		Size = size;
@@ -37,7 +37,6 @@ internal sealed class Field : BaseEntity, IColumn
 	RelationType IColumn.RelationType => RelationType.Undefined;
 	EntityType IColumn.Type => EntityType.Field;
 	string IColumn.Name => Name;
-	string IColumn.PhysicalName => PhysicalName;
 	int IColumn.Size => Size;
 	SearchableType IColumn.SearchableType => SearchableType;
 

@@ -92,7 +92,7 @@ internal static class SchemaExtensions
 				var toTable = schema.GetTable(meta.DataType);
 				if (toTable != null && fromTable!=null)
 				{
-					var relation = meta.ToRelation(toTable, ddlBuilder.GetPhysicalName(EntityType.Relation, meta.Name));
+					var relation = meta.ToRelation(toTable);
 #pragma warning disable CS8601 // Possible null reference assignment. Cannot be null here !!
 					fromTable.Relations[relationDicoIndex[fromTable.Id]] = relation;
 #pragma warning restore CS8601 
@@ -189,7 +189,7 @@ internal static class SchemaExtensions
 	private static Relation CreateMtmRelation(Relation relation, Table mtmTable, IDdlBuilder ddlBuilder)
 	{
 		var meta = relation.ToMeta(0);
-		return meta.ToRelation(mtmTable, ddlBuilder.GetPhysicalName(EntityType.Relation, meta.Name));
+		return meta.ToRelation(mtmTable);
 	}
 
 	#endregion 

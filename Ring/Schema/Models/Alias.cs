@@ -13,7 +13,7 @@ internal sealed class Alias : BaseEntity
 	/// 	Ctor
 	/// </summary>
 	internal Alias(int id, string name, string physicalName, string? description, AliasType type, EntityType entityType, int entityId,
-		string? value, bool baseline, bool active) : base(id, name, physicalName, description, baseline, active)
+		string? value, bool baseline, bool active) : base(id, name, description, baseline, active)
 	{
 		Type = type;
 		TargetEntityType = entityType;

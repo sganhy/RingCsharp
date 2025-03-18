@@ -192,12 +192,12 @@ internal readonly struct Meta : IEquatable<Meta>
 			meta.IsEntityBaseline);
 
 	internal static Relation GetEmptyRelation(Meta meta, RelationType relationType, TableType toTableType) =>
-		new(meta.Id, meta.Name, meta.Name, meta.Description, relationType,
+		new(meta.Id, meta.Name, meta.Description, relationType,
 			GetEmptyTable(new Meta(0, (byte)EntityType.Table, 0, (int)toTableType, 0L,
 			meta.Name,null, null, false)), -1, FieldType.Undefined, false, false, true, true);
 
 	internal static Field GetEmptyField(Meta meta, FieldType fieldType) =>
-		new(meta.Id, meta.Name, meta.Name, meta.Description, fieldType, 0, null, SearchableType.None, true,
+		new(meta.Id, meta.Name, meta.Description, fieldType, 0, null, SearchableType.None, true,
 			false, false, true);
 
 	internal static Meta? FirstOrDefault(Meta[] metas, EntityType entityType) 
@@ -220,7 +220,7 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	#region convertors 
 
-	internal Relation? ToRelation(Table to, string physicalName)
+	internal Relation? ToRelation(Table to)
 	{
 		// Code size: 134 (0x86)
 		if (IsRelation)
@@ -228,14 +228,14 @@ internal readonly struct Meta : IEquatable<Meta>
 			var fieldType = FieldType.Undefined;
 			if (to.Type == TableType.Business || to.Type == TableType.Lexicon)
 				fieldType = to.Fields[to.Columns[0].RecordIndex].Type;
-			return new Relation(Id, Name, string.Equals(physicalName, Name, StringComparison.Ordinal) ? Name : physicalName, 
+			return new Relation(Id, Name, 
 				Description, GetRelationType(), to, -1, fieldType,IsRelationNotNull, HasRelationConstraint, IsEntityBaseline, Active);
 		}
 		return null;
 	}
 	
 	internal Field? ToField(string physicalName) // Code size: 106 (0x6a)
-		=> IsField ? new Field(Id, Name, string.Equals(physicalName, Name, StringComparison.Ordinal)? Name: physicalName, Description, GetFieldType(), 
+		=> IsField ? new Field(Id, Name, Description, GetFieldType(), 
 			GetFieldSize(), GetFieldDefaultValue(), GetSearchableType(), IsEntityBaseline, IsFieldNotNull(), IsFieldMultilingual(), Active) : null;
 
 	internal static DbSchema? ToSchema(Meta[] schema, DatabaseProvider provider,
@@ -281,7 +281,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	internal Parameter? ToParameter()
 	{
 		var parameterType = GetParameterType();
-		return IsParameter ? new Parameter(Id, Name, Name, Description, parameterType,
+		return IsParameter ? new Parameter(Id, Name, Description, parameterType,
 			GetParameterValueType(), GetParameterValue(), parameterType.GetDefaultValue(), ReferenceId,
 				IsEntityBaseline, Active) : null;
 	}

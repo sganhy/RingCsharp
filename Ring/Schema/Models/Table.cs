@@ -16,7 +16,8 @@ internal sealed class Table : BaseEntity
 	internal readonly string? Subject;
 	internal readonly TableType Type;
 	internal readonly CacheId CacheId;
-	internal readonly bool Readonly;
+    internal readonly string PhysicalName;
+    internal readonly bool Readonly;
 
 	/// <summary>
 	/// 	Ctor
@@ -24,7 +25,7 @@ internal sealed class Table : BaseEntity
 	internal Table(int id, string name, string? description, string? subject, string physicalName, TableType type,
 		Relation[] relations, Field[] fields, Column[] columns, Index[] indexes, int schemaId,
 		PhysicalType physicalType, int objectIndex, int recordSize, bool baseline, bool active, bool cached, bool readonlyTable) 
-		: base(id, name, physicalName, description, baseline, active)
+		: base(id, name, description, baseline, active)
 	{
 		Type = type;
 		Fields = fields;
@@ -39,7 +40,8 @@ internal sealed class Table : BaseEntity
 		ObjectIndex = 0;
 		PhysicalType = physicalType;
 		Cached = cached;
-		ObjectIndex = objectIndex;
+		PhysicalName = physicalName;
+        ObjectIndex = objectIndex;
 	}
 
 #if DEBUG

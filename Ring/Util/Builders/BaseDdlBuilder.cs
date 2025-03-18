@@ -66,7 +66,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 			.Append(table.PhysicalName)
 			.Append(SqlSpace)
 			.Append(DdlAdd)
-			.Append(column.PhysicalName)
+			//.Append(column.PhysicalName)
 			.Append(SqlSpace)
 			.Append(GetDataType(column, true))
 			.ToString();
@@ -79,7 +79,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 			.Append(SqlSpace)
 			.Append(DdlDrop)
 			.Append(DdlColumn)
-			.Append(column.PhysicalName)
+			//.Append(column.PhysicalName)
 			.ToString();
 
 	public string Drop(Table table) // Code size: 42 (0x2a)
@@ -339,7 +339,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	{
 		// Code size: 160 (0xa0)
 		subResult.Append(Indent)
-			.Append(firstColumn? field.PhysicalName : GetSecondColumn(field))
+		//	.Append(firstColumn? field.PhysicalName : GetSecondColumn(field))
 			.Append(SqlSpace)
 			.Append(GetDataType(field, firstColumn));
 		if ((field.IsPrimaryKey() || table.Type != TableType.Business) && field.NotNull)
@@ -356,10 +356,12 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	}
 	private void Create(StringBuilder stringBuilder, Table table, Relation relation)
 	{
+		/*
 		stringBuilder.Append(Indent)
 			.Append(relation.PhysicalName)
 			.Append(SqlSpace)
 			.Append(GetDataType(relation));
+		*/
 		if (table.Type != TableType.Business && relation.NotNull)
 		{
 			stringBuilder.Append(SqlSpace)

@@ -47,7 +47,7 @@ public class BaseBuilderTest
         
 
     internal Field GetAnonymousField(FieldType fieldType, int size, int? id = null, string? name = null) =>
-        new (id ?? _faker.Random.Number(int.MinValue,int.MaxValue), name ?? _faker.Random.String(), name ?? _faker.Random.String(),
+        new (id ?? _faker.Random.Number(int.MinValue,int.MaxValue), name ?? _faker.Random.String(),
             _faker.Random.String(), fieldType, size, _faker.Random.Bool()?  null : _faker.Random.String(), _faker.PickRandom<SearchableType>(), _faker.Random.Bool(), 
             _faker.Random.Bool(), _faker.Random.Bool(), _faker.Random.Bool());
 
@@ -65,7 +65,7 @@ public class BaseBuilderTest
         toTable.LoadColumnMapper();
         toTable.LoadRelationRecordIndex();
         // generate primary key 
-        var result = new Relation(id, relationName, relationName, _faker.Random.String(), relationType, toTable, -1, primaryKey.Type, 
+        var result = new Relation(id, relationName, _faker.Random.String(), relationType, toTable, -1, primaryKey.Type, 
             notNull, _faker.Random.Bool(), _faker.Random.Bool(), _faker.Random.Bool());
 
         return result;
