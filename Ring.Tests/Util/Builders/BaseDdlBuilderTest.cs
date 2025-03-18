@@ -21,7 +21,7 @@ public sealed class BaseDdlBuilderTest : BaseBuilderTest
         // arrange 
         var table = GetAnonymousTable(12, 2);
         var field = GetAnonymousField(FieldType.String, 80);
-        var expectedSql = $"ALTER TABLE {table.PhysicalName} ADD {field.PhysicalName} varchar(80) COLLATE \"C\"";
+        var expectedSql = $"ALTER TABLE {table.PhysicalName} ADD {field.Name} varchar(80) COLLATE \"C\"";
 
         // act 
         var dql = _sut.AlterAddColumn(table, field);
@@ -36,7 +36,7 @@ public sealed class BaseDdlBuilderTest : BaseBuilderTest
         // arrange 
         var table = GetAnonymousTable(12, 2);
         var field = GetAnonymousField(FieldType.LongDateTime, 0);
-        var expectedSql = $"ALTER TABLE {table.PhysicalName} ADD {field.PhysicalName} timestamp without time zone";
+        var expectedSql = $"ALTER TABLE {table.PhysicalName} ADD {field.Name} timestamp without time zone";
 
         // act 
         var dql = _sut.AlterAddColumn(table, field);
@@ -51,7 +51,7 @@ public sealed class BaseDdlBuilderTest : BaseBuilderTest
         // arrange 
         var table = GetAnonymousTable(12, 2);
         var field = GetAnonymousField(FieldType.Byte, 0);
-        var expectedSql = $"ALTER TABLE {table.PhysicalName} ADD {field.PhysicalName} int2";
+        var expectedSql = $"ALTER TABLE {table.PhysicalName} ADD {field.Name} int2";
 
         // act 
         var dql = _sut.AlterAddColumn(table, field);
@@ -81,7 +81,7 @@ public sealed class BaseDdlBuilderTest : BaseBuilderTest
         // arrange 
         var table = GetAnonymousTable(12, 2);
         var field = GetAnonymousField(FieldType.Byte, 0);
-        var expectedSql = $"ALTER TABLE {table.PhysicalName} DROP COLUMN {field.PhysicalName}";
+        var expectedSql = $"ALTER TABLE {table.PhysicalName} DROP COLUMN {field.Name}";
 
         // act 
         var dql = _sut.AlterDropColumn(table, field);

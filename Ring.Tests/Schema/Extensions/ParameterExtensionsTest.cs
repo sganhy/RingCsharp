@@ -17,7 +17,7 @@ public class ParameterExtensionsTest
         var result = new List<Parameter>();
         foreach (var element in Enum.GetValues(typeof(ParameterType)))
         {
-            result.Add(new Parameter((int)element, _faker.Random.String(), _faker.Random.String(), _faker.Random.String(), (ParameterType)element,
+            result.Add(new Parameter((int)element, _faker.Random.String(), _faker.Random.String(), (ParameterType)element,
                 _faker.PickRandom<FieldType>(), ((ParameterType)element).GetDefaultValue() ?? string.Empty, 
                 ((ParameterType)element).GetDefaultValue() ?? string.Empty, schemaId,
                 true,true));

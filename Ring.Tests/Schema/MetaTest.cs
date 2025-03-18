@@ -416,7 +416,7 @@ public sealed class MetaTest : BaseTest
         var exepectedRelType = RelationType.Mtm;
 
         // act 
-        var relation = meta.ToRelation(GetAnonymousTable(1,0), "ability2book");
+        var relation = meta.ToRelation(GetAnonymousTable(1,0));
 
         // assert
         Assert.NotNull(relation);

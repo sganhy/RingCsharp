@@ -22,7 +22,7 @@ public class FieldExtensionsTest : BaseTest
         var fieldType = _faker.PickRandom<FieldType>();
         var defaultValue = _faker.Random.Bool()? null : _faker.Random.String(); // nullable string
         var size = _faker.Random.Number(0,int.MaxValue);
-        var field = new Field(id, name, name, description, fieldType, size, defaultValue, SearchableType.None, true, true, true, false);
+        var field = new Field(id, name, description, fieldType, size, defaultValue, SearchableType.None, true, true, true, false);
 
         // act 
         var meta = FieldExtensions.ToMeta(field, tableId);
@@ -51,7 +51,7 @@ public class FieldExtensionsTest : BaseTest
         var fieldType = _faker.PickRandom<FieldType>();
         var defaultValue = _faker.Random.Bool()? null: _faker.Random.String();
         var size = _faker.Random.Number(0,int.MaxValue);
-        var field = new Field(id, name, name, description, fieldType, size, defaultValue, SearchableType.IgnoreCaseAndDiacritics, false, false, false, true);
+        var field = new Field(id, name, description, fieldType, size, defaultValue, SearchableType.IgnoreCaseAndDiacritics, false, false, false, true);
 
         // act 
         var meta = FieldExtensions.ToMeta(field, tableId);
@@ -79,8 +79,8 @@ public class FieldExtensionsTest : BaseTest
         var fieldType = _faker.PickRandom<FieldType>();
         var defaultValue = _faker.Random.Bool()? null: _faker.Random.String();
         var size = _faker.Random.Number(int.MinValue,int.MaxValue);
-        var field1 = new Field(id, name, name, description, fieldType, size, defaultValue, SearchableType.IgnoreCaseAndDiacritics, false, false, false, true);
-        var field2 = new Field(id, name, name, description, fieldType, size, defaultValue, SearchableType.IgnoreCaseAndDiacritics, false, false, false, true);
+        var field1 = new Field(id, name, description, fieldType, size, defaultValue, SearchableType.IgnoreCaseAndDiacritics, false, false, false, true);
+        var field2 = new Field(id, name, description, fieldType, size, defaultValue, SearchableType.IgnoreCaseAndDiacritics, false, false, false, true);
 
         // act 
         var hash1 = FieldExtensions.GetHashCode(field1);
@@ -100,9 +100,9 @@ public class FieldExtensionsTest : BaseTest
         var fieldType = _faker.PickRandom<FieldType>();
         var defaultValue = _faker.Random.Bool() ? null : _faker.Random.String();
         var size = _faker.Random.Number(int.MinValue,int.MaxValue);
-        var field1 = new Field(id, name, name, description, fieldType, size, defaultValue, SearchableType.IgnoreCase, false, false, false, true);
-        var field2 = new Field(id, name, name, description, fieldType, size, defaultValue, SearchableType.IgnoreCase, false, false, true, true);
-        var field3 = new Field(id, name, name, description, fieldType, size, defaultValue, SearchableType.IgnoreCaseAndDiacritics, false, false, false, true);
+        var field1 = new Field(id, name, description, fieldType, size, defaultValue, SearchableType.IgnoreCase, false, false, false, true);
+        var field2 = new Field(id, name, description, fieldType, size, defaultValue, SearchableType.IgnoreCase, false, false, true, true);
+        var field3 = new Field(id, name, description, fieldType, size, defaultValue, SearchableType.IgnoreCaseAndDiacritics, false, false, false, true);
 
         // act 
         var hash1 = FieldExtensions.GetHashCode(field1);
