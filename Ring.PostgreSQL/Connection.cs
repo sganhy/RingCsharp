@@ -328,12 +328,12 @@ public sealed class Connection : IRingConnection
         if (saveQuery.Type == SaveQueryType.InsertRecord)
         {
             // use an array pool
-            var span = new ReadOnlySpan<IColumn>(saveQuery.Table.Columns);
+            var span = new ReadOnlySpan<Column>(saveQuery.Table.Columns);
             var spanCount = span.Length;
-            var recordIndexes = saveQuery.Table.RecordIndexes;
+            var recordIndexes = new int[0]; //saveQuery.Table.RecordIndexes;
             var data = saveQuery.Data;
 
-            result = new NpgsqlParameter[saveQuery.Table.ColumnCount];
+            result = new NpgsqlParameter[9];
             var i = 0;
             var colIndex = 0;
             while (i<spanCount)

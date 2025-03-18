@@ -3,6 +3,7 @@ using Ring.Schema;
 using Ring.Schema.Builders;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
+using Ring.Schema.Models;
 using System.Globalization;
 using System.Linq.Expressions;
 using Xunit.Abstractions;
@@ -397,8 +398,8 @@ public class TableExtensionsTest : BaseTest
         Assert.NotNull(table4);
         Assert.NotNull(table5);
 
-        table2.RecordIndexes[0] = 44; // change one RecordIndex
-
+        table2.Columns[0] = new Column(FieldType.Long, EntityType.Field, "test", SearchableType.None, 44, 55);
+            
         // swap two columns
         var tempCol = table4.Columns[0];
         table4.Columns[0] = table4.Columns[1];

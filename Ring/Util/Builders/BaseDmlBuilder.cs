@@ -86,7 +86,7 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
         // Code size: 409 (0x199)
         var columns = new StringBuilder();
 		var values = new StringBuilder();
-		var spanColumns = new ReadOnlySpan<IColumn>(table.Columns);
+		var spanColumns = new ReadOnlySpan<Column>(table.Columns);
 		var columnCount = table.Columns.Length;
 		var variableId = 1;
 
@@ -102,13 +102,14 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
             if (column.SearchableType!=SearchableType.None)
 			{
                 columns.Append(ColumnDelimiter);
-				columns.Append(_ddlBuilder.GetSecondColumn((Field)column));
+				//columns.Append(_ddlBuilder.GetSecondColumn((Field)column));
 				AppendVariable(values, VariableNameTemplate, ++variableId, false, fieldType);
 			}
             #endregion
             #region time zone extra field?
             if (fieldType == FieldType.LongDateTime)
             {
+				/*
                 var timeZoneField = _ddlBuilder.GetSecondColumn((Field)column);
                 if (!string.IsNullOrEmpty(timeZoneField))
                 {
@@ -116,6 +117,7 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
                     columns.Append(timeZoneField);
                     AppendVariable(values, VariableNameTemplate, ++variableId, false, FieldType.Short);
                 }
+				*/
             }
             #endregion
 			columns.Append(ColumnDelimiter);
@@ -136,7 +138,7 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 			.Append(DmlWhere);
 		if (table.Type == TableType.Business || table.Type == TableType.Lexicon)
 		{
-			result.Append(table.Fields[table.RecordIndexes[0]].PhysicalName);
+			result.Append(table.Columns[0].PhysicalName);
 			result.Append(DmlEqual);
 			result.AppendFormat(CultureInfo.InvariantCulture, VariableNameTemplate, FirstParameter);
 		}
@@ -171,7 +173,7 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 
 		if (table.Type == TableType.Business || table.Type == TableType.Lexicon)
 		{
-			result.Append(table.Fields[table.RecordIndexes[0]].PhysicalName)
+			result.Append(table.Columns[0].PhysicalName)
 				.Append(DmlEqual)
 				.AppendFormat(CultureInfo.InvariantCulture, VariableNameTemplate, FirstParameter);
 		}

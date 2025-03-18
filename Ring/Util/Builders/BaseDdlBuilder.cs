@@ -308,8 +308,10 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 		while (i < columnCount)
 		{
 			var column = table.Columns[i];
+			/*
 			if (column.Type == EntityType.Field) Create(result, table, (Field)column);
 			else Create(result, table, (Relation)column);
+			*/
 			++i;
 		}
 		if (i > 0) result.Length -= 2;

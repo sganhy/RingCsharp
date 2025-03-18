@@ -191,7 +191,7 @@ internal static class TableExtensions
 		var result = new List<IColumn>();
 		if (table.Type == TableType.Business || table.Type == TableType.Lexicon)
 		{
-			result.Add(table.Fields[table.RecordIndexes[0]]);
+			result.Add(table.Fields[table.Columns[0].RecordIndex]);
 		}
 		else
 		{
@@ -243,6 +243,7 @@ internal static class TableExtensions
 		i = 0;
 		while (i<columnCount)
 		{
+			/*
 			index = table.GetFieldIndex(columns[i].Name);
 			if (index < 0)
 			{
@@ -261,6 +262,7 @@ internal static class TableExtensions
 				table.RecordIndexes[colPosition] = index;
 				++colPosition;
 			}
+			*/
 			++i;
 		}
 	}
@@ -322,11 +324,9 @@ internal static class TableExtensions
 			.Append(HashCodeSeparator)
 			.Append(GetStringCode(table.Indexes))
 			.Append(HashCodeSeparator)
-			.AppendJoin(HashCodeSeparator, table.RecordIndexes)		 // int[] RecordIndexes
-			.Append(HashCodeSeparator)
 			.Append(table.RecordSize)
 			.Append(HashCodeSeparator)
-		/* IColumn[] Columns - removed from computing !! */
+		/* Columns[] Columns - removed from computing !! */
 			.Append(table.PhysicalName)
 			.Append(HashCodeSeparator)
 			.Append((int)table.Type)

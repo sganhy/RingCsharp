@@ -105,7 +105,6 @@ public class DmlBuilderTest : BaseBuilderTest
 
         // assert
         Assert.Equal(expectedResult, result);
-        Assert.Equal(18, table.ColumnCount);
     }
 
     [Fact]

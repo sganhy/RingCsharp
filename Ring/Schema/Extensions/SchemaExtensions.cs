@@ -169,8 +169,10 @@ internal static class SchemaExtensions
 							mtmTable.Relations[1] = relation.GetRelation(RelationType.Mto);
 							mtmTable.Relations[0] = inverseRelation.GetRelation(RelationType.Mto);
 						}
+						/*
 						mtmTable.Columns[0] = mtmTable.Relations[0];
 						mtmTable.Columns[1] = mtmTable.Relations[1];
+						*/
 						mtmTable.Indexes[0].Columns[0] = mtmTable.Relations[0].Name;
 						mtmTable.Indexes[0].Columns[1] = mtmTable.Relations[1].Name;
 						mtm.Add(physicalName, mtmTable);

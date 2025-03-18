@@ -38,16 +38,16 @@ public class TableBuilderTest
         Assert.NotNull(metaTable.GetField("description"));
         Assert.NotNull(metaTable.GetField("value"));
         Assert.NotNull(metaTable.GetField("active"));
-        Assert.Equal("id", metaTable.Fields[metaTable.RecordIndexes[0]].Name);
-        Assert.Equal("schema_id", metaTable.Fields[metaTable.RecordIndexes[1]].Name);
-        Assert.Equal("object_type", metaTable.Fields[metaTable.RecordIndexes[2]].Name);
-        Assert.Equal("reference_id", metaTable.Fields[metaTable.RecordIndexes[3]].Name);
-        Assert.Equal("data_type", metaTable.Fields[metaTable.RecordIndexes[4]].Name);
-        Assert.Equal("flags", metaTable.Fields[metaTable.RecordIndexes[5]].Name);
-        Assert.Equal("name", metaTable.Fields[metaTable.RecordIndexes[6]].Name);
-        Assert.Equal("description", metaTable.Fields[metaTable.RecordIndexes[7]].Name);
-        Assert.Equal("value", metaTable.Fields[metaTable.RecordIndexes[8]].Name);
-        Assert.Equal("active", metaTable.Fields[metaTable.RecordIndexes[9]].Name);
+        Assert.Equal("id", metaTable.Fields[metaTable.Columns[0].RecordIndex].Name);
+        Assert.Equal("schema_id", metaTable.Fields[metaTable.Columns[1].RecordIndex].Name);
+        Assert.Equal("object_type", metaTable.Fields[metaTable.Columns[2].RecordIndex].Name);
+        Assert.Equal("reference_id", metaTable.Fields[metaTable.Columns[3].RecordIndex].Name);
+        Assert.Equal("data_type", metaTable.Fields[metaTable.Columns[4].RecordIndex].Name);
+        Assert.Equal("flags", metaTable.Fields[metaTable.Columns[5].RecordIndex].Name);
+        Assert.Equal("name", metaTable.Fields[metaTable.Columns[6].RecordIndex].Name);
+        Assert.Equal("description", metaTable.Fields[metaTable.Columns[7].RecordIndex].Name);
+        Assert.Equal("value", metaTable.Fields[metaTable.Columns[8].RecordIndex].Name);
+        Assert.Equal("active", metaTable.Fields[metaTable.Columns[9].RecordIndex].Name);
     }
 
 
@@ -71,14 +71,14 @@ public class TableBuilderTest
         Assert.NotNull(metaIdTable.GetField("schema_id"));
         Assert.NotNull(metaIdTable.GetField("object_type"));
         Assert.NotNull(metaIdTable.GetField("value"));
-        Assert.Equal("id", metaIdTable.Fields[metaIdTable.RecordIndexes[0]].Name);
-        Assert.Equal("schema_id", metaIdTable.Fields[metaIdTable.RecordIndexes[1]].Name);
-        Assert.Equal("object_type", metaIdTable.Fields[metaIdTable.RecordIndexes[2]].Name);
-        Assert.Equal("value", metaIdTable.Fields[metaIdTable.RecordIndexes[3]].Name);
-        Assert.Equal(FieldType.Int, metaIdTable.Fields[metaIdTable.RecordIndexes[0]].Type);
-        Assert.Equal(FieldType.Int, metaIdTable.Fields[metaIdTable.RecordIndexes[1]].Type);
-        Assert.Equal(FieldType.Byte, metaIdTable.Fields[metaIdTable.RecordIndexes[2]].Type);
-        Assert.Equal(FieldType.Long, metaIdTable.Fields[metaIdTable.RecordIndexes[3]].Type);
+        Assert.Equal("id", metaIdTable.Fields[metaIdTable.Columns[0].RecordIndex].Name);
+        Assert.Equal("schema_id", metaIdTable.Fields[metaIdTable.Columns[1].RecordIndex].Name);
+        Assert.Equal("object_type", metaIdTable.Fields[metaIdTable.Columns[2].RecordIndex].Name);
+        Assert.Equal("value", metaIdTable.Fields[metaIdTable.Columns[3].RecordIndex].Name);
+        Assert.Equal(FieldType.Int, metaIdTable.Fields[metaIdTable.Columns[0].RecordIndex].Type);
+        Assert.Equal(FieldType.Int, metaIdTable.Fields[metaIdTable.Columns[1].RecordIndex].Type);
+        Assert.Equal(FieldType.Byte, metaIdTable.Fields[metaIdTable.Columns[2].RecordIndex].Type);
+        Assert.Equal(FieldType.Long, metaIdTable.Fields[metaIdTable.Columns[3].RecordIndex].Type);
     }
 
     [Fact]
@@ -94,8 +94,8 @@ public class TableBuilderTest
         Assert.Equal("information_schema.tables", catalog.PhysicalName);
         Assert.Equal(PhysicalType.View, catalog.PhysicalType);
         Assert.Equal(2, catalog.Fields.Length);
-        Assert.Equal("table_schema", catalog.Fields[catalog.RecordIndexes[0]].Name);
-        Assert.Equal("table_name", catalog.Fields[catalog.RecordIndexes[1]].Name);
+        Assert.Equal("table_schema", catalog.Fields[catalog.Columns[0].RecordIndex].Name);
+        Assert.Equal("table_name", catalog.Fields[catalog.Columns[1].RecordIndex].Name);
     }
 
     [Fact]
@@ -111,8 +111,8 @@ public class TableBuilderTest
         Assert.Equal("information_schema.tables", catalog.PhysicalName);
         Assert.Equal(PhysicalType.View, catalog.PhysicalType);
         Assert.Equal(2, catalog.Fields.Length);
-        Assert.Equal("table_schema", catalog.Fields[catalog.RecordIndexes[0]].Name);
-        Assert.Equal("table_name", catalog.Fields[catalog.RecordIndexes[1]].Name);
+        Assert.Equal("table_schema", catalog.Fields[catalog.Columns[0].RecordIndex].Name);
+        Assert.Equal("table_name", catalog.Fields[catalog.Columns[1].RecordIndex].Name);
     }
 
     [Fact]
@@ -142,17 +142,17 @@ public class TableBuilderTest
         Assert.NotNull(logTable.GetField("line_number"));
         Assert.NotNull(logTable.GetField("message"));
         Assert.NotNull(logTable.GetField("description"));
-        Assert.Equal("id", logTable.Fields[logTable.RecordIndexes[0]].Name);
-        Assert.Equal("entry_time", logTable.Fields[logTable.RecordIndexes[1]].Name);
-        Assert.Equal("level_id", logTable.Fields[logTable.RecordIndexes[2]].Name);
-        Assert.Equal("schema_id", logTable.Fields[logTable.RecordIndexes[3]].Name);
-        Assert.Equal("thread_id", logTable.Fields[logTable.RecordIndexes[4]].Name);
-        Assert.Equal("call_site", logTable.Fields[logTable.RecordIndexes[5]].Name);
-        Assert.Equal("job_id", logTable.Fields[logTable.RecordIndexes[6]].Name);
-        Assert.Equal("method", logTable.Fields[logTable.RecordIndexes[7]].Name);
-        Assert.Equal("line_number", logTable.Fields[logTable.RecordIndexes[8]].Name);
-        Assert.Equal("message", logTable.Fields[logTable.RecordIndexes[9]].Name);
-        Assert.Equal("description", logTable.Fields[logTable.RecordIndexes[10]].Name);
+        Assert.Equal("id", logTable.Fields[logTable.Columns[0].RecordIndex].Name);
+        Assert.Equal("entry_time", logTable.Fields[logTable.Columns[1].RecordIndex].Name);
+        Assert.Equal("level_id", logTable.Fields[logTable.Columns[2].RecordIndex].Name);
+        Assert.Equal("schema_id", logTable.Fields[logTable.Columns[3].RecordIndex].Name);
+        Assert.Equal("thread_id", logTable.Fields[logTable.Columns[4].RecordIndex].Name);
+        Assert.Equal("call_site", logTable.Fields[logTable.Columns[5].RecordIndex].Name);
+        Assert.Equal("job_id", logTable.Fields[logTable.Columns[6].RecordIndex].Name);
+        Assert.Equal("method", logTable.Fields[logTable.Columns[7].RecordIndex].Name);
+        Assert.Equal("line_number", logTable.Fields[logTable.Columns[8].RecordIndex].Name);
+        Assert.Equal("message", logTable.Fields[logTable.Columns[9].RecordIndex].Name);
+        Assert.Equal("description", logTable.Fields[logTable.Columns[10].RecordIndex].Name);
     }
 
 

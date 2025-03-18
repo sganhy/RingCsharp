@@ -1389,11 +1389,11 @@ public sealed class RecordTest : BaseTest
         rcd2.ClearData();
 
         // assert
-        for (var i = 0; i <= rcd1.Table?.RecordIndexes.Length; ++i)
+        for (var i = 0; i <= rcd1.Table?.Columns.Length; ++i)
         {
             Assert.Null(rcd1[i]);
         }
-        for (var i = 0; i <= rcd2.Table?.RecordIndexes.Length; ++i)
+        for (var i = 0; i <= rcd2.Table?.Columns.Length; ++i)
         {
             Assert.Null(rcd2[i]);
         }
@@ -1594,7 +1594,7 @@ public sealed class RecordTest : BaseTest
         for (var i = 0; i < bucket.Length; i++)
         {
             // don't fill flag string (last string into array)
-            if (i==0 || i% table.RecordSize != table.RecordIndexes.Length) 
+            if (i==0 || i% table.RecordSize != table.Columns.Length) 
                 bucket[i] = string.Join("", _faker.Random.Chars(' ', '}', maxStringSize));
         }
         return bucket;

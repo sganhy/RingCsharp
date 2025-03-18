@@ -20,7 +20,7 @@ internal sealed class DqlBuilder : BaseDqlBuilder
     public override DatabaseProvider Provider => DatabaseProvider.PostgreSql;
     public DqlBuilder() : base() {}
 
-    protected override string GetSelection(IColumn column)
+    protected override string GetSelection(Column column)
     {
         switch (column.FieldType)
         {

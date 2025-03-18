@@ -183,7 +183,7 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	internal static Table GetEmptyTable(Meta meta) // Code size: 106 (0x6a)
 		=> new(meta.Id, meta.Name, meta.Description, meta.Value, string.Empty,
-			meta.DataType.ToTableType(), Array.Empty<Relation>(), Array.Empty<Field>(), Array.Empty<int>(), Array.Empty<IColumn>(),
+			meta.DataType.ToTableType(), Array.Empty<Relation>(), Array.Empty<Field>(), Array.Empty<Column>(),
 			Array.Empty<Index>(), meta.ReferenceId, PhysicalType.Table, -1, 0, meta.IsEntityBaseline, meta.Active,
 			meta.IsTableCached, meta.IsTableReadonly);
 
@@ -227,7 +227,7 @@ internal readonly struct Meta : IEquatable<Meta>
 		{
 			var fieldType = FieldType.Undefined;
 			if (to.Type == TableType.Business || to.Type == TableType.Lexicon)
-				fieldType = to.Fields[to.RecordIndexes[0]].Type;
+				fieldType = to.Fields[to.Columns[0].RecordIndex].Type;
 			return new Relation(Id, Name, string.Equals(physicalName, Name, StringComparison.Ordinal) ? Name : physicalName, 
 				Description, GetRelationType(), to, -1, fieldType,IsRelationNotNull, HasRelationConstraint, IsEntityBaseline, Active);
 		}
@@ -294,7 +294,8 @@ internal readonly struct Meta : IEquatable<Meta>
 	/// </summary>
 	internal Table? ToTable(ArraySegment<Meta> tableItems, PhysicalType physicalType, IDdlBuilder ddlBuilder, string physicalName, int objectIndex)
 	{
-		if (IsTable)
+        // Code size: 276 (0x114)
+        if (IsTable)
 		{
 			var tableType = DataType.ToTableType();
 			var fields = GetFieldArray(tableItems, ddlBuilder);
@@ -305,11 +306,12 @@ internal readonly struct Meta : IEquatable<Meta>
 
             // sort arrays
             Array.Sort(fields, (x, y) => string.CompareOrdinal(x.Name, y.Name));
-			Array.Sort(indexes, (x, y) => string.CompareOrdinal(x.Name, y.Name));
+            Array.Sort(relations, (x, y) => string.CompareOrdinal(x.Name, y.Name));
+            Array.Sort(indexes, (x, y) => string.CompareOrdinal(x.Name, y.Name));
 
 			return new Table(Id, Name, Description, Value, physicalName,
-				tableType, relations, fields, new int[columnMapperSize], new IColumn[columnMapperSize], indexes,
-				ReferenceId, physicalType, objectIndex, colCount, IsEntityBaseline, Active, IsTableCached, IsTableReadonly);
+				tableType, relations, fields, new Column[colCount], indexes,
+				ReferenceId, physicalType, objectIndex, relations.Length + fields.Length + 1, IsEntityBaseline, Active, IsTableCached, IsTableReadonly);
 		}
 		return null;
 	}

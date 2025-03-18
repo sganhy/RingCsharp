@@ -44,8 +44,7 @@ public abstract class BaseTest
 
         relations = relations.OrderBy(o => o.Name, StringComparer.Ordinal).ToList();
         var result = new Table(_faker.Random.Number(100, int.MaxValue), _faker.Random.String(), _faker.Random.String(), _faker.Random.String(),
-            _faker.Random.String(), TableType.Business, relations.ToArray(), fields.ToArray(),
-            new int[fields.Count + relations.Count], new IColumn[fields.Count + relations.Count], Array.Empty<Index>(), 12,
+            _faker.Random.String(), TableType.Business, relations.ToArray(), fields.ToArray(), new Column[fields.Count + relations.Count], Array.Empty<Index>(), 12,
             PhysicalType.Table, 0, 0, true, true, true, true);
         result.LoadColumnMapper();
         result.LoadRelationRecordIndex();
@@ -61,8 +60,8 @@ public abstract class BaseTest
     internal Relation GetAnonymousRelation(string? name = null, char minChar = char.MinValue, char maxChar = char.MaxValue)
     {
         var toTable = new Table(_faker.Random.Number(int.MinValue, int.MaxValue), _faker.Random.String(null, minChar, maxChar), _faker.Random.String(),
-            _faker.Random.String(), _faker.Random.String(), TableType.Business, Array.Empty<Relation>(), Array.Empty<Field>(), Array.Empty<int>(),
-            Array.Empty<IColumn>(), Array.Empty<Index>(), 12, PhysicalType.Table, 0, 0, true, true, true, true);
+            _faker.Random.String(), _faker.Random.String(), TableType.Business, Array.Empty<Relation>(), Array.Empty<Field>(),
+            Array.Empty<Column>(), Array.Empty<Index>(), 12, PhysicalType.Table, 0, 0, true, true, true, true);
         return new Relation(_faker.Random.Number(100, int.MaxValue), name ?? _faker.Random.String(null, minChar, maxChar), name ?? _faker.Random.String(null, minChar, maxChar),
             _faker.Random.String(),  _faker.PickRandom<RelationType>(), toTable, -1, FieldType.Long, _faker.Random.Bool(), _faker.Random.Bool(),
             _faker.Random.Bool(), _faker.Random.Bool());

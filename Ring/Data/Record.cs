@@ -78,11 +78,11 @@ public struct Record : IEquatable<Record>
 	public readonly bool IsDirty => _data[_type.RecordSize-1+_offset] != null;
 	public readonly bool IsNew
 	{
-		// Code size: 59 (0x3b)
-		get
-		{
+        // Code size: 64 (0x40)
+        get
+        {
 			if (_type.Id==-1) ThrowRecordUnknownRecordType();
-			if (_type.Type == TableType.Business) return _data[_type.RecordIndexes[0]]==null;
+			if (_type.Type == TableType.Business) return _data[_type.Columns[0].RecordIndex]==null;
 			// not manage ==> @lexicon_itm, @log, @meta, @meta_id; 
 			return true; // always New if there is no keys
 		}
@@ -102,8 +102,8 @@ public struct Record : IEquatable<Record>
 	/// <summary>
 	/// 	Get primary key value (Field name ID)
 	/// </summary>
-	internal readonly long GetField()	// Code size: 47 (0x2f)
-		=> long.Parse(_data[_type.RecordIndexes[0]+_offset] ?? DefaultPrimaryKeyValue, DefaultCulture);
+	internal readonly long GetField() // Code size: 52 (0x34)
+        => long.Parse(_data[_type.Columns[0].RecordIndex + _offset] ?? DefaultPrimaryKeyValue, DefaultCulture);
 
 	/// <summary>
 	/// 	GetField methods

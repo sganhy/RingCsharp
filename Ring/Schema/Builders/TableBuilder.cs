@@ -141,8 +141,10 @@ internal sealed class TableBuilder
 		var metaArr = new Meta[] { metaRelation, metaRelation, metaIndex };
 		var segMent = new ArraySegment<Meta>(metaArr, 0, 3);
 		var result = metaTable.ToTable(segMent, PhysicalType.Table, ddlBuilder, physicalName, objectIndex) ?? partialTable;
+		/*TODO LOAD columns
 		result.RecordIndexes[0]=0; // columnMapper 4 Mtm table is always {0,1}
 		result.RecordIndexes[1]=1; // columnMapper 4 Mtm table is always {0,1}
+		*/
 		return result;
 	}
 #pragma warning restore CA1822, S2325
