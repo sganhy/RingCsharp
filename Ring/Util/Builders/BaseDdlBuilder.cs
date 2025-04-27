@@ -59,19 +59,19 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 
     protected BaseDdlBuilder() {}
 
-	public string AlterAddColumn(Table table, IColumn column) // Code size: 90 (0x5a)
+	public string AlterAddColumn(Table table, Column column) // Code size: 90 (0x5a)
 		=> new StringBuilder()
 			.Append(DdlAlter)
 			.Append(DdlTable)
 			.Append(table.PhysicalName)
 			.Append(SqlSpace)
 			.Append(DdlAdd)
-			//.Append(column.PhysicalName)
+			.Append(column.PhysicalName)
 			.Append(SqlSpace)
 			.Append(GetDataType(column, true))
 			.ToString();
 	
-	public string AlterDropColumn(Table table, IColumn column) // Code size: 80 (0x50)
+	public string AlterDropColumn(Table table, Column column) // Code size: 80 (0x50)
 		=> new StringBuilder()
 			.Append(DdlAlter)
 			.Append(DdlTable)
@@ -79,7 +79,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 			.Append(SqlSpace)
 			.Append(DdlDrop)
 			.Append(DdlColumn)
-			//.Append(column.PhysicalName)
+			.Append(column.PhysicalName)
 			.ToString();
 
 	public string Drop(Table table) // Code size: 42 (0x2a)
@@ -195,7 +195,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	}
 
 	protected abstract string MtmPrefix { get; }
-	protected string GetDataType(IColumn column, bool firstColumn)
+	protected string GetDataType(Column column, bool firstColumn)
 	{
 		// Code size: 96 (0x60)
 		var fielType = column.FieldType;
@@ -265,9 +265,9 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 			 case ConstraintType.PrimaryKey:
 				result.Append(DdlPrimaryKey)
 					.Append('(')
-					.Append(string.Join(',', constraint.ToTable.GetPrimaryKey().ConvertAll(delegate (IColumn column)
+					.Append(string.Join(',', constraint.ToTable.GetPrimaryKey().ConvertAll(delegate (Column column)
 					{
-						return column.Name;
+						return column.PhysicalName;
 					})
 					.ToArray()))
 					.Append(')');
@@ -338,10 +338,10 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	private void Create(StringBuilder subResult, Table table, Field field, bool firstColumn = true)
 	{
 		// Code size: 160 (0xa0)
-		subResult.Append(Indent)
+		//subResult.Append(Indent)
 		//	.Append(firstColumn? field.PhysicalName : GetSecondColumn(field))
-			.Append(SqlSpace)
-			.Append(GetDataType(field, firstColumn));
+			//.Append(SqlSpace)
+			//.Append(GetDataType(field, firstColumn));
 		if ((field.IsPrimaryKey() || table.Type != TableType.Business) && field.NotNull)
 		{
 			subResult.Append(SqlSpace).Append(DdlNotNull);

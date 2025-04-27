@@ -48,7 +48,7 @@ internal static class AlterQueryExtensions
 			.Append(alterQuery.Type.ToString())
 			.Append(HashCodeSeparator)
 			// ignore Builder
-			.Append(alterQuery.Column?.Name)
+			.Append(alterQuery.Column?.PhysicalName)
 			.Append(HashCodeSeparator).ToString();
 	}
 

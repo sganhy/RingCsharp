@@ -85,29 +85,31 @@ internal readonly struct Meta : IEquatable<Meta>
 	#endregion
 
 	#region field methods
-	internal FieldType GetFieldType() => (DataType & 127).ToFieldType();
-	internal bool IsFieldNotNull() => ReadFlag(BitPositionFieldNotNull);
-	internal bool IsFieldMultilingual() => ReadFlag(BitPositionFieldMultilingual);
-	internal int GetFieldSize() => (int)((Flags >> (BitPositionFirstPositionSize-1)) & (int.MaxValue)); // Code size: 18 (0x12)
+	internal FieldType GetFieldType() => (DataType & 127).ToFieldType(); // Code size: 15 (0xf)
+    internal bool IsFieldNotNull() => ReadFlag(BitPositionFieldNotNull); // Code size: 8 (0x8)
+    internal bool IsFieldMultilingual() => ReadFlag(BitPositionFieldMultilingual); // Code size: 8 (0x8)
+    internal int GetFieldSize() => (int)((Flags >> (BitPositionFirstPositionSize-1)) & (int.MaxValue)); // Code size: 18 (0x12)
 	internal SearchableType GetSearchableType() => ((int)((Flags >> (BitPositionFieldSearchableType-1)) & 0x3F)).ToSearchableType(); // Code size: 19 (0x13)
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal string? GetFieldDefaultValue()
 	{
-		if (!string.IsNullOrEmpty(Value)) return Value;
+        // Code size: 42 (0x2a)
+        if (!string.IsNullOrEmpty(Value)) return Value;
 		if (IsFieldNotNull()) return GetFieldType().GetDefaultValue();
 		return null;
 	}
 	internal static int SetFieldType(int dataType, FieldType fieldType)
 	{
-		dataType &= 0x7FFFFF80; // clear 7 first bits
+        // Code size: 16 (0x10)
+        dataType &= 0x7FFFFF80; // clear 7 first bits
 		dataType += (int)fieldType;
 		return dataType;
 	}
 	// field flags 
-	internal static long SetFieldNotNull(long flags, bool value) => WriteFlag(flags, BitPositionFieldNotNull, value);
-	internal static long SetFieldMultilingual(long flags, bool value) => WriteFlag(flags, BitPositionFieldMultilingual, value);
-	internal static long SetFieldSize(long flags, int size)
+	internal static long SetFieldNotNull(long flags, bool value) => WriteFlag(flags, BitPositionFieldNotNull, value); // Code size: 9 (0x9)
+    internal static long SetFieldMultilingual(long flags, bool value) => WriteFlag(flags, BitPositionFieldMultilingual, value); // Code size: 9 (0x9)
+    internal static long SetFieldSize(long flags, int size)
 	{
 		// Code size: 15 (0xf)
 		var temp = (long)size;
@@ -315,10 +317,22 @@ internal readonly struct Meta : IEquatable<Meta>
 		}
 		return null;
 	}
-	#endregion
 
-	public static bool operator ==(Meta left, Meta right) => left.Equals(right);
-	public static bool operator !=(Meta left, Meta right) => !left.Equals(right);
+    internal Column? ToColumn(string physicalName, int recordIndex)
+    {
+        // Code size: 276 (0x114)
+        if (IsField)
+        {
+			// FieldType fieldType, EntityType type, string physicalName, SearchableType searchableType, int id, int recordIndex, int size
+			return new Column(GetFieldType(), EntityType.Field, physicalName, GetSearchableType(), Id, recordIndex, GetFieldSize());
+        }
+        return null;
+    }
+
+    #endregion
+
+    public static bool operator ==(Meta left, Meta right) => left.Equals(right); // Code size: 9 (0x9)
+    public static bool operator !=(Meta left, Meta right) => !left.Equals(right);
 	public readonly bool Equals(Meta other) =>
 		Id == other.Id &&
 		ObjectType == other.ObjectType &&

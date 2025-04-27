@@ -5,7 +5,7 @@ namespace Ring.Schema.Models;
 /// <summary>
 /// 	Logical field sourceType
 /// </summary>
-internal sealed class Field : BaseEntity, IColumn
+internal sealed class Field : BaseEntity
 {
 	internal readonly SearchableType SearchableType;
 	internal readonly string? DefaultValue;
@@ -28,17 +28,6 @@ internal sealed class Field : BaseEntity, IColumn
 		SearchableType = searchableType;
 		Multilingual = multilingual;
 	}
-
-	/// <summary>
-	/// 	Implement IColumn
-	/// </summary>
-	int IColumn.Id => Id;
-	FieldType IColumn.FieldType => Type;
-	RelationType IColumn.RelationType => RelationType.Undefined;
-	EntityType IColumn.Type => EntityType.Field;
-	string IColumn.Name => Name;
-	int IColumn.Size => Size;
-	SearchableType IColumn.SearchableType => SearchableType;
 
 #if DEBUG
 	public override string ToString() => $"{Id} - {Name} ({Type})";

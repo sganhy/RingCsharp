@@ -10,7 +10,7 @@ internal sealed class Table : BaseEntity
 	internal readonly Relation[] Relations;        // sorted by name.
 	internal readonly Index[] Indexes;
 	internal readonly int RecordSize;
-	internal readonly Column[] Columns;           // mix Fields and Relations.
+	internal readonly Column[] Columns;            // mix Fields and Relations.
 	internal readonly PhysicalType PhysicalType;
 	internal readonly int SchemaId;
 	internal readonly string? Subject;

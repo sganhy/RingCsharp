@@ -14,7 +14,7 @@ public readonly struct AlterQuery
 	internal readonly Table Table;
 	internal readonly AlterQueryType Type;
 	internal readonly IDdlBuilder Builder;
-	internal readonly IColumn? Column;
+	internal readonly Column? Column;
 	internal readonly Constraint? Constraint;
 	internal readonly Index? Index;
 	internal readonly TableSpace? TableSpace;
@@ -34,7 +34,7 @@ public readonly struct AlterQuery
 		TableSpace = null;
 	}
 
-	internal AlterQuery(int id, Table table, AlterQueryType type, IDdlBuilder builder, IColumn? column, Constraint? constraint, 
+	internal AlterQuery(int id, Table table, AlterQueryType type, IDdlBuilder builder, Column? column, Constraint? constraint, 
 		Index? index, TableSpace? tableSpace)
 	{
 		Id = id;

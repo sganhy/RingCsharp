@@ -3,7 +3,7 @@ using System.Drawing;
 
 namespace Ring.Schema.Models;
 
-internal sealed class Relation : BaseEntity, IColumn
+internal sealed class Relation : BaseEntity
 {
 	internal Relation InverseRelation { get; private set; } // assigned after initialization
 	internal readonly bool HasConstraint;                   // foreign key constraint should be added
@@ -33,16 +33,5 @@ internal sealed class Relation : BaseEntity, IColumn
 	/// 	Assign only once the property 
 	/// </summary>
 	internal void SetInverseRelation(Relation relation) => InverseRelation = ReferenceEquals(InverseRelation,this) ? relation : InverseRelation;
-
-	/// <summary>
-	/// 	Implement IColumn
-	/// </summary>
-	int IColumn.Id => Id;
-	FieldType IColumn.FieldType => FieldType;
-	string IColumn.Name => Name;
-	RelationType IColumn.RelationType => Type;
-	EntityType IColumn.Type => EntityType.Relation;
-	int IColumn.Size => 0;
-	SearchableType IColumn.SearchableType => SearchableType.None;
 
 }

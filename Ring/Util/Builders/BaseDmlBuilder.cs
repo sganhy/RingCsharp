@@ -150,7 +150,7 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 			var keyCount = pk.Count;
 			for (var i=0; i<keyCount; ++i, ++variableIndex)
 			{
-				var column = Meta.GetEmptyField(new Meta(pk[i].Name),FieldType.Int);
+				var column = Meta.GetEmptyField(new Meta(pk[i].PhysicalName),FieldType.Int);
 				//result.Append(column.PhysicalName);
 				result.Append(DmlEqual);
 				result.AppendFormat(CultureInfo.InvariantCulture, VariableNameTemplate, 
@@ -184,7 +184,7 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 			var keyCount = pk.Count;
 			for (var i = 0; i < keyCount; ++i, ++variableIndex)
 			{
-				var column = Meta.GetEmptyField(new Meta(pk[i].Name), FieldType.Int);
+				var column = Meta.GetEmptyField(new Meta(pk[i].PhysicalName), FieldType.Int);
 				/*
 				result.Append(column.PhysicalName)
 					.Append(DmlEqual)

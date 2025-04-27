@@ -14,8 +14,8 @@ internal interface IDdlBuilder : ISqlBuilder
     string Create(Index index, Table table, TableSpace? tablespace = null);
     string Create(Constraint constraint, TableSpace? tablespace = null);
     string Drop(Table table);
-    string AlterAddColumn(Table table, IColumn column);
-    string AlterDropColumn(Table table, IColumn column);
+    string AlterAddColumn(Table table, Column column);
+    string AlterDropColumn(Table table, Column column);
     string Truncate(Table table);
     string GetSecondColumn(Field field); // some fields are defined onto 2 columns; return the physical name
     string GetPhysicalName(Table table, DbSchema schema);

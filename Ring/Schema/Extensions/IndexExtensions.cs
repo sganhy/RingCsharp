@@ -36,7 +36,7 @@ internal static class IndexExtensions
 			var key = new StringBuilder();
 			foreach (var idx in pk)
 			{
-				key.Append(idx.Name);
+				key.Append(idx.PhysicalName);
 				key.Append(',');
 			}
 			key.Length--;

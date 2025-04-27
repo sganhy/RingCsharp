@@ -91,7 +91,8 @@ internal static class FieldExtensions
 		return null;
 	}
 
-	internal static long GetHashCode(this Field field)
+
+    internal static long GetHashCode(this Field field)
 	{
 		HashHelper.Djb2X(GetStringCode(field), out long hash);
 		return hash;

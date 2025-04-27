@@ -59,10 +59,10 @@ internal struct BulkAlter : IEquatable<BulkAlter>
 		// Code size: 67 (0x43)
 		var table = _schema.GetTable(tableName);
 		if (table == null) ThrowInvalidObjectType(tableName);
-		IColumn? field = table.GetField(columnName);
-		IColumn? relation = table.GetRelation(columnName);
-		if (field==null && relation==null) ThrowInvalidFieldName(tableName, columnName);
-		AppendDdlCommand(AlterQueryType.AlterTableAddColumn, table, field??relation);
+		//IColumn? field = table.GetField(columnName);
+		//IColumn? relation = table.GetRelation(columnName);
+		//if (field==null && relation==null) ThrowInvalidFieldName(tableName, columnName);
+		//AppendDdlCommand(AlterQueryType.AlterTableAddColumn, table, field??relation);
 	}
 
 	internal readonly void Apply(IRingConnection connection)
@@ -104,7 +104,7 @@ internal struct BulkAlter : IEquatable<BulkAlter>
 				GetTableSpace(table, EntityType.Constraint)));
 	}
 
-	private void AppendDdlCommand(AlterQueryType type, Table table, IColumn? column = null)
+	private void AppendDdlCommand(AlterQueryType type, Table table, Column? column = null)
 	{
 		switch (type)
 		{

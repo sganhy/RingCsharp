@@ -2,6 +2,7 @@
 using System.Text;
 using Ring.Schema.Enums;
 using Ring.Schema.Models;
+using Ring.Util.Builders;
 using Ring.Util.Helpers;
 using Index = Ring.Schema.Models.Index;
 
@@ -186,12 +187,12 @@ internal static class TableExtensions
 		return null;
 	}
 
-	internal static List<IColumn> GetPrimaryKey(this Table table)
+	internal static List<Column> GetPrimaryKey(this Table table)
 	{
-		var result = new List<IColumn>();
+		var result = new List<Column>();
 		if (table.Type == TableType.Business || table.Type == TableType.Lexicon)
 		{
-			result.Add(table.Fields[table.Columns[0].RecordIndex]);
+			//result.Add(table.Fields[table.Columns[0].RecordIndex]);
 		}
 		else
 		{
@@ -227,44 +228,6 @@ internal static class TableExtensions
 	/// </summary>
 	internal static void LoadColumnMapper(this Table table)
 	{
-		var fieldCount = table.Fields.Length;
-		var relationCount = table.Relations.Length;
-		var columnCount = fieldCount + relationCount; // potential max column count
-		var index = 0;
-		var colPosition = 0;
-		var relationIndex = fieldCount;
-		var i =0;
-		// copy
-		var columns = new IColumn[columnCount];
-		for (; i < fieldCount; ++i) columns[i] = table.Fields[i];
-		for (i=0; i < relationCount; ++i) columns[i+fieldCount] = table.Relations[i];
-		// sort by Id
-		Array.Sort(columns, (x, y) => x.Id.CompareTo(y.Id));
-		i = 0;
-		while (i<columnCount)
-		{
-			/*
-			index = table.GetFieldIndex(columns[i].Name);
-			if (index < 0)
-			{
-				var relation = columns[i];
-				if (relation.RelationType == RelationType.Mto || relation.RelationType == RelationType.Otop)
-				{
-					table.RecordIndexes[colPosition] = relationIndex;
-					table.Columns[colPosition] = columns[i];
-					++colPosition;
-					++relationIndex;
-				}
-			}
-			else
-			{
-				table.Columns[colPosition] = columns[i];
-				table.RecordIndexes[colPosition] = index;
-				++colPosition;
-			}
-			*/
-			++i;
-		}
 	}
 
 	/// <summary>
@@ -298,7 +261,7 @@ internal static class TableExtensions
 
 	internal static string GetStringCode(this Table table)
 	{
-        // Code size: 284 (0x11c)
+        // Code size: 258 (0x102)
         /*
 		* readonly bool Cached
 		* readonly Field[] Fields
@@ -343,13 +306,28 @@ internal static class TableExtensions
 			.ToString();
 	}
 
+    internal static void LoadColumns(this Table table, ArraySegment<Meta> tableItems, IDdlBuilder ddlBuilder)
+    {
+        var result = new Column[10];
+        var defaultColumn = new Column(FieldType.Undefined, EntityType.Undefined, string.Empty, SearchableType.None, 0 , 0, 0);
+        var columnIndex = 0;
+        foreach (var item in tableItems)
+        {
+            if (item.IsField) table.Columns[columnIndex++] =
+                    item.ToColumn(ddlBuilder.GetPhysicalName(EntityType.Field, item.Name), table.GetFieldIndex(item.Name)) ?? defaultColumn;
+            if (item.IsRelation) table.Columns[columnIndex++] =
+                    item.ToColumn(ddlBuilder.GetPhysicalName(EntityType.Relation, item.Name), table.GetFieldIndex(item.Name)) ?? defaultColumn;
 
-	#region private methods 
+        }
+        Array.Sort(table.Columns, (x, y) => x.Id.CompareTo(y.Id));
+    }
 
-	/// <summary>
-	/// 	Get first unique index
-	/// </summary>
-	private static Index? GetFirstUniqueIndex(this Table table)
+    #region private methods 
+
+    /// <summary>
+    /// 	Get first unique index
+    /// </summary>
+    private static Index? GetFirstUniqueIndex(this Table table)
 	{
 		if (table.Indexes.Length > 0)
 			for (var i = 0; i < table.Indexes.Length; ++i)
@@ -357,11 +335,12 @@ internal static class TableExtensions
 		return null;
 	}
 
-	private static IColumn GetColumn(this Table table, string name)
+	private static Column GetColumn(this Table table, string name)
 	{
 		var col = table.GetField(name??string.Empty);
-		return col != null ? col : table.GetRelation(name??string.Empty);
-	}
+		//return col != null ? col : table.GetRelation(name??string.Empty);
+		return new Column(FieldType.Undefined, EntityType.Undefined, string.Empty, SearchableType.None, 0, 0, 0);
+    }
 
 	private static string GetStringCode(Field[] fields)
 	{
