@@ -46,7 +46,7 @@ public abstract class BaseTest
         var result = new Table(_faker.Random.Number(100, int.MaxValue), _faker.Random.String(), _faker.Random.String(), _faker.Random.String(),
             _faker.Random.String(), TableType.Business, relations.ToArray(), fields.ToArray(), new Column[fields.Count + relations.Count], Array.Empty<Index>(), 12,
             PhysicalType.Table, 0, 0, true, true, true, true);
-        result.LoadColumnMapper();
+        //result.LoadColumns();
         result.LoadRelationRecordIndex();
         return result;
     }

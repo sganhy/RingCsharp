@@ -1,5 +1,6 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Models;
+using Ring.Util.Builders;
 using Ring.Util.Helpers;
 using System.Globalization;
 using System.Runtime.CompilerServices;
@@ -79,7 +80,11 @@ internal static class FieldExtensions
 		return new (field.Id, (byte)EntityType.Field, tableId, dataType, flags, field.Name, field.Description, null, field.Active);
 	}
 
-	internal static Field? GetDefaultPrimaryKey(this Field? _, FieldType fieldType)
+    internal static Column ToColumn(this Field field, int recordIndex, IDdlBuilder ddlBuilder)
+        => new(field.Type, EntityType.Field, ddlBuilder.GetPhysicalName(EntityType.Relation, field.Name), SearchableType.None,
+            field.Id, recordIndex, 0);
+
+    internal static Field? GetDefaultPrimaryKey(this Field? _, FieldType fieldType)
 	{
 		switch (fieldType)
 		{

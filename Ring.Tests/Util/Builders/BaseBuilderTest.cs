@@ -36,7 +36,7 @@ public class BaseBuilderTest
             _faker.Random.String(), TableType.Business, relations.ToArray(), fields.ToArray(),
             new Column[fields.Count + relations.Count], Array.Empty<Index>(), 12, 
             PhysicalType.Table, 0, 0, true, true, true, true);
-        result.LoadColumnMapper();
+        //result.LoadColumns();
         result.LoadRelationRecordIndex();
         return result;
     }
@@ -62,7 +62,6 @@ public class BaseBuilderTest
             _faker.Random.String(), TableType.Business, Array.Empty<Relation>(), fieldList.ToArray(),
             new Column[fieldList.Count], Array.Empty<Index>(), 12, PhysicalType.Table, 0, 0,
             true, true, true, true);
-        toTable.LoadColumnMapper();
         toTable.LoadRelationRecordIndex();
         // generate primary key 
         var result = new Relation(id, relationName, _faker.Random.String(), relationType, toTable, -1, primaryKey.Type, 

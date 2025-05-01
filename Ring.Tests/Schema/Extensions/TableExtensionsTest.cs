@@ -364,7 +364,6 @@ public class TableExtensionsTest : BaseTest
         Assert.NotNull(table2);
         // copy relations
         for (var i = 0; i < table2.Relations.Length; ++i) table2.Relations[i] = table1.Relations[i];
-        table2.LoadColumnMapper();
         table2.LoadRelationRecordIndex();
 
         // act 

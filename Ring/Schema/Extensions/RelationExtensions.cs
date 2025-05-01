@@ -1,5 +1,6 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Models;
+using Ring.Util.Builders;
 using Ring.Util.Helpers;
 using System.Globalization;
 using System.Text;
@@ -25,7 +26,11 @@ internal static class RelationExtensions
 		return meta;
 	}
 
-	internal static string GetMtmName(this Relation relation)
+	internal static Column ToColumn(this Relation relation, int recordIndex, IDdlBuilder ddlBuilder)
+		=> new (relation.FieldType, EntityType.Relation, ddlBuilder.GetPhysicalName(EntityType.Relation, relation.Name), SearchableType.None,
+			relation.Id, recordIndex, 0);
+
+    internal static string GetMtmName(this Relation relation)
 	{
 		// mtm relation already computed - find previous table_id
 		var toTableId = relation.ToTable.Type == TableType.Mtm? 
@@ -106,6 +111,9 @@ internal static class RelationExtensions
 			.Append(BaseEntityExtensions.GetStringCode(relation))
 			.ToString();
 	}
+
+
+
 
 	internal static Relation SetRecordIndex(this Relation relation, int recordIndex)
 	{

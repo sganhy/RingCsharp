@@ -76,7 +76,7 @@ internal static class SchemaExtensions
 	/// </summary>
 	/// <param name="schema">Partial built in schema</param>
 	/// <param name="schemaItems">Should be sorted by name</param>
-	internal static void LoadRelations(this DbSchema schema, ReadOnlySpan<Meta> schemaItems, int mtmCount, IDdlBuilder ddlBuilder)
+	internal static void LoadRelations(this DbSchema schema, ReadOnlySpan<Meta> schemaItems, int mtmCount)
 	{
 		var relationDicoIndex = new Dictionary<int,int>(schema.TablesById.Length*2); // (tableId, relation index)
 	
@@ -104,16 +104,6 @@ internal static class SchemaExtensions
 		schema.LoadInverseRelations(schemaItems);
 		// load mtm relations
 		schema.LoadMtm(mtmCount);
-	}
-
-	internal static void LoadColumnMappers(this DbSchema schema)
-	{
-		foreach (var tbl in new Span<Table>(schema.TablesByName)) tbl.LoadColumnMapper();
-	}
-
-	internal static void LoadRecordIndexes(this DbSchema schema)
-	{
-		foreach (var tbl in new Span<Table>(schema.TablesByName)) tbl.LoadRelationRecordIndex();
 	}
 
 	#region private methods 

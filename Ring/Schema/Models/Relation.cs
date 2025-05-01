@@ -6,12 +6,11 @@ namespace Ring.Schema.Models;
 internal sealed class Relation : BaseEntity
 {
 	internal Relation InverseRelation { get; private set; } // assigned after initialization
-	internal readonly bool HasConstraint;                   // foreign key constraint should be added
-	internal readonly bool NotNull;                         // foreign key constraint should be added
+	internal readonly bool HasConstraint;
+	internal readonly bool NotNull;
 	internal readonly Table ToTable;
 	internal readonly RelationType Type;
 	internal readonly FieldType FieldType;
-	internal readonly int RecordIndex;                      // removed property , to avoid callVirt IL statment
 
 	/// <summary>
 	/// 	Ctor
@@ -25,7 +24,6 @@ internal sealed class Relation : BaseEntity
 		HasConstraint = constraint;
 		NotNull = notnull;
 		InverseRelation = this;
-		RecordIndex = recordIndex;
 		FieldType = fieldType;
 	}
 

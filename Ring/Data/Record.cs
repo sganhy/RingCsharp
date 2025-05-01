@@ -366,7 +366,7 @@ public struct Record : IEquatable<Record>
 		var relation = _type.GetRelation(name);
 		var trackerIndex = _offset + _type.RecordSize - 1;
 		if (relation == null) ThrowRecordUnknownRelationName(name);
-		var index = relation.RecordIndex;
+		var index = 112; //relation.RecordIndex;
 		if (index >= 0) return _data[trackerIndex] != null && IsColumnChanged(index, trackerIndex);
 		return false;
 	}
@@ -384,8 +384,8 @@ public struct Record : IEquatable<Record>
 		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var relation = _type.GetRelation(name);
 		if (relation == null) ThrowRecordUnknownRelationName(name);
-		var index = relation.RecordIndex + _offset;
-		if (index >= 0 && _data[index] != null) return long.Parse(_data[index]!, CultureInfo.InvariantCulture);
+		var index = _offset;//relation.RecordIndex + _offset; // replace by GetRelationIndex
+        if (index >= 0 && _data[index] != null) return long.Parse(_data[index]!, CultureInfo.InvariantCulture);
 		else ThrowRecordWrongRelationType(name);
 		return null;
 	}
@@ -396,7 +396,7 @@ public struct Record : IEquatable<Record>
 		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var relation = _type.GetRelation(name);
 		if (relation == null) ThrowRecordUnknownRelationName(name);
-		var index = relation.RecordIndex;
+		var index = 112; //  relation.RecordIndex;
 		if (index >= 0) SetData(index, value?.ToString(DefaultCulture));
 		else ThrowRecordWrongRelationType(name);
 	}

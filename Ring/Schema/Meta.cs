@@ -24,7 +24,10 @@ internal readonly struct Meta : IEquatable<Meta>
 	private const byte SequenceId = (byte)EntityType.Sequence;
 	private const byte TablespaceId = (byte)EntityType.Tablespace;
 	private const byte ParameterId = (byte)EntityType.Parameter;
-	private const char IndexColumnDelimiter = ';';
+    private const byte SearchableColumnId = (byte)EntityType.SearchableColumn;
+    private const byte TimeZoneColumnId = (byte)EntityType.TimeZoneColumn;
+
+    private const char IndexColumnDelimiter = ';';
 	private const char HashCodeSeparator = (char)7777;
 
 	// flags bit positions
@@ -78,9 +81,11 @@ internal readonly struct Meta : IEquatable<Meta>
 	internal readonly bool IsSequence => ObjectType == SequenceId;
 	internal readonly bool IsTableSpace => ObjectType == TablespaceId;
 	internal readonly bool IsParameter => ObjectType == ParameterId;
+    internal readonly bool IsSearchableColumn => ObjectType == SearchableColumnId;
+    internal readonly bool IsTimeZoneColumn => ObjectType == TimeZoneColumnId;
 
-	#region entity methods 
-	internal bool IsEntityBaseline => ReadFlag(BitPositionEntityBaseline);
+    #region entity methods 
+    internal bool IsEntityBaseline => ReadFlag(BitPositionEntityBaseline);
 	internal static long SetEntityBaseline(long flags, bool value) => WriteFlag(flags, BitPositionEntityBaseline, value);
 	#endregion
 
@@ -240,8 +245,7 @@ internal readonly struct Meta : IEquatable<Meta>
 		=> IsField ? new Field(Id, Name, Description, GetFieldType(), 
 			GetFieldSize(), GetFieldDefaultValue(), GetSearchableType(), IsEntityBaseline, IsFieldNotNull(), IsFieldMultilingual(), Active) : null;
 
-	internal static DbSchema? ToSchema(Meta[] schema, DatabaseProvider provider,
-		SchemaType type = SchemaType.Static, SchemaLoadType loadType = SchemaLoadType.Full)
+	internal static DbSchema? ToSchema(Meta[] schema, DatabaseProvider provider, SchemaType type = SchemaType.Static, SchemaLoadType loadType = SchemaLoadType.Full)
 	{
 		// sort ASC by reference_id, name
 		Array.Sort(schema, (x, y) => MetaSchemaComparer(x, y));
@@ -268,9 +272,7 @@ internal readonly struct Meta : IEquatable<Meta>
 				metaValue.Description, parameters, lexicons.ToArray(), loadType, type, sequences.ToArray(), tableById.ToArray(), 
 				tableByName.ToArray(), tableSpaces.ToArray(), provider, tableCount + mtmCount, metaValue.Active, metaValue.IsEntityBaseline);
 
-			result.LoadRelations(schema, mtmCount, ddlBuilder);
-			result.LoadColumnMappers(); // load column mapper on tables
-			result.LoadRecordIndexes(); // load record indexes on relations
+			result.LoadRelations(schema, mtmCount);
 
 			return result;
 		}
@@ -296,7 +298,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	/// </summary>
 	internal Table? ToTable(ArraySegment<Meta> tableItems, PhysicalType physicalType, IDdlBuilder ddlBuilder, string physicalName, int objectIndex)
 	{
-        // Code size: 276 (0x114)
+        // Code size: 284 (0x11c)
         if (IsTable)
 		{
 			var tableType = DataType.ToTableType();
@@ -311,9 +313,13 @@ internal readonly struct Meta : IEquatable<Meta>
             Array.Sort(relations, (x, y) => string.CompareOrdinal(x.Name, y.Name));
             Array.Sort(indexes, (x, y) => string.CompareOrdinal(x.Name, y.Name));
 
-			return new Table(Id, Name, Description, Value, physicalName,
+			var table =  new Table(Id, Name, Description, Value, physicalName,
 				tableType, relations, fields, new Column[colCount], indexes,
 				ReferenceId, physicalType, objectIndex, relations.Length + fields.Length + 1, IsEntityBaseline, Active, IsTableCached, IsTableReadonly);
+
+			table.LoadColumns(tableItems, ddlBuilder);
+
+            return table;
 		}
 		return null;
 	}
@@ -380,21 +386,24 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	private static int GetTableCount(ReadOnlySpan<Meta> schema)
 	{
-		var result = 0;
+        // Code size: 51 (0x33)
+        var result = 0;
 		foreach (var meta in schema) if (meta.IsTable) ++result;
 		return result;
 	}
 
 	private static int GetMtmCount(ReadOnlySpan<Meta> schema)
 	{
-		var result = 0;
+        // Code size: 63 (0x3f)
+        var result = 0;
 		foreach (var meta in schema) if (meta.IsRelation && meta.GetRelationType()==RelationType.Mtm) ++result;
 		return result >> 1; // divided by 2
 	}
 
 	private static long WriteFlag(long flags, byte bitPosition, bool value)
-	{
-		if (bitPosition < 65)
+    { 
+		// Code size: 35 (0x23)
+        if (bitPosition < 65)
 		{
 			var mask = 1L;
 			mask <<= bitPosition - 1;
@@ -405,9 +414,9 @@ internal readonly struct Meta : IEquatable<Meta>
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private bool ReadFlag(byte bitPosition) => ((Flags >> (bitPosition - 1)) & 1) > 0;
+	private bool ReadFlag(byte bitPosition) => ((Flags >> (bitPosition - 1)) & 1) > 0; // Code size: 21 (0x15)
 
-	private Index[] GetIndexes(ArraySegment<Meta> items, IDdlBuilder ddlBuilder)
+    private Index[] GetIndexes(ArraySegment<Meta> items, IDdlBuilder ddlBuilder)
 	{
 		// count element
 		var indexCount = 0;
