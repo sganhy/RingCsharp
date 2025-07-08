@@ -31,13 +31,14 @@ internal static class SchemaExtensions
 		return null;
 	}
 
-	/// <summary>
-	/// 	Get table object by Id
-	/// </summary>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+    /// <summary>
+    /// 	Get table object by Id --> O(log n)
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static Table? GetTable(this DbSchema schema, int id)
 	{
-		var span = new ReadOnlySpan<Table>(schema.TablesById);
+        // Code size: 91 (0x5b)
+        var span = new ReadOnlySpan<Table>(schema.TablesById);
 		int indexerLeft = 0, indexerRight = span.Length - 1, indexerMiddle, indexerCompare;
 		while (indexerLeft <= indexerRight)
 		{
@@ -57,7 +58,8 @@ internal static class SchemaExtensions
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static Table? GetTable(this DbSchema schema, string name)
 	{
-		var span = new ReadOnlySpan<Table>(schema.TablesByName);
+        // Code size: 92 (0x5c)
+        var span = new ReadOnlySpan<Table>(schema.TablesByName);
 		int indexerLeft = 0, indexerRight = span.Length - 1, indexerMiddle, indexerCompare;
 		while (indexerLeft <= indexerRight)
 		{
@@ -70,118 +72,5 @@ internal static class SchemaExtensions
 		}
 		return null;
 	}
-
-	/// <summary>
-	/// 	Load relationships objects into partial schema 
-	/// </summary>
-	/// <param name="schema">Partial built in schema</param>
-	/// <param name="schemaItems">Should be sorted by name</param>
-	internal static void LoadRelations(this DbSchema schema, ReadOnlySpan<Meta> schemaItems, int mtmCount)
-	{
-		var relationDicoIndex = new Dictionary<int,int>(schema.TablesById.Length*2); // (tableId, relation index)
-	
-		// load dico
-		foreach (var table in new ReadOnlySpan<Table>(schema.TablesById)) relationDicoIndex.Add(table.Id, 0);
-
-		// load relation
-		foreach (var meta in schemaItems)
-		{
-			if (meta.IsRelation)
-			{
-				var fromTable = schema.GetTable(meta.ReferenceId); // get table by id
-				var toTable = schema.GetTable(meta.DataType);
-				if (toTable != null && fromTable!=null)
-				{
-					var relation = meta.ToRelation(toTable);
-#pragma warning disable CS8601 // Possible null reference assignment. Cannot be null here !!
-					fromTable.Relations[relationDicoIndex[fromTable.Id]] = relation;
-#pragma warning restore CS8601 
-					++relationDicoIndex[fromTable.Id];
-				}
-			}
-		}
-		// load inverse relations
-		schema.LoadInverseRelations(schemaItems);
-		// load mtm relations
-		schema.LoadMtm(mtmCount);
-	}
-
-	#region private methods 
-	private static void LoadInverseRelations(this DbSchema schema, ReadOnlySpan<Meta> schemaItems)
-	{
-		foreach (var meta in schemaItems)
-		{
-			if (meta.IsRelation)
-			{
-				var fromTable = schema.GetTable(meta.ReferenceId); // get table by id
-				if (fromTable != null)
-				{
-					var relation = fromTable.GetRelation(meta.Name);
-					var invRelation = relation?.ToTable.GetRelation(meta.Value??string.Empty); 
-					if (relation != null && invRelation!=null)  relation.SetInverseRelation(invRelation);
-				}
-			}
-		}
-	}
-
-	private static void LoadMtm(this DbSchema schema, int mtmCount)
-	{
-		var ddlBuilder = schema.Provider.GetDdlBuilder();
-		var tableBuilder = new TableBuilder();
-		var span = new Span<Table>(schema.TablesById);
-        Table mtmTable;
-		var mtm = new Dictionary<string,Table>(mtmCount * 2); // store mtm physical name
-		foreach (var table in span)
-		{
-			for (var j=table.Relations.Length - 1; j >= 0; --j)
-			{
-				if (table.Relations[j].Type == RelationType.Mtm)
-				{
-					// step 1 - generate physical name
-					var relation = table.Relations[j];
-					var metaTable = new Meta(0,(byte)EntityType.Relation,0,(int)TableType.Mtm,0L, relation.GetMtmName(), 
-						null,null,true);
-					var emptyTable = Meta.GetEmptyTable(metaTable);
-					var physicalName = ddlBuilder.GetPhysicalName(emptyTable, schema);
-					var inverseRelation = relation.InverseRelation;
-
-                    if (!mtm.ContainsKey(physicalName))
-					{
-						mtmTable = tableBuilder.GetMtm(emptyTable, ddlBuilder, physicalName, mtm.Count);
-						//  step 2 - load relations - sort relation
-						if (string.CompareOrdinal(relation.Name, inverseRelation.Name) < 0)
-						{
-							mtmTable.Relations[0] = relation.GetRelation(RelationType.Mto);
-							mtmTable.Relations[1] = inverseRelation.GetRelation(RelationType.Mto);
-						}
-						else
-						{
-							mtmTable.Relations[1] = relation.GetRelation(RelationType.Mto);
-							mtmTable.Relations[0] = inverseRelation.GetRelation(RelationType.Mto);
-						}
-						/*
-						mtmTable.Columns[0] = mtmTable.Relations[0];
-						mtmTable.Columns[1] = mtmTable.Relations[1];
-						*/
-						mtmTable.Indexes[0].Columns[0] = mtmTable.Relations[0].Name;
-						mtmTable.Indexes[0].Columns[1] = mtmTable.Relations[1].Name;
-						mtm.Add(physicalName, mtmTable);
-					}
-					else mtmTable = mtm[physicalName];
-					// step 3 - create two new relations
-					table.Relations[j] = CreateMtmRelation(relation, mtmTable, ddlBuilder);
-					table.Relations[j].SetInverseRelation(inverseRelation);
-				}
-			}
-		}
-	}
-
-	private static Relation CreateMtmRelation(Relation relation, Table mtmTable, IDdlBuilder ddlBuilder)
-	{
-		var meta = relation.ToMeta(0);
-		return meta.ToRelation(mtmTable);
-	}
-
-	#endregion 
 
 }

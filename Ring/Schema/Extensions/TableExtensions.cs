@@ -166,18 +166,18 @@ internal static class TableExtensions
 		return -1;
 	}
 
-    internal static Column GetColumn(this Table table, string name)
-    {
-        var col = table.GetField(name ?? string.Empty);
-        //return col != null ? col : table.GetRelation(name??string.Empty);
-        return new Column(FieldType.Undefined, EntityType.Undefined, string.Empty, SearchableType.None, 0, 0, 0);
-    }
+	internal static Column GetColumn(this Table table, string name)
+	{
+		var col = table.GetField(name ?? string.Empty);
+		//return col != null ? col : table.GetRelation(name??string.Empty);
+		return new Column(FieldType.Undefined, EntityType.Undefined, string.Empty, SearchableType.None, 0, 0, 0);
+	}
 
-    /// <summary>
-    /// 	Get index object by name ==> O(log n) complexity
-    /// </summary>
-    /// <returns>Index object</returns>
-    internal static Index? GetIndex(this Table table, string name)
+	/// <summary>
+	/// 	Get index object by name ==> O(log n) complexity
+	/// </summary>
+	/// <returns>Index object</returns>
+	internal static Index? GetIndex(this Table table, string name)
 	{
 		// Code size: 92 (0x5c)
 		var span = new ReadOnlySpan<Index>(table.Indexes);
@@ -224,49 +224,12 @@ internal static class TableExtensions
 		flags = Meta.SetTableReadonly(flags, table.Readonly);
 		// set BaseEntity Flags
 		flags = Meta.SetEntityBaseline(flags, table.Baseline);
+
 		var meta = new Meta(table.Id, (byte)EntityType.Table, schemaId, (int)table.Type, flags, table.Name, table.Description, null, table.Active);
 		// first - define Object type
 		result.Add(meta);
 		return result.ToArray();
 	}
-
-	/// <summary>
-	/// 	Load Table.RecordIndexes[] & Table.Columns[]
-	/// </summary>
-	internal static void LoadColumns(this Table table, ArraySegment<Meta> tableItems, IDdlBuilder ddlBuilder)
-	{
-        var result = new Column[10];
-        var defaultColumn = new Column(FieldType.Undefined, EntityType.Undefined, string.Empty, SearchableType.None, 0, 0, 0);
-        var fieldCount = table.Fields.Length;
-        var columnIndex = 0;
-        foreach (var item in tableItems)
-        {
-            if (item.IsField) table.Columns[columnIndex++] =
-                    item.ToColumn(ddlBuilder.GetPhysicalName(EntityType.Field, item.Name), table.GetFieldIndex(item.Name)) ?? defaultColumn;
-            if (item.IsRelation) table.Columns[columnIndex++] =
-                    item.ToColumn(ddlBuilder.GetPhysicalName(EntityType.Relation, item.Name), table.GetRelationIndex(item.Name) + fieldCount) ?? defaultColumn;
-
-        }
-
-		/* record index !!
-        var fieldCount = table.Fields.Length;
-        var relationCount = table.Relations.Length;
-        var i = 0;
-        var currentIndex = 0;
-        while (i < relationCount)
-        {
-            var relation = table.Relations[i];
-            if (relation.Type == RelationType.Mto || relation.Type == RelationType.Otop)
-            {
-                table.Relations[i] = relation.SetRecordIndex(currentIndex + fieldCount);
-                ++currentIndex;
-            }
-            else table.Relations[i] = relation.SetRecordIndex(-1);
-            ++i;
-        }
-		*/
-        Array.Sort(table.Columns, (x, y) => x.Id.CompareTo(y.Id));
-    }
 
 	/// <summary>
 	/// 	Compute index of relation(s) to Record._data[]; default value equal to -1
@@ -297,10 +260,11 @@ internal static class TableExtensions
 		return hash;
 	}
 
+	//TODO Add column to hash computation
 	internal static string GetStringCode(this Table table)
 	{
-        // Code size: 258 (0x102)
-        /*
+		// Code size: 258 (0x102)
+		/*
 		* readonly bool Cached
 		* readonly Field[] Fields
 		* readonly Relation[] Relations
@@ -316,7 +280,7 @@ internal static class TableExtensions
 		* readonly CacheId CacheId
 		* readonly bool Readonly
 		*/
-        return new StringBuilder()
+		return new StringBuilder()
 			.Append(table.Cached)
 			.Append(HashCodeSeparator)
 			.Append(GetStringCode(table.Fields))
@@ -344,12 +308,12 @@ internal static class TableExtensions
 			.ToString();
 	}
 
-    #region private methods 
+	#region private methods 
 
-    /// <summary>
-    /// 	Get first unique index
-    /// </summary>
-    private static Index? GetFirstUniqueIndex(this Table table)
+	/// <summary>
+	/// 	Get first unique index
+	/// </summary>
+	private static Index? GetFirstUniqueIndex(this Table table)
 	{
 		if (table.Indexes.Length > 0)
 			for (var i = 0; i < table.Indexes.Length; ++i)

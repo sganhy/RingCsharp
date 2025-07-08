@@ -122,9 +122,12 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 #pragma warning restore CA1308
 				return name.StartsWith(SpecialEntityPrefix) ^ Provider.IsReservedWord(physicalName) ?
 					string.Join(null, StartPhysicalNameDelimiter, physicalName, EndPhysicalNameDelimiter) : physicalName;
-
-		}
-		return string.Empty;
+            case EntityType.SearchableColumn:
+                return Provider.IsReservedWord(name) ^ name.StartsWith(SpecialEntityPrefix)
+                ? string.Join(null, StartPhysicalNameDelimiter, SearchableFieldPrefix, name, EndPhysicalNameDelimiter) :
+					SearchableFieldPrefix + name;
+        }
+        return string.Empty;
 	}
 
 	public string GetPhysicalName(Index index, Table table)

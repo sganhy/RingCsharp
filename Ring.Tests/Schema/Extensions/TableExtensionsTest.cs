@@ -4,6 +4,8 @@ using Ring.Schema.Builders;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
+using Ring.Tests.Util.Builders.PostgreSQL;
+using Ring.Util.Builders;
 using System.Globalization;
 using System.Linq.Expressions;
 using Xunit.Abstractions;
@@ -14,13 +16,15 @@ namespace Ring.Tests.Schema.Extensions;
 
 public class TableExtensionsTest : BaseTest
 {
+    private readonly IDdlBuilder _builder = new PostGDdlBuilder();
+
     public TableExtensionsTest(ITestOutputHelper output) : base(output) => Expression.Empty();
 
     [Fact]
     internal void GetField_AnonymousTable_FieldObject()
     {
         // arrange 
-        var table = GetAnonymousTable(160, 160);
+        var table = GetAnonymousTable(_builder, 160, 160);
 
         foreach (var field in table.Fields.OrderByDescending(x => x.Name))
         {
@@ -41,7 +45,7 @@ public class TableExtensionsTest : BaseTest
     internal void GetFieldI_AnonymousTable_FieldObject()
     {
         // arrange 
-        var table = GetAnonymousTable(64, 10, 'А', 'Я'); // test on cyrilic alphabet
+        var table = GetAnonymousTable(_builder, 64, 10, 'А', 'Я'); // test on cyrilic alphabet
 
         // test not working on specific special character!
         foreach (var field in table.Fields.OrderByDescending(x => x.Name))
@@ -61,7 +65,7 @@ public class TableExtensionsTest : BaseTest
     internal void GetFieldI_OrdinalAnonymousTable_FieldObject()
     {
         // arrange 
-        var table = GetAnonymousTable(25, 2);
+        var table = GetAnonymousTable(_builder, 25, 2);
         var fields = table.Fields.OrderByDescending(x => x.Name);
 
         foreach (var field in fields)
@@ -80,7 +84,7 @@ public class TableExtensionsTest : BaseTest
     internal void GetFieldI_AnonymousTable_Null()
     {
         // arrange 
-        var table = GetAnonymousTable(0, 2);
+        var table = GetAnonymousTable(_builder, 0, 2);
 
         // act 
         var result = TableExtensions.GetField(table, "Test", StringComparison.CurrentCulture);
@@ -93,7 +97,7 @@ public class TableExtensionsTest : BaseTest
     internal void GetField_Id_FieldObject()
     {
         // arrange 
-        var table = GetAnonymousTable(40, 10);
+        var table = GetAnonymousTable(_builder, 40, 10);
         foreach (var field in table.Fields.OrderByDescending(x => x.Id))
         {
             // act 
@@ -110,7 +114,7 @@ public class TableExtensionsTest : BaseTest
     internal void GetFieldIndex_AnonymousTable_FieldObject()
     {
         // arrange 
-        var table = GetAnonymousTable(200, 200);
+        var table = GetAnonymousTable(_builder, 200, 200);
         var expectedIndex = 88;
         var field = table.Fields[expectedIndex];
 
@@ -126,7 +130,7 @@ public class TableExtensionsTest : BaseTest
     internal void GetRelation_AnonymousTable_RelationObject()
     {
         // arrange 
-        var table = GetAnonymousTable(2, 40);
+        var table = GetAnonymousTable(_builder, 2, 40);
         var relations = table.Relations.OrderByDescending(x => x.Name);
 
         foreach (var relation in relations)
@@ -145,7 +149,7 @@ public class TableExtensionsTest : BaseTest
     internal void GetRelationI_AnonymousTable_RelationObject()
     {
         // arrange - sometimes failing
-        var table = GetAnonymousTable(2, 85, 'А', 'Я');
+        var table = GetAnonymousTable(_builder, 2, 85, 'А', 'Я');
         var relations = table.Relations.OrderByDescending(x => x.Name, StringComparer.Ordinal);
 
         foreach (var relation in relations)
@@ -164,7 +168,7 @@ public class TableExtensionsTest : BaseTest
     internal void GetRelationI_AnonymousTable_Null()
     {
         // arrange 
-        var table = GetAnonymousTable(2, 0);
+        var table = GetAnonymousTable(_builder, 2, 0);
 
         // act 
         var result = TableExtensions.GetRelation(table, "test", StringComparison.CurrentCultureIgnoreCase);
@@ -177,7 +181,7 @@ public class TableExtensionsTest : BaseTest
     internal void GetRelation_Id_FieldObject()
     {
         // arrange 
-        var table = GetAnonymousTable(2, 15);
+        var table = GetAnonymousTable(_builder, 2, 15);
         var relations = table.Relations.OrderByDescending(x => x.Name);
 
         foreach (var relation in relations)

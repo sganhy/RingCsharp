@@ -6,7 +6,9 @@ using Index = Ring.Schema.Models.Index;
 using Ring.Schema;
 using Bogus;
 using Xunit.Abstractions;
-using Microsoft.VisualStudio.TestPlatform.Utilities;
+using Bogus.DataSets;
+using System;
+using Ring.Util.Builders;
 
 namespace Ring.Tests;
 
@@ -29,25 +31,43 @@ public abstract class BaseTest
     protected void LogArrange(string message) =>
         _output.WriteLine(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff") + "| ARRANGE | " + message);
 
-    internal Table GetAnonymousTable(int numberOfField = 0, int numberOfRelation = 0,
+    internal Table GetAnonymousTable(IDdlBuilder builder, int numberOfField = 0, int numberOfRelation = 0,
         char minChar = char.MinValue, char maxChar = char.MaxValue)
     {
-        var fields = new List<Field>();
-        for (var i = 0; i < numberOfField; i++) fields.Add(GetAnonymousField(minChar, maxChar));
-        var fieldsById = new List<Field>(fields);
-        var relations = new List<Relation>();
-        for (var i = 0; i < numberOfRelation; i++) relations.Add(GetAnonymousRelation(null, minChar, maxChar));
+        var tableId = _faker.Random.Number(100, int.MaxValue);
+        var tableType = TableType.Business;
+        var fields = new List<Meta>();
+        var relations = new List<Meta>();
+
+        for (var i = 0; i < numberOfRelation; i++) relations.Add(GetAnonymousRelation(null, minChar, maxChar).ToMeta(tableId));
+        for (var i = 0; i < numberOfField; i++) fields.Add(GetAnonymousField(minChar, maxChar).ToMeta(tableId));
 
         // sort lists
         fields = fields.OrderBy(o => o.Name, StringComparer.Ordinal).ToList();
-        fieldsById.Sort((t1, t2) => t1.Id.CompareTo(t2.Id));
-
         relations = relations.OrderBy(o => o.Name, StringComparer.Ordinal).ToList();
-        var result = new Table(_faker.Random.Number(100, int.MaxValue), _faker.Random.String(), _faker.Random.String(), _faker.Random.String(),
-            _faker.Random.String(), TableType.Business, relations.ToArray(), fields.ToArray(), new Column[fields.Count + relations.Count], Array.Empty<Index>(), 12,
-            PhysicalType.Table, 0, 0, true, true, true, true);
-        //result.LoadColumns();
-        result.LoadRelationRecordIndex();
+
+        // flags
+        var flags = 0L;
+        flags = Meta.SetEntityBaseline(flags, true);
+        flags = Meta.SetTableCached(flags, true);
+        flags = Meta.SetTableReadonly(flags, true);
+
+        // Meta(int id, byte objectType, int referenceId, int dataType, long flags, string name, string? description, string? value, bool active)
+        var table = new Meta(tableId, (byte)EntityType.Table, 0, (int)tableType, flags, _faker.Random.String(), _faker.Random.String(), null, true);
+        fields.AddRange(relations);
+        var items = new ArraySegment<Meta>(fields.ToArray());
+        var result = table.ToTable(items, PhysicalType.Table, builder, builder.GetPhysicalName(EntityType.Table, table.Name), 0);
+
+        // load relations 
+        if (result != null)
+        {
+            for (var i = 0; i < numberOfRelation; i++)
+#pragma warning disable CS8601 // Possible null reference assignment.
+                result.Relations[i] = relations[i].ToRelation(result);
+#pragma warning restore CS8601
+            result.LoadRelationRecordIndex();
+        }
+
         return result;
     }
 

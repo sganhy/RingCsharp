@@ -16,9 +16,9 @@ internal enum EntityType : byte
 	Tablespace = 18,
 	Parameter = 23,
 	Alias = 25,
-	// columns definition
-	SearchableColumn = 61,
-	TimeZoneColumn = 62,
+	// columns definition [71, 79]
+	SearchableColumn = 71,
+	TimeZoneColumn = 72,
 	// not stored in @meta table
 	Constraint = 101,
 	// 125 reserved for unit tests

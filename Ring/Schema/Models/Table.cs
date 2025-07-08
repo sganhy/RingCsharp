@@ -16,8 +16,8 @@ internal sealed class Table : BaseEntity
 	internal readonly string? Subject;
 	internal readonly TableType Type;
 	internal readonly CacheId CacheId;
-    internal readonly string PhysicalName;
-    internal readonly bool Readonly;
+	internal readonly string PhysicalName;
+	internal readonly bool Readonly;
 
 	/// <summary>
 	/// 	Ctor
@@ -41,7 +41,7 @@ internal sealed class Table : BaseEntity
 		PhysicalType = physicalType;
 		Cached = cached;
 		PhysicalName = physicalName;
-        ObjectIndex = objectIndex;
+		ObjectIndex = objectIndex;
 	}
 
 #if DEBUG

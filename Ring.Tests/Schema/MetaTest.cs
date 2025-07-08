@@ -7,12 +7,14 @@ using Ring.Schema.Models;
 using Xunit.Abstractions;
 using System.Linq.Expressions;
 using PostGDdlBuilder = Ring.Util.Builders.PostgreSQL.DdlBuilder;
+using Ring.Util.Builders;
 
 
 namespace Ring.Tests.Schema;
 
 public sealed class MetaTest : BaseTest
 {
+    private readonly IDdlBuilder _builder = new PostGDdlBuilder();
 
     public MetaTest(ITestOutputHelper output) : base(output) => Expression.Empty();
 
@@ -416,7 +418,7 @@ public sealed class MetaTest : BaseTest
         var exepectedRelType = RelationType.Mtm;
 
         // act 
-        var relation = meta.ToRelation(GetAnonymousTable(1,0));
+        var relation = meta.ToRelation(GetAnonymousTable(_builder, 1, 0));
 
         // assert
         Assert.NotNull(relation);
@@ -426,6 +428,7 @@ public sealed class MetaTest : BaseTest
         Assert.Equal(relation.Description, meta.Description);
         Assert.True(relation.Active);
         Assert.False(relation.NotNull);
+
         Assert.False(relation.Baseline);
     }
 
@@ -560,7 +563,6 @@ public sealed class MetaTest : BaseTest
         // arrange 
         var metaTable = GetMeta2Table();
         var metaItems = GetMeta2TableItems();
-        var physicalName = _faker.Random.String();
         var segment = new ArraySegment<Meta>(metaItems, 0, metaItems.Length);
 
         // act 
