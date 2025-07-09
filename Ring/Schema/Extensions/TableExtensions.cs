@@ -168,9 +168,9 @@ internal static class TableExtensions
 
 	internal static Column GetColumn(this Table table, string name)
 	{
-		var col = table.GetField(name ?? string.Empty);
+		//var col = table.GetField(name ?? string.Empty);
 		//return col != null ? col : table.GetRelation(name??string.Empty);
-		return new Column(FieldType.Undefined, EntityType.Undefined, string.Empty, SearchableType.None, 0, 0, 0);
+		return new Column(FieldType.Undefined, string.Empty, SearchableType.None, 0, 0);
 	}
 
 	/// <summary>

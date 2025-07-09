@@ -382,7 +382,7 @@ public struct Record : IEquatable<Record>
 	{
 		// Code size: 109 (0x6d)
 		if (_type.Id == -1) ThrowRecordUnknownRecordType();
-		var relation = _type.GetRelation(name);
+        var relation = _type.GetRelation(name);
 		if (relation == null) ThrowRecordUnknownRelationName(name);
 		var index = _offset;//relation.RecordIndex + _offset; // replace by GetRelationIndex
         if (index >= 0 && _data[index] != null) return long.Parse(_data[index]!, CultureInfo.InvariantCulture);

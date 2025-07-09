@@ -80,10 +80,6 @@ internal static class FieldExtensions
 		return new (field.Id, (byte)EntityType.Field, tableId, dataType, flags, field.Name, field.Description, null, field.Active);
 	}
 
-    internal static Column ToColumn(this Field field, int recordIndex, IDdlBuilder ddlBuilder)
-        => new(field.Type, EntityType.Field, ddlBuilder.GetPhysicalName(EntityType.Relation, field.Name), SearchableType.None,
-            field.Id, recordIndex, 0);
-
     internal static Field? GetDefaultPrimaryKey(this Field? _, FieldType fieldType)
 	{
 		switch (fieldType)

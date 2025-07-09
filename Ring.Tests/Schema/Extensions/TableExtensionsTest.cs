@@ -401,7 +401,7 @@ public class TableExtensionsTest : BaseTest
         Assert.NotNull(table4);
         Assert.NotNull(table5);
 
-        table2.Columns[0] = new Column(FieldType.Long, EntityType.Field, "test", SearchableType.None, 11, 44, 55);
+        table2.Columns[0] = new Column(FieldType.Long, "test", SearchableType.None, 11, 44);
             
         // swap two columns
         var tempCol = table4.Columns[0];

@@ -20,6 +20,8 @@ internal static class IntExtensions
 	private const int ParameterId = (int)EntityType.Parameter;
 	private const int AliasId = (int)EntityType.Alias;
 	private const int ConstraintId = (int)EntityType.Constraint;
+    private const int SearchableColumnId = (int)EntityType.SearchableColumn;
+    private const int TimeZoneColumnId = (int)EntityType.TimeZoneColumn;
 
     // field searchable constants
     private const int FieldStIgnoreCaseId = (int)SearchableType.IgnoreCase;
@@ -172,7 +174,9 @@ internal static class IntExtensions
 			case ParameterId: return EntityType.Parameter;
 			case AliasId: return EntityType.Alias;
 			case ConstraintId: return EntityType.Constraint;
-		}
+			case SearchableColumnId: return EntityType.SearchableColumn;
+			case TimeZoneColumnId: return EntityType.TimeZoneColumn;
+        }
 		return EntityType.Undefined;
 	}
 

@@ -83,7 +83,7 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 
 	private string BuildInsert(Table table)
 	{
-        // Code size: 409 (0x199)
+        // Code size: 258 (0x102)
         var columns = new StringBuilder();
 		var values = new StringBuilder();
 		var spanColumns = new ReadOnlySpan<Column>(table.Columns);
@@ -93,35 +93,10 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 		for (var i = 0; i<columnCount; ++i, ++variableId)
 		{
 			var column = spanColumns[i];
-			var fieldType = column.FieldType;
-
             columns.Append(column.PhysicalName);
-            AppendVariable(values, VariableNameTemplate, variableId, true, fieldType);
-
-            #region  add searchable field 
-            if (column.SearchableType!=SearchableType.None)
-			{
-                columns.Append(ColumnDelimiter);
-				//columns.Append(_ddlBuilder.GetSecondColumn((Field)column));
-				AppendVariable(values, VariableNameTemplate, ++variableId, false, fieldType);
-			}
-            #endregion
-            #region time zone extra field?
-            if (fieldType == FieldType.LongDateTime)
-            {
-				/*
-                var timeZoneField = _ddlBuilder.GetSecondColumn((Field)column);
-                if (!string.IsNullOrEmpty(timeZoneField))
-                {
-                    columns.Append(ColumnDelimiter);
-                    columns.Append(timeZoneField);
-                    AppendVariable(values, VariableNameTemplate, ++variableId, false, FieldType.Short);
-                }
-				*/
-            }
-            #endregion
 			columns.Append(ColumnDelimiter);
-		}
+            AppendVariable(values, VariableNameTemplate, variableId, true, column.FieldType);
+        }
 		if (variableId > 1)
 		{
 			--columns.Length;

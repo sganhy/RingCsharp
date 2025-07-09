@@ -244,8 +244,8 @@ internal readonly struct Meta : IEquatable<Meta>
 		return null;
 	}
 	
-	internal Field? ToField(string physicalName) // Code size: 106 (0x6a)
-		=> IsField ? new Field(Id, Name, Description, GetFieldType(), 
+	internal Field? ToField() // Code size: 82 (0x52)
+        => IsField ? new Field(Id, Name, Description, GetFieldType(), 
 			GetFieldSize(), GetFieldDefaultValue(), GetSearchableType(), IsEntityBaseline, IsFieldNotNull(), IsFieldMultilingual(), Active) : null;
 
 	internal static DbSchema? ToSchema(Meta[] schema, DatabaseProvider provider, SchemaType type = SchemaType.Static, SchemaLoadType loadType = SchemaLoadType.Full)
@@ -327,22 +327,22 @@ internal readonly struct Meta : IEquatable<Meta>
 		return null;
 	}
 
-	internal Column? ToColumn(int id, string physicalName, int recordIndex)
+	internal Column ToColumn(int id, string physicalName, int recordIndex, SearchableType? searchableType=null)
 	{
-		// Code size: 97 (0x61)
-		if (IsField)
+        // Code size: 90 (0x5a)
+        if (IsField)
 		{
 			// FieldType fieldType, EntityType type, string physicalName, SearchableType searchableType, int id, int recordIndex, int size
-			return new Column(GetFieldType(), EntityType.Field, physicalName, SearchableType.None, id, recordIndex, GetFieldSize());
+			return new Column(GetFieldType(), physicalName, searchableType ?? SearchableType.None, id, recordIndex);
 		} 
 		else if (IsRelation) {
-			return new Column(FieldType.Int, EntityType.Relation, physicalName, SearchableType.None, id, recordIndex, 0);
+			return new Column(FieldType.Int, physicalName, SearchableType.None, id, recordIndex); // TODO: computed later to get the right FieldType
 		}
 		else if (IsSearchableColumn)
 		{
-			return new Column(FieldType.String, EntityType.SearchableColumn, physicalName, GetSearchableType(), id, recordIndex, 0);
+			return new Column(FieldType.String, physicalName, GetSearchableType(), id, recordIndex);
 		}
-		return null;
+		return new Column(FieldType.Undefined, string.Empty, SearchableType.None, 0, 0); // default column
 	}
 
 	#endregion
@@ -494,7 +494,7 @@ internal readonly struct Meta : IEquatable<Meta>
 			{
 #pragma warning disable CS8601 // Possible null reference assignment.
 				result[fieldIndex] = string.Equals(primaryKey?.Name, item.Name, StringComparison.OrdinalIgnoreCase) ?
-					primaryKey : item.ToField(ddlBuilder.GetPhysicalName(EntityType.Field, item.Name));
+					primaryKey : item.ToField();
 #pragma warning restore CS8601
 				++fieldIndex;
 			}
@@ -621,10 +621,9 @@ internal readonly struct Meta : IEquatable<Meta>
 	/// </summary>
 	private static void LoadColumns(Table table, ArraySegment<Meta> tableItems, int physRelationCount, IDdlBuilder ddlBuilder)
 	{
-		// Code size: 579 (0x243)
-		// relation are not yet loaded here !!!!
-		var defaultColumn = new Column(FieldType.Undefined, EntityType.Undefined, string.Empty, SearchableType.None, 0, 0, 0);
-		var fieldCount = table.Fields.Length; // searchable fields + tz fields 
+        // Code size: 636 (0x27c)
+        // relation are not yet loaded here !!!!
+        var fieldCount = table.Fields.Length; // searchable fields + tz fields 
 		var extraFieldCount = table.Columns.Length - physRelationCount - table.Fields.Length; // searchable fields + tz fields 
 		var relationId = new int[physRelationCount]; 
 		var extraFields = new Dictionary<string, Meta>(extraFieldCount*2); // increase bucket to reduce collisions
@@ -657,15 +656,15 @@ internal readonly struct Meta : IEquatable<Meta>
 			{
 				var field = table.GetField(meta.Name);
 				var id = field?.Id ?? 1;
-				table.Columns[columnIndex] = meta.ToColumn(id, ddlBuilder.GetPhysicalName(EntityType.Field, meta.Name), table.GetFieldIndex(meta.Name)) ?? defaultColumn;
+				table.Columns[columnIndex] = meta.ToColumn(id, ddlBuilder.GetPhysicalName(EntityType.Field, meta.Name), table.GetFieldIndex(meta.Name));
 				++columnIndex;
 
 				if (true.Equals(field?.IsSearchable()))
 				{
 					// meta not define for the searchable field
 					if (!extraFields.ContainsKey(field.Name))
-						table.Columns[columnIndex] = meta.ToColumn(id, ddlBuilder.GetPhysicalName(EntityType.SearchableColumn, meta.Name), -1) ?? defaultColumn;
-					else table.Columns[columnIndex] = extraFields[field.Name].ToColumn(meta.Id, ddlBuilder.GetPhysicalName(EntityType.SearchableColumn, meta.Name), -1) ?? defaultColumn;
+						table.Columns[columnIndex] = meta.ToColumn(id, ddlBuilder.GetPhysicalName(EntityType.SearchableColumn, meta.Name), -1, field.SearchableType);
+					else table.Columns[columnIndex] = extraFields[field.Name].ToColumn(meta.Id, ddlBuilder.GetPhysicalName(EntityType.SearchableColumn, meta.Name), -1);
 					++columnIndex;
 				}
 			} 
@@ -674,13 +673,14 @@ internal readonly struct Meta : IEquatable<Meta>
 				var relIndex = relationId.GetIndex(meta.Id);
 				if (relIndex >= 0)
 				{
-					table.Columns[columnIndex] = meta.ToColumn(meta.Id, ddlBuilder.GetPhysicalName(EntityType.Relation, meta.Name), relIndex + fieldCount) ?? defaultColumn;
+					table.Columns[columnIndex] = meta.ToColumn(meta.Id, ddlBuilder.GetPhysicalName(EntityType.Relation, meta.Name), relIndex + fieldCount);
 					++columnIndex;
 				}
 			}
 		}
 		Array.Sort(table.Columns, (x, y) => x.Id.CompareTo(y.Id));
-	}
+		ArrangeColumns(table.Columns); // try to keep sort stable by simple trick
+    }
 
 	/// <summary>
 	/// 	Load relationships objects into partial schema 
@@ -794,6 +794,25 @@ internal readonly struct Meta : IEquatable<Meta>
 		return meta.ToRelation(mtmTable);
 	}
 
-	#endregion
+    private static void ArrangeColumns(Span<Column> columns)
+    {
+        // Code size: 102 (0x66)
+        // if id are identical field and its seachable column should be consecutive
+        for (var i=1; i < columns.Length; ++i)
+		{
+			var prevCol = columns[i - 1];
+            var currCol = columns[i];
+			if (prevCol.Id == currCol.Id)
+			{
+				if (prevCol.SearchableType != SearchableType.None && currCol.SearchableType == SearchableType.None) {
+					// swap objects
+					columns[i] = prevCol;
+                    columns[i-1] = currCol;
+                }
+			}
+        }
+    }
+
+    #endregion
 
 }

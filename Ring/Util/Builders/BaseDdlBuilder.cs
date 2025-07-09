@@ -203,7 +203,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 		// Code size: 96 (0x60)
 		var fielType = column.FieldType;
 		if (!firstColumn && fielType == FieldType.LongDateTime) return DataType[FieldType.Short];
-		return GetDataType(DataType[fielType], fielType, column.Size, VarcharMaxSize,
+		return GetDataType(DataType[fielType], fielType, 0, VarcharMaxSize,
 			fielType == FieldType.String || fielType == FieldType.LongString ?
 			StringCollateInformation : null);
 	}
