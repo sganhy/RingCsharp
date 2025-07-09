@@ -12,23 +12,23 @@ internal static class IntExtensions
 	private const int FieldId = (int)EntityType.Field;
 	private const int RelationId = (int)EntityType.Relation;
 	private const int IndexId = (int)EntityType.Index;
-    private const int ViewId = (int)EntityType.View;
-    private const int SchemaId = (int)EntityType.Schema;
+	private const int ViewId = (int)EntityType.View;
+	private const int SchemaId = (int)EntityType.Schema;
 	private const int SequenceId = (int)EntityType.Sequence;
 	private const int LanguageId = (int)EntityType.Language;
 	private const int TablespaceId = (int)EntityType.Tablespace;
 	private const int ParameterId = (int)EntityType.Parameter;
 	private const int AliasId = (int)EntityType.Alias;
 	private const int ConstraintId = (int)EntityType.Constraint;
-    private const int SearchableColumnId = (int)EntityType.SearchableColumn;
-    private const int TimeZoneColumnId = (int)EntityType.TimeZoneColumn;
+	private const int SearchableColumnId = (int)EntityType.SearchableColumn;
+	private const int TimeZoneColumnId = (int)EntityType.TimeZoneColumn;
 
-    // field searchable constants
-    private const int FieldStIgnoreCaseId = (int)SearchableType.IgnoreCase;
-    private const int FieldStIngoreCaseAndDiacriticsId = (int)SearchableType.IgnoreCaseAndDiacritics;
+	// field searchable constants
+	private const int FieldStIgnoreCaseId = (int)SearchableType.IgnoreCase;
+	private const int FieldStIngoreCaseAndDiacriticsId = (int)SearchableType.IgnoreCaseAndDiacritics;
 
-    // field types constants
-    private const int FieldTypeLongId = (int)FieldType.Long;
+	// field types constants
+	private const int FieldTypeLongId = (int)FieldType.Long;
 	private const int FieldTypeIntId = (int)FieldType.Int;
 	private const int FieldTypeShortId = (int)FieldType.Short;
 	private const int FieldTypeByteId = (int)FieldType.Byte;
@@ -76,8 +76,8 @@ internal static class IntExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static TableType ToTableType(this int dataType)
 	{
-        // Code size: 141 (0x8d)
-        switch (dataType)
+		// Code size: 141 (0x8d)
+		switch (dataType)
 		{
 			case TableTypeBusinessId: return TableType.Business;
 			case TableTypeBusinessLogId: return TableType.BusinessLog;
@@ -100,10 +100,10 @@ internal static class IntExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static FieldType ToFieldType(this int dataType)
 	{
-        // Code size: 127 (0x7f)
-        // high performance ! 
-        // avoid boxing operation - add unit test on all field type enum fields
-        switch (dataType)
+		// Code size: 127 (0x7f)
+		// high performance ! 
+		// avoid boxing operation - add unit test on all field type enum fields
+		switch (dataType)
 		{
 			case FieldTypeLongId: return FieldType.Long;
 			case FieldTypeIntId: return FieldType.Int;
@@ -123,23 +123,23 @@ internal static class IntExtensions
 	}
 
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static SearchableType ToSearchableType(this int value)
-    {
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal static SearchableType ToSearchableType(this int value)
+	{
 		switch (value)
-        {
-            case FieldStIgnoreCaseId: return SearchableType.IgnoreCase;
-            case FieldStIngoreCaseAndDiacriticsId: return SearchableType.IgnoreCaseAndDiacritics;
-        }
-        return SearchableType.None;
-    }
+		{
+			case FieldStIgnoreCaseId: return SearchableType.IgnoreCase;
+			case FieldStIngoreCaseAndDiacriticsId: return SearchableType.IgnoreCaseAndDiacritics;
+		}
+		return SearchableType.None;
+	}
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static RelationType ToRelationType(this int flags)
 	{
-        // Code size: 47 (0x2f)
-        // avoid boxing operation
-        switch (flags)
+		// Code size: 47 (0x2f)
+		// avoid boxing operation
+		switch (flags)
 		{
 			case RelationTypeOtopId: return RelationType.Otop;
 			case RelationTypeOtmId: return RelationType.Otm;
@@ -158,16 +158,16 @@ internal static class IntExtensions
 
 	internal static EntityType ToEntityType(this int entityType) 
 	{
-        // Code size: 120 (0x78)
-        // avoid boxing operation
-        switch (entityType)
+		// Code size: 120 (0x78)
+		// avoid boxing operation
+		switch (entityType)
 		{
 			case TableId: return EntityType.Table;
 			case FieldId: return EntityType.Field;
 			case RelationId: return EntityType.Relation;
 			case IndexId: return EntityType.Index;
-            case ViewId: return EntityType.View;
-            case SchemaId: return EntityType.Schema;
+			case ViewId: return EntityType.View;
+			case SchemaId: return EntityType.Schema;
 			case SequenceId: return EntityType.Sequence;
 			case LanguageId: return EntityType.Language;
 			case TablespaceId: return EntityType.Tablespace;
@@ -176,7 +176,7 @@ internal static class IntExtensions
 			case ConstraintId: return EntityType.Constraint;
 			case SearchableColumnId: return EntityType.SearchableColumn;
 			case TimeZoneColumnId: return EntityType.TimeZoneColumn;
-        }
+		}
 		return EntityType.Undefined;
 	}
 
