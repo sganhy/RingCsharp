@@ -158,11 +158,11 @@ internal readonly struct Meta : IEquatable<Meta>
 	internal bool IsIndexBitmap => ReadFlag(BitPositionIndexBitmap);
 	internal bool IsIndexUnique => ReadFlag(BitPositionIndexUnique);
 	// index values
-    internal Column[] GetIndexedColumns() => Value != null ? new Column[Value.CharCount(IndexColumnDelimiter)+1] : Array.Empty<Column>();
-    internal static string? SetIndexedColumns(string[] columns) => string.Join(IndexColumnDelimiter, columns);
-    
+	internal Column[] GetIndexedColumns() => Value != null ? new Column[Value.CharCount(IndexColumnDelimiter)+1] : Array.Empty<Column>();
+	internal static string? SetIndexedColumns(string[] columns) => string.Join(IndexColumnDelimiter, columns);
+	
 	// index flags 
-    internal static long SetIndexUnique(long flags, bool value) => WriteFlag(flags, BitPositionIndexUnique, value);
+	internal static long SetIndexUnique(long flags, bool value) => WriteFlag(flags, BitPositionIndexUnique, value);
 	internal static long SetIndexBitmap(long flags, bool value) => WriteFlag(flags, BitPositionIndexBitmap, value);
 	#endregion
 
@@ -210,7 +210,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	internal static Field GetEmptyField(Meta meta, FieldType fieldType) =>
 		new(meta.Id, meta.Name, meta.Description, fieldType, 0, null, SearchableType.None, true,
 			false, false, true);
-    internal static Meta? FirstOrDefault(Meta[] metas, EntityType entityType) 
+	internal static Meta? FirstOrDefault(Meta[] metas, EntityType entityType) 
 	{
 		Meta? result=null;
 		var span = new ReadOnlySpan<Meta>(metas);
@@ -301,14 +301,14 @@ internal readonly struct Meta : IEquatable<Meta>
 	/// </summary>
 	internal Table? ToTable(ArraySegment<Meta> tableItems, PhysicalType physicalType, IDdlBuilder ddlBuilder, string physicalName, int objectIndex)
 	{
-		// Code size: 246 (0xf6)
-		if (IsTable)
+        // Code size: 252 (0xfc)
+        if (IsTable)
 		{
 			var tableType = DataType.ToTableType();
 			var fields = GetFieldArray(tableItems, ddlBuilder);
 			var relations = GetRelationArray(tableItems);
 			var indexes = GetIndexes(tableItems, ddlBuilder);
-			(var colCount, var relationCount) = GetColumnCount(fields, tableItems, ddlBuilder);
+			(var colCount, var physRelationCount) = GetColumnCount(fields, tableItems, ddlBuilder);
 
 			// sort arrays (warn: relations not yet loaded here)
 			Array.Sort(fields, (x, y) => string.CompareOrdinal(x.Name, y.Name));
@@ -320,18 +320,18 @@ internal readonly struct Meta : IEquatable<Meta>
 
 			// load relations later , we need full schema to create relations
 			// load columns
-			LoadColumns(table, tableItems, relationCount, ddlBuilder);
-            LoadIndexColumns(table);
+			LoadColumns(table, tableItems, physRelationCount, ddlBuilder);
+			LoadIndexColumns(table, tableItems, physRelationCount);
 
-            return table;
+			return table;
 		}
 		return null;
 	}
 
 	internal Column ToColumn(int id, string physicalName, int recordIndex, SearchableType? searchableType= SearchableType.None)
 	{
-		// Code size: 90 (0x5a)
-		if (IsField)
+        // Code size: 144 (0x90)
+        if (IsField)
 		{
 			// FieldType fieldType, EntityType type, string physicalName, SearchableType searchableType, int id, int recordIndex, int size
 			return new Column(SearchableType.None == searchableType ? EntityType.Field : EntityType.SearchableColumn, GetFieldType(), physicalName, searchableType ?? SearchableType.None, id, recordIndex);
@@ -372,7 +372,7 @@ internal readonly struct Meta : IEquatable<Meta>
 		return hash;
 	}
 
-	// Code size: 190 (0xbe)
+	// Code size: 190 (0xbe) - checked: 2025-07-16
 	internal readonly string GetStringCode()
 		=> new StringBuilder()
 			.Append(Id)
@@ -393,25 +393,25 @@ internal readonly struct Meta : IEquatable<Meta>
 			.Append(HashCodeSeparator)
 			.Append(Active).ToString();
 
-    internal static int ColumnTypeWeight(EntityType entityType)
-    {
-        switch (entityType)
-        {
-            case EntityType.Field: return 1;
-            case EntityType.SearchableColumn: return 2;
-            case EntityType.TimeZoneColumn: return 3;
-            case EntityType.Relation: return 4;
-        }
-        return 5;
-    }
+	internal static int ColumnTypeWeight(EntityType entityType)
+	{
+		switch (entityType)
+		{
+			case EntityType.Field: return 1;
+			case EntityType.SearchableColumn: return 2;
+			case EntityType.TimeZoneColumn: return 3;
+			case EntityType.Relation: return 4;
+		}
+		return 5;
+	}
 
 #if DEBUG
 	public override string ToString() => string.IsNullOrEmpty(Name) ? string.Empty : $"{Id} - {Name}";
 #endif
 
-    #region private methods 
+	#region private methods 
 
-    private static int GetTableCount(ReadOnlySpan<Meta> schema)
+	private static int GetTableCount(ReadOnlySpan<Meta> schema)
 	{
 		// Code size: 51 (0x33)
 		var result = 0;
@@ -702,10 +702,10 @@ internal readonly struct Meta : IEquatable<Meta>
 			} 
 			else if (meta.IsRelation)
 			{
-				var relIndex = relationId.GetIndex(meta.Id);
-				if (relIndex >= 0)
+				var recordIndex = relationId.GetIndex(meta.Id);
+				if (recordIndex >= 0)
 				{
-					table.Columns[columnIndex] = meta.ToColumn(meta.Id, ddlBuilder.GetPhysicalName(EntityType.Relation, meta.Name), relIndex + fieldCount);
+					table.Columns[columnIndex] = meta.ToColumn(meta.Id, ddlBuilder.GetPhysicalName(EntityType.Relation, meta.Name), recordIndex + fieldCount);
 					++columnIndex;
 				}
 			}
@@ -713,28 +713,50 @@ internal readonly struct Meta : IEquatable<Meta>
 		Array.Sort(table.Columns, (x, y) => ColumnComparer(x, y));
 	}
 
-	private static void LoadIndexColumns(Table table)
+	private static void LoadIndexColumns(Table table, ArraySegment<Meta> tableItems, int physRelationCount)
 	{
-        // Code size: 100 (0x64)
-        for (var i=0; i < table.Indexes.Length; ++i)
+        Dictionary<string, int>? relDico = null;
+		var defaultCol =  new Column(EntityType.Undefined, FieldType.Undefined, string.Empty, SearchableType.None, 0, 0);
+        if (physRelationCount > 0)
+		{
+			relDico = new Dictionary<string, int>(physRelationCount * 2); // allow bucket
+			for (var i = 0; i < tableItems.Count; ++i)
+			{
+                var meta = tableItems[i];
+                if (meta.IsRelation)
+				{
+					var relType = meta.GetRelationType();
+					if (relType == RelationType.Mto || relType == RelationType.Otop) relDico.Add(meta.Name, meta.Id);
+				}
+			}
+		}
+		// relation are not yet loaded here !!
+		for (var i=0; i < table.Indexes.Length; ++i)
 		{
 			var index = table.Indexes[i];
 			var logicalCols = index.ColumnList.Split(IndexColumnDelimiter);
 			for (var j=0; j < logicalCols.Length; ++j)
 			{
 				var logicalName = logicalCols[j];
-				index.Columns[j] = table.GetColumn(logicalName) ??
-					new Column(EntityType.Undefined, FieldType.Undefined, string.Empty, SearchableType.None, 0, 0);
+				// field ?
+				var fieldIndex = table.GetFieldIndex(logicalName);
+				if (fieldIndex >= 0) index.Columns[j] = table.GetColumn(logicalName) ?? defaultCol;
+				else 
+				{
+					if (relDico != null && relDico.ContainsKey(logicalName))
+                        index.Columns[j] = table.GetColumn(relDico[logicalName], EntityType.Relation) ?? defaultCol;
+                }
+
             }
 		}
 	}
 
-    /// <summary>
-    /// 	Load relationships objects into partial schema 
-    /// </summary>
-    /// <param name="schema">Partial built in schema</param>
-    /// <param name="schemaItems">Sorted ASC by reference_id, name</param>
-    private static void LoadRelations(DbSchema schema, ReadOnlySpan<Meta> schemaItems, int mtmCount)
+	/// <summary>
+	/// 	Load relationships objects into partial schema 
+	/// </summary>
+	/// <param name="schema">Partial built in schema</param>
+	/// <param name="schemaItems">Sorted ASC by reference_id, name</param>
+	private static void LoadRelations(DbSchema schema, ReadOnlySpan<Meta> schemaItems, int mtmCount)
 	{
 		var relationDicoIndex = new Dictionary<int, int>(schema.TablesById.Length * 2); // (tableId, relation index)
 

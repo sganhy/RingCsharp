@@ -9,7 +9,7 @@ namespace Ring.Util.Builders;
 
 internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
 {
-    private string[] _tableSelect;
+    private string[] _tableSelect; // include relations: yes , include searchable: no
     private string? _catalogTable;
     protected readonly IDdlBuilder _ddlBuilder;
 
@@ -32,7 +32,7 @@ internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
         {
             var tableBuilder = new TableBuilder();
             table = tableBuilder.GetCatalog(EntityType.Table, Provider);
-            var result= new StringBuilder(BuildSelect(table));
+            var result= new StringBuilder(BuildSelect(table, false,false));
             //AppendFilter()
             _catalogTable = result.ToString();
         }
@@ -42,9 +42,9 @@ internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
 
     #region private methods 
 
-    private string BuildSelect(Table table)
+    private string BuildSelect(Table table, bool includeRelations, bool includeSearchables)
     {
-        // Code size: 117 (0x75)
+        // Code size: 153 (0x99)
         var result = new StringBuilder();
         var columnCount = table.Columns.Length;
         var i=0;
@@ -53,8 +53,11 @@ internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
         while (i<columnCount)
         {
             var column = table.Columns[i];
+            if (column.Type == EntityType.Field || 
+                (column.Type == EntityType.Relation && includeRelations) ||
+                (column.Type == EntityType.SearchableColumn && includeSearchables)) 
+                result.Append(GetSelection(column)).Append(ColumnDelimiter);
             ++i; // just before continue
-            result.Append(GetSelection(column)).Append(ColumnDelimiter);
         }
         --result.Length;
         result.Append(SqlFrom).Append(table.PhysicalName);
@@ -69,14 +72,14 @@ internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
         foreach (var table in tableSpan)
         {
             var index = table.ObjectIndex;
-            result[index] = BuildSelect(table);
+            result[index] = BuildSelect(table, true, false);
             for (var i=table.Relations.Length-1; i>=0; --i)
             {
                 var relation = table.Relations[i];
                 if (relation.Type==RelationType.Mtm)
                 {
                     index = relation.ToTable.ObjectIndex;
-                    result[index] = BuildSelect(relation.ToTable);
+                    result[index] = BuildSelect(relation.ToTable, true, false);
                 }
             }
         }

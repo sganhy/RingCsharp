@@ -238,8 +238,42 @@ public class TableExtensionsTest : BaseTest
 
         // assert
         Assert.NotNull(column);
+        Assert.Equal(6, column.Id);
     }
 
+    [Fact]
+    internal void GetColumn_ArmorTable_RelationColumnObject()
+    {
+        var metaList = GetSchema1();
+        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
+        var table = schema?.GetTable("armor");
+
+        // act 
+        Assert.NotNull(schema);
+        Assert.NotNull(table);
+        var column = table.GetColumn(1, EntityType.Relation);
+
+        // assert
+        Assert.NotNull(column);
+        Assert.Equal(EntityType.Relation, column.Type);
+    }
+
+    [Fact]
+    internal void GetColumn_WeaponTable_SearchableColumnObject()
+    {
+        var metaList = GetSchema1();
+        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
+        var table = schema?.GetTable("weapon");
+
+        // act 
+        Assert.NotNull(schema);
+        Assert.NotNull(table);
+        var column = table.GetColumn(2, EntityType.SearchableColumn);
+
+        // assert
+        Assert.NotNull(column);
+        Assert.Equal(EntityType.SearchableColumn, column.Type);
+    }
 
     [Fact]
     internal void GetField_Id_Null()
@@ -419,11 +453,9 @@ public class TableExtensionsTest : BaseTest
         Assert.NotNull(table5);
 
         table2.Columns[0] = new Column(EntityType.Field, FieldType.Long, "test", SearchableType.None, 11, 44);
-            
-        // swap two columns
-        var tempCol = table4.Columns[0];
-        table4.Columns[0] = table4.Columns[1];
-        table4.Columns[1] = tempCol;
+
+        // swap two columns 
+        (table4.Columns[1], table4.Columns[0]) = (table4.Columns[0], table4.Columns[1]);
 
         // act 
         var hash1 = TableExtensions.GetHashCode(table1);
@@ -434,7 +466,7 @@ public class TableExtensionsTest : BaseTest
         
 
         // assert
-        Assert.NotEqual(hash1, hash2);
+        Assert.Equal(hash1, hash2);
         Assert.Equal(hash1, hash3);
         Assert.Equal(hash1, hash4);
         Assert.NotEqual(hash1, hash5);

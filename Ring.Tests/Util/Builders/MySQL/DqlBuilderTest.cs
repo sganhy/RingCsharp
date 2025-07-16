@@ -46,7 +46,7 @@ public sealed class DqlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var table2 = _schema.GetTable("feat");
-        var expectedResult = "SELECT id,name,feat2feat_type,fighter,feat2parent_feat,multiple_times,effects_stack,metamagic,epic,target_object,prerequisites,benefit FROM rpg_sheet.t_feat";
+        var expectedResult = "SELECT id,name,s_name,feat2feat_type,fighter,feat2parent_feat,multiple_times,effects_stack,metamagic,epic,target_object,prerequisites,benefit FROM rpg_sheet.t_feat";
 
         // act 
         Assert.NotNull(table2);

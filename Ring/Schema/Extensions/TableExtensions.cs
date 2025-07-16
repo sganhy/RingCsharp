@@ -1,9 +1,10 @@
-﻿using System.Runtime.CompilerServices;
-using System.Text;
-using Ring.Schema.Enums;
+﻿using Ring.Schema.Enums;
 using Ring.Schema.Models;
 using Ring.Util.Builders;
 using Ring.Util.Helpers;
+using System;
+using System.Runtime.CompilerServices;
+using System.Text;
 using Index = Ring.Schema.Models.Index;
 
 namespace Ring.Schema.Extensions;
@@ -166,47 +167,60 @@ internal static class TableExtensions
 		return -1;
 	}
 
-    /// <summary>
-    /// 	Get column from logical name
-    /// </summary>
-    /// <param name="table">table object</param>
-    /// <param name="name">Logical column name</param>
-    /// <returns>Column object</returns>
-    internal static Column? GetColumn(this Table table, string name)
-    {
-        // Code size: 197 (0xc5)
-        var field = table.GetField(name);
+	/// <summary>
+	/// 	Get column from logical name - O(log N)
+	/// </summary>
+	/// <param name="table">table object</param>
+	/// <param name="name">Logical column name</param>
+	/// <returns>Column object</returns>
+	internal static Column? GetColumn(this Table table, string name)
+	{
+		// Code size: 75 (0x4b)
+		var field = table.GetField(name);
+		var type = EntityType.Undefined;
+		int id=-1;
 		if (field != null)
 		{
-			var span = new ReadOnlySpan<Column>(table.Columns); // sorted by Id
-			var id = field.Id;
-            var fieldWeight = field.SearchableType == SearchableType.None ? 
-					Meta.ColumnTypeWeight(EntityType.Field) :
-                    Meta.ColumnTypeWeight(EntityType.SearchableColumn);
-            int indexerLeft = 0, indexerRight = span.Length - 1, indexerMiddle, indexerCompare;
-
-			while (indexerLeft <= indexerRight)
-			{
-				indexerMiddle = indexerLeft + indexerRight;
-				indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
-				indexerCompare = id - span[indexerMiddle].Id;
-				if (indexerCompare == 0)
-				{
-					// sub search on Column.Type
-					var weightCompare = fieldWeight - Meta.ColumnTypeWeight(span[indexerMiddle].Type);
-					if (weightCompare==0) return span[indexerMiddle];
-                    else if (weightCompare > 0) indexerLeft = indexerMiddle + 1;
-                    else indexerRight = indexerMiddle - 1;
-                }
-				else if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
-				else indexerRight = indexerMiddle - 1;
-			}
+			id = field.Id;
+			type = field.SearchableType == SearchableType.None ? EntityType.Field : EntityType.SearchableColumn;
 		}
 		else 
 		{ 
+			var relation = table.GetRelation(name);
+			if (relation != null)
+			{
+				id = relation.Id;
+				type = EntityType.Relation;
+			}
+		}
+		return type != EntityType.Undefined ? GetColumn(table, id, type) : null;
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal static Column? GetColumn(this Table table, int id, EntityType type)
+	{
+		// Code size: 149 (0x95)
+		var colWeight = Meta.ColumnTypeWeight(type);
+		var span = new ReadOnlySpan<Column>(table.Columns); // sorted by Id
+		int indexerLeft = 0, indexerRight = span.Length - 1, indexerMiddle, indexerCompare; 
+		while (indexerLeft <= indexerRight)
+		{
+			indexerMiddle = indexerLeft + indexerRight;
+			indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
+			indexerCompare = id - span[indexerMiddle].Id;
+			if (indexerCompare == 0)
+			{
+				// sub search on Column.Type
+				var weightCompare = colWeight - Meta.ColumnTypeWeight(span[indexerMiddle].Type);
+				if (weightCompare == 0) return span[indexerMiddle];
+				else if (weightCompare > 0) indexerLeft = indexerMiddle + 1;
+				else indexerRight = indexerMiddle - 1;
+			}
+			else if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
+			else indexerRight = indexerMiddle - 1;
 		}
 		return null;
-    }
+	}
 
 	/// <summary>
 	/// 	Get index object by name ==> O(log n) complexity
@@ -231,15 +245,16 @@ internal static class TableExtensions
 
 	internal static List<Column> GetPrimaryKey(this Table table)
 	{
+		// Code size: 69 (0x45)
 		if (table.Type == TableType.Business || table.Type == TableType.Lexicon)
 		{
-            return new(1) { table.Columns[0] };
+			return new(1) { table.Columns[0] };
 		}
 		else
 		{
 			var index = table.GetFirstUniqueIndex();
 			if (index != null) return new (index.Columns);
-        }
+		}
 		return new(0) {}; 
 	}
 
@@ -293,10 +308,9 @@ internal static class TableExtensions
 		return hash;
 	}
 
-	//TODO Add column to hash computation
 	internal static string GetStringCode(this Table table)
 	{
-		// Code size: 258 (0x102)
+		// Code size: 258 (0x102) - checked: 2025-07-16
 		/*
 		* readonly bool Cached
 		* readonly Field[] Fields

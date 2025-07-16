@@ -48,7 +48,7 @@ public sealed class DqlBuilderTest : BaseBuilderTest
         // arrange 
         // add test on short date time
         var table = _schema.GetTable("book");
-        var expectedResult = "SELECT id,title,sub_title,short_name,core_rule,isbn,to_char(creation_time,'yyyy-mm-dd'),book2rule,to_char(update_stamp,'yyyy-mm-dd'),to_char(publish_date,'yyyy-mm-dd'),language,pages FROM rpg_sheet.t_book";
+        var expectedResult = "SELECT id,title,sub_title,short_name,core_rule,isbn,to_char(creation_time,'yyyy-mm-dd'),to_char(update_stamp,'yyyy-mm-dd'),book2rule,to_char(publish_date,'yyyy-mm-dd'),language,pages FROM rpg_sheet.t_book";
 
         // act 
         Assert.NotNull(table);
