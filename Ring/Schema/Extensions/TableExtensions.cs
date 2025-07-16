@@ -166,12 +166,47 @@ internal static class TableExtensions
 		return -1;
 	}
 
-	internal static Column GetColumn(this Table table, string name)
-	{
-		//var col = table.GetField(name ?? string.Empty);
-		//return col != null ? col : table.GetRelation(name??string.Empty);
-		return new Column(FieldType.Undefined, string.Empty, SearchableType.None, 0, 0);
-	}
+    /// <summary>
+    /// 	Get column from logical name
+    /// </summary>
+    /// <param name="table">table object</param>
+    /// <param name="name">Logical column name</param>
+    /// <returns>Column object</returns>
+    internal static Column? GetColumn(this Table table, string name)
+    {
+        // Code size: 197 (0xc5)
+        var field = table.GetField(name);
+		if (field != null)
+		{
+			var span = new ReadOnlySpan<Column>(table.Columns); // sorted by Id
+			var id = field.Id;
+            var fieldWeight = field.SearchableType == SearchableType.None ? 
+					Meta.ColumnTypeWeight(EntityType.Field) :
+                    Meta.ColumnTypeWeight(EntityType.SearchableColumn);
+            int indexerLeft = 0, indexerRight = span.Length - 1, indexerMiddle, indexerCompare;
+
+			while (indexerLeft <= indexerRight)
+			{
+				indexerMiddle = indexerLeft + indexerRight;
+				indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
+				indexerCompare = id - span[indexerMiddle].Id;
+				if (indexerCompare == 0)
+				{
+					// sub search on Column.Type
+					var weightCompare = fieldWeight - Meta.ColumnTypeWeight(span[indexerMiddle].Type);
+					if (weightCompare==0) return span[indexerMiddle];
+                    else if (weightCompare > 0) indexerLeft = indexerMiddle + 1;
+                    else indexerRight = indexerMiddle - 1;
+                }
+				else if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
+				else indexerRight = indexerMiddle - 1;
+			}
+		}
+		else 
+		{ 
+		}
+		return null;
+    }
 
 	/// <summary>
 	/// 	Get index object by name ==> O(log n) complexity
@@ -196,18 +231,16 @@ internal static class TableExtensions
 
 	internal static List<Column> GetPrimaryKey(this Table table)
 	{
-		var result = new List<Column>();
 		if (table.Type == TableType.Business || table.Type == TableType.Lexicon)
 		{
-			//result.Add(table.Fields[table.Columns[0].RecordIndex]);
+            return new(1) { table.Columns[0] };
 		}
 		else
 		{
 			var index = table.GetFirstUniqueIndex();
-			if (index != null)
-				foreach (string column in index.Columns) result.Add(GetColumn(table, column));
-		}
-		return result;
+			if (index != null) return new (index.Columns);
+        }
+		return new(0) {}; 
 	}
 
 	internal static bool HasPrimaryKey(this Table table) => GetPrimaryKey(table).Count > 0;

@@ -3,7 +3,7 @@
 namespace Ring.Schema.Models;
 
 /// <summary>
-/// 	Logical field sourceType
+/// 	Logical field
 /// </summary>
 internal sealed class Field : BaseEntity
 {

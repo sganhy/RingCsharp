@@ -225,6 +225,23 @@ public class TableExtensionsTest : BaseTest
     }
 
     [Fact]
+    internal void GetColumn_BookTable_ColumnObject()
+    {
+        var metaList = GetSchema1();
+        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
+        var table = schema?.GetTable("book");
+
+        // act 
+        Assert.NotNull(schema);
+        Assert.NotNull(table);
+        var column = table.GetColumn("isbn");
+
+        // assert
+        Assert.NotNull(column);
+    }
+
+
+    [Fact]
     internal void GetField_Id_Null()
     {
         // arrange 
@@ -401,7 +418,7 @@ public class TableExtensionsTest : BaseTest
         Assert.NotNull(table4);
         Assert.NotNull(table5);
 
-        table2.Columns[0] = new Column(FieldType.Long, "test", SearchableType.None, 11, 44);
+        table2.Columns[0] = new Column(EntityType.Field, FieldType.Long, "test", SearchableType.None, 11, 44);
             
         // swap two columns
         var tempCol = table4.Columns[0];

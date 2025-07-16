@@ -3,6 +3,9 @@ using System.Drawing;
 
 namespace Ring.Schema.Models;
 
+/// <summary>
+/// 	Logical relation
+/// </summary>
 internal sealed class Relation : BaseEntity
 {
 	internal Relation InverseRelation { get; private set; } // assigned after initialization

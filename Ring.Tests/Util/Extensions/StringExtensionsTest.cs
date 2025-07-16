@@ -53,5 +53,34 @@ public class StringExtensionsTest : BaseTest
         LogAssert($"result == 'Tes'");
         Assert.Equal("Tes", result);
     }
-       
+
+
+    [Fact]
+    public void CharCount_EmptyString_0()
+    {
+        // arrange 
+        var input = string.Empty;
+
+        // act 
+        LogAct("result <-- StringExtensions.Truncate(input, 3)");
+        var result = StringExtensions.CharCount(input, '$');
+
+        // assert
+        Assert.Equal(0, result);
+    }
+
+
+    [Fact]
+    public void CharCount_DefinedString_3()
+    {
+        // arrange 
+        var input = "element/div/env/01";
+
+        // act 
+        var result = StringExtensions.CharCount(input, '/');
+
+        // assert
+        Assert.Equal(3, result);
+    }
+
 }

@@ -2,6 +2,7 @@
 using Ring.Schema;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
+using Ring.Schema.Models;
 using System.Linq.Expressions;
 using Xunit.Abstractions;
 
@@ -70,9 +71,11 @@ public sealed class IndexExtensionsTest : BaseTest
         var id = _faker.Random.Number(10000);
         var name = _faker.Random.String();
         var description = _faker.Random.String();
-        var columns = _faker.Random.WordsArray(5).ToArray();
-        var index1 = new Index(id, name, name, description, columns, true, false, true, false);
-        var index2 = new Index(id, name, name, description, columns, true, false, true, false);
+        var columnCount = 5;
+        var columns = new List<Column>(columnCount);
+        for (var i = 0; i < columnCount; ++i) columns.Add(GetAnonymousColumn());
+        var index1 = new Index(id, name, name, description, columns.ToArray(), _faker.Random.String(10), true, false, true, false);
+        var index2 = new Index(id, name, name, description, columns.ToArray(), _faker.Random.String(12), true, false, true, false);
 
         // act 
         var hash1 = IndexExtensions.GetHashCode(index1);
@@ -89,11 +92,17 @@ public sealed class IndexExtensionsTest : BaseTest
         var id = _faker.Random.Number(int.MinValue,int.MaxValue);
         var name = _faker.Random.String();
         var description = _faker.Random.String();
-        var columns = _faker.Random.WordsArray(5).ToArray();
-        var columns2 = _faker.Random.WordsArray(7).ToArray();
-        var index1 = new Index(id, name, name, description, columns, true, false, true, false);
-        var index2 = new Index(id, name, name, description, columns2, true, false, true, false);
-        var index3 = new Index(id, name, name, description, columns, true, false, true, true);
+        var columnList1 = _faker.Random.String(8);
+        var columnList2 = _faker.Random.String(9);
+        var colCount1 = 5;
+        var colCount2 = 7;
+        var columns = new List<Column>(colCount1);
+        for (var i = 0; i < colCount1; ++i) columns.Add(GetAnonymousColumn());
+        var columns2 = new List<Column>(colCount2);
+        for (var i = 0; i < colCount2; ++i) columns2.Add(GetAnonymousColumn());
+        var index1 = new Index(id, name, name, description, columns.ToArray(), columnList1, true, false, true, false);
+        var index2 = new Index(id, name, name, description, columns2.ToArray(), columnList2, true, false, true, false);
+        var index3 = new Index(id, name, name, description, columns.ToArray(), columnList1, true, false, true, true);
 
         // act 
         var hash1 = IndexExtensions.GetHashCode(index1);

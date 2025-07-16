@@ -37,6 +37,11 @@ public class TableBuilderTest
         Assert.NotNull(metaTable.GetField("description"));
         Assert.NotNull(metaTable.GetField("value"));
         Assert.NotNull(metaTable.GetField("active"));
+
+        Assert.NotNull(metaTable.GetColumn("id"));
+        Assert.NotNull(metaTable.GetColumn("schema_id"));
+        Assert.NotNull(metaTable.GetColumn("object_type"));
+
         Assert.Equal("id", metaTable.Fields[metaTable.Columns[0].RecordIndex].Name);
         Assert.Equal("schema_id", metaTable.Fields[metaTable.Columns[1].RecordIndex].Name);
         Assert.Equal("object_type", metaTable.Fields[metaTable.Columns[2].RecordIndex].Name);
@@ -85,8 +90,6 @@ public class TableBuilderTest
         // arrange 
         // act 
         var catalog = _sut.GetCatalog(EntityType.Table, DatabaseProvider.PostgreSql);
-        //catalog.LoadColumns();
-        //catalog.LoadRelationRecordIndex();
 
         // assert
         Assert.Equal("information_schema.tables", catalog.PhysicalName);
@@ -120,8 +123,6 @@ public class TableBuilderTest
 
         // act 
         var logTable = _sut.GetLog(schemaName, DatabaseProvider.PostgreSql);
-        //logTable.LoadColumns();
-        //logTable.LoadRelationRecordIndex();
 
         // assert
         Assert.Equal("test.\"@log\"", logTable.PhysicalName);

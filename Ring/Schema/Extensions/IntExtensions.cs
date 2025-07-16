@@ -126,7 +126,8 @@ internal static class IntExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static SearchableType ToSearchableType(this int value)
 	{
-		switch (value)
+        // Code size: 16 (0x10)
+        switch (value)
 		{
 			case FieldStIgnoreCaseId: return SearchableType.IgnoreCase;
 			case FieldStIngoreCaseAndDiacriticsId: return SearchableType.IgnoreCaseAndDiacritics;
@@ -158,9 +159,9 @@ internal static class IntExtensions
 
 	internal static EntityType ToEntityType(this int entityType) 
 	{
-		// Code size: 120 (0x78)
-		// avoid boxing operation
-		switch (entityType)
+        // Code size: 143 (0x8f)
+        // avoid boxing operation
+        switch (entityType)
 		{
 			case TableId: return EntityType.Table;
 			case FieldId: return EntityType.Field;

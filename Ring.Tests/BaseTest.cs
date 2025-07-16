@@ -17,7 +17,7 @@ public abstract class BaseTest
     protected readonly Faker _faker = new();
     private readonly ITestOutputHelper _output;
 
-    public BaseTest(ITestOutputHelper output)
+    protected BaseTest(ITestOutputHelper output)
     {
         _output = output;
     }
@@ -76,6 +76,10 @@ public abstract class BaseTest
             _faker.Random.String(), _faker.PickRandom<FieldType>(), _faker.Random.Number(int.MinValue, int.MaxValue),
             _faker.Random.String(), _faker.PickRandom<SearchableType>(), _faker.Random.Bool(), _faker.Random.Bool(),
             _faker.Random.Bool(), _faker.Random.Bool());
+
+    internal Column GetAnonymousColumn() =>
+        new(_faker.PickRandom<EntityType>(), _faker.PickRandom<FieldType>(), _faker.Random.String(), _faker.PickRandom<SearchableType>(), 
+            _faker.Random.Number(int.MinValue, int.MaxValue), _faker.Random.Number(int.MinValue, int.MaxValue));
 
     internal Relation GetAnonymousRelation(string? name = null, char minChar = char.MinValue, char maxChar = char.MaxValue)
     {

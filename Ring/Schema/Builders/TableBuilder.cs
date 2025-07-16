@@ -15,8 +15,8 @@ internal sealed class TableBuilder
 	internal static readonly string FieldDataType = "data_type";
 	internal static readonly string FieldFlags = "flags";
 	internal static readonly string FieldName = "name";
-    internal static readonly string FieldTestPrefix = "test_";
-    internal static readonly string FieldActive = "active";
+	internal static readonly string FieldTestPrefix = "test_";
+	internal static readonly string FieldActive = "active";
 	internal static readonly string FieldDescription = "description";
 	internal static readonly string FieldLevelId = "level_id";
 	internal static readonly string FieldEntryTime = "entry_time";
@@ -30,8 +30,8 @@ internal sealed class TableBuilder
 #pragma warning disable CA1822, S2325
 	internal Table GetMeta(string schemaName, DatabaseProvider provider) {
 #pragma warning restore CA1822, S2325
-        // Code size: 301 (0x12d)
-        var metaList = new List<Meta> {
+		// Code size: 301 (0x12d)
+		var metaList = new List<Meta> {
 			GetField(FieldId, FieldType.Int),
 			GetField(FieldSchemaId, FieldType.Int),
 			GetField(FieldObjectType, FieldType.Byte),
@@ -51,9 +51,9 @@ internal sealed class TableBuilder
 #pragma warning disable CA1822, S2325 // Mark members as static
 	internal Table GetMetaId(string schemaName, DatabaseProvider provider) 
 	{
-        // Code size: 177 (0xb1)
+		// Code size: 177 (0xb1)
 #pragma warning restore CA1822, S2325
-        var metaList = new List<Meta> {
+		var metaList = new List<Meta> {
 			GetField(FieldId, FieldType.Int),
 			GetField(FieldSchemaId, FieldType.Int),
 			GetField(FieldObjectType, FieldType.Byte),
@@ -67,9 +67,9 @@ internal sealed class TableBuilder
 #pragma warning disable CA1822, S2325 // Mark members as static
 	internal Table GetLog(string schemaName, DatabaseProvider provider) 
 	{
-        // Code size: 300 (0x12c)
+		// Code size: 300 (0x12c)
 #pragma warning restore CA1822, S2325
-        var metaList = new List<Meta> {
+		var metaList = new List<Meta> {
 			GetField(FieldId, FieldType.Long),
 			GetField(FieldEntryTime, FieldType.DateTime),
 			GetField(FieldLevelId, FieldType.Short),
@@ -78,45 +78,45 @@ internal sealed class TableBuilder
 			GetField(FieldCallSite, FieldType.String,255, false, SearchableType.None),
 			GetField(FieldJobId, FieldType.Long, false),
 			GetField(FieldMethod, FieldType.String, 80, false, SearchableType.None),
-            GetField(FieldLineNumber, FieldType.Int, 80, false, SearchableType.None),
-            GetField(FieldMessage, FieldType.String, 255, false, SearchableType.None),
-            GetField(FieldDescription, FieldType.String, 0, false, SearchableType.None)
-        };
+			GetField(FieldLineNumber, FieldType.Int, 80, false, SearchableType.None),
+			GetField(FieldMessage, FieldType.String, 255, false, SearchableType.None),
+			GetField(FieldDescription, FieldType.String, 0, false, SearchableType.None)
+		};
 		var metaTable = GetTable((int)TableType.Log, TableType.Log.GetLogicalName(), TableType.Log);
 		metaList.Add(GetIndex(false, new[] { metaList[1] }));
 		return GetTable(schemaName, provider, metaList.ToArray(), metaTable);
 	}
 
 #pragma warning disable CA1822, S2325 // Mark members as static
-    internal Table GetTest(string schemaName, DatabaseProvider provider)
-    {
-        // Code size: 272 (0x110)
+	internal Table GetTest(string schemaName, DatabaseProvider provider)
+	{
+		// Code size: 272 (0x110)
 #pragma warning restore CA1822, S2325
-        var metaList = new List<Meta>();
-        var values = Enum.GetValues<FieldType>();
+		var metaList = new List<Meta>();
+		var values = Enum.GetValues<FieldType>();
 		var i = 0;
 		foreach (var fieldType in values)
 		{
 			if (fieldType == FieldType.Undefined) continue;
 			if (fieldType == FieldType.String)
 			{
-                // add 1 non searchable field 
-                metaList.Add(GetField(FieldTestPrefix + i++, fieldType, 16, false, SearchableType.None));
-                // add 2 searchable field 
-                metaList.Add(GetField(FieldTestPrefix + i++, fieldType, 512, false, SearchableType.IgnoreCase));
-                metaList.Add(GetField(FieldTestPrefix + i++, fieldType, 64, false, SearchableType.IgnoreCaseAndDiacritics));
-            }
+				// add 1 non searchable field 
+				metaList.Add(GetField(FieldTestPrefix + i++, fieldType, 16, false, SearchableType.None));
+				// add 2 searchable field 
+				metaList.Add(GetField(FieldTestPrefix + i++, fieldType, 512, false, SearchableType.IgnoreCase));
+				metaList.Add(GetField(FieldTestPrefix + i++, fieldType, 64, false, SearchableType.IgnoreCaseAndDiacritics));
+			}
 			else metaList.Add(GetField(FieldTestPrefix + i++, fieldType, false));
 		}
 		var metaTest = GetTable((int)TableType.Test, TableType.Test.GetLogicalName(), TableType.Logical, false);
-        return GetTable(schemaName, provider, metaList.ToArray(), metaTest);
-    }
+		return GetTable(schemaName, provider, metaList.ToArray(), metaTest);
+	}
 
 #pragma warning disable CA1822, S2325 // Mark members as static
-    internal Table GetCatalog(EntityType entityType, DatabaseProvider provider) 
+	internal Table GetCatalog(EntityType entityType, DatabaseProvider provider) 
 	{
-        // Code size: 99 (0x63)
-        var tableType = entityType.ToTableType();
+		// Code size: 99 (0x63)
+		var tableType = entityType.ToTableType();
 		var metaList = new List<Meta>(){ GetField(provider.GetSchemaFieldName(entityType), FieldType.String) };
 		if (entityType != EntityType.Schema)
 			metaList.Add(GetField(provider.GetEntityFieldName(entityType), FieldType.String));
@@ -126,40 +126,40 @@ internal sealed class TableBuilder
 #pragma warning restore CA1822, S2325
 
 #pragma warning disable CA1822, S2325 // Mark members as static
-    internal Table GetMtm(Table partialTable, IDdlBuilder ddlBuilder, string physicalName, int objectIndex) 
+	internal Table GetMtm(Table partialTable, IDdlBuilder ddlBuilder, string physicalName, int objectIndex) 
 	{
-        // Code size: 194 (0xc2)
-        // add @ prefix to logical name
-        var metaTable = new Meta(0, (byte)EntityType.Table, 0, (int)TableType.Mtm, 0L, TableType.Mtm.GetLogicalName(partialTable.Name), 
+		// Code size: 194 (0xc2)
+		// add @ prefix to logical name
+		var metaTable = new Meta(0, (byte)EntityType.Table, 0, (int)TableType.Mtm, 0L, TableType.Mtm.GetLogicalName(partialTable.Name), 
 				null,null,true);
-		var metaRelation = new Meta(0, (byte)EntityType.Relation, 0, 0, 0L, partialTable.Name, null, null, true);
-		// add index 
-		var flags = 0L;
-		var value = Meta.SetIndexedColumns(new string[] { partialTable.Name, partialTable.Name });
-		flags = Meta.SetIndexUnique(flags, true);
-		var metaIndex = new Meta(0, (byte)EntityType.Index, 0, 0, flags, partialTable.Name, null, value, true);
-		var metaArr = new Meta[] { metaRelation, metaRelation, metaIndex };
-		var segMent = new ArraySegment<Meta>(metaArr, 0, 3);
-		var result = metaTable.ToTable(segMent, PhysicalType.Table, ddlBuilder, physicalName, objectIndex) ?? partialTable;
-		/*TODO LOAD columns
+        var metaRelation = new Meta(0, (byte)EntityType.Relation, 0, 0, 0L, partialTable.Name, null, null, true);
+        // add index 
+        var flags = 0L;
+        var value = Meta.SetIndexedColumns(new string[] { partialTable.Name, partialTable.Name });
+        flags = Meta.SetIndexUnique(flags, true);
+        var metaIndex = new Meta(0, (byte)EntityType.Index, 0, 0, flags, partialTable.Name, null, value, true);
+        var metaArr = new Meta[] { metaRelation, metaRelation, metaIndex };
+        var segMent = new ArraySegment<Meta>(metaArr, 0, 3);
+        var result = metaTable.ToTable(segMent, PhysicalType.Table, ddlBuilder, physicalName, objectIndex) ?? partialTable;
+        /*TODO LOAD columns
 		result.RecordIndexes[0]=0; // columnMapper 4 Mtm table is always {0,1}
 		result.RecordIndexes[1]=1; // columnMapper 4 Mtm table is always {0,1}
 		*/
-		return result;
+        return result;
 	}
 #pragma warning restore CA1822, S2325
 
-    #region private methods 
+	#region private methods 
 
-    private static Table GetTable(string schemaName, DatabaseProvider provider, Meta[] metaArray, Meta metaTable, PhysicalType? physicalType=null)
+	private static Table GetTable(string schemaName, DatabaseProvider provider, Meta[] metaArray, Meta metaTable, PhysicalType? physicalType=null)
 	{
-        // Code size: 127 (0x7f)
-        var ddlBuilder = provider.GetDdlBuilder();
+		// Code size: 127 (0x7f)
+		var ddlBuilder = provider.GetDdlBuilder();
 		var emptyTable = Meta.GetEmptyTable(metaTable);
 		var emptySchema = Meta.GetEmptySchema(GetSchema(0, schemaName), provider);
 		var physicalName = ddlBuilder.GetPhysicalName(emptyTable, emptySchema);
 
-        var spanMeta = metaArray.AsSpan();
+		var spanMeta = metaArray.AsSpan();
 		for (var i=0; i< spanMeta.Length; ++i) spanMeta[i] = Meta.Create(i,spanMeta[i]);
 		return metaTable.ToTable(new ArraySegment<Meta>(metaArray, 0, metaArray.Length),
 				physicalType ?? PhysicalType.Table, ddlBuilder, physicalName, 0) ?? emptyTable;
@@ -184,7 +184,7 @@ internal sealed class TableBuilder
 		flags = Meta.SetFieldNotNull(flags, notNull);
 		flags = Meta.SetFieldSize(flags, fieldSize);
 		if (fieldType == FieldType.String) flags = Meta.SetSearchableType(flags, searchableType);
-        flags = Meta.SetEntityBaseline(flags, true);
+		flags = Meta.SetEntityBaseline(flags, true);
 		dataType = Meta.SetFieldType(dataType, fieldType);
 		return new (0, (byte)EntityType.Field, 0, dataType, flags, name, null, null, true);
 	}
@@ -195,10 +195,8 @@ internal sealed class TableBuilder
 		var flags = 0L;
 		flags = Meta.SetEntityBaseline(flags, true);
 		flags = Meta.SetIndexUnique(flags, unique);
-		var meta = new Meta(0, (byte)EntityType.Index, 0, 0, flags, string.Empty, null, 
-			Meta.SetIndexedColumns(fields.ToArray()), true);
-		return meta;
-	}
+		return new (0, (byte)EntityType.Index, 0, 0, flags, string.Empty, null, Meta.SetIndexedColumns(fields.ToArray()), true);
+    }
 
 	#endregion
 }

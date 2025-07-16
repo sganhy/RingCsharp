@@ -20,27 +20,19 @@ internal static class IndexExtensions
 		flags = Meta.SetIndexUnique(flags, index.Unique);
 		flags = Meta.SetIndexBitmap(flags, index.Bitmap);
 		// int id, byte objectType, int referenceId, int dataType, long flags, string name, string? description, string? value, bool active
-		string? value = Meta.SetIndexedColumns(index.Columns);
+		string? value = index.ColumnList;
 		var meta = new Meta(index.Id, (byte)EntityType.Index, tableId, 0, flags, index.Name, index.Description, value, index.Active);
 		return meta;
 	}
 
 	internal static bool IsPrimaryKey(this Index index, Table table)
 	{
-		// Code size: 130 (0x82)
-		var result = false;
+        // Code size: 51 (0x33)
+        var result = false;
 		if (index.Unique)
 		{
-			var pk = table.GetPrimaryKey();
-			var key = new StringBuilder();
-			foreach (var idx in pk)
-			{
-				key.Append(idx.PhysicalName);
-				key.Append(',');
-			}
-			key.Length--;
-			var indexKey = string.Join(',', index.Columns);
-			result = indexKey == key.ToString();
+			var pk = table.GetPrimaryKey().ToArray();
+			result = index.Columns.Join(',') == pk.Join(',');
 		}
 		return result;
 	}
@@ -62,7 +54,7 @@ internal static class IndexExtensions
 		return new StringBuilder()
 			.Append(index.Bitmap)
 			.Append(HashCodeSeparator)
-			.Append(string.Join(HashCodeSeparator, index.Columns))
+			.Append(index.ColumnList)
 			.Append(HashCodeSeparator)
 			.Append(index.Unique)
 			.Append(HashCodeSeparator)

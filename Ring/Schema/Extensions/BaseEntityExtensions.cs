@@ -5,7 +5,7 @@ namespace Ring.Schema.Extensions;
 
 internal static class BaseEntityExtensions
 {
-	private const char HashCodeSeparator = (char)8888;
+	private const char HashCodeSeparator = (char)8998;
 
 	// Code size: 106 (0x6a)
 	internal static string GetStringCode(this BaseEntity baseEntity) 
