@@ -238,7 +238,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 		result.Append(DdlCreate);
 		if (index.Unique) result.Append(DdlUnique);
 		result.Append(DdlIndex)
-			.Append(index.PhysicalName)
+			.Append(GetPhysicalName(index, table))
 			.Append(SqlSpace)
 			.Append(DdlOn)
 			.Append(table.PhysicalName)

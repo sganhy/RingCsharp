@@ -199,7 +199,7 @@ internal readonly struct Meta : IEquatable<Meta>
 			meta.IsTableCached, meta.IsTableReadonly);
 
 	internal static Index GetEmptyIndex(Meta meta) // Code size: 64 (0x40)
-		=> new(meta.Id, meta.Name, meta.Name, meta.Description, meta.GetIndexedColumns(), meta.Value ?? string.Empty, meta.IsIndexUnique, 
+		=> new(meta.Id, meta.Name, meta.Description, meta.GetIndexedColumns(), meta.Value ?? string.Empty, meta.IsIndexUnique, 
 			meta.IsIndexBitmap, meta.Active, meta.IsEntityBaseline);
 
 	internal static Relation GetEmptyRelation(Meta meta, RelationType relationType, TableType toTableType) =>
@@ -293,8 +293,8 @@ internal readonly struct Meta : IEquatable<Meta>
 				IsEntityBaseline, Active) : null;
 	}
 
-	internal Index? ToIndex(string physicalName) // Code size: 65 (0x41)
-		=> IsIndex ? new Index(Id, Name, physicalName, Description, GetIndexedColumns(), Value ?? string.Empty, IsIndexUnique, IsIndexBitmap, Active, IsEntityBaseline) : null;
+	internal Index? ToIndex() // Code size: 65 (0x41)
+		=> IsIndex ? new Index(Id, Name, Description, GetIndexedColumns(), Value ?? string.Empty, IsIndexUnique, IsIndexBitmap, Active, IsEntityBaseline) : null;
 
 	/// <summary>
 	/// 	Create a instance of table, relation assigned later by schema creation
@@ -307,7 +307,7 @@ internal readonly struct Meta : IEquatable<Meta>
 			var tableType = DataType.ToTableType();
 			var fields = GetFieldArray(tableItems, ddlBuilder);
 			var relations = GetRelationArray(tableItems);
-			var indexes = GetIndexes(tableItems, ddlBuilder);
+			var indexes = GetIndexes(tableItems);
 			(var colCount, var physRelationCount) = GetColumnCount(fields, tableItems, ddlBuilder);
 
 			// sort arrays (warn: relations not yet loaded here)
@@ -393,9 +393,11 @@ internal readonly struct Meta : IEquatable<Meta>
 			.Append(HashCodeSeparator)
 			.Append(Active).ToString();
 
-	internal static int ColumnTypeWeight(EntityType entityType)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static int ColumnTypeWeight(EntityType entityType)
 	{
-		switch (entityType)
+        // Code size: 36 (0x24)
+        switch (entityType)
 		{
 			case EntityType.Field: return 1;
 			case EntityType.SearchableColumn: return 2;
@@ -443,7 +445,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private bool ReadFlag(byte bitPosition) => ((Flags >> (bitPosition - 1)) & 1) > 0; // Code size: 21 (0x15)
 
-	private Index[] GetIndexes(ArraySegment<Meta> items, IDdlBuilder ddlBuilder)
+	private Index[] GetIndexes(ArraySegment<Meta> items)
 	{
 		// count element
 		var indexCount = 0;
@@ -460,7 +462,7 @@ internal readonly struct Meta : IEquatable<Meta>
 				var tempIndex = GetEmptyIndex(item);
 				// cannot be null here 
 #pragma warning disable CS8601 // Possible null reference assignment.
-				result[fieldIndex] = item.ToIndex(ddlBuilder.GetPhysicalName(tempIndex, table));
+				result[fieldIndex] = item.ToIndex();
 #pragma warning restore CS8601
 				++fieldIndex;
 			}

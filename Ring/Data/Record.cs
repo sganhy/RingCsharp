@@ -361,13 +361,15 @@ public struct Record : IEquatable<Record>
 
 	internal readonly bool IsRelationChanged(string name)
 	{
-		// Code size: 95 (0x5f) - no callvirt
-		if (_type.Id == -1) ThrowRecordUnknownRecordType();
+        // Code size: 133 (0x85)
+        if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var relation = _type.GetRelation(name);
 		var trackerIndex = _offset + _type.RecordSize - 1;
 		if (relation == null) ThrowRecordUnknownRelationName(name);
-		var index = 112; //relation.RecordIndex;
-		if (index >= 0) return _data[trackerIndex] != null && IsColumnChanged(index, trackerIndex);
+        var column = _type.GetColumn(relation.Id, EntityType.Relation);
+        if (column == null) ThrowRecordWrongRelationType(name);
+        var index = _offset + column.RecordIndex;
+        if (index >= 0) return _data[trackerIndex] != null && IsColumnChanged(index, trackerIndex);
 		return false;
 	}
 
@@ -380,14 +382,14 @@ public struct Record : IEquatable<Record>
 	/// <returns>relation ID value;if not defined return null</returns>
 	internal readonly long? GetRelation(string name)
 	{
-		// Code size: 109 (0x6d)
-		if (_type.Id == -1) ThrowRecordUnknownRecordType();
+        // Code size: 109 (0x6d)
+        if (_type.Id == -1) ThrowRecordUnknownRecordType();
         var relation = _type.GetRelation(name);
 		if (relation == null) ThrowRecordUnknownRelationName(name);
-		var index = _offset;//relation.RecordIndex + _offset; // replace by GetRelationIndex
-        if (index >= 0 && _data[index] != null) return long.Parse(_data[index]!, CultureInfo.InvariantCulture);
-		else ThrowRecordWrongRelationType(name);
-		return null;
+		var column = _type.GetColumn(relation.Id, EntityType.Relation);
+        if (column == null) ThrowRecordWrongRelationType(name);
+        var index = _offset + column.RecordIndex;
+        return long.Parse(_data[index]!, CultureInfo.InvariantCulture);
 	}
 
 	internal void SetRelation(string name, long? value)
@@ -396,8 +398,10 @@ public struct Record : IEquatable<Record>
 		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var relation = _type.GetRelation(name);
 		if (relation == null) ThrowRecordUnknownRelationName(name);
-		var index = 112; //  relation.RecordIndex;
-		if (index >= 0) SetData(index, value?.ToString(DefaultCulture));
+        var column = _type.GetColumn(relation.Id, EntityType.Relation);
+        if (column == null) ThrowRecordUnknownRelationName(name);
+        var index = column.RecordIndex;
+        if (index >= 0) SetData(column.RecordIndex, value?.ToString(DefaultCulture));
 		else ThrowRecordWrongRelationType(name);
 	}
 

@@ -74,8 +74,8 @@ public sealed class IndexExtensionsTest : BaseTest
         var columnCount = 5;
         var columns = new List<Column>(columnCount);
         for (var i = 0; i < columnCount; ++i) columns.Add(GetAnonymousColumn());
-        var index1 = new Index(id, name, name, description, columns.ToArray(), _faker.Random.String(10), true, false, true, false);
-        var index2 = new Index(id, name, name, description, columns.ToArray(), _faker.Random.String(12), true, false, true, false);
+        var index1 = new Index(id, name, description, columns.ToArray(), _faker.Random.String(10), true, false, true, false);
+        var index2 = new Index(id, name, description, columns.ToArray(), _faker.Random.String(12), true, false, true, false);
 
         // act 
         var hash1 = IndexExtensions.GetHashCode(index1);
@@ -100,9 +100,9 @@ public sealed class IndexExtensionsTest : BaseTest
         for (var i = 0; i < colCount1; ++i) columns.Add(GetAnonymousColumn());
         var columns2 = new List<Column>(colCount2);
         for (var i = 0; i < colCount2; ++i) columns2.Add(GetAnonymousColumn());
-        var index1 = new Index(id, name, name, description, columns.ToArray(), columnList1, true, false, true, false);
-        var index2 = new Index(id, name, name, description, columns2.ToArray(), columnList2, true, false, true, false);
-        var index3 = new Index(id, name, name, description, columns.ToArray(), columnList1, true, false, true, true);
+        var index1 = new Index(id, name, description, columns.ToArray(), columnList1, true, false, true, false);
+        var index2 = new Index(id, name, description, columns2.ToArray(), columnList2, true, false, true, false);
+        var index3 = new Index(id, name, description, columns.ToArray(), columnList1, true, false, true, true);
 
         // act 
         var hash1 = IndexExtensions.GetHashCode(index1);

@@ -334,7 +334,7 @@ public sealed class MetaTest : BaseTest
            name, _faker.Random.String(), "name;object2book", true);
 
         // act 
-        var index = meta.ToIndex("idx_1071");
+        var index = meta.ToIndex();
 
         // assert
         Assert.NotNull(index);
@@ -355,7 +355,7 @@ public sealed class MetaTest : BaseTest
             _faker.Random.String(), _faker.Random.String(), _faker.Random.String(), _faker.Random.Bool());
         
         // act 
-        var index = meta.ToIndex(_faker.Random.String());
+        var index = meta.ToIndex();
 
         // assert
         Assert.Null(index);
