@@ -68,7 +68,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 			.Append(DdlAdd)
 			.Append(column.PhysicalName)
 			.Append(SqlSpace)
-			.Append(GetDataType(column, true))
+			.Append(GetDataType(table, column))
 			.ToString();
 	
 	public string AlterDropColumn(Table table, Column column) // Code size: 80 (0x50)
@@ -206,12 +206,15 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	}
 
 	protected abstract string MtmPrefix { get; }
-	protected string GetDataType(Column column, bool firstColumn)
+	protected string GetDataType(Table table, Column column)
 	{
 		// Code size: 96 (0x60)
 		var fielType = column.FieldType;
-		if (!firstColumn && fielType == FieldType.LongDateTime) return DataType[FieldType.Short];
-		return GetDataType(DataType[fielType], fielType, 0, VarcharMaxSize,
+		var size = 0;
+		// find size!!
+		if (column.Type == EntityType.Field || column.Type == EntityType.SearchableColumn) size = table.GetField(column)?.Size ?? 0;
+		//if (!firstColumn && fielType == FieldType.LongDateTime) return DataType[FieldType.Short];
+		return GetDataType(DataType[fielType], fielType, size, VarcharMaxSize,
 			fielType == FieldType.String || fielType == FieldType.LongString ?
 			StringCollateInformation : null);
 	}
@@ -316,15 +319,17 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 			.Append(SqlSpace)
 			.Append('(')
 			.Append(SqlLineFeed);
+
 		while (i < columnCount)
 		{
-			var column = table.Columns[i];
 			/*
+			var column = table.Columns[i];
 			if (column.Type == EntityType.Field) Create(result, table, (Field)column);
 			else Create(result, table, (Relation)column);
 			*/
 			++i;
 		}
+
 		if (i > 0) result.Length -= 2;
 		result.Append(')');
 		if (tablespace != null)

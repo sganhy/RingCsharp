@@ -26,7 +26,7 @@ internal static class RelationExtensions
 		return meta;
 	}
 
-    internal static string GetMtmName(this Relation relation)
+	internal static string GetMtmName(this Relation relation)
 	{
 		// mtm relation already computed - find previous table_id
 		var toTableId = relation.ToTable.Type == TableType.Mtm? 
@@ -78,16 +78,16 @@ internal static class RelationExtensions
 
 	internal static string GetStringCode(this Relation relation)
 	{
-        // Code size: 206 (0xce)
-        /*
-		 * Relation InverseRelation
-		 * readonly bool HasConstraint
-		 * readonly bool NotNull
-		 * readonly Table ToTable
-		 * readonly RelationType Type
-		 * readonly FieldType FieldType
-		 */
-        return new StringBuilder() 
+		// Code size: 206 (0xce)
+		/*
+		* Relation InverseRelation
+		* readonly bool HasConstraint
+		* readonly bool NotNull
+		* readonly Table ToTable
+		* readonly RelationType Type
+		* readonly FieldType FieldType
+		*/
+		return new StringBuilder() 
 			.Append(relation.InverseRelation.Name)
 			.Append(relation.InverseRelation.Id)
 			.Append(HashCodeSeparator)
@@ -108,16 +108,7 @@ internal static class RelationExtensions
 			.ToString();
 	}
 
+	internal static Relation SetFieldType(this Relation relation, FieldType fieldType) // Code size: 61 (0x3d)
+		=> new(relation.Id, relation.Name, relation.Description, relation.Type, relation.ToTable, fieldType, relation.NotNull, relation.HasConstraint, relation.Baseline, relation.Active);
 
-
-
-	internal static Relation SetRecordIndex(this Relation relation, int recordIndex)
-	{
-		var result = new Relation(relation.Id, relation.Name, relation.Description, relation.Type, relation.ToTable, recordIndex,
-			relation.FieldType, relation.NotNull, relation.HasConstraint, relation.Baseline, relation.Active);
-		// manage inverse relationship
-		result.SetInverseRelation(relation.InverseRelation);
-		relation.InverseRelation.SetInverseRelation(result);
-		return result;
-	}
 }

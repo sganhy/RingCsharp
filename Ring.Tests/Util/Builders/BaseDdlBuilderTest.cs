@@ -1,4 +1,5 @@
 ﻿using Ring.Schema.Enums;
+using Ring.Schema.Extensions;
 using Ring.Util.Builders;
 using Ring.Util.Builders.PostgreSQL;
 
@@ -19,12 +20,18 @@ public sealed class BaseDdlBuilderTest : BaseBuilderTest
     public void AlterAddColumn_Field1_DdlQuery()
     {
         // arrange 
-        var table = GetAnonymousTable(12, 2);
-        var field = GetAnonymousField(FieldType.String, 80);
-        var expectedSql = $"ALTER TABLE {table.PhysicalName} ADD {field.Name} varchar(80) COLLATE \"C\"";
+        var table = GetAnonymousTable(_sut, 22, 2);
+        var field = table.Fields[10];
+        field = field.SetSize(80);
+        field = field.SetType(FieldType.String);
+        table.Fields[10] = field;
+        var col = table.GetColumn(field.Id, EntityType.Field);
+        Assert.NotNull(col);
+        col = col.SetFieldType(FieldType.String);
+        var expectedSql = $"ALTER TABLE {table.PhysicalName} ADD {col.PhysicalName} varchar(80) COLLATE \"C\"";
 
         // act 
-        var dql = _sut.AlterAddColumn(table, null);
+        var dql = _sut.AlterAddColumn(table, col);
 
         // assert
         Assert.Equal(expectedSql, dql);
@@ -34,12 +41,17 @@ public sealed class BaseDdlBuilderTest : BaseBuilderTest
     public void AlterAddColumn_Field2_DdlQuery()
     {
         // arrange 
-        var table = GetAnonymousTable(12, 2);
-        var field = GetAnonymousField(FieldType.LongDateTime, 0);
-        var expectedSql = $"ALTER TABLE {table.PhysicalName} ADD {field.Name} timestamp without time zone";
+        var table = GetAnonymousTable(_sut, 17, 2);
+        var field = table.Fields[10];
+        field = field.SetType(FieldType.String);
+        table.Fields[11] = field;
+        var col = table.GetColumn(field.Id, EntityType.Field);
+        Assert.NotNull(col);
+        col = col.SetFieldType(FieldType.LongDateTime);
+        var expectedSql = $"ALTER TABLE {table.PhysicalName} ADD {col.PhysicalName} timestamp without time zone";
 
         // act 
-        var dql = _sut.AlterAddColumn(table, null);
+        var dql = _sut.AlterAddColumn(table, col);
 
         // assert
         Assert.Equal(expectedSql, dql);
@@ -49,12 +61,17 @@ public sealed class BaseDdlBuilderTest : BaseBuilderTest
     public void AlterAddColumn_Field3_DdlQuery()
     {
         // arrange 
-        var table = GetAnonymousTable(12, 2);
-        var field = GetAnonymousField(FieldType.Byte, 0);
-        var expectedSql = $"ALTER TABLE {table.PhysicalName} ADD {field.Name} int2";
+        var table = GetAnonymousTable(_sut, 12, 2);
+        var field = table.Fields[10];
+        field = field.SetType(FieldType.String);
+        table.Fields[9] = field;
+        var col = table.GetColumn(field.Id, EntityType.Field);
+        Assert.NotNull(col);
+        col = col.SetFieldType(FieldType.Byte);
+        var expectedSql = $"ALTER TABLE {table.PhysicalName} ADD {col.PhysicalName} int2";
 
         // act 
-        var dql = _sut.AlterAddColumn(table, null);
+        var dql = _sut.AlterAddColumn(table, col);
 
         // assert
         Assert.Equal(expectedSql, dql);
@@ -64,12 +81,16 @@ public sealed class BaseDdlBuilderTest : BaseBuilderTest
     public void AlterAddColumn_Relation1_DdlQuery()
     {
         // arrange 
-        var table = GetAnonymousTable(12, 2);
-        var relation = GetAnonymousRelation(RelationType.Mto,8);
-        var expectedSql = $"ALTER TABLE {table.PhysicalName} ADD {relation.Name} int8";
+        var table = GetAnonymousTable(_sut, 12, 25);
+        var relation = table.Relations[10];
+        var col = table.GetColumn(relation.Id, EntityType.Relation);
+        Assert.NotNull(col);
+        col = col.SetFieldType(FieldType.Int);
+        table.Columns[table.GetColumnIndex(relation.Id, EntityType.Relation)] = col;
+        var expectedSql = $"ALTER TABLE {table.PhysicalName} ADD {col.PhysicalName} int4";
 
         // act 
-        var dql = _sut.AlterAddColumn(table, null);
+        var dql = _sut.AlterAddColumn(table, col);
 
         // assert
         Assert.Equal(expectedSql, dql);
@@ -79,12 +100,14 @@ public sealed class BaseDdlBuilderTest : BaseBuilderTest
     public void AlterDropColumn_Field1_DdlQuery()
     {
         // arrange 
-        var table = GetAnonymousTable(12, 2);
-        var field = GetAnonymousField(FieldType.Byte, 0);
-        var expectedSql = $"ALTER TABLE {table.PhysicalName} DROP COLUMN {field.Name}";
+        var table = GetAnonymousTable(_sut, 18, 2);
+        var field = table.Fields[16];
+        var col = table.GetColumn(field.Id, EntityType.Field);
+        Assert.NotNull(col);
+        var expectedSql = $"ALTER TABLE {table.PhysicalName} DROP COLUMN {col.PhysicalName}";
 
         // act 
-        var dql = _sut.AlterDropColumn(table, null);
+        var dql = _sut.AlterDropColumn(table, col);
 
         // assert
         Assert.Equal(expectedSql, dql);
@@ -94,17 +117,18 @@ public sealed class BaseDdlBuilderTest : BaseBuilderTest
     public void AlterDropColumn_Relation1_DdlQuery()
     {
         // arrange 
-        var table = GetAnonymousTable(12, 2);
-        var relation = GetAnonymousRelation(RelationType.Mto,4);
-        var expectedSql = $"ALTER TABLE {table.PhysicalName} DROP COLUMN {relation.Name}";
+        var table = GetAnonymousTable(_sut, 12, 25);
+        var relation = table.Relations[20];
+        var col = table.GetColumn(relation.Id, EntityType.Relation);
+        Assert.NotNull(col);
+        var expectedSql = $"ALTER TABLE {table.PhysicalName} DROP COLUMN {col.PhysicalName}";
 
         // act 
-        var dql = _sut.AlterDropColumn(table, null);
+        var dql = _sut.AlterDropColumn(table, col);
 
         // assert
         Assert.Equal(expectedSql, dql);
     }
-
 
 
 }

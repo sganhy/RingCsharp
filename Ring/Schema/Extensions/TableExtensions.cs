@@ -68,6 +68,12 @@ internal static class TableExtensions
 		return null;
 	}
 
+
+	/// <summary>
+	/// 	Get Fields by id ==> O(n) complexity
+	/// </summary>
+	internal static Field? GetField(this Table table, Column column) => GetField(table, column.Id);
+
 	/// <summary>
 	/// 	Get index field by name, case sensitive search ==> O(log n) complexity
 	/// </summary>
@@ -222,6 +228,31 @@ internal static class TableExtensions
 		return null;
 	}
 
+	internal static int GetColumnIndex(this Table table, int id, EntityType type)
+	{
+		// Code size: 141 (0x8d)
+		var colWeight = Meta.ColumnTypeWeight(type);
+		var span = new ReadOnlySpan<Column>(table.Columns); // sorted by Id
+		int indexerLeft = 0, indexerRight = span.Length - 1, indexerMiddle, indexerCompare;
+		while (indexerLeft <= indexerRight)
+		{
+			indexerMiddle = indexerLeft + indexerRight;
+			indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
+			indexerCompare = id - span[indexerMiddle].Id;
+			if (indexerCompare == 0)
+			{
+				// sub search on Column.Type
+				var weightCompare = colWeight - Meta.ColumnTypeWeight(span[indexerMiddle].Type);
+				if (weightCompare == 0) return indexerMiddle;
+				else if (weightCompare > 0) indexerLeft = indexerMiddle + 1;
+				else indexerRight = indexerMiddle - 1;
+			}
+			else if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
+			else indexerRight = indexerMiddle - 1;
+		}
+		return -1;
+	}
+
 	/// <summary>
 	/// 	Get index object by name ==> O(log n) complexity
 	/// </summary>
@@ -267,6 +298,7 @@ internal static class TableExtensions
 		for (i=0; i < table.Relations.Length; ++i) result.Add(table.Relations[i].ToMeta(table.Id));
 		for (i=0; i < table.Indexes.Length; ++i) result.Add(table.Indexes[i].ToMeta(table.Id));
 		var flags = 0L;
+
 		// set Table Flags
 		flags = Meta.SetTableCached(flags, table.Cached);
 		flags = Meta.SetTableReadonly(flags, table.Readonly);
@@ -279,28 +311,6 @@ internal static class TableExtensions
 		return result.ToArray();
 	}
 
-	/// <summary>
-	/// 	Compute index of relation(s) to Record._data[]; default value equal to -1
-	/// </summary>
-	internal static void LoadRelationRecordIndex(this Table table)
-	{
-		var fieldCount = table.Fields.Length;
-		var relationCount = table.Relations.Length;
-		var i = 0;
-		var currentIndex = 0;
-		while (i < relationCount)
-		{
-			var relation = table.Relations[i];
-			if (relation.Type == RelationType.Mto || relation.Type == RelationType.Otop)
-			{
-				table.Relations[i] = relation.SetRecordIndex(currentIndex + fieldCount);
-				++currentIndex;
-			}
-			else table.Relations[i] = relation.SetRecordIndex(-1);
-			++i;
-		}
-	}
-
 	internal static long GetHashCode(this Table table)
 	{
 		// Code size: 15 (0xf)
@@ -310,7 +320,7 @@ internal static class TableExtensions
 
 	internal static string GetStringCode(this Table table)
 	{
-		// Code size: 258 (0x102) - checked: 2025-07-16
+		// Code size: 237 (0xed) - checked: 2025-07-18
 		/*
 		* readonly bool Cached
 		* readonly Field[] Fields
@@ -339,8 +349,7 @@ internal static class TableExtensions
 			.Append(table.RecordSize)
 			.Append(HashCodeSeparator)
 		/* Columns[] Columns - removed from computing !! */
-			.Append(table.PhysicalName)
-			.Append(HashCodeSeparator)
+		/* table.PhysicalName - removed from computing !! */
 			.Append((int)table.Type)
 			.Append(HashCodeSeparator)
 			.Append(table.SchemaId)

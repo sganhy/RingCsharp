@@ -65,7 +65,6 @@ public abstract class BaseTest
 #pragma warning disable CS8601 // Possible null reference assignment.
                 result.Relations[i] = relations[i].ToRelation(result);
 #pragma warning restore CS8601
-            result.LoadRelationRecordIndex();
         }
 
         return result;
@@ -87,7 +86,7 @@ public abstract class BaseTest
             _faker.Random.String(), _faker.Random.String(), TableType.Business, Array.Empty<Relation>(), Array.Empty<Field>(),
             Array.Empty<Column>(), Array.Empty<Index>(), 12, PhysicalType.Table, 0, 0, true, true, true, true);
         return new Relation(_faker.Random.Number(100, int.MaxValue), name ?? _faker.Random.String(null, minChar, maxChar), 
-            _faker.Random.String(),  _faker.PickRandom<RelationType>(), toTable, -1, FieldType.Long, _faker.Random.Bool(), _faker.Random.Bool(),
+            _faker.Random.String(),  _faker.PickRandom<RelationType>(), toTable, FieldType.Long, _faker.Random.Bool(), _faker.Random.Bool(),
             _faker.Random.Bool(), _faker.Random.Bool());
     }
     internal Meta GetMeta1Table(TableType tableType)

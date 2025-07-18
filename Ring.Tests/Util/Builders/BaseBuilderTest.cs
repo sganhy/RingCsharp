@@ -3,6 +3,7 @@ using Ring.Schema;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
+using Ring.Util.Builders;
 using System.Reflection;
 using Index = Ring.Schema.Models.Index;
 
@@ -12,7 +13,7 @@ public class BaseBuilderTest
 {
     private readonly Faker _faker = new();
 
-    internal Table GetAnonymousTable(int numberOfField = 0, int numberOfRelation = 0)
+    internal Table GetAnonymousTable(IDdlBuilder builder, int numberOfField = 0, int numberOfRelation = 0)
     {
         var fields = new List<Field>();
         for (var i = 0; i < numberOfField-1; i++)
@@ -21,24 +22,26 @@ public class BaseBuilderTest
         // add pk
         Field pk = FieldExtensions.GetDefaultPrimaryKey(null, FieldType.Short) ?? default!;
         fields.Add(pk);
-        var fieldsById = new List<Field>(fields);
         var relations = new List<Relation>();
-
-        for (var i = 0; i < numberOfRelation; i++) relations.Add(GetAnonymousRelation(RelationType.Mto, i+20, "skill2book"));
-
-        // sort lists
-        // Array.Sort(fields, (x, y) => 
-        fields = fields.OrderBy(o => o.Name, StringComparer.Ordinal).ToList(); // compare ordinal here !! string.CompareOrdinal()
-        fieldsById.Sort((t1, t2) => t1.Id.CompareTo(t2.Id));
-        relations = relations.OrderBy(o => o.Name, StringComparer.Ordinal).ToList();
+        for (var i = 0; i < numberOfRelation; i++) relations.Add(GetAnonymousRelation(RelationType.Mto, i + 20, "skill2book_"  + i.ToString()));
 
         var result = new Table(_faker.Random.Number(int.MinValue,int.MaxValue), _faker.Random.String(), _faker.Random.String(), _faker.Random.String(),
             _faker.Random.String(), TableType.Business, relations.ToArray(), fields.ToArray(),
             new Column[fields.Count + relations.Count], Array.Empty<Index>(), 12, 
-            PhysicalType.Table, 0, 0, true, true, true, true);
-        //result.LoadColumns();
-        result.LoadRelationRecordIndex();
-        return result;
+            PhysicalType.Table, 0, 0, true, true, true, true).ToMeta(0);
+        var metaTable = GetFirstMeta(result, EntityType.Table);
+        var table = metaTable.ToTable(new ArraySegment<Meta>(result), PhysicalType.Table, builder, _faker.Random.String(), 0); // load Columns
+
+        // add relations 
+        if (table != null)
+        {
+            for (var i = 0; i < numberOfRelation; ++i) table.Relations[i] = relations[i];
+
+            // Array.Sort(fields, (x, y) => 
+            fields = fields.OrderBy(o => o.Name, StringComparer.Ordinal).ToList(); // compare ordinal here !! string.CompareOrdinal()
+            relations = relations.OrderBy(o => o.Name, StringComparer.Ordinal).ToList();
+        }
+        return table;
     }
 
     internal TableSpace GetAnonymousTableSpace(string name) =>
@@ -62,9 +65,8 @@ public class BaseBuilderTest
             _faker.Random.String(), TableType.Business, Array.Empty<Relation>(), fieldList.ToArray(),
             new Column[fieldList.Count], Array.Empty<Index>(), 12, PhysicalType.Table, 0, 0,
             true, true, true, true);
-        toTable.LoadRelationRecordIndex();
         // generate primary key 
-        var result = new Relation(id, relationName, _faker.Random.String(), relationType, toTable, -1, primaryKey.Type, 
+        var result = new Relation(id, relationName, _faker.Random.String(), relationType, toTable, primaryKey.Type, 
             notNull, _faker.Random.Bool(), _faker.Random.Bool(), _faker.Random.Bool());
 
         return result;
@@ -130,5 +132,18 @@ public class BaseBuilderTest
         return new(id, (byte)entityType, referenceId??_faker.Random.Number(int.MinValue,int.MaxValue), dataType, flags,
             name, _faker.Random.String(), _faker.Random.String(), active);
     }
+
+    private Meta GetFirstMeta(Meta[] metas, EntityType entityType)
+    {
+        var i = 0;
+        while (i < metas.Length)
+        {
+            var et = metas[i].GetEntityType();
+            if (et == entityType) return metas[i];
+            ++i; 
+        }
+        return new Meta("Test");
+    }
+
 
 }

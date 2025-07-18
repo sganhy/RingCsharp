@@ -74,8 +74,8 @@ public sealed class IndexExtensionsTest : BaseTest
         var columnCount = 5;
         var columns = new List<Column>(columnCount);
         for (var i = 0; i < columnCount; ++i) columns.Add(GetAnonymousColumn());
-        var index1 = new Index(id, name, description, columns.ToArray(), _faker.Random.String(10), true, false, true, false);
-        var index2 = new Index(id, name, description, columns.ToArray(), _faker.Random.String(12), true, false, true, false);
+        var index1 = new Index(id, name, description, columns.ToArray(), _faker.Random.String(), true, false, true, false);
+        var index2 = new Index(id, name, description, columns.ToArray(), index1.ColumnList, true, false, true, false);
 
         // act 
         var hash1 = IndexExtensions.GetHashCode(index1);

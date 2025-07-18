@@ -1,4 +1,5 @@
-﻿using Ring.Schema.Models;
+﻿using Ring.Schema.Enums;
+using Ring.Schema.Models;
 using System.Text;
 
 namespace Ring.Schema.Extensions;
@@ -14,6 +15,10 @@ internal static class ColumnExtensions
 			foreach (var column in columns) result.Append(column.PhysicalName).Append(separator);
 			result.Length--;
 		}
-		return result.ToString(); 
+		return result.ToString();
 	}
+
+	internal static Column SetFieldType(this Column column, FieldType fieldType) // Code size: 37 (0x25)
+		=> new(column.Type, fieldType, column.PhysicalName, column.SearchableType, column.Id, column.RecordIndex);
+
 }

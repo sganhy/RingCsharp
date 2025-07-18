@@ -47,22 +47,22 @@ internal static class FieldExtensions
 	/// </summary>
 	internal static string? GetSearchableValue(this Field? _, SearchableType searchableType, string? value)
 	{
-        // Code size: 117 (0x75)
-        if (value == null) return null;
+		// Code size: 117 (0x75)
+		if (value == null) return null;
 		switch (searchableType)
 		{
 			case SearchableType.IgnoreCase:	return value.ToUpperInvariant();
 			case SearchableType.IgnoreCaseAndDiacritics:
-                var normalizedString = value.Normalize(NormalizationForm.FormD).AsSpan();
-                var result = new StringBuilder(normalizedString.Length);
-                foreach (var c in normalizedString)
-                {
-                    // CharUnicodeInfo.GetUnicodeCategory(c) <> UnicodeCategory.NonSpacingMark
-                    if (char.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
-                        result.Append(char.ToUpper(c, CultureInfo.InvariantCulture));
-                }
-                return result.ToString();
-        }
+				var normalizedString = value.Normalize(NormalizationForm.FormD).AsSpan();
+				var result = new StringBuilder(normalizedString.Length);
+				foreach (var c in normalizedString)
+				{
+					// CharUnicodeInfo.GetUnicodeCategory(c) <> UnicodeCategory.NonSpacingMark
+					if (char.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+						result.Append(char.ToUpper(c, CultureInfo.InvariantCulture));
+				}
+				return result.ToString();
+		}
 		return value;
 	}
 
@@ -80,7 +80,7 @@ internal static class FieldExtensions
 		return new (field.Id, (byte)EntityType.Field, tableId, dataType, flags, field.Name, field.Description, null, field.Active);
 	}
 
-    internal static Field? GetDefaultPrimaryKey(this Field? _, FieldType fieldType)
+	internal static Field? GetDefaultPrimaryKey(this Field? _, FieldType fieldType)
 	{
 		switch (fieldType)
 		{
@@ -92,14 +92,18 @@ internal static class FieldExtensions
 		return null;
 	}
 
+	internal static Field SetType(this Field field, FieldType fieldType) // Code size: 67 (0x43)
+		=> new(field.Id, field.Name, field.Description, fieldType, field.Size, field.DefaultValue, field.SearchableType, field.Baseline, field.NotNull, field.Multilingual, field.Active);
+	internal static Field SetSize(this Field field, int size) // Code size: 67 (0x43)
+		=> new(field.Id, field.Name, field.Description, field.Type, size, field.DefaultValue, field.SearchableType, field.Baseline, field.NotNull, field.Multilingual, field.Active);
 
-    internal static long GetHashCode(this Field field)
+	internal static long GetHashCode(this Field field)
 	{
 		HashHelper.Djb2X(GetStringCode(field), out long hash);
 		return hash;
 	}
 
-	// Code size: 148 (0x94)
+	// Code size: 148 (0x94) - checked 2025-07-18
 	internal static string GetStringCode(this Field field)
 		=> new StringBuilder()
 			.Append((int)field.SearchableType)

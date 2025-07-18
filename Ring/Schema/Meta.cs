@@ -205,7 +205,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	internal static Relation GetEmptyRelation(Meta meta, RelationType relationType, TableType toTableType) =>
 		new(meta.Id, meta.Name, meta.Description, relationType,
 			GetEmptyTable(new Meta(0, (byte)EntityType.Table, 0, (int)toTableType, 0L,
-			meta.Name,null, null, false)), -1, FieldType.Undefined, false, false, true, true);
+			meta.Name,null, null, false)), FieldType.Undefined, false, false, true, true);
 
 	internal static Field GetEmptyField(Meta meta, FieldType fieldType) =>
 		new(meta.Id, meta.Name, meta.Description, fieldType, 0, null, SearchableType.None, true,
@@ -239,7 +239,7 @@ internal readonly struct Meta : IEquatable<Meta>
 			if (to.Type == TableType.Business || to.Type == TableType.Lexicon)
 				fieldType = to.Fields[to.Columns[0].RecordIndex].Type;
 			return new Relation(Id, Name, 
-				Description, GetRelationType(), to, -1, fieldType,IsRelationNotNull, HasRelationConstraint, IsEntityBaseline, Active);
+				Description, GetRelationType(), to, fieldType,IsRelationNotNull, HasRelationConstraint, IsEntityBaseline, Active);
 		}
 		return null;
 	}

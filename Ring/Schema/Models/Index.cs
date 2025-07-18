@@ -13,8 +13,8 @@ internal sealed class Index : BaseEntity
 	/// <summary>
 	/// 	Ctor
 	/// </summary>
-	internal Index(int id, string name, string? description, Column[] columns, string columnList, bool unique, bool bitmap, bool active, bool baseline)
-		: base(id, name, description, baseline, active)
+	internal Index(int id, string name, string? description, Column[] columns, string columnList, bool unique, bool bitmap,
+		bool active, bool baseline)	: base(id, name, description, baseline, active)
 	{
 		Unique = unique;
 		Columns = columns;

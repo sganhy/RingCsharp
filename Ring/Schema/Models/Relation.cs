@@ -18,8 +18,8 @@ internal sealed class Relation : BaseEntity
 	/// <summary>
 	/// 	Ctor
 	/// </summary>
-	internal Relation(int id, string name, string? description, RelationType type, Table toObject, int recordIndex,
-		FieldType fieldType, bool notnull, bool constraint, bool baseline, bool active)
+	internal Relation(int id, string name, string? description, RelationType type, Table toObject, FieldType fieldType, 
+		bool notnull, bool constraint, bool baseline, bool active)
 		: base(id, name, description, baseline, active)
 	{
 		Type = type;

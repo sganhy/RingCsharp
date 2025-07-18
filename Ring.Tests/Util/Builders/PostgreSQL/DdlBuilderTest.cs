@@ -21,7 +21,7 @@ public class DdlBuilderTest : BaseBuilderTest
     public void Drop_Table1_DdlQuery()
     {
         // arrange 
-        var table = GetAnonymousTable(12, 2);
+        var table = GetAnonymousTable(_sut, 12, 2);
         var expectedSql = $"DROP TABLE {table.PhysicalName}";
 
         // act 
@@ -35,7 +35,7 @@ public class DdlBuilderTest : BaseBuilderTest
     public void Create_Table1_DdlQuery()
     {
         // arrange 
-        var table = GetAnonymousTable(12, 2);
+        var table = GetAnonymousTable(_sut, 12, 2);
         var expectedSql = $"CREATE TABLE {table.PhysicalName} (";
 
         // act 
@@ -59,7 +59,6 @@ public class DdlBuilderTest : BaseBuilderTest
         table2.Relations[1] = GetAnonymousRelation(RelationType.Mto, 1, @"skill2book");
         table2.Relations[0] = GetAnonymousRelation(RelationType.Mtm, 8, @"ability2book");
         //table2.LoadColumns();
-        table2.LoadRelationRecordIndex();
         var expectedSql = $"CREATE TABLE {physicalName} (\n" + "\tid int2 NOT NULL,\n\tskill2book int8,\n" +
                 "\tname varchar(80) COLLATE \"C\",\n" + "\ts_name varchar(80) COLLATE \"C\",\n" + 
                 "\tsub_name varchar(30) COLLATE \"C\",\n" + "\tis_group bool,\n" +
@@ -86,7 +85,6 @@ public class DdlBuilderTest : BaseBuilderTest
 #pragma warning disable CS8602
         table3.Relations[0] = GetAnonymousRelation(RelationType.Mto, 11, @"skill2book", true);
         //table3.LoadColumns();
-        table3.LoadRelationRecordIndex();
         var expectedSql = $"CREATE TABLE {physicalName} (\n" + "\tid int2 NOT NULL,\n" +
                 "\tname varchar(80) COLLATE \"C\" NOT NULL,\n" + "\ts_name varchar(80) COLLATE \"C\" NOT NULL,\n" +
                 "\tsub_name varchar(30) COLLATE \"C\",\n" + "\tis_group bool NOT NULL,\n" +
@@ -116,8 +114,7 @@ public class DdlBuilderTest : BaseBuilderTest
 
 #pragma warning disable CS8602
         table4.Relations[0] = GetAnonymousRelation(RelationType.Mto, 11, @"skill2book", false);
-        //table4.LoadColumns();
-        table4.LoadRelationRecordIndex();
+        
         var expectedSql = $"CREATE TABLE {physicalName} (\n" + "\tid int2 NOT NULL,\n" +
                 "\tname varchar(80) COLLATE \"C\" NOT NULL,\n" + "\ts_name varchar(80) COLLATE \"C\" NOT NULL,\n" +
                 "\tsub_name varchar(30) COLLATE \"C\",\n" + "\tis_group bool NOT NULL,\n" +
@@ -313,7 +310,7 @@ public class DdlBuilderTest : BaseBuilderTest
     public void Truncate_Table1_DdlQuery()
     {
         // arrange 
-        var table = GetAnonymousTable(12, 2);
+        var table = GetAnonymousTable(_sut, 12, 2);
         var expectedSql = $"TRUNCATE TABLE {table.PhysicalName}";
 
         // act 
