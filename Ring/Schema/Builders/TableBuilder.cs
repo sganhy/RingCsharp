@@ -126,25 +126,26 @@ internal sealed class TableBuilder
 #pragma warning restore CA1822, S2325
 
 #pragma warning disable CA1822, S2325 // Mark members as static
-	internal Table GetMtm(Table partialTable, IDdlBuilder ddlBuilder, string physicalName, int objectIndex) 
+	internal Table GetMtm(Table partialTable, IDdlBuilder ddlBuilder, string physicalName, int objectIndex, Relation relation1, Relation relation2) 
 	{
-		// Code size: 194 (0xc2)
-		// add @ prefix to logical name
-		var metaTable = new Meta(0, (byte)EntityType.Table, 0, (int)TableType.Mtm, 0L, TableType.Mtm.GetLogicalName(partialTable.Name), 
+        // Code size: 236 (0xec)
+        // add @ prefix to logical name
+        var metaTable = new Meta(0, (byte)EntityType.Table, 0, (int)TableType.Mtm, 0L, TableType.Mtm.GetLogicalName(partialTable.Name), 
 				null,null,true);
-        var metaRelation = new Meta(0, (byte)EntityType.Relation, 0, 0, 0L, partialTable.Name, null, null, true);
+        var relFlags = 0L;
+		relFlags = Meta.SetRelationType(relFlags, RelationType.Mto);
+        var metaRelation1 = relation1.ToMeta(partialTable.Id);
+        var metaRelation2 = relation2.ToMeta(partialTable.Id);
         // add index 
         var flags = 0L;
         var value = Meta.SetIndexedColumns(new string[] { partialTable.Name, partialTable.Name });
         flags = Meta.SetIndexUnique(flags, true);
         var metaIndex = new Meta(0, (byte)EntityType.Index, 0, 0, flags, partialTable.Name, null, value, true);
-        var metaArr = new Meta[] { metaRelation, metaRelation, metaIndex };
+        var metaArr = new Meta[] { metaRelation1, metaRelation2, metaIndex };
         var segMent = new ArraySegment<Meta>(metaArr, 0, 3);
         var result = metaTable.ToTable(segMent, PhysicalType.Table, ddlBuilder, physicalName, objectIndex) ?? partialTable;
-        /*TODO LOAD columns
-		result.RecordIndexes[0]=0; // columnMapper 4 Mtm table is always {0,1}
-		result.RecordIndexes[1]=1; // columnMapper 4 Mtm table is always {0,1}
-		*/
+		result.Relations[0] = relation1;
+        result.Relations[1] = relation2;
         return result;
 	}
 #pragma warning restore CA1822, S2325

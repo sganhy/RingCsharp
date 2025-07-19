@@ -60,15 +60,11 @@ internal static class RelationExtensions
 		return result.ToString();
 	}
 
-	internal static bool Initialized(this Relation relation)
-		=> !ReferenceEquals(relation.InverseRelation, relation) && 
-			(relation.Type != RelationType.Mtm || relation.ToTable.Type == TableType.Mtm);
+	internal static bool Initialized(this Relation relation) => // Code size: 38 (0x26)
+        !ReferenceEquals(relation.InverseRelation, relation) && (relation.Type != RelationType.Mtm || relation.ToTable.Type == TableType.Mtm);
 
-	internal static Relation GetRelation(this Relation relation, RelationType relationType)
-	{
-		var meta = relation.ToMeta(-1, relationType);
-		return meta.ToRelation(relation.ToTable) ?? relation;
-	}
+	internal static Relation SetTypeAndId(this Relation relation, RelationType relationType, int id) => // Code size: 56 (0x38)
+		new (id, relation.Name, relation.Description, relationType, relation.ToTable, relation.FieldType, relation.NotNull, relation.HasConstraint, relation.Baseline, relation.Active);
 
 	internal static long GetHashCode(this Relation relation)
 	{
@@ -107,8 +103,5 @@ internal static class RelationExtensions
 			.Append(BaseEntityExtensions.GetStringCode(relation))
 			.ToString();
 	}
-
-	internal static Relation SetFieldType(this Relation relation, FieldType fieldType) // Code size: 61 (0x3d)
-		=> new(relation.Id, relation.Name, relation.Description, relation.Type, relation.ToTable, fieldType, relation.NotNull, relation.HasConstraint, relation.Baseline, relation.Active);
 
 }

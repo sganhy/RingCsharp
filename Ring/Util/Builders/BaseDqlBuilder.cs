@@ -24,8 +24,8 @@ internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
 		_tableSelect = GetTableSelect(schema);   // pre load selection for all tables
 	}
 
-	public string SelectFrom(Table table) => _tableSelect[table.ObjectIndex];
-	
+	public string SelectFrom(Table table) => _tableSelect[table.ObjectIndex]; // Code size: 14 (0xe)
+
 	public string Exists(Table table)
 	{
 		if (_catalogTable==null)
@@ -49,6 +49,7 @@ internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
 		var columnCount = table.Columns.Length;
 		var i=0;
 		result.Append(SqlSelect);
+
 		// select clause 
 		while (i<columnCount)
 		{
@@ -66,6 +67,7 @@ internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
 
 	private string[] GetTableSelect(DbSchema schema)
 	{
+		// Code size: 154 (0x9a)
 		var result = new string[schema.ObjectCount];
 		var tableSpan = new ReadOnlySpan<Table>(schema.TablesById);
 

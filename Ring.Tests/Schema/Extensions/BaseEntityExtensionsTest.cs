@@ -15,7 +15,7 @@ public sealed class BaseEntityExtensionsTest : BaseTest
     internal void GetStringCode_AnonymousInput_StringCode()
     {
         // arrange 
-        const char sep = (char)8888;
+        const char sep = (char)8998;
         var id = _faker.Random.Number(int.MinValue, int.MaxValue);
         var name = _faker.Random.String();
         var description = _faker.Random.String();
@@ -23,7 +23,7 @@ public sealed class BaseEntityExtensionsTest : BaseTest
         var defaultValue = _faker.Random.Bool() ? null : _faker.Random.String(); // nullable string
         var size = _faker.Random.Number(0, int.MaxValue);
         var field = new Field(id, name, description, fieldType, size, defaultValue, SearchableType.IgnoreCase, true, true, true, false);
-        var expectedValue = $"{field.Active}{sep}{field.Baseline}{sep}{field.Description}{sep}{field.Id}{sep}{field.Name}{sep}{field.Name}";
+        var expectedValue = $"{field.Active}{sep}{field.Baseline}{sep}{field.Description}{sep}{field.Id}{sep}{field.Name}";
 
         // act 
         var result = BaseEntityExtensions.GetStringCode(field);

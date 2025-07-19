@@ -7,8 +7,8 @@ internal static class BaseEntityExtensions
 {
 	private const char HashCodeSeparator = (char)8998;
 
-	// Code size: 106 (0x6a)
-	internal static string GetStringCode(this BaseEntity baseEntity) 
+    // Code size: 106 (0x6a) - checked 2025-07-19
+    internal static string GetStringCode(this BaseEntity baseEntity) 
 		=> new StringBuilder()
 			.Append(baseEntity.Active)
 			.Append(HashCodeSeparator)

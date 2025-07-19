@@ -59,11 +59,13 @@ public abstract class BaseTest
         var result = table.ToTable(items, PhysicalType.Table, builder, builder.GetPhysicalName(EntityType.Table, table.Name), 0);
 
         // load relations 
-        if (result != null)
+        if (result != null && numberOfRelation>0)
         {
+            // we need a table with at least one field (pk)
+            var tableTarget = GetAnonymousTable(builder, 1, 0);
             for (var i = 0; i < numberOfRelation; i++)
 #pragma warning disable CS8601 // Possible null reference assignment.
-                result.Relations[i] = relations[i].ToRelation(result);
+                result.Relations[i] = relations[i].ToRelation(tableTarget);
 #pragma warning restore CS8601
         }
 

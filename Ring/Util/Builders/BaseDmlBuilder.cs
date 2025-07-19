@@ -83,8 +83,8 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 
 	private string BuildInsert(Table table)
 	{
-        // Code size: 258 (0x102)
-        var columns = new StringBuilder();
+		// Code size: 258 (0x102)
+		var columns = new StringBuilder();
 		var values = new StringBuilder();
 		var spanColumns = new ReadOnlySpan<Column>(table.Columns);
 		var columnCount = table.Columns.Length;
@@ -93,20 +93,21 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 		for (var i = 0; i<columnCount; ++i, ++variableId)
 		{
 			var column = spanColumns[i];
-            columns.Append(column.PhysicalName);
+			columns.Append(column.PhysicalName);
 			columns.Append(ColumnDelimiter);
-            AppendVariable(values, VariableNameTemplate, variableId, true, column.FieldType);
-        }
+			AppendVariable(values, VariableNameTemplate, variableId, true, column.FieldType);
+		}
 		if (variableId > 1)
 		{
 			--columns.Length;
 			--values.Length;
 		}
-        return $"{DmlInsert}{table.PhysicalName} {StartParenthesis}{columns}{DmlValues}{values}{EndParenthesis}";
+		return $"{DmlInsert}{table.PhysicalName} {StartParenthesis}{columns}{DmlValues}{values}{EndParenthesis}";
 	}
 
 	private string BuildDelete(Table table)
 	{
+		// Code size: 251 (0xfb)
 		var result = new StringBuilder();
 		result.Append(DmlDelete)
 			.Append(table.PhysicalName)
@@ -125,8 +126,7 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 			var keyCount = pk.Count;
 			for (var i=0; i<keyCount; ++i, ++variableIndex)
 			{
-				var column = Meta.GetEmptyField(new Meta(pk[i].PhysicalName),FieldType.Int);
-				//result.Append(column.PhysicalName);
+				result.Append(pk[i].PhysicalName);
 				result.Append(DmlEqual);
 				result.AppendFormat(CultureInfo.InvariantCulture, VariableNameTemplate, 
 					variableIndex.ToString(CultureInfo.InvariantCulture));
@@ -159,13 +159,11 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 			var keyCount = pk.Count;
 			for (var i = 0; i < keyCount; ++i, ++variableIndex)
 			{
-				var column = Meta.GetEmptyField(new Meta(pk[i].PhysicalName), FieldType.Int);
-				/*
+				var column = pk[i];
 				result.Append(column.PhysicalName)
 					.Append(DmlEqual)
 					.AppendFormat(CultureInfo.InvariantCulture, VariableNameTemplate, 
 					variableIndex.ToString(CultureInfo.InvariantCulture));
-				*/
 				// last element?
 				if (i < keyCount - 1) result.Append(DmlAnd);
 			}
