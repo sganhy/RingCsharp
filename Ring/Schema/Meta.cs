@@ -808,8 +808,8 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	private static void LoadMtm(DbSchema schema, int mtmCount)
 	{
-        // Code size: 363 (0x16b)
-        var ddlBuilder = schema.Provider.GetDdlBuilder();
+		// Code size: 363 (0x16b)
+		var ddlBuilder = schema.Provider.GetDdlBuilder();
 		var tableBuilder = new TableBuilder();
 		var span = new Span<Table>(schema.TablesById);
 		Table mtmTable;
@@ -830,9 +830,9 @@ internal readonly struct Meta : IEquatable<Meta>
 					if (!mtm.ContainsKey(physicalName))
 					{
 						mtmTable = tableBuilder.GetMtm(emptyTable, ddlBuilder, physicalName, mtm.Count,
-                            string.CompareOrdinal(relation.Name, inverseRelation.Name) < 0 ? relation.SetTypeAndId(RelationType.Mto,1) 
+							string.CompareOrdinal(relation.Name, inverseRelation.Name) < 0 ? relation.SetTypeAndId(RelationType.Mto,1) 
 							: inverseRelation.SetTypeAndId(RelationType.Mto,2),
-                            string.CompareOrdinal(relation.Name, inverseRelation.Name) < 0 ? inverseRelation.SetTypeAndId(RelationType.Mto,1) 
+							string.CompareOrdinal(relation.Name, inverseRelation.Name) < 0 ? inverseRelation.SetTypeAndId(RelationType.Mto,1) 
 							: relation.SetTypeAndId(RelationType.Mto, 2));
 						mtm.Add(physicalName, mtmTable);
 					}
