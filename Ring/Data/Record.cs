@@ -361,14 +361,14 @@ public struct Record : IEquatable<Record>
 
 	internal readonly bool IsRelationChanged(string name)
 	{
-        // Code size: 133 (0x85)
+        // Code size: 124 (0x7c)
         if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var relation = _type.GetRelation(name);
 		var trackerIndex = _offset + _type.RecordSize - 1;
 		if (relation == null) ThrowRecordUnknownRelationName(name);
         var column = _type.GetColumn(relation.Id, EntityType.Relation);
         if (column == null) ThrowRecordWrongRelationType(name);
-        var index = _offset + column.RecordIndex;
+		var index = column.RecordIndex;
         if (index >= 0) return _data[trackerIndex] != null && IsColumnChanged(index, trackerIndex);
 		return false;
 	}

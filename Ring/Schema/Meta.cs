@@ -48,8 +48,8 @@ internal readonly struct Meta : IEquatable<Meta>
 	private const byte BitPositionTableReadonly = 10;
 	private const byte BitPositionTablespaceIndex = 11;
 	private const byte BitPositionTablespaceTable = 12;
-
-	#endregion 
+	private static readonly FieldType DefaultColumnFieldType = FieldType.Long;
+	#endregion
 
 	internal readonly int Id;
 	internal readonly byte ObjectType;
@@ -336,7 +336,7 @@ internal readonly struct Meta : IEquatable<Meta>
 			return new Column(SearchableType.None == searchableType ? EntityType.Field : EntityType.SearchableColumn, GetFieldType(), physicalName, searchableType ?? SearchableType.None, id, recordIndex);
 		} 
 		else if (IsRelation) {
-			return new Column(EntityType.Relation, FieldType.Long, physicalName, SearchableType.None, id, recordIndex); // TODO: computed later to get the right FieldType
+			return new Column(EntityType.Relation, DefaultColumnFieldType, physicalName, SearchableType.None, id, recordIndex);
 		}
 		else if (IsSearchableColumn)
 		{
@@ -545,6 +545,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	private static Table[] GetTables(Meta[] schema, IDdlBuilder ddlBuilder, Meta metaSchema, DatabaseProvider provider,
 		int mtmCount)
 	{
+		// Code size: 417 (0x1a1)
 		int startIndex, count, i = 0;
 		var metaCount = schema.Length;
 		var tableCount = metaCount > 400 ? metaCount / 4 : 100;
@@ -639,7 +640,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	/// </summary>
 	private static void LoadColumns(Table table, ArraySegment<Meta> tableItems, int physRelationCount, IDdlBuilder ddlBuilder)
 	{
-		// Code size: 636 (0x27c)
+		// Code size: 791 (0x317)
 		// relation are not yet loaded here !!!!
 		var fieldCount = table.Fields.Length; // searchable fields + tz fields 
 		var extraFieldCount = table.Columns.Length - physRelationCount - table.Fields.Length; // searchable fields + tz fields 
@@ -786,6 +787,8 @@ internal readonly struct Meta : IEquatable<Meta>
 		LoadInverseRelations(schema, schemaItems);
 		// load mtm relations
 		LoadMtm(schema, mtmCount);
+		// load relation type columns
+		LoadTypeColumns(schema);
 	}
 
 	private static void LoadInverseRelations(DbSchema schema, ReadOnlySpan<Meta> schemaItems)
@@ -808,7 +811,7 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	private static void LoadMtm(DbSchema schema, int mtmCount)
 	{
-		// Code size: 363 (0x16b)
+		// Code size: 371 (0x173)
 		var ddlBuilder = schema.Provider.GetDdlBuilder();
 		var tableBuilder = new TableBuilder();
 		var span = new Span<Table>(schema.TablesById);
@@ -831,10 +834,10 @@ internal readonly struct Meta : IEquatable<Meta>
 					if (!mtm.ContainsKey(physicalName))
 					{
 						mtmTable = tableBuilder.GetMtm(emptyTable, ddlBuilder, physicalName, mtm.Count,
-							string.CompareOrdinal(relation.Name, inverseRelation.Name) < 0 ? relation.SetTypeAndId(RelationType.Mto,1) 
-							: inverseRelation.SetTypeAndId(RelationType.Mto,1),
-							string.CompareOrdinal(relation.Name, inverseRelation.Name) < 0 ? inverseRelation.SetTypeAndId(RelationType.Mto,2) 
-							: relation.SetTypeAndId(RelationType.Mto, 2));
+							string.CompareOrdinal(relation.Name, inverseRelation.Name) < 0 ? relation.SetTypeAndId(RelationType.Mto,1, true) 
+							: inverseRelation.SetTypeAndId(RelationType.Mto,1, true),
+							string.CompareOrdinal(relation.Name, inverseRelation.Name) < 0 ? inverseRelation.SetTypeAndId(RelationType.Mto,2, true) 
+							: relation.SetTypeAndId(RelationType.Mto, 2, true));
 						mtm.Add(physicalName, mtmTable);
 					}
 					else mtmTable = mtm[physicalName];
@@ -843,6 +846,37 @@ internal readonly struct Meta : IEquatable<Meta>
 					table.Relations[j] = CreateMtmRelation(relation, mtmTable, ddlBuilder);
 					table.Relations[j].SetInverseRelation(inverseRelation);
 				}
+			}
+		}
+	}
+
+	private static void LoadTypeColumns(DbSchema schema)
+	{
+		// Code size: 45 (0x2d)
+		var spanTable = new Span<Table>(schema.TablesByName);
+		foreach (var table in spanTable) LoadTypeColumns(table);
+	}
+	private static void LoadTypeColumns(Table table)
+	{
+		// Code size: 144 (0x90)
+		var relations = new Span<Relation>(table.Relations);
+		foreach (var relation in relations)
+		{
+			if (relation.Type == RelationType.Mto || relation.Type == RelationType.Otop)
+			{
+				var index = table.GetColumnIndex(relation.Id, EntityType.Relation);
+				if (index >= 0)
+				{
+					var column = table.Columns[index];
+					// change if necessary
+					if (column.FieldType!= relation.FieldType) 
+						table.Columns[index] = column.SetFieldType(relation.FieldType);
+				}
+			}
+			if (relation.Type == RelationType.Mtm)
+			{
+				// load mtm table columns
+				LoadTypeColumns(relation.ToTable);
 			}
 		}
 	}

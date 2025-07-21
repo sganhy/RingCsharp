@@ -92,7 +92,10 @@ internal static class FieldExtensions
 	internal static Field SetType(this Field field, FieldType fieldType) // Code size: 67 (0x43)
 		=> new(field.Id, field.Name, field.Description, fieldType, field.Size, field.DefaultValue, field.SearchableType, field.Baseline, field.NotNull, field.Multilingual, field.Active);
 
-	internal static Field SetSize(this Field field, int size) // Code size: 67 (0x43)
+    internal static Field SetNotNull(this Field field, bool notNull) // Code size: 67 (0x43)
+        => new(field.Id, field.Name, field.Description, field.Type, field.Size, field.DefaultValue, field.SearchableType, field.Baseline, notNull, field.Multilingual, field.Active);
+
+    internal static Field SetSize(this Field field, int size) // Code size: 67 (0x43)
 		=> new(field.Id, field.Name, field.Description, field.Type, size, field.DefaultValue, field.SearchableType, field.Baseline, field.NotNull, field.Multilingual, field.Active);
 
 	internal static long GetHashCode(this Field field)

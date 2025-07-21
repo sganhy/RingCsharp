@@ -199,18 +199,18 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 		// Code size: 96 (0x60)
 		var fieldType = column.FieldType;
 		var maxSize = VarcharMaxSize;
-        var result = new StringBuilder(DataType[fieldType]);
+		var result = new StringBuilder(DataType[fieldType]);
 		var collateInformation = StringCollateInformation;
 
-        if (fieldType == FieldType.String)
-            result.Append(GetSizeInfo(size.HasValue ? size.Value : (table.GetField(column)?.Size ?? 0)));  // performance issue may be with GetField() ?
-        if ((fieldType == FieldType.String || fieldType == FieldType.LongString) && collateInformation != null)
-            result.Append(SqlSpace).Append(collateInformation);
-        return result.ToString();
+		if (fieldType == FieldType.String)
+			result.Append(GetSizeInfo(size.HasValue ? size.Value : (table.GetField(column)?.Size ?? 0)));  // performance issue may be with GetField() ?
+		if ((fieldType == FieldType.String || fieldType == FieldType.LongString) && collateInformation != null)
+			result.Append(SqlSpace).Append(collateInformation);
+		return result.ToString();
 	}
 	
 
-    public abstract string Create(TableSpace tablespace);
+	public abstract string Create(TableSpace tablespace);
 	protected abstract Dictionary<FieldType, string> DataType { get; }
 	protected abstract int VarcharMaxSize { get; }
 	protected abstract string StringCollateInformation { get; }
@@ -294,14 +294,14 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	}
 	public string Create(Table table, TableSpace? tablespace = null)
 	{
-        // Code size: 166 (0xa6)
-        var i = 0;
+		// Code size: 272 (0x110)
+		var i = 0;
 		var columnCount = table.Columns.Length;
 		var result = new StringBuilder();
 		var fieldInfoDico = GetFieldInfoDico(table);
-        var relationInfoDico = GetRelationInfoDico(table);
+		var relationInfoDico = GetRelationInfoDico(table);
 
-        result.Append(DdlCreate)
+		result.Append(DdlCreate)
 			.Append(DdlTable)
 			.Append(table.PhysicalName)
 			.Append(SqlSpace)
@@ -311,7 +311,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 		while (i < columnCount)
 		{
 			var column = table.Columns[i];
-			if (column.Type == EntityType.Field || column.Type == EntityType.SearchableColumn)
+			if (column.Type == EntityType.Field || column.Type == EntityType.SearchableColumn || column.Type == EntityType.TimeZoneColumn)
 			{
 				var field = fieldInfoDico[column.RecordIndex];
 				Create(result, table, column, field, null);
@@ -319,12 +319,12 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 			if (column.Type == EntityType.Relation)
 			{
 				var relation = relationInfoDico[column.RecordIndex];
-                Create(result, table, column, null, relation);
-            }
-            ++i;
-        }
+				Create(result, table, column, null, relation);
+			}
+			++i;
+		}
 
-        if (i > 0) result.Length -= 2;
+		if (i > 0) result.Length -= 2;
 		result.Append(')');
 		if (tablespace != null)
 		{
@@ -345,26 +345,31 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	#region private methods 
 	private static string GetSizeInfo(int size) => $"({size})";
 
-    private void Create(StringBuilder subResult, Table table, Column column, Field? field, Relation? relation)
-    {
+	private void Create(StringBuilder subResult, Table table, Column column, Field? field, Relation? relation)
+	{
 		int? size = null;
 		var notNull = string.Empty;
-        if (field!=null)
-        {
+		if (field!=null)
+		{
 			size = field.Size;
 			if ((field.IsPrimaryKey() || table.Type != TableType.Business) && field.NotNull)
-                notNull = SqlSpace + DdlNotNull;
-        }
-        subResult.Append(Indent)
+				notNull = SqlSpace + DdlNotNull;
+		}
+		if (relation != null)
+		{
+			if (table.Type != TableType.Business && relation.NotNull) 
+				notNull = SqlSpace + DdlNotNull;
+		}
+		subResult.Append(Indent)
 				 .Append(column.PhysicalName)
 				 .Append(SqlSpace)
 				 .Append(GetDataType(table, column, size))
-                 .Append(notNull)
-                 .Append(',')
+				 .Append(notNull)
+				 .Append(',')
 				 .Append(SqlLineFeed);
-    }
+	}
 
-    private Constraint GetPrimaryKey(Table table)
+	private Constraint GetPrimaryKey(Table table)
 	{
 		// Code size: 28 (0x1c)
 		var result =new Constraint(ConstraintType.PrimaryKey, table, string.Empty);
@@ -374,41 +379,41 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	/// <summary>
 	/// Return dictionnary of fields by RecordIndex
 	/// </summary>
-    private static Dictionary<int, Field> GetFieldInfoDico(Table table)
-    {
-        // Code size: 54 (0x36)
-        var result = new Dictionary<int, Field>(table.Fields.Length * 2);
+	private static Dictionary<int, Field> GetFieldInfoDico(Table table)
+	{
+		// Code size: 54 (0x36)
+		var result = new Dictionary<int, Field>(table.Fields.Length * 2);
 		for (var i = 0; i < table.Fields.Length; ++i) 
 		{
 			var field = table.Fields[i];
 			result.Add(i, field);
 		}
-        return result;
-    }
+		return result;
+	}
 
-    /// <summary>
-    /// Return dictionnary of fields by RecordIndex
-    /// </summary>
-    private static Dictionary<int, Relation> GetRelationInfoDico(Table table)
-    {
+	/// <summary>
+	/// Return dictionnary of fields by RecordIndex
+	/// </summary>
+	private static Dictionary<int, Relation> GetRelationInfoDico(Table table)
+	{
 		// Code size: 52 (0x34)
 		var fieldCount = table.Fields.Length;
-        var index=0;
-        var result = new Dictionary<int, Relation>(table.Relations.Length);
-        for (var i=0; i < table.Relations.Length; ++i)
-        {
-            var relation = table.Relations[i];
+		var index=0;
+		var result = new Dictionary<int, Relation>(table.Relations.Length);
+		for (var i=0; i < table.Relations.Length; ++i)
+		{
+			var relation = table.Relations[i];
 			if (relation.Type == RelationType.Mto || relation.Type == RelationType.Otop)
 			{
 				result.Add(index + fieldCount, relation);
 				++index;
 
-            }
-        }
-        return result;
-    }
+			}
+		}
+		return result;
+	}
 
-    #endregion
+	#endregion
 
 }
 

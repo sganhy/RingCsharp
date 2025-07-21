@@ -31,14 +31,14 @@ internal static class SchemaExtensions
 		return null;
 	}
 
-    /// <summary>
-    /// 	Get table object by Id --> O(log n)
-    /// </summary>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+	/// <summary>
+	/// 	Get table object by Id --> O(log n)
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static Table? GetTable(this DbSchema schema, int id)
 	{
-        // Code size: 91 (0x5b)
-        var span = new ReadOnlySpan<Table>(schema.TablesById);
+		// Code size: 91 (0x5b)
+		var span = new ReadOnlySpan<Table>(schema.TablesById);
 		int indexerLeft = 0, indexerRight = span.Length - 1, indexerMiddle, indexerCompare;
 		while (indexerLeft <= indexerRight)
 		{
@@ -52,14 +52,14 @@ internal static class SchemaExtensions
 		return null;
 	}
 
-    /// <summary>
-    /// 	Get table object by name (case sensitive) --> O(log n)
-    /// </summary>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+	/// <summary>
+	/// 	Get table object by name (case sensitive) --> O(log n)
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static Table? GetTable(this DbSchema schema, string name)
 	{
-        // Code size: 92 (0x5c)
-        var span = new ReadOnlySpan<Table>(schema.TablesByName);
+		// Code size: 92 (0x5c)
+		var span = new ReadOnlySpan<Table>(schema.TablesByName);
 		int indexerLeft = 0, indexerRight = span.Length - 1, indexerMiddle, indexerCompare;
 		while (indexerLeft <= indexerRight)
 		{

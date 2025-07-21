@@ -58,15 +58,37 @@ public class DdlBuilderTest : BaseBuilderTest
         Assert.NotNull(table2);
         table2.Relations[1] = GetAnonymousRelation(RelationType.Mto, 1, @"skill2book");
         table2.Relations[0] = GetAnonymousRelation(RelationType.Mtm, 8, @"ability2book");
-        //table2.LoadColumns();
-        var expectedSql = $"CREATE TABLE {physicalName} (\n" + "\tid int2 NOT NULL,\n\tskill2book int8,\n" +
+
+        var expectedSql = $"CREATE TABLE {physicalName} (\n" + "\tid int2 NOT NULL,\n" +
                 "\tname varchar(80) COLLATE \"C\",\n" + "\ts_name varchar(80) COLLATE \"C\",\n" + 
                 "\tsub_name varchar(30) COLLATE \"C\",\n" + "\tis_group bool,\n" +
                 "\tcategory varchar(8) COLLATE \"C\",\n" + "\tarmor_penality int2,\n" + "\ttrained_only bool,\n" +
-                "\ttry_again bool)";
+                "\ttry_again bool,\n\tskill2book int8)";
 
         // act 
         var ddl = _sut.Create(table2);
+
+
+        // assert
+        Assert.Equal(expectedSql, ddl);
+    }
+
+    [Fact]
+    public void Create_MtmTable_DdlQuery()
+    {
+        // arrange 
+        var metaList = GetSchema1();
+        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
+        Assert.NotNull(schema);
+        var table = schema.GetTable("skill");
+        Assert.NotNull(table);
+        var relation  = table.GetRelation("synergy2skill");
+        Assert.NotNull(relation);
+        var mtmTable = relation.ToTable;
+        var expectedSql = $"CREATE TABLE {mtmTable.PhysicalName} (\n" + "\tskill2synergy int2 NOT NULL,\n\tsynergy2skill int2 NOT NULL)";
+
+        // act 
+        var ddl = _sut.Create(mtmTable);
 
 
         // assert
@@ -84,6 +106,8 @@ public class DdlBuilderTest : BaseBuilderTest
         var table3 = metaTable.ToTable(segment, PhysicalType.Table, _sut, physicalName, 0);
 #pragma warning disable CS8602
         Assert.NotNull(table3);
+        // load relation
+        table3.Relations[0] = GetAnonymousRelation(RelationType.Mto, 8, @"skill2book");
         var expectedSql = $"CREATE TABLE {physicalName} (\n" + "\tid int2 NOT NULL,\n" +
                 "\tname varchar(80) COLLATE \"C\" NOT NULL,\n" + "\ts_name varchar(80) COLLATE \"C\" NOT NULL,\n" +
                 "\tsub_name varchar(30) COLLATE \"C\",\n" + "\tis_group bool NOT NULL,\n" +
@@ -168,10 +192,9 @@ public class DdlBuilderTest : BaseBuilderTest
         var testTable = schema.GetTable("@test");
         // change test_11 field to not null!
         Assert.NotNull(testTable);
-        var field11 = testTable.GetField("test_11");
-        Assert.NotNull(field11);
-        testTable.Columns[11] = new Column(EntityType.Field, field11.Type, field11.Name, SearchableType.None, -1, 11);
-            // new Field(field11.Id, field11.Name, field11.Name, null, field11.Type, 0, null, SearchableType.None, true, true, true, true); // replace field
+        var index = testTable.GetFieldIndex("test_11");
+        testTable.Fields[index] = testTable.Fields[index].SetNotNull(true);
+
         var expectedSql = $"CREATE TABLE test.\"@test\" (\n" + "\ttest_0 int8,\n" +
                 "\ttest_1 int4,\n" + "\ttest_2 int2,\n" + "\ttest_3 int2,\n" +
                 "\ttest_4 float4,\n" + "\ttest_5 float8,\n" + "\ttest_6 varchar(16) COLLATE \"C\",\n" + "\ttest_7 varchar(512) COLLATE \"C\",\n" +

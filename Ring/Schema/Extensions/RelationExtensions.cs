@@ -63,8 +63,8 @@ internal static class RelationExtensions
 	internal static bool Initialized(this Relation relation) => // Code size: 38 (0x26)
 		!ReferenceEquals(relation.InverseRelation, relation) && (relation.Type != RelationType.Mtm || relation.ToTable.Type == TableType.Mtm);
 
-	internal static Relation SetTypeAndId(this Relation relation, RelationType relationType, int id) => // Code size: 56 (0x38)
-		new (id, relation.Name, relation.Description, relationType, relation.ToTable, relation.FieldType, relation.NotNull, relation.HasConstraint, relation.Baseline, relation.Active);
+	internal static Relation SetTypeAndId(this Relation relation, RelationType relationType, int id, bool notNull) => // Code size: 56 (0x38)
+		new (id, relation.Name, relation.Description, relationType, relation.ToTable, relation.FieldType, notNull, relation.HasConstraint, relation.Baseline, relation.Active);
 
 	internal static long GetHashCode(this Relation relation)
 	{
