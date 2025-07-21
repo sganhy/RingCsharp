@@ -26,7 +26,7 @@ public sealed class BaseEntityExtensionsTest : BaseTest
         var expectedValue = $"{field.Active}{sep}{field.Baseline}{sep}{field.Description}{sep}{field.Id}{sep}{field.Name}";
 
         // act 
-        var result = BaseEntityExtensions.GetStringCode(field);
+        var result = BaseEntityExtensions.GetStringCode(field).ToString();
 
         // assert
         Assert.Equal(expectedValue, result);

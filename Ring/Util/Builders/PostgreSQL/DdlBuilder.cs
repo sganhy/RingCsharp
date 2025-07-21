@@ -25,13 +25,13 @@ internal sealed class DdlBuilder : BaseDdlBuilder
 
 	public DdlBuilder() : base() { }
 
-	public override DatabaseProvider Provider => DatabaseProvider.PostgreSql;
-	protected override string StringCollateInformation => @"COLLATE ""C""";
-	protected override string MtmPrefix => "@mtm_";
-	protected override string TimeZoneOffsetPrefix => "@tz_offset_";
-	protected override int VarcharMaxSize => 65535;
+	public sealed override DatabaseProvider Provider => DatabaseProvider.PostgreSql;
+	protected sealed override string StringCollateInformation => @"COLLATE ""C""";
+	protected sealed override string MtmPrefix => "@mtm_";
+	protected sealed override string TimeZoneOffsetPrefix => "@tz_offset_";
+	protected sealed override int VarcharMaxSize => 65535;
 
-	public override string Create(TableSpace tablespace) // Code size: 77 (0x4d)
+	public sealed override string Create(TableSpace tablespace) // Code size: 77 (0x4d)
 		=> new StringBuilder()
 			.Append(DdlCreate)
 			.Append(DdlTableSpace)
@@ -41,17 +41,16 @@ internal sealed class DdlBuilder : BaseDdlBuilder
 			.Append(tablespace.FileName)
 			.Append('\'').ToString();
 
-	protected override Dictionary<FieldType, string> DataType => _dataType;
-	protected override string SchemaSeparator => ".";
-	protected override string StartPhysicalNameDelimiter => "\"";
-	protected override string EndPhysicalNameDelimiter => StartPhysicalNameDelimiter;
-	protected override string TablePrefix => DefaultTablePrefix;
-	protected override string SearchableFieldPrefix => "s_";
+	protected sealed override Dictionary<FieldType, string> DataType => _dataType;
+	protected sealed override string SchemaSeparator => ".";
+	protected sealed override string StartPhysicalNameDelimiter => "\"";
+	protected sealed override string EndPhysicalNameDelimiter => StartPhysicalNameDelimiter;
+	protected sealed override string TablePrefix => DefaultTablePrefix;
+	protected sealed override string SearchableFieldPrefix => "s_";
 
-	public override string GetPhysicalName(EntityType entityType, string name)
-		=> base.GetPhysicalName(entityType, name);
+	public sealed override string GetPhysicalName(EntityType entityType, string name) => base.GetPhysicalName(entityType, name);
 
-    protected override string GetPhysicalName(Constraint constraint)
+    protected sealed override string GetPhysicalName(Constraint constraint)
     {
         // Code size: 197 (0xc5)
         var result = new StringBuilder(31); // constraint name max length(30)

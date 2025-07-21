@@ -675,7 +675,7 @@ public sealed class RecordTest : BaseTest
         var index = logTable.GetFieldIndex("entry_time");
         var meta = field?.ToMeta(99, FieldType.DateTime);
         var newField = meta?.ToField();
-        logTable.Fields[index] = newField ?? GetAnonymousField();
+        logTable.Fields[index] = newField ?? GetAnonymousField(null);
         var rcd = new Record(logTable, new string?[logTable.RecordSize*3], logTable.RecordSize);
 
         // act 
@@ -857,7 +857,7 @@ public sealed class RecordTest : BaseTest
         var index = logTable.GetFieldIndex("entry_time");
         var meta = field?.ToMeta(99, FieldType.Float);
         var newField = meta?.ToField();
-        logTable.Fields[index] = newField ?? GetAnonymousField();
+        logTable.Fields[index] = newField ?? GetAnonymousField(null);
         var rcd = new Record(logTable);
 
         // act 
@@ -893,7 +893,7 @@ public sealed class RecordTest : BaseTest
         var index = logTable.GetFieldIndex("entry_time");
         var meta = field?.ToMeta(99, FieldType.Double);
         var newField = meta?.ToField();
-        logTable.Fields[index] = newField ?? GetAnonymousField();
+        logTable.Fields[index] = newField ?? GetAnonymousField(null);
         var rcd = new Record(logTable);
         
         // act 
@@ -913,7 +913,7 @@ public sealed class RecordTest : BaseTest
         var index = logTable.GetFieldIndex("entry_time");
         var meta = field?.ToMeta(99, FieldType.Double);
         var newField = meta?.ToField();
-        logTable.Fields[index] = newField ?? GetAnonymousField();
+        logTable.Fields[index] = newField ?? GetAnonymousField(null);
         var rcd = new Record(logTable);
 
         // act 
@@ -935,7 +935,7 @@ public sealed class RecordTest : BaseTest
         var index = logTable.GetFieldIndex("entry_time");
         var meta = field?.ToMeta(99, FieldType.Double);
         var newField = meta?.ToField();
-        logTable.Fields[index] = newField ?? GetAnonymousField();
+        logTable.Fields[index] = newField ?? GetAnonymousField(null);
         var rcd = new Record(logTable);
         var dbl = 0.456D;
 
@@ -972,7 +972,7 @@ public sealed class RecordTest : BaseTest
         var index = logTable.GetFieldIndex("entry_time");
         var meta = field?.ToMeta(99, FieldType.ByteArray);
         var newField = meta?.ToField();
-        logTable.Fields[index] = newField ?? GetAnonymousField();
+        logTable.Fields[index] = newField ?? GetAnonymousField(null);
         var rcd = new Record(logTable);
         var byteArray = new byte[] { 1,2,3,4,5,6,7,8,9, byte.MinValue, byte.MaxValue };
 
@@ -1006,7 +1006,7 @@ public sealed class RecordTest : BaseTest
         var index = logTable.GetFieldIndex("entry_time");
         var meta = field?.ToMeta(99, FieldType.ByteArray);
         var newField = meta?.ToField();
-        logTable.Fields[index] = newField ?? GetAnonymousField();
+        logTable.Fields[index] = newField ?? GetAnonymousField(null);
         var rcd = new Record(logTable);
 
         // act 
@@ -1027,7 +1027,7 @@ public sealed class RecordTest : BaseTest
         var index = logTable.GetFieldIndex("entry_time");
         var meta = field?.ToMeta(99, FieldType.ByteArray);
         var newField = meta?.ToField();
-        logTable.Fields[index] = newField ?? GetAnonymousField();
+        logTable.Fields[index] = newField ?? GetAnonymousField(null);
         var rcd = new Record(logTable);
 
         // act 
@@ -1048,7 +1048,7 @@ public sealed class RecordTest : BaseTest
         var index = logTable.GetFieldIndex("entry_time");
         var meta = field?.ToMeta(99, FieldType.ByteArray);
         var newField = meta?.ToField();
-        logTable.Fields[index] = newField ?? GetAnonymousField();
+        logTable.Fields[index] = newField ?? GetAnonymousField(null);
         var rcd = new Record(logTable, new string?[logTable.RecordSize*3], logTable.RecordSize); // mutliple record 
         var byteArray = new byte[] { _faker.Random.Byte(), _faker.Random.Byte(), _faker.Random.Byte() };
         var base64 = Convert.ToBase64String(byteArray);

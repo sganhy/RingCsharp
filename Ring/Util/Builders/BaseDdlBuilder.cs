@@ -1,19 +1,19 @@
-﻿using Ring.Schema.Enums;
+﻿using Ring.Schema;
+using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
-using System.Text;
-using Index = Ring.Schema.Models.Index;
-using DbSchema = Ring.Schema.Models.Schema;
-using System.Globalization;
-using Ring.Schema;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Globalization;
+using System.Text;
+using DbSchema = Ring.Schema.Models.Schema;
+using Index = Ring.Schema.Models.Index;
 
 namespace Ring.Util.Builders;
 
 internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 {
 	protected static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
-	
 
 	// entity
 	protected static readonly string DdlView = @"VIEW";
@@ -68,7 +68,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 			.Append(DdlAdd)
 			.Append(column.PhysicalName)
 			.Append(SqlSpace)
-			.Append(GetDataType(table, column))
+			.Append(GetDataType(table, column, null))
 			.ToString();
 	
 	public string AlterDropColumn(Table table, Column column) // Code size: 80 (0x50)
@@ -95,19 +95,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 			.Append(DdlTable)
 			.Append(table.PhysicalName)
 			.ToString();
-		
-	public string GetSecondColumn(Field field)
-	{
-		// Code size: 194 (0xc2)
-		if (field.IsSearchable()) return Provider.IsReservedWord(field.Name) ^ field.Name.StartsWith(SpecialEntityPrefix) 
-				? string.Join(null, StartPhysicalNameDelimiter, SearchableFieldPrefix, field.Name, EndPhysicalNameDelimiter) : 
-			SearchableFieldPrefix + field.Name;
-		// check DatabaseProvider
-		if (TimeZoneOffsetPrefix != null && field.Type == FieldType.LongDateTime)
-			return string.Join(null, StartPhysicalNameDelimiter, TimeZoneOffsetPrefix, field.Id.ToString(DefaultCulture), EndPhysicalNameDelimiter) ;
-		return string.Empty; // a crash will be better here
-	}
-
+	
 	public virtual string GetPhysicalName(EntityType entityType, string name)
 	{
 		// Code size: 318 (0x13e)
@@ -206,26 +194,23 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	}
 
 	protected abstract string MtmPrefix { get; }
-	protected string GetDataType(Table table, Column column)
+	protected string GetDataType(Table table, Column column, int? size)
 	{
 		// Code size: 96 (0x60)
-		var fielType = column.FieldType;
-		var size = 0;
-		// find size!!
-		if (column.Type == EntityType.Field || column.Type == EntityType.SearchableColumn) size = table.GetField(column)?.Size ?? 0;
-		//if (!firstColumn && fielType == FieldType.LongDateTime) return DataType[FieldType.Short];
-		return GetDataType(DataType[fielType], fielType, size, VarcharMaxSize,
-			fielType == FieldType.String || fielType == FieldType.LongString ?
-			StringCollateInformation : null);
+		var fieldType = column.FieldType;
+		var maxSize = VarcharMaxSize;
+        var result = new StringBuilder(DataType[fieldType]);
+		var collateInformation = StringCollateInformation;
+
+        if (fieldType == FieldType.String)
+            result.Append(GetSizeInfo(size.HasValue ? size.Value : (table.GetField(column)?.Size ?? 0)));  // performance issue may be with GetField() ?
+        if ((fieldType == FieldType.String || fieldType == FieldType.LongString) && collateInformation != null)
+            result.Append(SqlSpace).Append(collateInformation);
+        return result.ToString();
 	}
-	protected string GetDataType(Relation relation)
-	{
-		// Code size: 43 (0x2b)
-		if (relation.FieldType != FieldType.Undefined) 
-			return GetDataType(DataType[relation.FieldType], FieldType.Long, 0, 0);
-		return string.Empty;
-	}
-	public abstract string Create(TableSpace tablespace);
+	
+
+    public abstract string Create(TableSpace tablespace);
 	protected abstract Dictionary<FieldType, string> DataType { get; }
 	protected abstract int VarcharMaxSize { get; }
 	protected abstract string StringCollateInformation { get; }
@@ -309,11 +294,14 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	}
 	public string Create(Table table, TableSpace? tablespace = null)
 	{
-		// Code size: 211 (0xd3)
-		var i = 0;
+        // Code size: 166 (0xa6)
+        var i = 0;
 		var columnCount = table.Columns.Length;
 		var result = new StringBuilder();
-		result.Append(DdlCreate)
+		var fieldInfoDico = GetFieldInfoDico(table);
+        var relationInfoDico = GetRelationInfoDico(table);
+
+        result.Append(DdlCreate)
 			.Append(DdlTable)
 			.Append(table.PhysicalName)
 			.Append(SqlSpace)
@@ -322,15 +310,21 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 
 		while (i < columnCount)
 		{
-			/*
 			var column = table.Columns[i];
-			if (column.Type == EntityType.Field) Create(result, table, (Field)column);
-			else Create(result, table, (Relation)column);
-			*/
-			++i;
-		}
+			if (column.Type == EntityType.Field || column.Type == EntityType.SearchableColumn)
+			{
+				var field = fieldInfoDico[column.RecordIndex];
+				Create(result, table, column, field, null);
+			}
+			if (column.Type == EntityType.Relation)
+			{
+				var relation = relationInfoDico[column.RecordIndex];
+                Create(result, table, column, null, relation);
+            }
+            ++i;
+        }
 
-		if (i > 0) result.Length -= 2;
+        if (i > 0) result.Length -= 2;
 		result.Append(')');
 		if (tablespace != null)
 		{
@@ -351,61 +345,70 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	#region private methods 
 	private static string GetSizeInfo(int size) => $"({size})";
 
-	private void Create(StringBuilder subResult, Table table, Field field, bool firstColumn = true)
-	{
-		// Code size: 160 (0xa0)
-		//subResult.Append(Indent)
-		//	.Append(firstColumn? field.PhysicalName : GetSecondColumn(field))
-			//.Append(SqlSpace)
-			//.Append(GetDataType(field, firstColumn));
-		if ((field.IsPrimaryKey() || table.Type != TableType.Business) && field.NotNull)
-		{
-			subResult.Append(SqlSpace).Append(DdlNotNull);
-		}
-		subResult.Append(',').Append(SqlLineFeed);
-		if (firstColumn)
-			if (field.IsSearchable() || (field.Type == FieldType.LongDateTime && !string.IsNullOrEmpty(TimeZoneOffsetPrefix)))
-			{
-				// recursive call 4 searchable fields or longDateTime !!
-				Create(subResult, table, field, false);
-			}
-	}
-	private void Create(StringBuilder stringBuilder, Table table, Relation relation)
-	{
-		/*
-		stringBuilder.Append(Indent)
-			.Append(relation.PhysicalName)
-			.Append(SqlSpace)
-			.Append(GetDataType(relation));
-		*/
-		if (table.Type != TableType.Business && relation.NotNull)
-		{
-			stringBuilder.Append(SqlSpace)
-				.Append(DdlNotNull);
-		}
-		stringBuilder.Append(',')
-			.Append(SqlLineFeed);
-	}
+    private void Create(StringBuilder subResult, Table table, Column column, Field? field, Relation? relation)
+    {
+		int? size = null;
+		var notNull = string.Empty;
+        if (field!=null)
+        {
+			size = field.Size;
+			if ((field.IsPrimaryKey() || table.Type != TableType.Business) && field.NotNull)
+                notNull = SqlSpace + DdlNotNull;
+        }
+        subResult.Append(Indent)
+				 .Append(column.PhysicalName)
+				 .Append(SqlSpace)
+				 .Append(GetDataType(table, column, size))
+                 .Append(notNull)
+                 .Append(',')
+				 .Append(SqlLineFeed);
+    }
 
-	private static string GetDataType(string dataType, FieldType fieldType, int size, int maxSize, string? collateInformation = null)
-	{
-		// Code size: 70 (0x46)
-		var result = new StringBuilder(dataType);
-		if (fieldType == FieldType.String && size > 0 && size <= maxSize)
-			result.Append(GetSizeInfo(size));
-		if ((fieldType == FieldType.String || fieldType == FieldType.LongString) && collateInformation != null)
-			result.Append(SqlSpace).Append(collateInformation);
-		return result.ToString();
-	}
-
-	private Constraint GetPrimaryKey(Table table)
+    private Constraint GetPrimaryKey(Table table)
 	{
 		// Code size: 28 (0x1c)
 		var result =new Constraint(ConstraintType.PrimaryKey, table, string.Empty);
 		return new(ConstraintType.PrimaryKey, table, GetPhysicalName(result));
 	}
 
-	#endregion
+	/// <summary>
+	/// Return dictionnary of fields by RecordIndex
+	/// </summary>
+    private static Dictionary<int, Field> GetFieldInfoDico(Table table)
+    {
+        // Code size: 54 (0x36)
+        var result = new Dictionary<int, Field>(table.Fields.Length * 2);
+		for (var i = 0; i < table.Fields.Length; ++i) 
+		{
+			var field = table.Fields[i];
+			result.Add(i, field);
+		}
+        return result;
+    }
+
+    /// <summary>
+    /// Return dictionnary of fields by RecordIndex
+    /// </summary>
+    private static Dictionary<int, Relation> GetRelationInfoDico(Table table)
+    {
+		// Code size: 52 (0x34)
+		var fieldCount = table.Fields.Length;
+        var index=0;
+        var result = new Dictionary<int, Relation>(table.Relations.Length);
+        for (var i=0; i < table.Relations.Length; ++i)
+        {
+            var relation = table.Relations[i];
+			if (relation.Type == RelationType.Mto || relation.Type == RelationType.Otop)
+			{
+				result.Add(index + fieldCount, relation);
+				++index;
+
+            }
+        }
+        return result;
+    }
+
+    #endregion
 
 }
 

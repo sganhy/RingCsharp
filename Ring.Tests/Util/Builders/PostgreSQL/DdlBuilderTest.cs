@@ -83,8 +83,7 @@ public class DdlBuilderTest : BaseBuilderTest
         var segment = new ArraySegment<Meta>(metaItems, 0, metaItems.Length);
         var table3 = metaTable.ToTable(segment, PhysicalType.Table, _sut, physicalName, 0);
 #pragma warning disable CS8602
-        table3.Relations[0] = GetAnonymousRelation(RelationType.Mto, 11, @"skill2book", true);
-        //table3.LoadColumns();
+        Assert.NotNull(table3);
         var expectedSql = $"CREATE TABLE {physicalName} (\n" + "\tid int2 NOT NULL,\n" +
                 "\tname varchar(80) COLLATE \"C\" NOT NULL,\n" + "\ts_name varchar(80) COLLATE \"C\" NOT NULL,\n" +
                 "\tsub_name varchar(30) COLLATE \"C\",\n" + "\tis_group bool NOT NULL,\n" +

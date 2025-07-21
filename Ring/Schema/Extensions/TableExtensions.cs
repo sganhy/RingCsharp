@@ -209,6 +209,7 @@ internal static class TableExtensions
 		var colWeight = Meta.ColumnTypeWeight(type);
 		var span = new ReadOnlySpan<Column>(table.Columns); // sorted by Id
 		int indexerLeft = 0, indexerRight = span.Length - 1, indexerMiddle, indexerCompare; 
+
 		while (indexerLeft <= indexerRight)
 		{
 			indexerMiddle = indexerLeft + indexerRight;
@@ -234,6 +235,7 @@ internal static class TableExtensions
 		var colWeight = Meta.ColumnTypeWeight(type);
 		var span = new ReadOnlySpan<Column>(table.Columns); // sorted by Id
 		int indexerLeft = 0, indexerRight = span.Length - 1, indexerMiddle, indexerCompare;
+
 		while (indexerLeft <= indexerRight)
 		{
 			indexerMiddle = indexerLeft + indexerRight;

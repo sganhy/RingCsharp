@@ -54,15 +54,16 @@ internal struct BulkAlter : IEquatable<BulkAlter>
 		AppendDdlCommand(AlterQueryType.CreateIndex, table, index);
 	}
 
+	
 	internal void AlterTableAdd(string tableName, string columnName)
 	{
-		// Code size: 67 (0x43)
-		var table = _schema.GetTable(tableName);
+        // columnName: logical column name
+        // Code size: 51 (0x33)
+        var table = _schema.GetTable(tableName);
 		if (table == null) ThrowInvalidObjectType(tableName);
-		//IColumn? field = table.GetField(columnName);
-		//IColumn? relation = table.GetRelation(columnName);
-		//if (field==null && relation==null) ThrowInvalidFieldName(tableName, columnName);
-		//AppendDdlCommand(AlterQueryType.AlterTableAddColumn, table, field??relation);
+		var column = table.GetColumn(columnName);
+        if (column == null) ThrowInvalidFieldName(tableName, columnName);
+        AppendDdlCommand(AlterQueryType.AlterTableAddColumn, table, column);
 	}
 
 	internal readonly void Apply(IRingConnection connection)

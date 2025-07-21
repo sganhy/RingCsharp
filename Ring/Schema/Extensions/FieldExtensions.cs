@@ -16,14 +16,10 @@ internal static class FieldExtensions
 	private static readonly string PrimaryKeyFieldName = "id";
 	private static readonly string PrimaryKeyDescription = "Internal record number";
 	private static readonly string NumberDefaultValue = "0";
-	private static readonly Field _defaultPrimaryKeyInt64 =
-		new(0, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Long, 0, NumberDefaultValue, SearchableType.None, true, true, false, true);
-	private static readonly Field _defaultPrimaryKeyInt32 =
-		new(0, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Int, 0, NumberDefaultValue, SearchableType.None, true, true, false, true);
-	private static readonly Field _defaultPrimaryKeyInt16 =
-		new(0, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Short, 0, NumberDefaultValue, SearchableType.None, true, true, false, true);
-	private static readonly Field _defaultPrimaryKeyInt08 =
-		new(0, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Byte, 0, NumberDefaultValue, SearchableType.None, true, true, false, true);
+	private static readonly Field _defaultPrimaryKeyInt64 =	new(0, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Long, 0, NumberDefaultValue, SearchableType.None, true, true, false, true);
+	private static readonly Field _defaultPrimaryKeyInt32 =	new(0, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Int, 0, NumberDefaultValue, SearchableType.None, true, true, false, true);
+	private static readonly Field _defaultPrimaryKeyInt16 =	new(0, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Short, 0, NumberDefaultValue, SearchableType.None, true, true, false, true);
+	private static readonly Field _defaultPrimaryKeyInt08 =	new(0, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Byte, 0, NumberDefaultValue, SearchableType.None, true, true, false, true);
 #pragma warning restore RCS1187
 
 	internal static bool IsValid(this Field field) => IsPrimaryKey(field) || field.Id > 0; 
@@ -82,6 +78,7 @@ internal static class FieldExtensions
 
 	internal static Field? GetDefaultPrimaryKey(this Field? _, FieldType fieldType)
 	{
+		// Code size: 67 (0x43)
 		switch (fieldType)
 		{
 			case FieldType.Byte: return _defaultPrimaryKeyInt08;
@@ -94,6 +91,7 @@ internal static class FieldExtensions
 
 	internal static Field SetType(this Field field, FieldType fieldType) // Code size: 67 (0x43)
 		=> new(field.Id, field.Name, field.Description, fieldType, field.Size, field.DefaultValue, field.SearchableType, field.Baseline, field.NotNull, field.Multilingual, field.Active);
+
 	internal static Field SetSize(this Field field, int size) // Code size: 67 (0x43)
 		=> new(field.Id, field.Name, field.Description, field.Type, size, field.DefaultValue, field.SearchableType, field.Baseline, field.NotNull, field.Multilingual, field.Active);
 

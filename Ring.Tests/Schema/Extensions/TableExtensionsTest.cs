@@ -6,6 +6,7 @@ using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using Ring.Tests.Util.Builders.PostgreSQL;
 using Ring.Util.Builders;
+using System.Data.Common;
 using System.Globalization;
 using System.Linq.Expressions;
 using Xunit.Abstractions;
@@ -273,6 +274,26 @@ public class TableExtensionsTest : BaseTest
         // assert
         Assert.NotNull(column);
         Assert.Equal(EntityType.SearchableColumn, column.Type);
+    }
+
+
+    [Fact]
+    internal void GetColumnIndex_AnonymousTable_FindAllColumns()
+    {
+        var metaList = GetSchema1();
+        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
+        var table = GetAnonymousTable(_builder, 512,0);
+
+        // act 
+        Assert.NotNull(schema);
+        Assert.NotNull(table);
+
+        for (var i = 0; i < table.Columns.Length; ++i)
+        {
+            var index = table.GetColumnIndex(table.Columns[i].Id, table.Columns[i].Type);
+            // assert
+            Assert.Equal(i, index);
+        }
     }
 
     [Fact]

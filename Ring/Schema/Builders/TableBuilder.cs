@@ -128,25 +128,23 @@ internal sealed class TableBuilder
 #pragma warning disable CA1822, S2325 // Mark members as static
 	internal Table GetMtm(Table partialTable, IDdlBuilder ddlBuilder, string physicalName, int objectIndex, Relation relation1, Relation relation2) 
 	{
-        // Code size: 236 (0xec)
+        // Code size: 226 (0xe2)
         // add @ prefix to logical name
-        var metaTable = new Meta(0, (byte)EntityType.Table, 0, (int)TableType.Mtm, 0L, TableType.Mtm.GetLogicalName(partialTable.Name), 
-				null,null,true);
-        var relFlags = 0L;
-		relFlags = Meta.SetRelationType(relFlags, RelationType.Mto);
-        var metaRelation1 = relation1.ToMeta(partialTable.Id);
-        var metaRelation2 = relation2.ToMeta(partialTable.Id);
-        // add index 
-        var flags = 0L;
-        var value = Meta.SetIndexedColumns(new string[] { partialTable.Name, partialTable.Name });
-        flags = Meta.SetIndexUnique(flags, true);
-        var metaIndex = new Meta(0, (byte)EntityType.Index, 0, 0, flags, partialTable.Name, null, value, true);
-        var metaArr = new Meta[] { metaRelation1, metaRelation2, metaIndex };
-        var segMent = new ArraySegment<Meta>(metaArr, 0, 3);
-        var result = metaTable.ToTable(segMent, PhysicalType.Table, ddlBuilder, physicalName, objectIndex) ?? partialTable;
+        var metaTable = new Meta(0, (byte)EntityType.Table, 0, (int)TableType.Mtm, 0L, TableType.Mtm.GetLogicalName(partialTable.Name), null,null,true);
+		var metaRelation1 = relation1.ToMeta(partialTable.Id);
+		var metaRelation2 = relation2.ToMeta(partialTable.Id);
+		// add index 
+		var flags = 0L;
+		var reltArr = new string[] { metaRelation1.Name, metaRelation2.Name };
+        var value = Meta.GetColumnList(reltArr);
+		flags = Meta.SetIndexUnique(flags, true);
+		var metaIndex = new Meta(0, (byte)EntityType.Index, 0, 0, flags, partialTable.Name, null, value, true);
+		var metaArr = new Meta[] { metaRelation1, metaRelation2, metaIndex };
+		var segMent = new ArraySegment<Meta>(metaArr, 0, 3);
+		var result = metaTable.ToTable(segMent, PhysicalType.Table, ddlBuilder, physicalName, objectIndex) ?? partialTable;
 		result.Relations[0] = relation1;
-        result.Relations[1] = relation2;
-        return result;
+		result.Relations[1] = relation2;
+		return result;
 	}
 #pragma warning restore CA1822, S2325
 
@@ -196,8 +194,8 @@ internal sealed class TableBuilder
 		var flags = 0L;
 		flags = Meta.SetEntityBaseline(flags, true);
 		flags = Meta.SetIndexUnique(flags, unique);
-		return new (0, (byte)EntityType.Index, 0, 0, flags, string.Empty, null, Meta.SetIndexedColumns(fields.ToArray()), true);
-    }
+		return new (0, (byte)EntityType.Index, 0, 0, flags, string.Empty, null, Meta.GetColumnList(fields.ToArray()), true);
+	}
 
 	#endregion
 }

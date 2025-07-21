@@ -40,7 +40,7 @@ public abstract class BaseTest
         var relations = new List<Meta>();
 
         for (var i = 0; i < numberOfRelation; i++) relations.Add(GetAnonymousRelation(null, minChar, maxChar).ToMeta(tableId));
-        for (var i = 0; i < numberOfField; i++) fields.Add(GetAnonymousField(minChar, maxChar).ToMeta(tableId));
+        for (var i = 0; i < numberOfField; i++) fields.Add(GetAnonymousField(i+1, minChar, maxChar).ToMeta(tableId)); // avoid Id collisions
 
         // sort lists
         fields = fields.OrderBy(o => o.Name, StringComparer.Ordinal).ToList();
@@ -72,8 +72,8 @@ public abstract class BaseTest
         return result;
     }
 
-    internal Field GetAnonymousField(char minChar = char.MinValue, char maxChar = char.MaxValue) =>
-        new(_faker.Random.Number(int.MinValue, int.MaxValue), _faker.Random.String(null, minChar, maxChar),
+    internal Field GetAnonymousField(int? id, char minChar = char.MinValue, char maxChar = char.MaxValue) =>
+        new(id == null ? _faker.Random.Number(int.MinValue, int.MaxValue): id.Value, _faker.Random.String(null, minChar, maxChar),
             _faker.Random.String(), _faker.PickRandom<FieldType>(), _faker.Random.Number(int.MinValue, int.MaxValue),
             _faker.Random.String(), _faker.PickRandom<SearchableType>(), _faker.Random.Bool(), _faker.Random.Bool(),
             _faker.Random.Bool(), _faker.Random.Bool());

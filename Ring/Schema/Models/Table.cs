@@ -45,7 +45,7 @@ internal sealed class Table : BaseEntity
 	}
 
 #if DEBUG
-	public override string ToString() => $"{Id} - {Name} ({ObjectIndex})";
+	public sealed override string ToString() => $"{Id} - {Name} ({ObjectIndex})";
 #endif
 
 }

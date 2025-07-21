@@ -159,7 +159,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	internal bool IsIndexUnique => ReadFlag(BitPositionIndexUnique);
 	// index values
 	internal Column[] GetIndexedColumns() => Value != null ? new Column[Value.CharCount(IndexColumnDelimiter)+1] : Array.Empty<Column>();
-	internal static string? SetIndexedColumns(string[] columns) => string.Join(IndexColumnDelimiter, columns);
+	internal static string? GetColumnList(string[] columns) => string.Join(IndexColumnDelimiter, columns);
 	
 	// index flags 
 	internal static long SetIndexUnique(long flags, bool value) => WriteFlag(flags, BitPositionIndexUnique, value);
@@ -821,6 +821,7 @@ internal readonly struct Meta : IEquatable<Meta>
 				if (table.Relations[j].Type == RelationType.Mtm)
 				{
 					// step 1 - generate physical name
+					
 					var relation = table.Relations[j];
 					var metaTable = new Meta(0, (byte)EntityType.Relation, 0, (int)TableType.Mtm, 0L, relation.GetMtmName(), null, null, true);
 					var emptyTable = GetEmptyTable(metaTable);
@@ -831,8 +832,8 @@ internal readonly struct Meta : IEquatable<Meta>
 					{
 						mtmTable = tableBuilder.GetMtm(emptyTable, ddlBuilder, physicalName, mtm.Count,
 							string.CompareOrdinal(relation.Name, inverseRelation.Name) < 0 ? relation.SetTypeAndId(RelationType.Mto,1) 
-							: inverseRelation.SetTypeAndId(RelationType.Mto,2),
-							string.CompareOrdinal(relation.Name, inverseRelation.Name) < 0 ? inverseRelation.SetTypeAndId(RelationType.Mto,1) 
+							: inverseRelation.SetTypeAndId(RelationType.Mto,1),
+							string.CompareOrdinal(relation.Name, inverseRelation.Name) < 0 ? inverseRelation.SetTypeAndId(RelationType.Mto,2) 
 							: relation.SetTypeAndId(RelationType.Mto, 2));
 						mtm.Add(physicalName, mtmTable);
 					}

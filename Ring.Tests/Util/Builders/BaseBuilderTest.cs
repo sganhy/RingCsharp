@@ -86,7 +86,7 @@ public class BaseBuilderTest
             { GetMeta(7,"trained_only", EntityType.Field,23, 6L, true, 1061) },
             { GetMeta(9,"try_again", EntityType.Field,23, 6L, true, 1061) },
             { GetMeta(1,"id", EntityType.Field,2, 2L, true, 1061) },
-            { GetMeta(1,"skill2book", EntityType.Relation,1021, 2883600L, true, 1061)}
+            { GetMeta(11,"skill2book", EntityType.Relation,1021, 2883600L, true, 1061)}
         };
         // 2,0,2,1011,1021,786448,ability2book,,book2ability,true
         if (addMtmRelationship)

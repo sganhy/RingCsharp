@@ -30,6 +30,6 @@ internal sealed class Field : BaseEntity
 	}
 
 #if DEBUG
-	public override string ToString() => $"{Id} - {Name} ({Type})";
+	public sealed override string ToString() => $"{Id} - {Name} ({Type})";
 #endif
 }
