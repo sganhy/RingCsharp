@@ -556,7 +556,7 @@ internal readonly struct Meta : IEquatable<Meta>
 		//pass 1: build dico
 		foreach (var meta in schemaSpan)
 		{
-			if (meta.IsField || meta.IsRelation || meta.IsIndex)
+			if (meta.IsField || meta.IsRelation || meta.IsIndex || meta.IsSearchableColumn || meta.IsTimeZoneColumn)
 			{
 				if (!dico.ContainsKey(meta.ReferenceId)) dico.Add(meta.ReferenceId, (i, 0));
 				(startIndex, count) = dico[meta.ReferenceId];
@@ -640,9 +640,9 @@ internal readonly struct Meta : IEquatable<Meta>
 	/// </summary>
 	private static void LoadColumns(Table table, ArraySegment<Meta> tableItems, int physRelationCount, IDdlBuilder ddlBuilder)
 	{
-		// Code size: 791 (0x317)
-		// relation are not yet loaded here !!!!
-		var fieldCount = table.Fields.Length; // searchable fields + tz fields 
+        // Code size: 791 (0x317)
+        // relation are not yet loaded here !!!!
+        var fieldCount = table.Fields.Length; // searchable fields + tz fields 
 		var extraFieldCount = table.Columns.Length - physRelationCount - table.Fields.Length; // searchable fields + tz fields 
 		var relationId = new int[physRelationCount]; 
 		var extraFields = new Dictionary<string, Meta>(extraFieldCount*2); // increase bucket to reduce collisions
@@ -686,7 +686,11 @@ internal readonly struct Meta : IEquatable<Meta>
 					// meta not define for the searchable field
 					if (!extraFields.ContainsKey(field.Name))
 						table.Columns[columnIndex] = meta.ToColumn(id, ddlBuilder.GetPhysicalName(EntityType.SearchableColumn, meta.Name), recordIndex, field.SearchableType);
-					else table.Columns[columnIndex] = extraFields[field.Name].ToColumn(meta.Id, ddlBuilder.GetPhysicalName(EntityType.SearchableColumn, meta.Name), recordIndex);
+					else 
+					{
+						var metaExtra = extraFields[field.Name];
+                        table.Columns[columnIndex] = metaExtra.ToColumn(metaExtra.Id, ddlBuilder.GetPhysicalName(EntityType.SearchableColumn, meta.Name), recordIndex);
+					}
 					++columnIndex;
 				}
 

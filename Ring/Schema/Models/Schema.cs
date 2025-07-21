@@ -20,7 +20,7 @@ internal sealed class Schema : BaseEntity
 	internal readonly IDmlBuilder DmlBuiler;
 	internal readonly IDqlBuilder DqlBuiler;
 	internal readonly int ObjectCount;            // table count + mtm count + view count
-    internal readonly string PhysicalName;            // table count + mtm count + view count
+    internal readonly string PhysicalName;        // table count + mtm count + view count
 
     /// <summary>
     /// 	Ctor

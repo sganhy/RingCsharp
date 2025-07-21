@@ -199,5 +199,6 @@
 1,0,3,1053,0,8736,short_name,,short_name,true
 1,0,1,1061,2,2,id,,,true
 4,0,2,1061,1061,786448,synergy2skill,,skill2synergy,true
+99,0,71,1061,1061,0,name,,name,true
 9,0,1,1071,23,6,simple,,,true
 1,0,3,1071,0,8736,name,,name;weapon2book,true

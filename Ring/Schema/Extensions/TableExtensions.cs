@@ -46,9 +46,9 @@ internal static class TableExtensions
 	/// <returns>Field object</returns>
 	internal static Field? GetField(this Table table, string name, StringComparison comparisonType)
 	{
-        // Code size: 59 (0x3b) - no callvirt
-        var span = new ReadOnlySpan<Field>(table.Fields);
-        foreach (var field in span) if (string.Equals(name, field.Name, comparisonType)) return field;
+		// Code size: 59 (0x3b) - no callvirt
+		var span = new ReadOnlySpan<Field>(table.Fields);
+		foreach (var field in span) if (string.Equals(name, field.Name, comparisonType)) return field;
 		return null;
 	}
 

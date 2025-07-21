@@ -31,7 +31,7 @@ public class DmlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var table = _schema.GetTable("skill");
-        var expectedResult = "INSERT INTO rpg_sheet.t_skill (id,name,s_name,skill2ability,sub_name,is_group,category,armor_penality,trained_only,try_again) VALUES (:p1,:p2,:p3,:p4,:p5,:p6,:p7,:p8,:p9,:p10)";
+        var expectedResult = "INSERT INTO rpg_sheet.t_skill (id,name,skill2ability,sub_name,is_group,category,armor_penality,trained_only,try_again,s_name) VALUES (:p1,:p2,:p3,:p4,:p5,:p6,:p7,:p8,:p9,:p10)";
 
         // act 
         Assert.NotNull(table);
