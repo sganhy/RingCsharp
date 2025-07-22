@@ -13,7 +13,6 @@ internal abstract class BaseEntity
 	/// </summary>
 	/// <param name="id">BaseEntity id</param>
 	/// <param name="name">BaseEntity logical name</param>
-	/// <param name="name">BaseEntity physical name</param>
 	/// <param name="description">BaseEntity description</param>
 	/// <param name="active">Is entity enabled</param>
 	/// <param name="baseline">Is entity baselined</param>

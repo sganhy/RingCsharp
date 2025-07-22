@@ -1,20 +1,19 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Models;
-using Ring.Util.Builders;
 using Ring.Util.Helpers;
-using System;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Index = Ring.Schema.Models.Index;
 
 namespace Ring.Schema.Extensions;
-
+ 
 internal static class TableExtensions
 {
+	// Rider check 2025-07-22
 	private const char HashCodeSeparator = (char)9999;
 
 	/// <summary>
-	/// 	Get field by name, case sensitive search ==> O(log n) complexity
+	/// 	Get field by name, case-sensitive search ==> O(log n) complexity
 	/// </summary>
 	/// <param name="table">table object</param>
 	/// <param name="name">field name</param>
@@ -24,12 +23,12 @@ internal static class TableExtensions
 	{
 		// Code size: 92 (0x5c) - no callvirt
 		var span = new ReadOnlySpan<Field>(table.Fields);
-		int indexerLeft = 0, indexerRight = span.Length - 1, indexerMiddle, indexerCompare;
+		int indexerLeft = 0, indexerRight = span.Length - 1;
 		while (indexerLeft <= indexerRight)
 		{
-			indexerMiddle = indexerLeft + indexerRight;
+			var indexerMiddle = indexerLeft + indexerRight;
 			indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
-			indexerCompare = string.CompareOrdinal(name, span[indexerMiddle].Name);
+			var indexerCompare = string.CompareOrdinal(name, span[indexerMiddle].Name);
 			if (indexerCompare == 0) return span[indexerMiddle];
 			if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
 			else indexerRight = indexerMiddle - 1;
@@ -76,7 +75,7 @@ internal static class TableExtensions
 	internal static Field? GetField(this Table table, Column column) => GetField(table, column.Id);
 
 	/// <summary>
-	/// 	Get index field by name, case sensitive search ==> O(log n) complexity
+	/// 	Get index field by name, case-sensitive search ==> O(log n) complexity
 	/// </summary>
 	/// <param name="table">table object</param>
 	/// <param name="name">field name</param>
@@ -86,12 +85,12 @@ internal static class TableExtensions
 	{
 		// Code size: 84 (0x54) - no callvirt
 		var span = new ReadOnlySpan<Field>(table.Fields);
-		int indexerLeft = 0, indexerRight = span.Length - 1, indexerMiddle, indexerCompare;
+		int indexerLeft = 0, indexerRight = span.Length - 1;
 		while (indexerLeft <= indexerRight)
 		{
-			indexerMiddle = indexerLeft + indexerRight;
+			var indexerMiddle = indexerLeft + indexerRight;
 			indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
-			indexerCompare = string.CompareOrdinal(name, span[indexerMiddle].Name);
+			var indexerCompare = string.CompareOrdinal(name, span[indexerMiddle].Name);
 			if (indexerCompare == 0) return indexerMiddle;
 			if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
 			else indexerRight = indexerMiddle - 1;
@@ -110,12 +109,12 @@ internal static class TableExtensions
 	{
 		// Code size: 92 (0x5c)
 		var span = new ReadOnlySpan<Relation>(table.Relations);
-		int indexerLeft = 0, indexerRight = span.Length - 1, indexerMiddle, indexerCompare;
+		int indexerLeft = 0, indexerRight = span.Length - 1;
 		while (indexerLeft <= indexerRight)
 		{
-			indexerMiddle = indexerLeft + indexerRight;
+			var indexerMiddle = indexerLeft + indexerRight;
 			indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
-			indexerCompare = string.CompareOrdinal(name, span[indexerMiddle].Name);
+			var indexerCompare = string.CompareOrdinal(name, span[indexerMiddle].Name);
 			if (indexerCompare == 0) return span[indexerMiddle];
 			if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
 			else indexerRight = indexerMiddle - 1;
@@ -141,7 +140,7 @@ internal static class TableExtensions
 	}
 
 	/// <summary>
-	/// 	Get relation object by id ==> O(n) complexity
+	/// 	Get the relation object by id ==> O(n) complexity
 	/// </summary>
 	/// <returns>Relation object</returns>
 	internal static Relation? GetRelation(this Table table, int id)
@@ -152,7 +151,7 @@ internal static class TableExtensions
 	}
 
 	/// <summary>
-	/// 	Get index relation by name, case sensitive search ==> O(log n) complexity
+	/// 	Get index relation by name, case-sensitive search ==> O(log n) complexity
 	/// </summary>
 	/// <param name="table">table object</param>
 	/// <param name="name">relation name</param>
@@ -161,12 +160,13 @@ internal static class TableExtensions
 	{
 		// Code size: 84 (0x54)
 		var span = new ReadOnlySpan<Relation>(table.Relations);
-		int indexerLeft = 0, indexerRight = span.Length - 1, indexerMiddle, indexerCompare;
+
+		int indexerLeft = 0, indexerRight = span.Length - 1;
 		while (indexerLeft <= indexerRight)
 		{
-			indexerMiddle = indexerLeft + indexerRight;
+			var indexerMiddle = indexerLeft + indexerRight;
 			indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
-			indexerCompare = string.CompareOrdinal(name, span[indexerMiddle].Name);
+			var indexerCompare = string.CompareOrdinal(name, span[indexerMiddle].Name);
 			if (indexerCompare == 0) return indexerMiddle;
 			if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
 			else indexerRight = indexerMiddle - 1;
@@ -185,7 +185,7 @@ internal static class TableExtensions
 		// Code size: 75 (0x4b)
 		var field = table.GetField(name);
 		var type = EntityType.Undefined;
-		int id=-1;
+		var id=-1;
 		if (field != null)
 		{
 			id = field.Id;
@@ -209,13 +209,13 @@ internal static class TableExtensions
 		// Code size: 149 (0x95)
 		var colWeight = Meta.ColumnTypeWeight(type);
 		var span = new ReadOnlySpan<Column>(table.Columns); // sorted by Id
-		int indexerLeft = 0, indexerRight = span.Length - 1, indexerMiddle, indexerCompare; 
+		int indexerLeft = 0, indexerRight = span.Length - 1;
 
 		while (indexerLeft <= indexerRight)
 		{
-			indexerMiddle = indexerLeft + indexerRight;
+			var indexerMiddle = indexerLeft + indexerRight;
 			indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
-			indexerCompare = id - span[indexerMiddle].Id;
+			var indexerCompare = id - span[indexerMiddle].Id;
 			if (indexerCompare == 0)
 			{
 				// sub search on Column.Type
@@ -235,13 +235,13 @@ internal static class TableExtensions
 		// Code size: 141 (0x8d)
 		var colWeight = Meta.ColumnTypeWeight(type);
 		var span = new ReadOnlySpan<Column>(table.Columns); // sorted by Id
-		int indexerLeft = 0, indexerRight = span.Length - 1, indexerMiddle, indexerCompare;
+		int indexerLeft = 0, indexerRight = span.Length - 1;
 
 		while (indexerLeft <= indexerRight)
 		{
-			indexerMiddle = indexerLeft + indexerRight;
+			var indexerMiddle = indexerLeft + indexerRight;
 			indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
-			indexerCompare = id - span[indexerMiddle].Id;
+			var indexerCompare = id - span[indexerMiddle].Id;
 			if (indexerCompare == 0)
 			{
 				// sub search on Column.Type
@@ -257,19 +257,19 @@ internal static class TableExtensions
 	}
 
 	/// <summary>
-	/// 	Get index object by name ==> O(log n) complexity
+	/// 	Get an index object by name ==> O(log n) complexity
 	/// </summary>
 	/// <returns>Index object</returns>
 	internal static Index? GetIndex(this Table table, string name)
 	{
 		// Code size: 92 (0x5c)
 		var span = new ReadOnlySpan<Index>(table.Indexes);
-		int indexerLeft = 0, indexerRight = span.Length - 1, indexerMiddle, indexerCompare;
+		int indexerLeft = 0, indexerRight = span.Length - 1;
 		while (indexerLeft <= indexerRight)
 		{
-			indexerMiddle = indexerLeft + indexerRight;
+			var indexerMiddle = indexerLeft + indexerRight;
 			indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
-			indexerCompare = string.CompareOrdinal(name, span[indexerMiddle].Name);
+			var indexerCompare = string.CompareOrdinal(name, span[indexerMiddle].Name);
 			if (indexerCompare == 0) return span[indexerMiddle];
 			if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
 			else indexerRight = indexerMiddle - 1;
@@ -282,14 +282,14 @@ internal static class TableExtensions
 		// Code size: 69 (0x45)
 		if (table.Type == TableType.Business || table.Type == TableType.Lexicon)
 		{
-			return new(1) { table.Columns[0] };
+			return new List<Column>(1) { table.Columns[0] };
 		}
 		else
 		{
 			var index = table.GetFirstUniqueIndex();
-			if (index != null) return new (index.Columns);
+			if (index != null) return new List<Column>(index.Columns);
 		}
-		return new(0) {}; 
+		return new List<Column>(0) {}; 
 	}
 
 	internal static bool HasPrimaryKey(this Table table) => GetPrimaryKey(table).Count > 0;

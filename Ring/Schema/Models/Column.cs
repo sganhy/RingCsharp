@@ -22,7 +22,7 @@ internal sealed class Column
 	}
 
 #if DEBUG
-	public sealed override string ToString() => $"{Id} - {PhysicalName}";
+	public override string ToString() => $"{Id} - {PhysicalName}";
 #endif
 
 
