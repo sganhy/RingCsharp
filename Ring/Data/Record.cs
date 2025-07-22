@@ -84,7 +84,7 @@ public struct Record : IEquatable<Record>
 			if (_type.Id==-1) ThrowRecordUnknownRecordType();
 			if (_type.Type == TableType.Business) return _data[_type.Columns[0].RecordIndex]==null;
 			// not manage ==> @lexicon_itm, @log, @meta, @meta_id; 
-			return true; // always New if there is no keys
+			return true; // always New if there are no keys
 		}
 	}
 	internal readonly Table Table => _type;
@@ -219,7 +219,7 @@ public struct Record : IEquatable<Record>
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	internal void SetField(string name, long value, FieldType fieldType)
+	private void SetField(string name, long value, FieldType fieldType)
 	{
 		// Code size: 277 (0x115) - no callvirt
 		if (_type.Id == -1) ThrowRecordUnknownRecordType();
@@ -284,10 +284,10 @@ public struct Record : IEquatable<Record>
 		SetDateTimeField(fieldId, _type.Fields[fieldId].Type, value.DateTime, value.Offset);
 	}
 	public void SetField(string name, double value) => SetField(name, value, FieldType.Double); // Code size: 11 (0xb)
-	public void SetField(string name, float value) => SetField(name, (double)value, FieldType.Float); // Code size: 12 (0xc)
+	public void SetField(string name, float value) => SetField(name, value, FieldType.Float); // Code size: 12 (0xc)
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	internal void SetField(string name, double value, FieldType fieldType)
+	private void SetField(string name, double value, FieldType fieldType)
 	{
 		// Code size: 99 (0x63)
 		if (_type.Id == -1) ThrowRecordUnknownRecordType();
@@ -310,7 +310,7 @@ public struct Record : IEquatable<Record>
 	}
 	public static bool operator ==(Record left, Record right) => left.Equals(right);
 	public static bool operator !=(Record left, Record right) => !left.Equals(right);
-	public override readonly bool Equals(object? obj) => obj is Record record && Equals(record);
+	public readonly override bool Equals(object? obj) => obj is Record record && Equals(record);
 	public readonly bool Equals(Record other)
 	{
 		// Code size: 88 (0x58)
@@ -329,7 +329,7 @@ public struct Record : IEquatable<Record>
 		}
 		return false;
 	}
-	public override readonly int GetHashCode()
+	public readonly override int GetHashCode()
 	{
 		// Code size: 108 (0x6c)
 		var result = new StringBuilder();
@@ -379,7 +379,7 @@ public struct Record : IEquatable<Record>
 	/// 	Return relation ID value by name
 	/// </summary>
 	/// <param name="name">Name of the relation</param>
-	/// <returns>relation ID value;if not defined return null</returns>
+	/// <returns>relation ID value; if not defined, return null</returns>
 	internal readonly long? GetRelation(string name)
 	{
         // Code size: 109 (0x6d)
@@ -410,9 +410,8 @@ public struct Record : IEquatable<Record>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private void SetStringField(int fieldSize, int fieldId, string value)
 	{
-		// Code size: 33 (0x21)
-		if (value.Length <= fieldSize) SetData(fieldId, value);
-		else SetData(fieldId, value.Truncate(fieldSize)); // truncate or exception ?? // replace by Span<T>
+        // Code size: 27 (0x1b)
+        SetData(fieldId, value.Length <= fieldSize ? value : value.Truncate(fieldSize)); // truncate or exception ?? // replace by Span<T>
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -552,15 +551,15 @@ public struct Record : IEquatable<Record>
 	private static void ThrowImpossibleConversion(FieldType fieldTypeSource, FieldType fieldTypeDestination) =>
 		throw new ArgumentException(string.Format(DefaultCulture,
 			ResourceHelper.GetErrorMessage(ResourceType.RecordCannotConvert),
-			fieldTypeSource.RecordTypeDisplay() ?? NullString,
-			fieldTypeDestination.RecordTypeDisplay() ?? NullString));
+			fieldTypeSource.RecordTypeDisplay(),
+			fieldTypeDestination.RecordTypeDisplay()));
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
 	private static void ThrowInvalidBase64String() =>
 		throw new FormatException(ResourceHelper.GetErrorMessage(ResourceType.InvalidBase64String));
 
-	private static IDdlBuilder GetDefaultDdlBuilder() => new Ring.Util.Builders.PostgreSQL.DdlBuilder(); // Code size: 6 (0x6)
+	private static IDdlBuilder GetDefaultDdlBuilder() => new Util.Builders.PostgreSQL.DdlBuilder(); // Code size: 6 (0x6)
 
     private static Table GetDefaultType()
 	{
