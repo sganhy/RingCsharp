@@ -16,6 +16,7 @@ namespace Ring.Schema;
 
 internal readonly struct Meta : IEquatable<Meta>
 {
+	// Rider check 2025-07-22
 	#region constants
 
 	// entity type constants
@@ -159,7 +160,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	internal bool IsIndexUnique => ReadFlag(BitPositionIndexUnique);
 	// index values
 	internal Column[] GetIndexedColumns() => Value != null ? new Column[Value.CharCount(IndexColumnDelimiter)+1] : Array.Empty<Column>();
-	internal static string? GetColumnList(string[] columns) => string.Join(IndexColumnDelimiter, columns);
+	internal static string GetColumnList(string[] columns) => string.Join(IndexColumnDelimiter, columns);
 	
 	// index flags 
 	internal static long SetIndexUnique(long flags, bool value) => WriteFlag(flags, BitPositionIndexUnique, value);
@@ -304,10 +305,10 @@ internal readonly struct Meta : IEquatable<Meta>
 		if (IsTable)
 		{
 			var tableType = DataType.ToTableType();
-			var fields = GetFieldArray(tableItems, ddlBuilder);
+			var fields = GetFieldArray(tableItems);
 			var relations = GetRelationArray(tableItems);
 			var indexes = GetIndexes(tableItems);
-			(var colCount, var physRelationCount) = GetColumnCount(fields, tableItems, ddlBuilder);
+			var (colCount, physRelationCount) = GetColumnCount(fields, tableItems, ddlBuilder);
 
 			// sort arrays (warn: relations not yet loaded here)
 			Array.Sort(fields, (x, y) => string.CompareOrdinal(x.Name, y.Name));
@@ -317,7 +318,7 @@ internal readonly struct Meta : IEquatable<Meta>
 				tableType, relations, fields, new Column[colCount], indexes,
 				ReferenceId, physicalType, objectIndex, relations.Length + fields.Length + 1, IsEntityBaseline, Active, IsTableCached, IsTableReadonly);
 
-			// load relations later , we need full schema to create relations
+			// load relations later, we need full schema to create relations
 			// load columns
 			LoadColumns(table, tableItems, physRelationCount, ddlBuilder);
 			LoadIndexColumns(table, tableItems, physRelationCount);
@@ -444,12 +445,11 @@ internal readonly struct Meta : IEquatable<Meta>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private bool ReadFlag(byte bitPosition) => ((Flags >> (bitPosition - 1)) & 1) > 0; // Code size: 21 (0x15)
 
-	private Index[] GetIndexes(ArraySegment<Meta> items)
+	private static Index[] GetIndexes(ArraySegment<Meta> items)
 	{
 		// count element
 		var indexCount = 0;
 		var span = items.AsSpan();
-		var table = GetEmptyTable(this);
 		foreach (var item in span) if (item.IsIndex) ++indexCount;
 		if (indexCount <= 0) return Array.Empty<Index>();
 		var result = new Index[indexCount];
@@ -458,7 +458,6 @@ internal readonly struct Meta : IEquatable<Meta>
 		{
 			if (item.IsIndex)
 			{
-				var tempIndex = GetEmptyIndex(item);
 				// cannot be null here 
 #pragma warning disable CS8601 // Possible null reference assignment.
 				result[fieldIndex] = item.ToIndex();
@@ -488,7 +487,7 @@ internal readonly struct Meta : IEquatable<Meta>
 		return result.ToArray();
 	}
 
-	private static Field[] GetFieldArray(ArraySegment<Meta> items, IDdlBuilder ddlBuilder)
+	private static Field[] GetFieldArray(ArraySegment<Meta> items)
 	{
 		// Code size: 235 (0xeb)
 		// count element
@@ -736,7 +735,7 @@ internal readonly struct Meta : IEquatable<Meta>
 				}
 			}
 		}
-		// relation are not yet loaded here !!
+		// relation is not yet loaded here !!
 		for (var i=0; i < table.Indexes.Length; ++i)
 		{
 			var index = table.Indexes[i];
@@ -758,10 +757,8 @@ internal readonly struct Meta : IEquatable<Meta>
 	}
 
 	/// <summary>
-	/// 	Load relationships objects into partial schema 
+	/// 	Load relationships object into partial schema 
 	/// </summary>
-	/// <param name="schema">Partial built in schema</param>
-	/// <param name="schemaItems">Sorted ASC by reference_id, name</param>
 	private static void LoadRelations(DbSchema schema, ReadOnlySpan<Meta> schemaItems, int mtmCount)
 	{
 		var relationDicoIndex = new Dictionary<int, int>(schema.TablesById.Length * 2); // (tableId, relation index)
@@ -819,7 +816,6 @@ internal readonly struct Meta : IEquatable<Meta>
 		var ddlBuilder = schema.Provider.GetDdlBuilder();
 		var tableBuilder = new TableBuilder();
 		var span = new Span<Table>(schema.TablesById);
-		Table mtmTable;
 		var mtm = new Dictionary<string, Table>(mtmCount * 2); // store mtm physical name
 		foreach (var table in span)
 		{
@@ -835,6 +831,7 @@ internal readonly struct Meta : IEquatable<Meta>
 					var physicalName = ddlBuilder.GetPhysicalName(emptyTable, schema);
 					var inverseRelation = relation.InverseRelation;
 
+					Table mtmTable;
 					if (!mtm.ContainsKey(physicalName))
 					{
 						mtmTable = tableBuilder.GetMtm(emptyTable, ddlBuilder, physicalName, mtm.Count,
@@ -896,7 +893,7 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	private static int ColumnComparer(Column col1, Column col2)
 	{
-		// sort ASC by Id, then by Entity Type depend of weight see ColumnTypeWeight()
+		// sort ASC by ID, then by Entity Type depend on weight see ColumnTypeWeight()
 		var result = col1.Id.CompareTo(col2.Id);
 		if (result != 0) return result;
 		var w1 = ColumnTypeWeight(col1.Type);
