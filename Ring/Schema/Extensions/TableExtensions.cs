@@ -280,8 +280,8 @@ internal static class TableExtensions
 
 	internal static List<Column> GetPrimaryKey(this Table table)
 	{
-        // Code size: 68 (0x44)
-        if (table.Type == TableType.Business || table.Type == TableType.Lexicon)
+		// Code size: 68 (0x44)
+		if (table.Type == TableType.Business || table.Type == TableType.Lexicon)
 		{
 			return new List<Column>(1) { table.Columns[0] };
 		}
