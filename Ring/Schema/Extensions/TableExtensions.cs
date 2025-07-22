@@ -295,7 +295,8 @@ internal static class TableExtensions
 
 	internal static bool HasPrimaryKey(this Table table) => GetPrimaryKey(table).Count > 0;
 
-	internal static Meta[] ToMeta(this Table table, int schemaId) {
+	internal static Meta[] ToMeta(this Table table, int schemaId) 
+	{
 		// Code size: 283 (0x11b)
 		var result = new List<Meta>(table.Fields.Length+table.Relations.Length+table.Indexes.Length+1);
 		int i;
@@ -311,7 +312,7 @@ internal static class TableExtensions
 		flags = Meta.SetEntityBaseline(flags, table.Baseline);
 
 		var meta = new Meta(table.Id, (byte)EntityType.Table, schemaId, (int)table.Type, flags, table.Name, table.Description, null, table.Active);
-		// first - define Object type
+		// first - define an object type
 		result.Add(meta);
 		return result.ToArray();
 	}
