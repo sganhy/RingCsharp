@@ -9,8 +9,9 @@ namespace Ring.Schema.Extensions;
  
 internal static class TableExtensions
 {
-	// Rider check 2025-07-22
+	// Rider check 2025-07-23
 	private const char HashCodeSeparator = (char)9999;
+	private static readonly List<Column> EmptyColumnList = new(0);
 
 	/// <summary>
 	/// 	Get field by name, case-sensitive search ==> O(log n) complexity
@@ -279,8 +280,8 @@ internal static class TableExtensions
 
 	internal static List<Column> GetPrimaryKey(this Table table)
 	{
-		// Code size: 69 (0x45)
-		if (table.Type == TableType.Business || table.Type == TableType.Lexicon)
+        // Code size: 68 (0x44)
+        if (table.Type == TableType.Business || table.Type == TableType.Lexicon)
 		{
 			return new List<Column>(1) { table.Columns[0] };
 		}
@@ -289,7 +290,7 @@ internal static class TableExtensions
 			var index = table.GetFirstUniqueIndex();
 			if (index != null) return new List<Column>(index.Columns);
 		}
-		return new List<Column>(0) {}; 
+		return EmptyColumnList;
 	}
 
 	internal static bool HasPrimaryKey(this Table table) => GetPrimaryKey(table).Count > 0;
