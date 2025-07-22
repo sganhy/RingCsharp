@@ -78,9 +78,9 @@ public struct Record : IEquatable<Record>
 	public readonly bool IsDirty => _data[_type.RecordSize-1+_offset] != null;
 	public readonly bool IsNew
 	{
-        // Code size: 64 (0x40)
-        get
-        {
+		// Code size: 64 (0x40)
+		get
+		{
 			if (_type.Id==-1) ThrowRecordUnknownRecordType();
 			if (_type.Type == TableType.Business) return _data[_type.Columns[0].RecordIndex]==null;
 			// not manage ==> @lexicon_itm, @log, @meta, @meta_id; 
@@ -103,7 +103,7 @@ public struct Record : IEquatable<Record>
 	/// 	Get primary key value (Field name ID)
 	/// </summary>
 	internal readonly long GetField() // Code size: 52 (0x34)
-        => long.Parse(_data[_type.Columns[0].RecordIndex + _offset] ?? DefaultPrimaryKeyValue, DefaultCulture);
+		=> long.Parse(_data[_type.Columns[0].RecordIndex + _offset] ?? DefaultPrimaryKeyValue, DefaultCulture);
 
 	/// <summary>
 	/// 	GetField methods
@@ -361,15 +361,15 @@ public struct Record : IEquatable<Record>
 
 	internal readonly bool IsRelationChanged(string name)
 	{
-        // Code size: 124 (0x7c)
-        if (_type.Id == -1) ThrowRecordUnknownRecordType();
+		// Code size: 124 (0x7c)
+		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var relation = _type.GetRelation(name);
 		var trackerIndex = _offset + _type.RecordSize - 1;
 		if (relation == null) ThrowRecordUnknownRelationName(name);
-        var column = _type.GetColumn(relation.Id, EntityType.Relation);
-        if (column == null) ThrowRecordWrongRelationType(name);
+		var column = _type.GetColumn(relation.Id, EntityType.Relation);
+		if (column == null) ThrowRecordWrongRelationType(name);
 		var index = column.RecordIndex;
-        if (index >= 0) return _data[trackerIndex] != null && IsColumnChanged(index, trackerIndex);
+		if (index >= 0) return _data[trackerIndex] != null && IsColumnChanged(index, trackerIndex);
 		return false;
 	}
 
@@ -382,14 +382,14 @@ public struct Record : IEquatable<Record>
 	/// <returns>relation ID value; if not defined, return null</returns>
 	internal readonly long? GetRelation(string name)
 	{
-        // Code size: 109 (0x6d)
-        if (_type.Id == -1) ThrowRecordUnknownRecordType();
-        var relation = _type.GetRelation(name);
+		// Code size: 109 (0x6d)
+		if (_type.Id == -1) ThrowRecordUnknownRecordType();
+		var relation = _type.GetRelation(name);
 		if (relation == null) ThrowRecordUnknownRelationName(name);
 		var column = _type.GetColumn(relation.Id, EntityType.Relation);
-        if (column == null) ThrowRecordWrongRelationType(name);
-        var index = _offset + column.RecordIndex;
-        return long.Parse(_data[index]!, CultureInfo.InvariantCulture);
+		if (column == null) ThrowRecordWrongRelationType(name);
+		var index = _offset + column.RecordIndex;
+		return long.Parse(_data[index]!, CultureInfo.InvariantCulture);
 	}
 
 	internal void SetRelation(string name, long? value)
@@ -398,10 +398,10 @@ public struct Record : IEquatable<Record>
 		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var relation = _type.GetRelation(name);
 		if (relation == null) ThrowRecordUnknownRelationName(name);
-        var column = _type.GetColumn(relation.Id, EntityType.Relation);
-        if (column == null) ThrowRecordUnknownRelationName(name);
-        var index = column.RecordIndex;
-        if (index >= 0) SetData(column.RecordIndex, value?.ToString(DefaultCulture));
+		var column = _type.GetColumn(relation.Id, EntityType.Relation);
+		if (column == null) ThrowRecordUnknownRelationName(name);
+		var index = column.RecordIndex;
+		if (index >= 0) SetData(column.RecordIndex, value?.ToString(DefaultCulture));
 		else ThrowRecordWrongRelationType(name);
 	}
 
@@ -410,8 +410,8 @@ public struct Record : IEquatable<Record>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private void SetStringField(int fieldSize, int fieldId, string value)
 	{
-        // Code size: 27 (0x1b)
-        SetData(fieldId, value.Length <= fieldSize ? value : value.Truncate(fieldSize)); // truncate or exception ?? // replace by Span<T>
+		// Code size: 27 (0x1b)
+		SetData(fieldId, value.Length <= fieldSize ? value : value.Truncate(fieldSize)); // truncate or exception ?? // replace by Span<T>
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -499,8 +499,8 @@ public struct Record : IEquatable<Record>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private readonly bool IsColumnChanged(int fieldId, int trackerIndex) => _data[trackerIndex]!.GetBitValue(fieldId); // cannot be null here - Code size: 15 (0xf)
 
-    // exceptions 
-    [MethodImpl(MethodImplOptions.NoInlining)]
+	// exceptions 
+	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
 	private readonly void ThrowRecordUnknownFieldName(string fieldName) => 
 		throw new ArgumentException(string.Format(DefaultCulture,
@@ -561,7 +561,7 @@ public struct Record : IEquatable<Record>
 
 	private static IDdlBuilder GetDefaultDdlBuilder() => new Util.Builders.PostgreSQL.DdlBuilder(); // Code size: 6 (0x6)
 
-    private static Table GetDefaultType()
+	private static Table GetDefaultType()
 	{
 		// Code size: 77 (0x4d)
 		var metaTable = new Meta(-1, (byte)EntityType.Table, 0, (int)TableType.Undefined, 0L, string.Empty, null, null, true);
