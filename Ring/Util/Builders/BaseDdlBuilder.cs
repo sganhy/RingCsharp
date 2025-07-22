@@ -1,9 +1,6 @@
-﻿using Ring.Schema;
-using Ring.Schema.Enums;
+﻿using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.Text;
 using DbSchema = Ring.Schema.Models.Schema;
@@ -13,11 +10,12 @@ namespace Ring.Util.Builders;
 
 internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 {
+	// Rider check 2025-07-23
 	protected static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
 
 	// entity
 	protected static readonly string DdlView = @"VIEW";
-	protected static readonly string DdlTable = @"TABLE ";  // final space character needed !
+	protected static readonly string DdlTable = @"TABLE ";  // final space character needed!
 	protected static readonly string DdlConstraint = @"CONSTRAINT ";
 	protected static readonly string DdlIndex = @"INDEX ";
 	protected static readonly string DdlSequence = @"SEQUENCE";
@@ -27,15 +25,13 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 
 	// options
 	protected static readonly string DdlUnique = @"UNIQUE ";
-	protected static readonly string DdlBitmap = @"BITMAP";
-	protected static readonly string DdlHash = @"HASH";
 	protected static readonly string DdlUsing = @"USING ";
 	protected static readonly string DdlOn = @"ON ";
 
 	// commands
 	protected static readonly string DdlReference = @"REFERENCES";
 	protected static readonly string DdlCreate = @"CREATE ";
-	protected static readonly string DdlAlter = @"ALTER "; // final space character needed !
+	protected static readonly string DdlAlter = @"ALTER "; // final space character needed!
 	protected static readonly string DdlDrop = @"DROP ";
 	protected static readonly string DdlAdd = @"ADD ";
 	protected static readonly string DdlColumn = @"COLUMN ";
@@ -51,13 +47,11 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	protected static readonly string DefaultIndexPrefix = @"idx_";
 
 	// conventions
-	protected readonly static char SpecialEntityPrefix = '@';
+	protected static readonly char SpecialEntityPrefix = '@';
 	protected abstract string SearchableFieldPrefix { get; }
 	protected abstract string? TimeZoneOffsetPrefix { get; }
 	protected abstract string GetPhysicalName(Constraint constraint);
 	public bool HasTimeZoneOffsetColumn => TimeZoneOffsetPrefix != null;
-
-	protected BaseDdlBuilder() {}
 
 	public string AlterAddColumn(Table table, Column column) // Code size: 90 (0x5a)
 		=> new StringBuilder()
@@ -194,17 +188,17 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	}
 
 	protected abstract string MtmPrefix { get; }
-	protected string GetDataType(Table table, Column column, int? size)
+
+	private string GetDataType(Table table, Column column, int? size)
 	{
 		// Code size: 96 (0x60)
 		var fieldType = column.FieldType;
-		var maxSize = VarcharMaxSize;
 		var result = new StringBuilder(DataType[fieldType]);
 		var collateInformation = StringCollateInformation;
 
 		if (fieldType == FieldType.String)
 			result.Append(GetSizeInfo(size.HasValue ? size.Value : (table.GetField(column)?.Size ?? 0)));  // performance issue may be with GetField() ?
-		if ((fieldType == FieldType.String || fieldType == FieldType.LongString) && collateInformation != null)
+		if ((fieldType == FieldType.String || fieldType == FieldType.LongString))
 			result.Append(SqlSpace).Append(collateInformation);
 		return result.ToString();
 	}
@@ -377,7 +371,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	}
 
 	/// <summary>
-	/// Return dictionnary of fields by RecordIndex
+	/// Return dictionary of fields by RecordIndex
 	/// </summary>
 	private static Dictionary<int, Field> GetFieldInfoDico(Table table)
 	{
@@ -392,7 +386,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	}
 
 	/// <summary>
-	/// Return dictionnary of fields by RecordIndex
+	/// Return dictionary of fields by RecordIndex
 	/// </summary>
 	private static Dictionary<int, Relation> GetRelationInfoDico(Table table)
 	{
