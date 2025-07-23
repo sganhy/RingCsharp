@@ -1,6 +1,5 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Models;
-using Ring.Util.Builders;
 using Ring.Util.Helpers;
 using System.Globalization;
 using System.Runtime.CompilerServices;
@@ -16,10 +15,10 @@ internal static class FieldExtensions
 	private static readonly string PrimaryKeyFieldName = "id";
 	private static readonly string PrimaryKeyDescription = "Internal record number";
 	private static readonly string NumberDefaultValue = "0";
-	private static readonly Field _defaultPrimaryKeyInt64 =	new(0, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Long, 0, NumberDefaultValue, SearchableType.None, true, true, false, true);
-	private static readonly Field _defaultPrimaryKeyInt32 =	new(0, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Int, 0, NumberDefaultValue, SearchableType.None, true, true, false, true);
-	private static readonly Field _defaultPrimaryKeyInt16 =	new(0, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Short, 0, NumberDefaultValue, SearchableType.None, true, true, false, true);
-	private static readonly Field _defaultPrimaryKeyInt08 =	new(0, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Byte, 0, NumberDefaultValue, SearchableType.None, true, true, false, true);
+	private static readonly Field DefaultPrimaryKeyInt64 =	new(0, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Long, 0, NumberDefaultValue, SearchableType.None, true, true, false, true);
+	private static readonly Field DefaultPrimaryKeyInt32 =	new(0, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Int, 0, NumberDefaultValue, SearchableType.None, true, true, false, true);
+	private static readonly Field DefaultPrimaryKeyInt16 =	new(0, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Short, 0, NumberDefaultValue, SearchableType.None, true, true, false, true);
+	private static readonly Field DefaultPrimaryKeyInt08 =	new(0, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Byte, 0, NumberDefaultValue, SearchableType.None, true, true, false, true);
 #pragma warning restore RCS1187
 
 	internal static bool IsValid(this Field field) => IsPrimaryKey(field) || field.Id > 0; 
@@ -31,8 +30,8 @@ internal static class FieldExtensions
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static bool IsPrimaryKey(this Field field) =>
-		ReferenceEquals(field, _defaultPrimaryKeyInt64) || ReferenceEquals(field, _defaultPrimaryKeyInt32) ||
-		ReferenceEquals(field, _defaultPrimaryKeyInt16) || ReferenceEquals(field, _defaultPrimaryKeyInt08);
+		ReferenceEquals(field, DefaultPrimaryKeyInt64) || ReferenceEquals(field, DefaultPrimaryKeyInt32) ||
+		ReferenceEquals(field, DefaultPrimaryKeyInt16) || ReferenceEquals(field, DefaultPrimaryKeyInt08);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static bool IsSearchable(this Field field) // Code size: 22 (0x16)
@@ -81,10 +80,10 @@ internal static class FieldExtensions
 		// Code size: 67 (0x43)
 		switch (fieldType)
 		{
-			case FieldType.Byte: return _defaultPrimaryKeyInt08;
-			case FieldType.Short: return _defaultPrimaryKeyInt16;
-			case FieldType.Int: return _defaultPrimaryKeyInt32;
-			case FieldType.Long: return _defaultPrimaryKeyInt64;
+			case FieldType.Byte: return DefaultPrimaryKeyInt08;
+			case FieldType.Short: return DefaultPrimaryKeyInt16;
+			case FieldType.Int: return DefaultPrimaryKeyInt32;
+			case FieldType.Long: return DefaultPrimaryKeyInt64;
 		}
 		return null;
 	}

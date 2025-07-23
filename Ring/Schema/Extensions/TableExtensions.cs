@@ -73,7 +73,7 @@ internal static class TableExtensions
 	/// <summary>
 	/// 	Get Fields by id ==> O(n) complexity
 	/// </summary>
-	internal static Field? GetField(this Table table, Column column) => GetField(table, column.Id);
+	internal static Field? GetField(this Table table, Column column) => GetField(table, column.Id); // Code size: 13 (0xd)
 
 	/// <summary>
 	/// 	Get index field by name, case-sensitive search ==> O(log n) complexity
@@ -132,6 +132,7 @@ internal static class TableExtensions
 	/// <returns>Relation object</returns>
 	internal static Relation? GetRelation(this Table table, string name, StringComparison comparisonType)
 	{
+		// Code size: 49 (0x31)
 		for (var i = table.Relations.Length - 1; i >= 0; --i)
 		{
 			var relation = table.Relations[i];
@@ -146,6 +147,7 @@ internal static class TableExtensions
 	/// <returns>Relation object</returns>
 	internal static Relation? GetRelation(this Table table, int id)
 	{
+		// Code size: 54 (0x36)
 		foreach (var relation in new ReadOnlySpan<Relation>(table.Relations))
 			if (id == relation.Id) return relation;
 		return null;
@@ -326,13 +328,12 @@ internal static class TableExtensions
 
 	internal static string GetStringCode(this Table table)
 	{
-		// Code size: 237 (0xed) - checked: 2025-07-18
-		/*
+        // Code size: 232 (0xe8) - checked: 2025-07-23
+        /*
 		* readonly bool Cached
 		* readonly Field[] Fields
 		* readonly Relation[] Relations
 		* readonly Index[] Indexes
-		* readonly int[] RecordIndexes
 		* readonly int RecordSize
 		* readonly IColumn[] Columns
 		* readonly string PhysicalName
@@ -343,15 +344,12 @@ internal static class TableExtensions
 		* readonly CacheId CacheId
 		* readonly bool Readonly
 		*/
-		return new StringBuilder()
+        return new StringBuilder()
 			.Append(table.Cached)
 			.Append(HashCodeSeparator)
 			.Append(GetStringCode(table.Fields))
-			.Append(HashCodeSeparator)
 			.Append(GetStringCode(table.Relations))
-			.Append(HashCodeSeparator)
 			.Append(GetStringCode(table.Indexes))
-			.Append(HashCodeSeparator)
 			.Append(table.RecordSize)
 			.Append(HashCodeSeparator)
 		/* Columns[] Columns - removed from computing !! */
@@ -365,6 +363,7 @@ internal static class TableExtensions
 			.Append(table.Subject)
 			.Append(HashCodeSeparator)
 			.Append(table.Readonly)
+			.Append(HashCodeSeparator)
 		/* + BaseEntity string code */
 			.Append(BaseEntityExtensions.GetStringCode(table))
 			.ToString();
@@ -377,18 +376,18 @@ internal static class TableExtensions
 	/// </summary>
 	private static Index? GetFirstUniqueIndex(this Table table)
 	{
+		// Code size: 54 (0x36)
 		if (table.Indexes.Length > 0)
 			for (var i = 0; i < table.Indexes.Length; ++i)
 				if (table.Indexes[i].Unique) return table.Indexes[i];
 		return null;
 	}	
 
-	private static string GetStringCode(Field[] fields)
+	private static string GetStringCode(ReadOnlySpan<Field> fields)
 	{
-		// Code size: 73 (0x49)
-		var span = fields.AsSpan();
+		// Code size: 68 (0x44)
 		var result = new StringBuilder();
-		foreach (var field in span)
+		foreach (var field in fields)
 		{
 			result.Append(field.GetStringCode());
 			result.Append(HashCodeSeparator);
@@ -396,12 +395,11 @@ internal static class TableExtensions
 		return result.ToString();
 	}
 
-	private static string GetStringCode(Relation[] relations)
+	private static string GetStringCode(ReadOnlySpan<Relation> relations)
 	{
-		// Code size: 73 (0x49)
-		var span = relations.AsSpan();
+		// Code size: 68 (0x44)
 		var result = new StringBuilder();
-		foreach (var relation in span)
+		foreach (var relation in relations)
 		{
 			result.Append(relation.GetStringCode());
 			result.Append(HashCodeSeparator);
@@ -409,12 +407,11 @@ internal static class TableExtensions
 		return result.ToString();
 	}
 
-	private static string GetStringCode(Index[] indexes)
+	private static string GetStringCode(ReadOnlySpan<Index> indexes)
 	{
-		// Code size: 73 (0x49)
-		var span = indexes.AsSpan();
+		// Code size: 68 (0x44)
 		var result = new StringBuilder();
-		foreach (var index in span)
+		foreach (var index in indexes)
 		{
 			result.Append(index.GetStringCode());
 			result.Append(HashCodeSeparator);

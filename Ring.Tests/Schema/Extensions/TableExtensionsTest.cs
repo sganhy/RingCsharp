@@ -173,7 +173,7 @@ public class TableExtensionsTest : BaseTest
 
         // act 
         var result = TableExtensions.GetRelation(table, "test", StringComparison.CurrentCultureIgnoreCase);
-        
+
         // assert
         Assert.Null(result);
     }
@@ -282,7 +282,7 @@ public class TableExtensionsTest : BaseTest
     {
         var metaList = GetSchema1();
         var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
-        var table = GetAnonymousTable(_builder, 512,0);
+        var table = GetAnonymousTable(_builder, 512, 0);
 
         // act 
         Assert.NotNull(schema);
@@ -483,7 +483,7 @@ public class TableExtensionsTest : BaseTest
         var hash3 = TableExtensions.GetHashCode(table3);
         var hash4 = TableExtensions.GetHashCode(table4);
         var hash5 = TableExtensions.GetHashCode(table5);
-        
+
 
         // assert
         Assert.Equal(hash1, hash2);
@@ -492,4 +492,25 @@ public class TableExtensionsTest : BaseTest
         Assert.NotEqual(hash1, hash5);
     }
 
+    [Fact]
+    internal void GetStringCode_FeatType_StringCode()
+    {
+        // arrange 
+        var tableSeparator = (char)9999;
+        var metaList = GetSchema1();
+        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
+        Assert.NotNull(schema);
+        var table1 = schema.GetTable("feat_type");
+        Assert.NotNull(table1);
+        var expectedStringCode = $"{table1.Cached}{tableSeparator}{table1.Fields[0].GetStringCode()}{tableSeparator}{table1.Fields[1].GetStringCode()}{tableSeparator}";
+        expectedStringCode += $"{table1.Relations[0].GetStringCode()}{tableSeparator}{table1.Indexes[0].GetStringCode()}{tableSeparator}{table1.RecordSize}";
+        expectedStringCode += $"{tableSeparator}{(int)table1.Type}{tableSeparator}{table1.SchemaId}{tableSeparator}{(int)table1.PhysicalType}{tableSeparator}{table1.Subject}";
+        expectedStringCode += $"{tableSeparator}{table1.Readonly}{tableSeparator}{BaseEntityExtensions.GetStringCode(table1)}";
+
+        // act 
+        var stringCode = TableExtensions.GetStringCode(table1);
+
+        // assert
+        Assert.Equal(expectedStringCode, stringCode);
+    }
 }
