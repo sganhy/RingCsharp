@@ -1,2 +1,7 @@
-﻿// See https://aka.ms/new-console-template for more information
+﻿using Ring.Schema;
+
+// See https://aka.ms/new-console-template for more information
 Console.WriteLine("Hello, World!");
+
+
+Meta meta = new Meta();
