@@ -1,10 +1,42 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFrameworks>net8.0</TargetFrameworks>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<LangVersion>10.0</LangVersion>
+		<AnalysisLevel>6.0-all</AnalysisLevel>
+		<AssemblyVersion>1.0.0.225</AssemblyVersion>
+		<FileVersion>1.0.0.225</FileVersion>
+		<RepositoryType>https://github.com/sganhy/RingCsharp.git</RepositoryType>
+		<RepositoryUrl>https://github.com/sganhy/RingCsharp</RepositoryUrl>
+		<Description>Ring Zero</Description>
+		<Title>SchemaMgr</Title>
+		<Version>1.0.0-beta</Version>
+		<IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+		<NoWarn>CA1307;CA1802;S3267;IDE0066</NoWarn>
+		<PublishTrimmed>True</PublishTrimmed>
+		<PublishAot>True</PublishAot>
+		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+		<SignAssembly>True</SignAssembly>
+		<AssemblyOriginatorKeyFile>SchemaMgr.snk</AssemblyOriginatorKeyFile>
+		<Copyright>Copyright © 2025</Copyright>
+		<NuGetAuditLevel>critical</NuGetAuditLevel>
+		<Product>Ring Zero</Product>
+		<EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
+		<ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+		<PlatformTarget>x64</PlatformTarget>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Ring.InfluxDB\Ring.InfluxDB.csproj" />
+		<ProjectReference Include="..\Ring.MySql\Ring.MySql.csproj" />
+		<ProjectReference Include="..\Ring.Oracle\Ring.Oracle.csproj" />
+		<ProjectReference Include="..\Ring.PostgreSQL\Ring.PostgreSQL.csproj" />
+		<ProjectReference Include="..\Ring.Sqlite\Ring.Sqlite.csproj" />
+		<ProjectReference Include="..\Ring.SqlServer\Ring.SqlServer.csproj" />
+		<ProjectReference Include="..\Ring\Ring.csproj" />
+	</ItemGroup>
 
 </Project>
