@@ -152,7 +152,7 @@ internal static class IntExtensions
 	}
 
 	/// <summary>
-	/// 	Low performance !
+	/// 	Low performance!
 	/// </summary>
 	internal static ParameterType ToParameterType(this int id) =>
 		ParameterTypeEnumsId.ContainsKey(id) ? ParameterTypeEnumsId[id] : ParameterType.Undefined;

@@ -376,10 +376,9 @@ internal static class TableExtensions
 	/// </summary>
 	private static Index? GetFirstUniqueIndex(this Table table)
 	{
-		// Code size: 54 (0x36)
-		if (table.Indexes.Length > 0)
-			for (var i = 0; i < table.Indexes.Length; ++i)
-				if (table.Indexes[i].Unique) return table.Indexes[i];
+		// Code size: 52 (0x34)
+		var span = new ReadOnlySpan<Index>(table.Indexes);
+		foreach (var index in span) if (index.Unique) return index;
 		return null;
 	}	
 

@@ -135,11 +135,11 @@ internal sealed class TableBuilder
 		var metaRelation2 = relation2.ToMeta(partialTable.Id);
 		// add index 
 		var flags = 0L;
-		var reltArr = new string[] { metaRelation1.Name, metaRelation2.Name };
+		var reltArr = new [] { metaRelation1.Name, metaRelation2.Name };
         var value = Meta.GetColumnList(reltArr);
 		flags = Meta.SetIndexUnique(flags, true);
 		var metaIndex = new Meta(0, (byte)EntityType.Index, 0, 0, flags, partialTable.Name, null, value, true);
-		var metaArr = new Meta[] { metaRelation1, metaRelation2, metaIndex };
+		var metaArr = new [] { metaRelation1, metaRelation2, metaIndex };
 		var segMent = new ArraySegment<Meta>(metaArr, 0, 3);
 		var result = metaTable.ToTable(segMent, PhysicalType.Table, ddlBuilder, physicalName, objectIndex) ?? partialTable;
 		result.Relations[0] = relation1;
