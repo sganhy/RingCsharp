@@ -35,7 +35,7 @@ public struct Record : IEquatable<Record>
 	private static readonly string BooleanFalse = false.ToString(DefaultCulture);
 #pragma warning restore RCS1187
 
-	// should be instantiate when record type is defined
+	// should be instantiated when record type is defined
 	// _data.Length should be > _type.Fields.Length
 	private string?[] _data;
 	private Table _type;
