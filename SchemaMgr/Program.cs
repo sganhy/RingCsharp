@@ -5,3 +5,4 @@ Console.WriteLine("Hello, World!");
 
 
 Meta meta = new Meta();
+Console.WriteLine(meta.Name);

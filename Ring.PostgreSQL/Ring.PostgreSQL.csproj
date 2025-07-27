@@ -33,14 +33,11 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Npgsql" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<ProjectReference Include="..\Ring\Ring.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Npgsql" />
 		<PackageReference Include="Microsoft.DotNet.ILCompiler" />
 		<PackageReference Include="Microsoft.NET.ILLink.Tasks" />
 	</ItemGroup>

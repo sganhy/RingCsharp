@@ -2,7 +2,7 @@
 
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
-		<TargetFrameworks>net8.0</TargetFrameworks>
+		<TargetFrameworks>net9.0;net8.0</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<LangVersion>10.0</LangVersion>
@@ -11,7 +11,7 @@
 		<FileVersion>1.0.0.225</FileVersion>
 		<RepositoryType>https://github.com/sganhy/RingCsharp.git</RepositoryType>
 		<RepositoryUrl>https://github.com/sganhy/RingCsharp</RepositoryUrl>
-		<Description>Ring Zero</Description>
+		<Description>SchemaMgr - Ring Zero</Description>
 		<Title>SchemaMgr</Title>
 		<Version>1.0.0-beta</Version>
 		<IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
@@ -23,7 +23,7 @@
 		<AssemblyOriginatorKeyFile>SchemaMgr.snk</AssemblyOriginatorKeyFile>
 		<Copyright>Copyright © 2025</Copyright>
 		<NuGetAuditLevel>critical</NuGetAuditLevel>
-		<Product>Ring Zero</Product>
+		<Product>SchemaMgr - Ring Zero</Product>
 		<EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
 		<ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
 		<PlatformTarget>x64</PlatformTarget>
@@ -37,6 +37,12 @@
 		<ProjectReference Include="..\Ring.Sqlite\Ring.Sqlite.csproj" />
 		<ProjectReference Include="..\Ring.SqlServer\Ring.SqlServer.csproj" />
 		<ProjectReference Include="..\Ring\Ring.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.DotNet.ILCompiler" />
+		<PackageReference Include="Microsoft.NET.ILLink.Tasks" />
+		<PackageReference Include="CommandLineParser" />
 	</ItemGroup>
 
 </Project>
