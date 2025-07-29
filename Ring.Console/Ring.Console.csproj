@@ -21,10 +21,6 @@
     <PackageReference Include="Microsoft.NET.ILLink.Tasks" />
 	<PackageReference Include="Microsoft.DotNet.ILCompiler" />
 	<PackageReference Include="Npgsql" />
-    <PackageReference Include="Serilog" />
-    <PackageReference Include="Serilog.Extensions.Logging" />
-    <PackageReference Include="Serilog.Sinks.Console" />
-    <PackageReference Include="Serilog.Sinks.File" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
   </ItemGroup>
 

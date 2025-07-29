@@ -22,8 +22,9 @@ public struct Record : IEquatable<Record>
 	private const long MinIntValue = int.MinValue;
 	private const long MaxShortValue = short.MaxValue;
 	private const long MinShortValue = short.MinValue;
-	private const long MaxByteValue = sbyte.MaxValue;
 	private const long MinByteValue = sbyte.MinValue;
+	private const long MaxByteValue = sbyte.MaxValue;
+	private const char SchemaSeparator = '.';
 #pragma warning disable RCS1187 // Use constant instead of field
 	private static readonly string[] DefaultData = new string[2]; // 1 field + state info
 	private static readonly Table DefaultType = GetDefaultType();
@@ -98,6 +99,32 @@ public struct Record : IEquatable<Record>
 		for (var i=_offset;i<lastIndex;++i) span[i] = null;
 	}
 #pragma warning restore IDE0251
+
+	public string RecordType 
+	{
+		readonly get
+		{
+			// Code size: 74 (0x4a)
+			if (_type==null) return string.Empty;
+			var table = _type;
+			var schema = Global.GetSchema(table.Id);
+			var tableName = table.Name;
+			if (schema == null) ThrowRecordUnknownRecordType();
+			if (schema.Default) return tableName;
+			return schema.Name + SchemaSeparator + tableName;
+		}
+		set 
+		{
+			if (_type==null || value==null) ThrowRecordUnknownRecordType();
+			int separatorIndex = value.IndexOf(SchemaSeparator);
+			string? tableName = separatorIndex > 0 ? value[separatorIndex..] : value;
+			string? schemaName = separatorIndex > 0 ? value[..(separatorIndex - 1)] : null;
+			var table = Global.GetTable(schemaName, tableName);
+			if (table==null) ThrowRecordUnknownRecordType();
+			_type = table;
+			_data = new string?[table.RecordSize];
+		}
+	}
 
 	/// <summary>
 	/// 	Get primary key value (Field name ID)

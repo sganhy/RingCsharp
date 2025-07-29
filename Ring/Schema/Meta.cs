@@ -7,6 +7,7 @@ using Ring.Util.Builders;
 using Ring.Util.Extensions;
 using Ring.Util.Helpers;
 using System.Globalization;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text;
 using DbSchema = Ring.Schema.Models.Schema;
@@ -62,8 +63,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	internal readonly string? Value;
 	internal readonly bool Active;
 
-	internal Meta(string name)
-		: this(default, default, default, default, default, name, null, default, true) {}
+	internal Meta(string name) : this(default, default, default, default, default, name, null, default, true) {}
 	internal Meta(int id, byte objectType, int referenceId, int dataType, long flags, string name, string? description, string? value, bool active)
 	{
 		Id = id;
@@ -191,7 +191,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	internal static DbSchema GetEmptySchema(Meta meta, DatabaseProvider provider) // Code size: 90 (0x5a)
 		=> new(meta.Id, meta.Name, provider.GetDdlBuilder().GetPhysicalName(EntityType.Schema,meta.Name), meta.Description, 
 			Array.Empty<Parameter>(), Array.Empty<Lexicon>(), SchemaLoadType.Full, SchemaType.Undefined, Array.Empty<Sequence>(), 
-			Array.Empty<Table>(), Array.Empty<Table>(), Array.Empty<TableSpace>(), provider, 0, meta.Active, meta.IsEntityBaseline);
+			Array.Empty<Table>(), Array.Empty<Table>(), Array.Empty<TableSpace>(), provider, 0, false, meta.Active, meta.IsEntityBaseline);
 
 	internal static Table GetEmptyTable(Meta meta) // Code size: 106 (0x6a)
 		=> new(meta.Id, meta.Name, meta.Description, meta.Value, string.Empty,
@@ -248,7 +248,7 @@ internal readonly struct Meta : IEquatable<Meta>
 		=> IsField ? new Field(Id, Name, Description, GetFieldType(), 
 			GetFieldSize(), GetFieldDefaultValue(), GetSearchableType(), IsEntityBaseline, IsFieldNotNull(), IsFieldMultilingual(), Active) : null;
 
-	internal static DbSchema? ToSchema(Meta[] schema, DatabaseProvider provider, SchemaType type = SchemaType.Static, SchemaLoadType loadType = SchemaLoadType.Full)
+	internal static DbSchema? ToSchema(Meta[] schema, DatabaseProvider provider, SchemaType type = SchemaType.Static, SchemaLoadType loadType = SchemaLoadType.Full, bool isDefault = false)
 	{
 		// sort ASC by reference_id, name
 		Array.Sort(schema, (x, y) => MetaSchemaComparer(x, y));
@@ -272,8 +272,8 @@ internal readonly struct Meta : IEquatable<Meta>
 
 			// build schema to result
 			var result = new DbSchema(meta.Value.Id, metaValue.Name, ddlBuilder.GetPhysicalName(EntityType.Schema, metaValue.Name), 
-				metaValue.Description, parameters, lexicons.ToArray(), loadType, type, sequences.ToArray(), tableById.ToArray(), 
-				tableByName.ToArray(), tableSpaces.ToArray(), provider, tableCount + mtmCount, metaValue.Active, metaValue.IsEntityBaseline);
+				metaValue.Description, parameters, lexicons.ToArray(), loadType, type, sequences.ToArray(), tableById.ToArray(), tableByName.ToArray(), 
+				tableSpaces.ToArray(), provider, tableCount + mtmCount, isDefault, metaValue.Active, metaValue.IsEntityBaseline);
 
 			LoadRelations(result, schema, mtmCount);
 

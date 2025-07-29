@@ -3,10 +3,6 @@
 using Ring.Data;
 using Ring.Schema.Builders;
 using Ring.Schema.Enums;
-using Serilog;
-using Serilog.Events;
-using Serilog.Extensions.Logging;
-using Serilog.Formatting.Json;
 using Ring.Schema.Extensions;
 using System.Diagnostics;
 using System.Globalization;
@@ -14,6 +10,7 @@ using System.Globalization;
 int op = 10;
 var tests = op.ToString("X2", CultureInfo.InvariantCulture); 
 
+/*
 var logger = new LoggerConfiguration()
                           // add console as logging target
                           .WriteTo.Console(outputTemplate: "{Timestamp:HH:mm:ss} [{Level}] [{SourceContext}] {Message}{NewLine}{Exception}")
@@ -38,7 +35,7 @@ Log.Information("Car2: {@car}");
 Log.Warning("Warning accrued at {now}", DateTime.Now);
 Log.Error("Error accrued at {now}", DateTime.Now);
 Log.Fatal("Problem with car car accrued at {now}", DateTime.Now);
-
+*/
 // call difference trougth interface and and base class
 var builder = new SchemaBuilder();
 var config = new Configuration() { DefaultSchema = "public", MaxConnectionPoolSize = 20 };
@@ -52,7 +49,7 @@ testh.Sort();
 
 var POSTGRE_CONN_STRING1 = "User ID=postgres; Password=sa;Host=localhost;Port=5432;Database=postgres; Pooling=false;";
 
-var configuration = new Configuration { ConnectionString = POSTGRE_CONN_STRING1, LoggerFactory = microsoftLoggerFactory };
+var configuration = new Configuration { ConnectionString = POSTGRE_CONN_STRING1, LoggerFactory = null };
 IRingConnection conn = new Ring.PostgreSQL.Connection(configuration);
 conn.Open();
 

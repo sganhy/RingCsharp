@@ -1588,6 +1588,24 @@ public sealed class RecordTest : BaseTest
         Assert.True(result);
     }
 
+
+    [Fact]
+    public void RecordType_GetValueFromDefaultSchema_book()
+    {
+        // arrange 
+        var tableBook = _schema.GetTable("book");
+        Global.SetDefaultSchema(_schema);
+        Global.AddSchema(_schema);
+        Assert.NotNull(tableBook);
+        var rcd = new Record(tableBook);
+
+        // act 
+        var result = rcd.RecordType;
+
+        // assert
+        Assert.NotNull(result);
+    }
+
     private string?[] GetBucket(Table table, int recordCount, int maxStringSize)
     {
         var bucket = new string?[table.RecordSize * recordCount]; // 15 records 
