@@ -100,14 +100,14 @@ public struct Record : IEquatable<Record>
 	}
 #pragma warning restore IDE0251
 
-	public string RecordType 
+	public string? RecordType 
 	{
 		readonly get
 		{
-			// Code size: 74 (0x4a)
-			if (_type==null) return string.Empty;
+			// Code size: 70 (0x46)
+			if (_type==null) return null;
 			var table = _type;
-			var schema = Global.GetSchema(table.Id);
+			var schema = Global.GetSchema(table.SchemaId);
 			var tableName = table.Name;
 			if (schema == null) ThrowRecordUnknownRecordType();
 			if (schema.Default) return tableName;
@@ -115,14 +115,22 @@ public struct Record : IEquatable<Record>
 		}
 		set 
 		{
-			if (_type==null || value==null) ThrowRecordUnknownRecordType();
-			int separatorIndex = value.IndexOf(SchemaSeparator);
-			string? tableName = separatorIndex > 0 ? value[separatorIndex..] : value;
-			string? schemaName = separatorIndex > 0 ? value[..(separatorIndex - 1)] : null;
-			var table = Global.GetTable(schemaName, tableName);
-			if (table==null) ThrowRecordUnknownRecordType();
-			_type = table;
-			_data = new string?[table.RecordSize];
+			// Code size: 122 (0x7a)
+			if (value != null)
+			{
+				int separatorIndex = value.IndexOf(SchemaSeparator);
+				string? tableName = separatorIndex > 0 ? value[(separatorIndex+1)..] : value;
+				string? schemaName = separatorIndex > 0 ? value[..separatorIndex] : null;
+				var table = Global.GetTable(schemaName, tableName);
+				if (table == null) ThrowRecordUnknownRecordType();
+				_type = table;
+				_data = new string?[table.RecordSize];
+			}
+			else 
+			{
+				_type = DefaultType;
+				_data = DefaultData;
+			}
 		}
 	}
 
@@ -245,41 +253,6 @@ public struct Record : IEquatable<Record>
 #pragma warning restore RCS1003
 	}
 
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private void SetField(string name, long value, FieldType fieldType)
-	{
-		// Code size: 277 (0x115) - no callvirt
-		if (_type.Id == -1) ThrowRecordUnknownRecordType();
-		var fieldId = _type.GetFieldIndex(name);
-		if (fieldId == -1) ThrowRecordUnknownFieldName(name);
-		var type = _type.Fields[fieldId].Type;
-		switch (type)
-		{
-			case FieldType.Long:
-				SetData(fieldId, value.ToString(DefaultCulture));
-				break;
-			case FieldType.Int:
-				if (value <= MaxIntValue && value >= MinIntValue) SetData(fieldId, value.ToString(DefaultCulture));
-				else ThrowValueTooLarge(type);
-				break;
-			case FieldType.Short:
-				if (value <= MaxShortValue && value >= MinShortValue) SetData(fieldId, value.ToString(DefaultCulture));
-				else ThrowValueTooLarge(type);
-				break;
-			case FieldType.Byte:
-				if (value <= MaxByteValue && value >= MinByteValue) SetData(fieldId, value.ToString(DefaultCulture));
-				else ThrowValueTooLarge(type);
-				break;
-			case FieldType.Float:
-			case FieldType.Double:
-				SetFloatField(type, fieldId, value.ToString(DefaultCulture));
-				break;
-			default:
-				ThrowImpossibleConversion(fieldType, type);
-				break;
-		}
-	}
-
 	public void SetField(string name, long value) => SetField(name, value, FieldType.Long); // Code size: 10 (0xa)
 	public void SetField(string name, int value) => SetField(name, value, FieldType.Int); // Code size: 11 (0xb)
 	public void SetField(string name, short value) => SetField(name, value, FieldType.Short); // Code size: 11 (0xb)
@@ -312,18 +285,6 @@ public struct Record : IEquatable<Record>
 	}
 	public void SetField(string name, double value) => SetField(name, value, FieldType.Double); // Code size: 11 (0xb)
 	public void SetField(string name, float value) => SetField(name, value, FieldType.Float); // Code size: 12 (0xc)
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private void SetField(string name, double value, FieldType fieldType)
-	{
-		// Code size: 99 (0x63)
-		if (_type.Id == -1) ThrowRecordUnknownRecordType();
-		var fieldId = _type.GetFieldIndex(name);
-		if (fieldId == -1) ThrowRecordUnknownFieldName(name);
-		var type = _type.Fields[fieldId].Type;
-		if (type != FieldType.Float && type != FieldType.Double) ThrowImpossibleConversion(fieldType, type);
-		SetData(fieldId, value.ToString(DefaultCulture));
-	}
 
 	public void SetField<T>(string name, T value) where T : IEnumerable<byte>
 	{
@@ -433,6 +394,53 @@ public struct Record : IEquatable<Record>
 	}
 
 	#region private methods 
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private void SetField(string name, double value, FieldType fieldType)
+	{
+		// Code size: 99 (0x63)
+		if (_type.Id == -1) ThrowRecordUnknownRecordType();
+		var fieldId = _type.GetFieldIndex(name);
+		if (fieldId == -1) ThrowRecordUnknownFieldName(name);
+		var type = _type.Fields[fieldId].Type;
+		if (type != FieldType.Float && type != FieldType.Double) ThrowImpossibleConversion(fieldType, type);
+		SetData(fieldId, value.ToString(DefaultCulture));
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private void SetField(string name, long value, FieldType fieldType)
+	{
+		// Code size: 277 (0x115) - no callvirt
+		if (_type.Id == -1) ThrowRecordUnknownRecordType();
+		var fieldId = _type.GetFieldIndex(name);
+		if (fieldId == -1) ThrowRecordUnknownFieldName(name);
+		var type = _type.Fields[fieldId].Type;
+		switch (type)
+		{
+			case FieldType.Long:
+				SetData(fieldId, value.ToString(DefaultCulture));
+				break;
+			case FieldType.Int:
+				if (value <= MaxIntValue && value >= MinIntValue) SetData(fieldId, value.ToString(DefaultCulture));
+				else ThrowValueTooLarge(type);
+				break;
+			case FieldType.Short:
+				if (value <= MaxShortValue && value >= MinShortValue) SetData(fieldId, value.ToString(DefaultCulture));
+				else ThrowValueTooLarge(type);
+				break;
+			case FieldType.Byte:
+				if (value <= MaxByteValue && value >= MinByteValue) SetData(fieldId, value.ToString(DefaultCulture));
+				else ThrowValueTooLarge(type);
+				break;
+			case FieldType.Float:
+			case FieldType.Double:
+				SetFloatField(type, fieldId, value.ToString(DefaultCulture));
+				break;
+			default:
+				ThrowImpossibleConversion(fieldType, type);
+				break;
+		}
+	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private void SetStringField(int fieldSize, int fieldId, string value)

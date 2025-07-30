@@ -3,6 +3,7 @@ using Ring.Schema.Builders;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
+using System;
 using System.Runtime.CompilerServices;
 using DbSchema = Ring.Schema.Models.Schema;
 
@@ -10,39 +11,112 @@ namespace Ring;
 
 internal static class Global
 {
+    private readonly static int MaxNumberOfSchema = 4096;
     private readonly static SchemaBuilder _schemaBuilder = new SchemaBuilder();
+    private readonly static object _syncRoot = new object();
+    private static int _currentMaxNumberOfSchema;
     private static DbSchema? _metaSchema;
     private static DbSchema? _defaultSchema;
     private static int _maxSchemaId = 0;
-    private static bool _initialized = false;
-    private static DbSchema[] _schemas = new DbSchema[2048];
+    private static bool _initialized;
+    private static DbSchema?[] _schemas = Array.Empty<DbSchema>();
+    private static (string,int)[] _schemaMappers = Array.Empty<(string, int)>(); // (schemaName, schemaId)
+    private static int _schemaCount; // current number of schema
 
-    internal static void Start(string schemaName, Type connectionType, string connectionString,DatabaseProvider provider, 
-        int maxConnPoolSize=3)
+    internal static void Init(int maxNumberOfSchema)
     {
-        //_metaSchema = _schemaBuilder.GetMeta(schemaName, provider, maxConnPoolSize, connectionString);
-        _metaSchema.Connections.Init();
-        var tblBuilder = new TableBuilder();
-        /*
-        _metaSchema.SelectQuery(tblBuilder.GetCatalog(EntityType.Table, provider),
-            "select table_schema, table_name from information_schema.tables", Array.Empty<IDbDataParameter>());
-        */
-        _defaultSchema = _metaSchema;
+        if (_initialized) return;
+        _schemaCount = 0; 
+        _currentMaxNumberOfSchema = maxNumberOfSchema;
+        if (maxNumberOfSchema > MaxNumberOfSchema) _currentMaxNumberOfSchema = MaxNumberOfSchema;
+        _schemas = new DbSchema[_currentMaxNumberOfSchema];
+        _initialized = true;
     }
 
-    internal static void SetDefaultSchema(DbSchema schema) => _defaultSchema = schema; // Code size: 7 (0x7)
-    internal static void AddSchema(DbSchema schema) => _schemas[schema.Id] = schema;
-    internal static DbSchema DefaultSchema => _defaultSchema ?? Meta.GetEmptySchema(new Meta(string.Empty),DatabaseProvider.Undefined); // Code size: 27 (0x1b)
+    internal static void SetDefaultSchema(DbSchema schema)
+    {
+        // Code size: 55 (0x37)
+        lock (_syncRoot)
+        {
+            if (schema.Id == (schema?.Id ?? -1)) _defaultSchema = schema; // assign schema if necessary
+        }
+    }
+
+    internal static void LoadSchema(DbSchema schema)
+    {
+        // Code size: 246 (0xf6)
+        lock (_syncRoot)
+        {
+            _defaultSchema ??= schema;
+            var currSchema = _schemas[schema.Id];
+            
+            // new schema ??
+            if (currSchema == null)
+            {
+                // prepare new mapper
+                var mappingCount = _schemaCount + 1;
+                var newMapping = new (string, int)[mappingCount];
+                var index = 0;
+                var maxSchemaCount = _schemas.Length;
+
+                // copy as fast as possible mapping
+                for (var i = 0; i < maxSchemaCount; ++i)
+                {
+                    var sch = _schemas[i];
+                    if (sch != null)
+                    {
+                        newMapping[index] = (sch.Name, sch.Id);
+                        ++index;
+                    }
+                }
+                newMapping[index] = (schema.Name, schema.Id); // add new one to last position
+                // sort mapper
+                Array.Sort(newMapping, (x, y) => string.CompareOrdinal(x.Item1,y.Item1));
+
+                // assign new mapper
+                _schemaMappers = newMapping;
+            }
+            _schemas[schema.Id] = schema;
+            
+            // new schema ??
+            if (currSchema == null)
+            {
+                ++_schemaCount;
+            }
+        }
+    }
+    internal static DbSchema DefaultSchema => _defaultSchema ?? Meta.GetEmptySchema(new Meta(string.Empty),DatabaseProvider.SqlLite); // Code size: 27 (0x1b) - DatabaseProvider cannot be undefined !!!!
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static DbSchema? GetSchema(int id) => _schemas[id];
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static Table? GetTable(string? schemaName, string tableName) => schemaName == null ? _defaultSchema?.GetTable(tableName) : GetSchema(schemaName)?.GetTable(schemaName); // Code size: 40 (0x28)
-
+    internal static DbSchema? GetSchema(int id)
+    {
+        // Code size: 8 (0x8)
+        var schList = _schemas;
+        return schList[id];
+    }
     internal static DbSchema? GetSchema(string name)
     {
+        // Code size: 99 (0x63)
+        var span = new ReadOnlySpan<(string, int)>(_schemaMappers);
+        int indexerLeft = 0, indexerRight = span.Length - 1;
+        while (indexerLeft <= indexerRight)
+        {
+            var indexerMiddle = indexerLeft + indexerRight;
+            indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
+            var indexerCompare = string.CompareOrdinal(name, span[indexerMiddle].Item1);
+            if (indexerCompare == 0) return GetSchema(span[indexerMiddle].Item2);
+            if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
+            else indexerRight = indexerMiddle - 1;
+        }
         return null;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static Table? GetTable(string? schemaName, string tableName)
+    {
+        // Code size: 44 (0x2c) - DatabaseProvider cannot be undefined !!!!
+        var schema = (schemaName != null) ? GetSchema(schemaName) ?? Meta.GetEmptySchema(new Meta(string.Empty), DatabaseProvider.SqlLite) : DefaultSchema;  
+        return schema.GetTable(tableName);
     }
 
 }

@@ -24,8 +24,9 @@ public sealed class RecordTest : BaseTest
     {
         var metaList = GetSchema1();
         var meta = new Meta("Test");
-        _schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql) ??
+        _schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql,SchemaType.Static,SchemaLoadType.Full,true) ??
                     Meta.GetEmptySchema(meta, DatabaseProvider.PostgreSql);
+        Global.Init(64);
     }
 
     [Fact]
@@ -1595,7 +1596,7 @@ public sealed class RecordTest : BaseTest
         // arrange 
         var tableBook = _schema.GetTable("book");
         Global.SetDefaultSchema(_schema);
-        Global.AddSchema(_schema);
+        Global.LoadSchema(_schema);
         Assert.NotNull(tableBook);
         var rcd = new Record(tableBook);
 
@@ -1604,6 +1605,26 @@ public sealed class RecordTest : BaseTest
 
         // assert
         Assert.NotNull(result);
+        Assert.Equal(tableBook.Name, result);
+    }
+
+    [Fact]
+    public void RecordType_SetValue_SchemaNameAndArmor()
+    {
+        // arrange 
+        var tableBook = _schema.GetTable("armor");
+        Global.SetDefaultSchema(_schema);
+        Global.LoadSchema(_schema);
+        Assert.NotNull(tableBook);
+        var rcd = new Record();
+
+        // act 
+        rcd.RecordType = "RpgSheet.armor";
+        var result = rcd.RecordType;
+
+        // assert
+        Assert.NotNull(result);
+        Assert.Equal("armor", result);
     }
 
     private string?[] GetBucket(Table table, int recordCount, int maxStringSize)
