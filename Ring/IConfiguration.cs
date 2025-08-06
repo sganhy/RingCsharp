@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 
-namespace Ring.Data;
+namespace Ring;
 
 public interface IConfiguration
 {
@@ -29,5 +29,10 @@ public interface IConfiguration
     /// Default tablespace for meta tables.
     /// </summary>
     string? DefaultTableStorage { get; }
+
+    /// <summary>
+    /// Max number of schema loaded (cannot be higher than 4096 and less than 16)
+    /// </summary>
+    int MaxNumberOfSchema { get; }
 
 }

@@ -67,10 +67,10 @@ public struct Record : IEquatable<Record>
 	internal readonly string? this[int i]
 	{
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		get => _data[i + _offset];
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		set => _data[i + _offset] = value;
-	}
+		get => _data[i + _offset]; // Code size: 16 (0x10)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+		set => _data[i + _offset] = value; // Code size: 17 (0x11)
+    }
 
 	internal readonly string?[] Data => _data;
 #pragma warning disable RCS1085 // Use auto-implemented property
@@ -110,7 +110,7 @@ public struct Record : IEquatable<Record>
 			var schema = Global.GetSchema(table.SchemaId);
 			var tableName = table.Name;
 			if (schema == null) ThrowRecordUnknownRecordType();
-			if (schema.Default) return tableName;
+			if (Global.IsSchemaDefault(schema)) return tableName;
 			return schema.Name + SchemaSeparator + tableName;
 		}
 		set 
@@ -137,13 +137,12 @@ public struct Record : IEquatable<Record>
 	/// <summary>
 	/// 	Get primary key value (Field name ID)
 	/// </summary>
-	internal readonly long GetField() // Code size: 52 (0x34)
-		=> long.Parse(_data[_type.Columns[0].RecordIndex + _offset] ?? DefaultPrimaryKeyValue, DefaultCulture);
+	internal readonly long GetField() => long.Parse(_data[_type.Columns[0].RecordIndex + _offset] ?? DefaultPrimaryKeyValue, DefaultCulture); // Code size: 52 (0x34)
 
-	/// <summary>
-	/// 	GetField methods
-	/// </summary>
-	public readonly string? GetField(string name)
+    /// <summary>
+    /// 	GetField methods
+    /// </summary>
+    public readonly string? GetField(string name)
 	{
 		// Code size: 83 (0x53)
 		if (_type.Id == -1) ThrowRecordUnknownRecordType();

@@ -13,6 +13,7 @@ using Ring.Data.Models;
 using Bogus;
 using Xunit.Abstractions;
 using Bogus.DataSets;
+using Ring.Data;
 
 namespace Ring.Tests.Data;
 
@@ -24,9 +25,10 @@ public sealed class RecordTest : BaseTest
     {
         var metaList = GetSchema1();
         var meta = new Meta("Test");
-        _schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql,SchemaType.Static,SchemaLoadType.Full,true) ??
-                    Meta.GetEmptySchema(meta, DatabaseProvider.PostgreSql);
-        Global.Init(64);
+        _schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql,SchemaType.Static,SchemaLoadType.Full) ?? Meta.GetEmptySchema(meta, DatabaseProvider.PostgreSql);
+        var config = new Configuration();
+        config.MaxNumberOfSchema = 2048;
+        Global.Init(config);
     }
 
     [Fact]
@@ -1609,7 +1611,7 @@ public sealed class RecordTest : BaseTest
     }
 
     [Fact]
-    public void RecordType_SetValue_SchemaNameAndArmor()
+    public void RecordType_SetValue_Armor()
     {
         // arrange 
         var tableBook = _schema.GetTable("armor");
@@ -1625,6 +1627,7 @@ public sealed class RecordTest : BaseTest
         // assert
         Assert.NotNull(result);
         Assert.Equal("armor", result);
+        Assert.Equal(18, rcd.Table.RecordSize);
     }
 
     private string?[] GetBucket(Table table, int recordCount, int maxStringSize)

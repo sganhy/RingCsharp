@@ -21,15 +21,13 @@ internal sealed class Schema : BaseEntity
 	internal readonly IDqlBuilder DqlBuiler;
 	internal readonly int ObjectCount;            // table count + mtm count + view count
 	internal readonly string PhysicalName;        // table count + mtm count + view count
-	internal readonly bool Default;               // is default schema
 
 	/// <summary>
 	/// 	Ctor
 	/// </summary>
 	internal Schema(int id, string name, string physicalName, string? description, Parameter[] parameters, Lexicon[] lexicons, SchemaLoadType loadType,
 		SchemaType type, Sequence[] sequences, Table[] tablesById, Table[] tablesByName, TableSpace[] tableSpaces, DatabaseProvider provider,
-		int objectCount, bool isDefault, bool active, bool baseline)
-		: base(id, name, description, baseline, active)
+		int objectCount, bool active, bool baseline) : base(id, name, description, baseline, active)
 	{
 		Connections = new ConnectionPool(id, parameters.GetMinPoolSize(id), parameters.GetMaxPoolSize(id),
 		parameters.GetDbConnectionString(id));
@@ -47,6 +45,5 @@ internal sealed class Schema : BaseEntity
 		DmlBuiler = provider.GetDmlBuilder();
 		DdlBuiler = provider.GetDdlBuilder();
 		DqlBuiler = provider.GetDqlBuilder();
-		Default = isDefault;
 	}
 }
