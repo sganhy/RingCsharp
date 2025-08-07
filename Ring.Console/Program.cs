@@ -51,7 +51,7 @@ testh.Sort();
 var POSTGRE_CONN_STRING1 = "User ID=postgres; Password=sa;Host=localhost;Port=5432;Database=postgres; Pooling=false;";
 
 var configuration = new Configuration { ConnectionString = POSTGRE_CONN_STRING1, LoggerFactory = null };
-IConnection conn = new Ring.PostgreSQL.Connection(configuration);
+IConnection conn = new Ring.PostgreSQL.Connection(1, configuration);
 conn.Open();
 
 Process proc = Process.GetCurrentProcess();

@@ -1,13 +1,12 @@
 ﻿using Ring.Data.Models;
-using Ring.Schema.Enums;
 using System.Data;
 
 namespace Ring;
 
 public interface IConnection : IDisposable
 {
-    int ProviderId();
-    void BeginTransaction();
+	int ProviderId();
+	void BeginTransaction();
 	void Commit();
 	void Rollback();
 	int Id { get; }
@@ -19,7 +18,7 @@ public interface IConnection : IDisposable
 	Task OpenAsync(CancellationToken cancellationToken);
 	void Close();
 	Task CloseAsync(CancellationToken cancellationToken);
-	IConnection CreateInstance();
+	IConnection CreateInstance(int id);
 	string?[] Execute(in RetrieveQuery query);
 	long Execute(in AlterQuery query);
 	long Execute(in SaveQuery query);

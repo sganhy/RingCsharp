@@ -8,9 +8,11 @@ internal sealed class ConnectionPool
 	internal int Cursor;
 	internal int SwapIndex;
 	internal bool Disposed;
-	internal int LastIndex;
 	internal ushort PutRequestCount;
-	internal long CreationCount; // db connection creation count 
+	internal int ConnectionCount;
+	internal long CreationCount;
+	internal long DestroyCount;
+	internal readonly int LastIndex;
 	internal readonly IConnection[] Connections;
 	internal readonly string ConnectionString;
 	internal readonly object SyncRoot;
@@ -22,7 +24,9 @@ internal sealed class ConnectionPool
 	internal ConnectionPool(int id, int minPoolSize, int maxPoolSize, string connectionString)
 	{
 		Id = id;
+		ConnectionCount = 0;
 		CreationCount = 0L;
+		DestroyCount = 0L;
 		SyncRoot = new object();
 		MinConnection = minPoolSize;
 		MaxConnection = maxPoolSize;
