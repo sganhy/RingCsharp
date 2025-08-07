@@ -1,6 +1,5 @@
 ﻿using Npgsql;
 using Microsoft.Extensions.Logging;
-using Ring.Data;
 using Ring.Data.Extensions;
 using Ring.Data.Models;
 using Ring.Util.Builders;
@@ -18,7 +17,7 @@ using Ring.Schema.Extensions;
 
 namespace Ring.PostgreSQL;
 
-public sealed class Connection : IRingConnection
+public sealed class Connection : IConnection
 {
     private readonly static Dictionary<string, int> _connectionCounts = new(); // <connectionString.ToUpper(), connectionCount>
     private readonly static string ActionMessage = "{Message}";
@@ -111,7 +110,7 @@ public sealed class Connection : IRingConnection
         await _connection.CloseAsync().ConfigureAwait(false);
     }
 
-    public IRingConnection CreateNewInstance() => new Connection(_configuration);
+    public IConnection CreateInstance() => new Connection(_configuration);
 
     public void Dispose()
     {
@@ -306,6 +305,8 @@ public sealed class Connection : IRingConnection
         }
     }
 
+    public int ProviderId() => (int)DatabaseProvider.PostgreSql;
+
     #region private methods 
 
     private static string[] GetBindVariable()
@@ -463,11 +464,10 @@ public sealed class Connection : IRingConnection
         //LogDdlException(ex, query);
     }
 
-    private void LogOperationPerformed(AlterQuery query, TimeSpan ts) =>
-        _logOperationPerformed(_logger, string.Empty, null);
+    private void LogOperationPerformed(AlterQuery query, TimeSpan ts) => _logOperationPerformed(_logger, string.Empty, null);
 
-    private void LogOperationPerformed(SaveQuery query, TimeSpan ts) =>
-        _logOperationPerformed(_logger, string.Empty, null);
+    private void LogOperationPerformed(SaveQuery query, TimeSpan ts) => _logOperationPerformed(_logger, string.Empty, null);
+
 
     #endregion
 }

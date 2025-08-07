@@ -159,7 +159,7 @@ public readonly struct BulkSave : IBulkSave
 	{	
 	}
 
-	internal void Save(IRingConnection connection, bool noTransaction=false)
+	internal void Save(IConnection connection, bool noTransaction=false)
 	{
         // Code size: 77 (0x4d)
         var queryCount = _info.Queries.Count;
@@ -193,13 +193,13 @@ public readonly struct BulkSave : IBulkSave
 	private static void ThrowRecordUnknownRecordType() =>
 		throw new ArgumentException(ResourceHelper.GetErrorMessage(ResourceType.RecordUnkownRecordType));
 
-	private void GenerateId(IRingConnection connection)
+	private void GenerateId(IConnection connection)
 	{ 
 
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private void SaveWithoutTransactions(IRingConnection connection)
+	private void SaveWithoutTransactions(IConnection connection)
 	{
 		// Code size: 69 (0x45)
 		foreach (var query in _info.Queries.AsReadOnlySpan())
@@ -212,7 +212,7 @@ public readonly struct BulkSave : IBulkSave
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private void SaveWithTransaction(IRingConnection connection)
+	private void SaveWithTransaction(IConnection connection)
 	{
         // Code size: 91 (0x5b)
         connection.BeginTransaction();

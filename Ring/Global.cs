@@ -1,9 +1,7 @@
 ﻿using Ring.Schema;
-using Ring.Schema.Builders;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
-using System;
 using System.Runtime.CompilerServices;
 using DbSchema = Ring.Schema.Models.Schema;
 
@@ -11,8 +9,8 @@ namespace Ring;
 
 internal static class Global
 {
-	private readonly static int MaxNumberOfSchema = 4096;
-	private readonly static int MinNumberOfSchema = 16;
+	private readonly static int MaxSchemaBucketSize = 4096;
+	private readonly static int MinSchemaBucketSize = 16;
 	private readonly static object _syncRoot = new();
 	private static int _currentMaxNumberOfSchema;
 	private static DbSchema? _defaultSchema;
@@ -26,10 +24,10 @@ internal static class Global
 	{
 		if (_initialized) return;
 		_schemaCount = 0; 
-		_currentMaxNumberOfSchema = configuration.MaxNumberOfSchema;
-		if (_currentMaxNumberOfSchema > MaxNumberOfSchema) _currentMaxNumberOfSchema = MaxNumberOfSchema;
-		if (_currentMaxNumberOfSchema < MinNumberOfSchema) _currentMaxNumberOfSchema = MinNumberOfSchema;
-		_schemas = new DbSchema[_currentMaxNumberOfSchema];
+		_currentMaxNumberOfSchema = configuration.MaxNumberOfSchema * 4;
+		if (_currentMaxNumberOfSchema > MaxSchemaBucketSize) _currentMaxNumberOfSchema = MaxSchemaBucketSize;
+		if (_currentMaxNumberOfSchema < MinSchemaBucketSize) _currentMaxNumberOfSchema = MinSchemaBucketSize;
+		_schemas = new DbSchema[_currentMaxNumberOfSchema+1]; // @meta schema (Id=0)
 		_initialized = true;
 	}
 	internal static void SetDefaultSchema(DbSchema schema)
@@ -42,8 +40,8 @@ internal static class Global
 	}
 	internal static void LoadSchema(DbSchema schema)
 	{
-		// Code size: 255 (0xff)
-		lock (_syncRoot)
+        // Code size: 257 (0x101)
+        lock (_syncRoot)
 		{
 			_defaultSchema ??= schema;
 			var currSchema = _schemas[schema.Id];
@@ -85,15 +83,16 @@ internal static class Global
 	{
 		_schemaMappers = Array.Empty<(string, int)>();
 		_schemaCount = 0;
-		_schemas = new DbSchema[_currentMaxNumberOfSchema];
+		_schemas = new DbSchema[_currentMaxNumberOfSchema+1];
 	}
 
 	internal static DbSchema DefaultSchema => _defaultSchema ?? Meta.GetEmptySchema(new Meta(string.Empty),DatabaseProvider.SqlLite); // Code size: 27 (0x1b) - DatabaseProvider cannot be undefined !!!!
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static bool IsSchemaDefault(DbSchema schema) => ReferenceEquals(schema,_defaultSchema); // Code size: 9 (0x9)
+    internal static int MaxSchemaId() => MaxSchemaBucketSize; // Code size: 6 (0x6)
 
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static DbSchema? GetSchema(int id)
 	{
 		// Code size: 8 (0x8)

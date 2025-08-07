@@ -54,19 +54,35 @@ internal struct BulkAlter : IEquatable<BulkAlter>
 		AppendDdlCommand(AlterQueryType.CreateIndex, table, index);
 	}
 
-	
+
 	internal void AlterTableAdd(string tableName, string columnName)
 	{
-        // columnName: logical column name
-        // Code size: 51 (0x33)
-        var table = _schema.GetTable(tableName);
+		// columnName: logical column name
+		// Code size: 51 (0x33)
+		var table = _schema.GetTable(tableName);
 		if (table == null) ThrowInvalidObjectType(tableName);
 		var column = table.GetColumn(columnName);
-        if (column == null) ThrowInvalidFieldName(tableName, columnName);
-        AppendDdlCommand(AlterQueryType.AlterTableAddColumn, table, column);
+		if (column == null) ThrowInvalidFieldName(tableName, columnName);
+		AppendDdlCommand(AlterQueryType.AlterTableAddColumn, table, column);
 	}
 
-	internal readonly void Apply(IRingConnection connection)
+	internal readonly void Apply()
+	{
+        // Code size: 59 (0x3b)
+        if (_queries.Count == 0) return;
+        var connection = _schema.Connections.Get();
+        try
+        {
+            Apply(connection);
+        }
+        finally
+        {
+            // return connection immediatly
+            _schema.Connections.Put(connection);
+        }
+    }
+
+    internal readonly void Apply(IConnection connection)
 	{
 		// Code size: 91 (0x5b)
 		// sort by Type
@@ -98,9 +114,9 @@ internal struct BulkAlter : IEquatable<BulkAlter>
 
 	private void AppendDdlCommand(AlterQueryType type, Constraint constraint)
 	{
-        // Code size: 83 (0x53)
-        var table = constraint.ToTable;
-        if (type == AlterQueryType.CreateTable && constraint.Type == ConstraintType.PrimaryKey)
+		// Code size: 83 (0x53)
+		var table = constraint.ToTable;
+		if (type == AlterQueryType.CreateTable && constraint.Type == ConstraintType.PrimaryKey)
 			_queries.Add(new AlterQuery(table.Id, table, AlterQueryType.CreatePrimaryKey, _schema.DdlBuiler, null, constraint, null, 
 				GetTableSpace(table, EntityType.Constraint)));
 	}
