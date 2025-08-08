@@ -1,4 +1,4 @@
-﻿using Bogus.DataSets;
+using Bogus.DataSets;
 using Newtonsoft.Json;
 using Ring.Data.Models;
 using Ring.Schema.Enums;
