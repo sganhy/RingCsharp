@@ -1,6 +1,5 @@
 ﻿using Npgsql;
 using Microsoft.Extensions.Logging;
-using Ring.Data;
 using Ring.Data.Extensions;
 using Ring.Data.Models;
 using Ring.Util.Builders;
@@ -18,15 +17,13 @@ using Ring.Schema.Extensions;
 
 namespace Ring.PostgreSQL;
 
-public sealed class Connection : IRingConnection
+public sealed class Connection : IConnection
 {
-    private readonly static Dictionary<string, int> _connectionCounts = new(); // <connectionString.ToUpper(), connectionCount>
     private readonly static string ActionMessage = "{Message}";
     private readonly static NpgsqlParameter [] DefaultParameterArray = Array.Empty<NpgsqlParameter>();
     private readonly static CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
     private readonly static LogBuilder _logBuilder = new();
     private readonly static string?[] EmptyResult = Array.Empty<string?>();
-    private readonly static object _syncRoot = new();
     private readonly static string _ddlOperationType = nameof(AlterQueryType);
     private readonly static int BindVariableNameCacheSize = 1024;
     private readonly static object VariableValueTrue = true;
@@ -53,20 +50,14 @@ public sealed class Connection : IRingConnection
                 LoggerMessage.Define<string>(LogLevel.Information, new EventId((int)EventType.QueryPerformed, 
                     nameof(LogOperationPerformed)), ActionMessage);
 
-    public Connection(IConfiguration configuration)
+    public Connection(int id, IConfiguration configuration)
     {
         _configuration = configuration;
         _currentTransaction = null;
         _logger = _configuration.LoggerFactory.CreateLogger<Connection>();
         _informationEnabled = _logger.IsEnabled(LogLevel.Information);
         _connection = new NpgsqlConnection(_configuration.ConnectionString);
-        var key = _configuration.ConnectionString?.ToUpper(CultureInfo.InvariantCulture) ?? string.Empty;
-        lock (_syncRoot)
-        {
-            if (_connectionCounts.ContainsKey(key)) ++_connectionCounts[key];
-            else _connectionCounts.Add(key, 1);
-            _id = _connectionCounts[key];
-        }
+        _id = id;
         _creationTime = DateTime.Now;
     }
 
@@ -84,9 +75,7 @@ public sealed class Connection : IRingConnection
         }
     }
 
-#pragma warning disable RCS1085 // Use auto-implemented property
     public int Id => _id;
-#pragma warning restore RCS1085
 
     public void Open()
     {
@@ -111,7 +100,7 @@ public sealed class Connection : IRingConnection
         await _connection.CloseAsync().ConfigureAwait(false);
     }
 
-    public IRingConnection CreateNewInstance() => new Connection(_configuration);
+    public IConnection CreateInstance(int id) => new Connection(id, _configuration);
 
     public void Dispose()
     {
@@ -306,6 +295,8 @@ public sealed class Connection : IRingConnection
         }
     }
 
+    public int ProviderId() => (int)DatabaseProvider.PostgreSql;
+
     #region private methods 
 
     private static string[] GetBindVariable()
@@ -463,11 +454,10 @@ public sealed class Connection : IRingConnection
         //LogDdlException(ex, query);
     }
 
-    private void LogOperationPerformed(AlterQuery query, TimeSpan ts) =>
-        _logOperationPerformed(_logger, string.Empty, null);
+    private void LogOperationPerformed(AlterQuery query, TimeSpan ts) => _logOperationPerformed(_logger, string.Empty, null);
 
-    private void LogOperationPerformed(SaveQuery query, TimeSpan ts) =>
-        _logOperationPerformed(_logger, string.Empty, null);
+    private void LogOperationPerformed(SaveQuery query, TimeSpan ts) => _logOperationPerformed(_logger, string.Empty, null);
+
 
     #endregion
 }

@@ -6,9 +6,6 @@ using Ring.Util.Models;
 
 namespace Ring.Schema.Builders;
 
-
-
-
 internal sealed class DocumentBuilder
 {
     internal string FilePath { get; set; }
@@ -21,7 +18,7 @@ internal sealed class DocumentBuilder
     private long _jobId = -1L;
     private DatabaseProvider _provider = DatabaseProvider.Undefined;
     private string _schemaName = string.Empty;
-    private readonly List<Log> _logs = new List<Log>();
+    private readonly List<Log> _logs = new();
     private readonly LogBuilder _logBuilder = new LogBuilder();
 
     /// <summary>

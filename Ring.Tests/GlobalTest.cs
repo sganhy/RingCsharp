@@ -17,7 +17,7 @@ public sealed class GlobalTest : BaseTest
         _schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql, SchemaType.Static, SchemaLoadType.Full) ?? Meta.GetEmptySchema(meta, DatabaseProvider.PostgreSql);
         var config = new Configuration
         {
-            MaxNumberOfSchema = 4096
+            MaxNumberOfSchema = Global.MaxSchemaId()
         };
         Global.Init(config);
     }
@@ -34,10 +34,6 @@ public sealed class GlobalTest : BaseTest
             lstOfName.Add(schemaName);
             var schema = new Meta(i+1, (byte)EntityType.Schema, 0, 0, 0L, schemaName, _faker.Random.String(), null, true);
             var schemaObj = Meta.GetEmptySchema(schema, DatabaseProvider.SqlServer);
-            if (i == 98)
-            {
-                Console.WriteLine("44411");
-            }
             Global.LoadSchema(schemaObj);
         }
         var j = 1;
@@ -55,4 +51,27 @@ public sealed class GlobalTest : BaseTest
         Global.Clear();
     }
 
+
+    [Fact]
+    public void GetSchema_AnonymousId_SchemaObject()
+    {
+        // arrange 
+        var maxSchemaId = Global.MaxSchemaId();
+        for (var i = 0; i <= maxSchemaId; ++i)
+        {
+            var schema = new Meta(i, (byte)EntityType.Schema, 0, 0, 0L, _faker.Random.String(), _faker.Random.String(), null, true);
+            var schemaObj = Meta.GetEmptySchema(schema, DatabaseProvider.SqlServer);
+            Global.LoadSchema(schemaObj);
+        }
+        for (var i = 0; i <= maxSchemaId; ++i)
+        {
+            // act 
+            var sch = Global.GetSchema(i);
+
+            // assert
+            Assert.NotNull(sch);
+            Assert.Equal(i, sch.Id);
+        }
+        Global.Clear();
+    }
 }

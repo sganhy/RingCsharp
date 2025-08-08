@@ -1,23 +1,24 @@
 ﻿using Ring.Data.Models;
 using System.Data;
 
-namespace Ring.Data;
+namespace Ring;
 
-public interface IRingConnection : IDisposable
+public interface IConnection : IDisposable
 {
-    void BeginTransaction();
+	int ProviderId();
+	void BeginTransaction();
 	void Commit();
-    void Rollback();
-    int Id { get; }
+	void Rollback();
+	int Id { get; }
 	string ConnectionString { get; }
 	DateTime CreationTime { get; }
 	DateTime? LastConnectionTime { get; }
-    ConnectionState State { get; }
+	ConnectionState State { get; }
 	void Open();
 	Task OpenAsync(CancellationToken cancellationToken);
 	void Close();
 	Task CloseAsync(CancellationToken cancellationToken);
-	IRingConnection CreateNewInstance();
+	IConnection CreateInstance(int id);
 	string?[] Execute(in RetrieveQuery query);
 	long Execute(in AlterQuery query);
 	long Execute(in SaveQuery query);

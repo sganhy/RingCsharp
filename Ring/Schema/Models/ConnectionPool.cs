@@ -1,6 +1,4 @@
-﻿using Ring.Data;
-
-namespace Ring.Schema.Models;
+﻿namespace Ring.Schema.Models;
 
 internal sealed class ConnectionPool
 {
@@ -9,29 +7,36 @@ internal sealed class ConnectionPool
 	internal readonly int MaxConnection; // min 1
 	internal int Cursor;
 	internal int SwapIndex;
-	internal int LastIndex;
+	internal bool Disposed;
 	internal ushort PutRequestCount;
-	internal long CreationCount; // db connection creation count 
-	internal readonly IRingConnection[] Connections;
+	internal int ConnectionCount;
+	internal long CreationCount;
+	internal long DestroyCount;
+	internal readonly int LastIndex;
+	internal readonly IConnection[] Connections;
 	internal readonly string ConnectionString;
 	internal readonly object SyncRoot;
 
 
 	/// <summary>
-	///     Ctor
+	/// 	Ctor
 	/// </summary>
 	internal ConnectionPool(int id, int minPoolSize, int maxPoolSize, string connectionString)
 	{
 		Id = id;
+		ConnectionCount = 0;
 		CreationCount = 0L;
+		DestroyCount = 0L;
 		SyncRoot = new object();
 		MinConnection = minPoolSize;
 		MaxConnection = maxPoolSize;
-		Connections = new IRingConnection[maxPoolSize];
-		Cursor = minPoolSize - 1;     // cursor on min last element 
+		Connections = new IConnection[maxPoolSize];
+		Cursor = minPoolSize - 1; // cursor on min last element
 		LastIndex = maxPoolSize - 1;
 		SwapIndex = 0;
 		ConnectionString = connectionString;
 		PutRequestCount = 0;
+		Disposed = false;
 	}
+
 }

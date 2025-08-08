@@ -58,6 +58,19 @@ public sealed class IntExtensionsTest : BaseTest
     }
 
     [Fact]
+    public void ToDatabaseProvider_AllExistingEnumId_Enum()
+    {
+        // arrange 
+        foreach (var provider in Enum.GetValues<DatabaseProvider>())
+        {
+            // act 
+            var databaseProviderResult = IntExtensions.ToDatabaseProvider((int)provider);
+            // assert 
+            Assert.Equal(provider, databaseProviderResult);
+        }
+    }
+
+    [Fact]
     public void ToTableType_AllExistingEnumId_Enum()
     {
         // arrange 

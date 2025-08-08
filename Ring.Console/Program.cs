@@ -1,5 +1,6 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
+using Ring;
 using Ring.Data;
 using Ring.Schema.Builders;
 using Ring.Schema.Enums;
@@ -50,7 +51,7 @@ testh.Sort();
 var POSTGRE_CONN_STRING1 = "User ID=postgres; Password=sa;Host=localhost;Port=5432;Database=postgres; Pooling=false;";
 
 var configuration = new Configuration { ConnectionString = POSTGRE_CONN_STRING1, LoggerFactory = null };
-IRingConnection conn = new Ring.PostgreSQL.Connection(configuration);
+IConnection conn = new Ring.PostgreSQL.Connection(1, configuration);
 conn.Open();
 
 Process proc = Process.GetCurrentProcess();

@@ -65,10 +65,34 @@ internal static class IntExtensions
 	private const int RelationTypeMtoId = (int)RelationType.Mto;
 	private const int RelationTypeOtofId = (int)RelationType.Otof;
 
+
+	// database provider
+	private const int ProviderOracleId = (int)DatabaseProvider.Oracle;
+	private const int ProviderPostgreSqlId = (int)DatabaseProvider.PostgreSql;
+	private const int ProviderMySqlId = (int)DatabaseProvider.MySql;
+	private const int ProviderInfluxDbId = (int)DatabaseProvider.InfluxDb;
+	private const int ProviderSqlServerId = (int)DatabaseProvider.SqlServer;
+	private const int ProviderSqlLiteId = (int)DatabaseProvider.SqlLite;
+
 	#endregion 
 
 	// cache of Ring.Schema.Enums.ParameterType
 	private static readonly Dictionary<int, ParameterType> ParameterTypeEnumsId = GetParameterTypeId();
+
+	internal static DatabaseProvider ToDatabaseProvider(this int providerId)
+	{
+		// Code size: 57 (0x39)
+		switch (providerId)
+		{
+			case ProviderOracleId: return DatabaseProvider.Oracle;
+			case ProviderPostgreSqlId: return DatabaseProvider.PostgreSql;
+			case ProviderMySqlId: return DatabaseProvider.MySql;
+			case ProviderInfluxDbId: return DatabaseProvider.InfluxDb;
+			case ProviderSqlServerId: return DatabaseProvider.SqlServer;
+			case ProviderSqlLiteId: return DatabaseProvider.SqlLite;
+		}
+		return DatabaseProvider.Undefined;
+	}
 
 	/// <summary>
 	/// 	Casting from int to TableType
@@ -126,8 +150,8 @@ internal static class IntExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static SearchableType ToSearchableType(this int value)
 	{
-        // Code size: 16 (0x10)
-        switch (value)
+		// Code size: 16 (0x10)
+		switch (value)
 		{
 			case FieldStIgnoreCaseId: return SearchableType.IgnoreCase;
 			case FieldStIngoreCaseAndDiacriticsId: return SearchableType.IgnoreCaseAndDiacritics;
@@ -159,9 +183,9 @@ internal static class IntExtensions
 
 	internal static EntityType ToEntityType(this int entityType) 
 	{
-        // Code size: 143 (0x8f)
-        // avoid boxing operation
-        switch (entityType)
+		// Code size: 143 (0x8f)
+		// avoid boxing operation
+		switch (entityType)
 		{
 			case TableId: return EntityType.Table;
 			case FieldId: return EntityType.Field;
