@@ -1,6 +1,5 @@
 using Ring.Schema.Enums;
 using Ring.Schema.Models;
-using System;
 using System.Data;
 using System.Runtime.CompilerServices;
 
@@ -8,23 +7,30 @@ namespace Ring.Schema.Extensions;
 
 internal static class ConnectionPoolExtensions
 {
-
 	internal static Task InitAsync(this ConnectionPool connectionPool, IConnection initialConnection, CancellationToken cancellationToken=default)
 	{
-		// Code size: 57 (0x39)
+		// Code size: 62 (0x3e)
 		Initialize(connectionPool, initialConnection); // sync
 		var minPoolSize = connectionPool.MinConnection;
 		var tasks = new Task [minPoolSize];
-		for (var i = 0; i < minPoolSize; ++i) tasks[i]=connectionPool.Connections[i].OpenAsync(cancellationToken);
+		for (var i = 0; i < minPoolSize; ++i)
+		{
+			var conn = connectionPool.Connections[i];
+			if (conn != null) tasks[i]= conn.OpenAsync(cancellationToken);
+		}
 		return Task.WhenAll(tasks);
 	}
 
 	internal static void Init(this ConnectionPool connectionPool, IConnection initialConnection)
 	{
-		// Code size: 40 (0x28)
+		// Code size: 46 (0x2e)
 		Initialize(connectionPool, initialConnection); // sync
 		var minPoolSize = connectionPool.MinConnection;
-		for (var i = 0; i < minPoolSize; ++i) connectionPool.Connections[i].Open(); // open all connection 
+		for (var i = 0; i < minPoolSize; ++i)
+		{
+			var conn = connectionPool.Connections[i];
+			conn?.Open();
+		}
 	}
 
 	/// <summary>
@@ -40,7 +46,7 @@ internal static class ConnectionPoolExtensions
 		{
 			var result = connectionPool.Connections[connectionPool.Cursor];
 			--connectionPool.Cursor;
-			Monitor.Exit(connectionPool.SyncRoot); // end lock 
+			Monitor.Exit(connectionPool.SyncRoot); // end lock as soon as possible!
 			return result;
 		}
 		Monitor.Exit(connectionPool.SyncRoot); // end lock 
@@ -70,6 +76,41 @@ internal static class ConnectionPoolExtensions
 		DestroyConnectionAsync(connectionPool, connection);
 	}
 
+	public static bool Unloaded(this ConnectionPool connectionPool) => connectionPool.Cursor == int.MinValue || connectionPool.LastIndex == int.MinValue; // Code size: 29 (0x1d)
+
+	public static void Unload(this ConnectionPool connectionPool)
+	{
+		Monitor.Enter(connectionPool.SyncRoot);	 // start lock to lock before comparison (_cursor < _lastIndex) 
+		var currentCursor = connectionPool.Cursor;
+		connectionPool.Cursor = int.MinValue;		// avoid to stack new connections & finalize last executions
+		connectionPool.LastIndex = int.MinValue;
+		Monitor.Exit(connectionPool.SyncRoot);	  // end lock 
+
+		var span = new Span<IConnection?>(connectionPool.Connections);
+		for (var i=0; i< span.Length; ++i)
+		{
+			var conn = span[i];
+			if (conn!=null && conn.State!=ConnectionState.Closed && i< currentCursor)
+			{
+				conn.Close();
+				conn.Dispose();
+			}
+			span[i] = null;
+		}
+	}
+
+	public static void CheckHealth(this ConnectionPool connectionPool)
+	{
+		// verify connection & creation time
+
+	}
+
+	public static ConnectionPool Resize(this ConnectionPool connectionPool, int minPoolSize, int maxPoolSize)
+	{
+		// verify connection & creation time
+		return new ConnectionPool(connectionPool.Id, minPoolSize, maxPoolSize, connectionPool.ConnectionString);
+	}
+
 	#region private methods 
 
 	private static void DestroyConnectionAsync(this ConnectionPool connectionPool, IConnection connection)
@@ -77,8 +118,8 @@ internal static class ConnectionPoolExtensions
 		// Code size: 50 (0x32)
 		if (connection.State != ConnectionState.Closed)
 		{
-            ThreadPool.QueueUserWorkItem((state) => connection.Close());
-            //connection.Close();
+			ThreadPool.QueueUserWorkItem((state) => connection.Close()); // crash ??
+			//connection.Close();
 		}
 		--connectionPool.ConnectionCount;
 		++connectionPool.DestroyCount;
@@ -87,13 +128,18 @@ internal static class ConnectionPoolExtensions
 
 	private static IConnection CreateConnection(this ConnectionPool connectionPool)
 	{
-		// Code size: 59 (0x3b)
+		// Code size: 70 (0x46)
 		var id = connectionPool.ConnectionCount + 1;
-		var connection = connectionPool.Connections[0].CreateInstance(id);
-		++connectionPool.ConnectionCount;
-		++connectionPool.CreationCount;
-		connection.Open();
-		return connection;
+		var connection = connectionPool.Connections[0];
+		if (connection != null)
+		{
+			var newConnection = connection.CreateInstance(id);
+			++connectionPool.ConnectionCount;
+			++connectionPool.CreationCount;
+			newConnection.Open();
+			return newConnection;
+		}
+		throw new NotSupportedException();
 	}
 
 	private static void Initialize(this ConnectionPool connectionPool, IConnection initialConnection)

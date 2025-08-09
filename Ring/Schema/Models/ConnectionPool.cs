@@ -12,8 +12,8 @@ internal sealed class ConnectionPool
 	internal int ConnectionCount;
 	internal long CreationCount;
 	internal long DestroyCount;
-	internal readonly int LastIndex;
-	internal readonly IConnection[] Connections;
+	internal int LastIndex;
+	internal readonly IConnection?[] Connections;
 	internal readonly string ConnectionString;
 	internal readonly object SyncRoot;
 

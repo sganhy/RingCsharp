@@ -120,6 +120,8 @@ public sealed class ConnectionPoolExtensionsTest : BaseTest
             Assert.Equal(ConnectionState.Open, conn.State);
             hashSet.Add(conn.Id);
         }
+        Assert.Equal(14, pool.Cursor);
+        Assert.Equal(63, pool.LastIndex);
     }
 
     [Fact]
@@ -143,7 +145,36 @@ public sealed class ConnectionPoolExtensionsTest : BaseTest
             Assert.Equal(ConnectionState.Open, conn.State);
             hashSet.Add(conn.Id);
         }
+        Assert.Equal(63, pool.Cursor);
+        Assert.Equal(127, pool.LastIndex);
     }
+
+    [Fact]
+    internal async Task Unload_None_AllConnectionDestroyed()
+    {
+        // arrange 
+        var maxConnectionCount = 8;
+        var connectionString = _faker.Random.String();
+        var pool = new ConnectionPool(_faker.Random.Number(), 8, maxConnectionCount, connectionString);
+        await pool.InitAsync(new ConnectionMock(1, DatabaseProvider.SqlLite, connectionString));
+        var lstConns = new List<IConnection>(maxConnectionCount);
+        foreach (var connection in pool.Connections) // copy  connections; to test it later
+            if (connection != null) lstConns.Append(connection); 
+
+        // act 
+        var conn = pool.Get();
+        pool.Unload();
+        pool.Put(conn);
+
+        // assert
+        Assert.Equal(int.MinValue, pool.Cursor);
+        Assert.Equal(int.MinValue, pool.LastIndex);
+        Assert.Equal(ConnectionState.Closed, conn.State);
+        foreach (var connection in pool.Connections) Assert.Null(connection);
+        foreach (var connection in lstConns) Assert.Equal(ConnectionState.Closed, connection.State);
+        Assert.True(pool.Unloaded());
+    }
+
 
     public ConnectionPoolExtensionsTest(ITestOutputHelper output) : base(output) => Expression.Empty();
 
