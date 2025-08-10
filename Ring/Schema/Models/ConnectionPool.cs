@@ -9,12 +9,14 @@ internal sealed class ConnectionPool
 	internal int SwapIndex;
 	internal bool Disposed;
 	internal ushort PutRequestCount;
-	internal int ConnectionCount;
 	internal long CreationCount;
 	internal long DestroyCount;
+	internal int ConnectionCount;
+	internal int ResizeCount;
 	internal int LastIndex;
 	internal readonly IConnection?[] Connections;
 	internal readonly string ConnectionString;
+	internal readonly DateTime CreationTime;
 	internal readonly object SyncRoot;
 
 
@@ -27,6 +29,8 @@ internal sealed class ConnectionPool
 		ConnectionCount = 0;
 		CreationCount = 0L;
 		DestroyCount = 0L;
+		ResizeCount = 0;
+		CreationTime = DateTime.Now;
 		SyncRoot = new object();
 		MinConnection = minPoolSize;
 		MaxConnection = maxPoolSize;

@@ -7,6 +7,10 @@ namespace Ring.Schema.Extensions;
 
 internal static class ConnectionPoolExtensions
 {
+	private static int _connectionPoolId = 1;
+
+	internal static int GetId(this ConnectionPool? _) => _connectionPoolId++; // Code size: 14 (0xe)
+
 	internal static Task InitAsync(this ConnectionPool connectionPool, IConnection initialConnection, CancellationToken cancellationToken=default)
 	{
 		// Code size: 62 (0x3e)
@@ -46,7 +50,7 @@ internal static class ConnectionPoolExtensions
 		{
 			var result = connectionPool.Connections[connectionPool.Cursor];
 			--connectionPool.Cursor;
-			Monitor.Exit(connectionPool.SyncRoot); // end lock as soon as possible!
+			Monitor.Exit(connectionPool.SyncRoot); // end lock as fast as possible!
 			return result;
 		}
 		Monitor.Exit(connectionPool.SyncRoot); // end lock 
@@ -80,6 +84,7 @@ internal static class ConnectionPoolExtensions
 
 	public static void Unload(this ConnectionPool connectionPool)
 	{
+		// Code size: 126 (0x7e)
 		Monitor.Enter(connectionPool.SyncRoot);	 // start lock to lock before comparison (_cursor < _lastIndex) 
 		var currentCursor = connectionPool.Cursor;
 		connectionPool.Cursor = int.MinValue;		// avoid to stack new connections & finalize last executions
@@ -90,13 +95,13 @@ internal static class ConnectionPoolExtensions
 		for (var i=0; i< span.Length; ++i)
 		{
 			var conn = span[i];
-			if (conn!=null && conn.State!=ConnectionState.Closed && i< currentCursor)
+			if (conn!=null && conn.State!=ConnectionState.Closed && i<= currentCursor)
 			{
 				conn.Close();
 				conn.Dispose();
 			}
-			span[i] = null;
 		}
+		connectionPool.ClearConnections();
 	}
 
 	public static void CheckHealth(this ConnectionPool connectionPool)
@@ -107,8 +112,44 @@ internal static class ConnectionPoolExtensions
 
 	public static ConnectionPool Resize(this ConnectionPool connectionPool, int minPoolSize, int maxPoolSize)
 	{
-		// verify connection & creation time
-		return new ConnectionPool(connectionPool.Id, minPoolSize, maxPoolSize, connectionPool.ConnectionString);
+		// Code size: 301 (0x12d)
+		if (minPoolSize == connectionPool.MinConnection && maxPoolSize == connectionPool.MaxConnection) return connectionPool;
+		// Code size: 213 (0xd5)
+		Monitor.Enter(connectionPool.SyncRoot); // start lock to lock before comparison (_cursor < _lastIndex) 
+		var currentCursor = connectionPool.Cursor;
+		connectionPool.Cursor = int.MinValue; // avoid to stack new connections & finalize last executions
+		connectionPool.LastIndex = int.MinValue;
+		Monitor.Exit(connectionPool.SyncRoot); // end lock 
+		var newPool = new ConnectionPool(GetId(connectionPool), minPoolSize, maxPoolSize, connectionPool.ConnectionString)
+		{
+			ConnectionCount = connectionPool.ConnectionCount,
+			DestroyCount = connectionPool.DestroyCount,
+			CreationCount = connectionPool.CreationCount,
+			ResizeCount = connectionPool.ResizeCount + 1
+		};
+		
+		var preserveCount = Math.Min(currentCursor, newPool.LastIndex); // close as less as possible connections
+
+		// preserve current openned connections
+		var i = 0;
+		for (i = 0; i <= preserveCount; ++i) newPool.Connections[i] = connectionPool.Connections[i];
+		var initialConnection = newPool.Connections[0];
+		// bigger pool ?
+		for (; i < minPoolSize; ++i)
+		{
+			var conn = initialConnection?.CreateInstance(i+1);
+			conn?.Open();
+			newPool.Connections[i] = conn;
+		}
+		// smaller pool ?
+		for (i= preserveCount + 1; i<= currentCursor; ++i)
+		{
+			var conn = connectionPool.Connections[i];
+			conn?.Close();
+		}
+		if (preserveCount > newPool.Cursor) newPool.Cursor = preserveCount;
+		connectionPool.ClearConnections();
+		return newPool;
 	}
 
 	#region private methods 
@@ -144,8 +185,7 @@ internal static class ConnectionPoolExtensions
 
 	private static void Initialize(this ConnectionPool connectionPool, IConnection initialConnection)
 	{
-		// Code size: 141 (0x8d)
-		connectionPool.Cursor = connectionPool.MinConnection - 1; // cursor on min last element 
+		// Code size: 102 (0x66)
 		connectionPool.ConnectionCount = 0;
 
 		// close reference connection
@@ -159,13 +199,20 @@ internal static class ConnectionPoolExtensions
 			case DatabaseProvider.Oracle:
 			case DatabaseProvider.PostgreSql:
 				for (var i = 0; i < minPoolSize; ++i) connectionPool.Connections[i] = initialConnection.CreateInstance(i + 1);
-				
+
 				connectionPool.ConnectionCount = minPoolSize;
 				connectionPool.CreationCount = minPoolSize;
 				break;
 			default:
 				throw new NotSupportedException();
 		}
+	}
+
+	private static void ClearConnections(this ConnectionPool connectionPool)
+	{
+		// Code size: 42 (0x2a)
+		var span = new Span<IConnection?>(connectionPool.Connections);
+		for (var i = 0; i < span.Length; ++i) span[i] = null;
 	}
 
 	#endregion

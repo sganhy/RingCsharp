@@ -74,6 +74,8 @@ public sealed class ConnectionPoolExtensionsTest : BaseTest
         }
         Assert.Equal(255, pool.CreationCount);
         Assert.Equal(155, pool.DestroyCount);
+        Assert.Equal(99, pool.LastIndex);
+        Assert.Equal(99, pool.Cursor);
     }
 
     [Fact]
@@ -97,6 +99,8 @@ public sealed class ConnectionPoolExtensionsTest : BaseTest
             Assert.Equal(ConnectionState.Open, conn.State);
             hashSet.Add(conn.Id);
         }
+        Assert.Equal(14, pool.Cursor);
+        Assert.Equal(63, pool.LastIndex);
     }
 
     [Fact]
@@ -150,29 +154,124 @@ public sealed class ConnectionPoolExtensionsTest : BaseTest
     }
 
     [Fact]
-    internal async Task Unload_None_AllConnectionDestroyed()
+    internal void Unload_None_AllConnectionDestroyed()
     {
         // arrange 
         var maxConnectionCount = 8;
         var connectionString = _faker.Random.String();
         var pool = new ConnectionPool(_faker.Random.Number(), 8, maxConnectionCount, connectionString);
-        await pool.InitAsync(new ConnectionMock(1, DatabaseProvider.SqlLite, connectionString));
+        pool.Init(new ConnectionMock(1, DatabaseProvider.Oracle, connectionString));
         var lstConns = new List<IConnection>(maxConnectionCount);
-        foreach (var connection in pool.Connections) // copy  connections; to test it later
-            if (connection != null) lstConns.Append(connection); 
+        for (var i = 0; i < pool.Connections.Length; ++i)
+        {
+            // copy  connections; to test it later
+            var connection = pool.Connections[i];
+            if (connection != null) lstConns.Add(connection);
+        }
 
         // act 
         var conn = pool.Get();
         pool.Unload();
-        pool.Put(conn);
+        pool.Put(conn); 
+        Thread.Sleep(150); // async close wait here 150 ms
 
         // assert
         Assert.Equal(int.MinValue, pool.Cursor);
         Assert.Equal(int.MinValue, pool.LastIndex);
         Assert.Equal(ConnectionState.Closed, conn.State);
+        Assert.Equal(8, lstConns.Count);
         foreach (var connection in pool.Connections) Assert.Null(connection);
         foreach (var connection in lstConns) Assert.Equal(ConnectionState.Closed, connection.State);
         Assert.True(pool.Unloaded());
+    }
+
+    [Fact]
+    internal void Resize_ConnectionPool_ToBiggerConnectionPool()
+    {
+        // arrange 
+        var maxConnectionCount = 6;
+        var connectionString = _faker.Random.String();
+        var pool = new ConnectionPool(ConnectionPoolExtensions.GetId(null), 5, maxConnectionCount, connectionString);
+        pool.Init(new ConnectionMock(1, DatabaseProvider.PostgreSql, connectionString));
+        var lstConns = new List<IConnection>(maxConnectionCount);
+        for (var i = 0; i < pool.Connections.Length; ++i)
+        {
+            // copy  connections; to test it later
+            var connection = pool.Connections[i];
+            if (connection != null) lstConns.Add(connection);
+        }
+
+        // act 
+        var conn1 = pool.Get();
+        var conn2 = pool.Get();
+        var newConnPool = pool.Resize(8, 10);
+        pool.Put(conn2);
+        pool.Put(conn1);
+        Thread.Sleep(150); // async close wait here 150 ms
+
+        // assert
+        Assert.Equal(int.MinValue, pool.Cursor); // 1) check 'pool'
+        Assert.Equal(int.MinValue, pool.LastIndex);
+        Assert.Equal(ConnectionState.Closed, conn1.State);
+        Assert.Equal(ConnectionState.Closed, conn2.State);
+        Assert.Equal(2, pool.DestroyCount);
+        Assert.Equal(5, lstConns.Count);
+        foreach (var connection in pool.Connections) Assert.Null(connection);
+        Assert.True(ReferenceEquals(lstConns[0], newConnPool.Connections[0])); // 2) check 'newConnPool'
+        Assert.False(ReferenceEquals(lstConns[0], newConnPool.Connections[1]));
+        Assert.False(ReferenceEquals(lstConns[0], newConnPool.Connections[2]));
+        Assert.False(ReferenceEquals(lstConns[1], newConnPool.Connections[0]));
+        Assert.True(ReferenceEquals(lstConns[1], newConnPool.Connections[1]));
+        Assert.True(ReferenceEquals(lstConns[2], newConnPool.Connections[2]));
+        Assert.Equal(7, newConnPool.Cursor);
+        Assert.NotNull(newConnPool.Connections[3]);
+        Assert.NotNull(newConnPool.Connections[4]);
+        Assert.NotNull(newConnPool.Connections[5]);
+        Assert.NotNull(newConnPool.Connections[6]);
+        Assert.NotNull(newConnPool.Connections[7]);
+        Assert.Null(newConnPool.Connections[8]);
+        Assert.NotEqual(pool.Id, newConnPool.Id);
+        Assert.Equal(1, newConnPool.ResizeCount);
+    }
+
+
+    [Fact]
+    internal void Resize_ConnectionPool_ToSmallerConnectionPool()
+    {
+        // arrange 
+        var maxConnectionCount = 11;
+        var connectionString = _faker.Random.String();
+        var pool = new ConnectionPool(ConnectionPoolExtensions.GetId(null), 8, maxConnectionCount, connectionString);
+        pool.Init(new ConnectionMock(1, DatabaseProvider.PostgreSql, connectionString));
+        var lstConns = new List<IConnection>(maxConnectionCount);
+        for (var i = 0; i < pool.Connections.Length; ++i)
+        {
+            // copy  connections; to test it later
+            var connection = pool.Connections[i];
+            if (connection != null) lstConns.Add(connection);
+        }
+
+        // act 
+        var conn1 = pool.Get();
+        var newConnPool = pool.Resize(3, 5);
+        pool.Put(conn1);
+        Thread.Sleep(100); // async close wait here 150 ms
+
+        // assert
+        Assert.Equal(int.MinValue, pool.Cursor); // 1) check 'pool'
+        Assert.Equal(int.MinValue, pool.LastIndex);
+        Assert.Equal(ConnectionState.Closed, lstConns[5].State); // 3 connections closed
+        Assert.Equal(ConnectionState.Closed, lstConns[6].State);
+        Assert.Equal(ConnectionState.Closed, lstConns[7].State);
+        Assert.Equal(1, pool.DestroyCount);
+        Assert.Equal(8, lstConns.Count);
+        foreach (var connection in pool.Connections) Assert.Null(connection);
+        Assert.True(ReferenceEquals(lstConns[0], newConnPool.Connections[0])); // 2) check 'newConnPool'
+        Assert.True(ReferenceEquals(lstConns[1], newConnPool.Connections[1])); // kept 5 first connection from previous ConnectionPool
+        Assert.True(ReferenceEquals(lstConns[2], newConnPool.Connections[2]));
+        Assert.True(ReferenceEquals(lstConns[3], newConnPool.Connections[3]));
+        Assert.True(ReferenceEquals(lstConns[4], newConnPool.Connections[4]));
+        Assert.Equal(4, newConnPool.Cursor);
     }
 
 
