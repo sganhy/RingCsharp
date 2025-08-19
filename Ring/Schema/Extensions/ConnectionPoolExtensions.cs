@@ -114,18 +114,16 @@ internal static class ConnectionPoolExtensions
 	{
 		// Code size: 301 (0x12d)
 		if (minPoolSize == connectionPool.MinConnection && maxPoolSize == connectionPool.MaxConnection) return connectionPool;
-		// Code size: 213 (0xd5)
 		Monitor.Enter(connectionPool.SyncRoot); // start lock to lock before comparison (_cursor < _lastIndex) 
 		var currentCursor = connectionPool.Cursor;
 		connectionPool.Cursor = int.MinValue; // avoid to stack new connections & finalize last executions
 		connectionPool.LastIndex = int.MinValue;
 		Monitor.Exit(connectionPool.SyncRoot); // end lock 
-		var newPool = new ConnectionPool(GetId(connectionPool), minPoolSize, maxPoolSize, connectionPool.ConnectionString)
+		var newPool = new ConnectionPool(GetId(connectionPool), minPoolSize, maxPoolSize, connectionPool.ResizeCount + 1, connectionPool.ConnectionString)
 		{
 			ConnectionCount = connectionPool.ConnectionCount,
 			DestroyCount = connectionPool.DestroyCount,
 			CreationCount = connectionPool.CreationCount,
-			ResizeCount = connectionPool.ResizeCount + 1
 		};
 		
 		var preserveCount = Math.Min(currentCursor, newPool.LastIndex); // close as less as possible connections

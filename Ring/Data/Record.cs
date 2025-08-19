@@ -40,7 +40,7 @@ public struct Record : IEquatable<Record>
 	// _data.Length should be > _type.Fields.Length
 	private string?[] _data;
 	private Table _type;
-	private readonly int _offset;
+	private int _offset; // cannot be readonly anymore !
 
 	/// <summary>
 	/// 	Ctor
@@ -76,15 +76,15 @@ public struct Record : IEquatable<Record>
 #pragma warning disable RCS1085 // Use auto-implemented property
 	internal readonly int Offset => _offset;
 #pragma warning restore RCS1085
-	public readonly bool IsDirty => _data[_type.RecordSize-1+_offset] != null;
-	public readonly bool IsNew
+	public readonly bool IsDirty => _data[_type.RecordSize-1 + _offset] != null; // Code size: 31 (0x1f)
+    public readonly bool IsNew
 	{
 		// Code size: 64 (0x40)
 		get
 		{
 			if (_type.Id==-1) ThrowRecordUnknownRecordType();
 			if (_type.Type == TableType.Business) return _data[_type.Columns[0].RecordIndex]==null;
-			// not manage ==> @lexicon_itm, @log, @meta, @meta_id; 
+			// not managed ==> @lexicon_itm, @log, @meta, @meta_id; 
 			return true; // always New if there are no keys
 		}
 	}
@@ -115,21 +115,27 @@ public struct Record : IEquatable<Record>
 		}
 		set 
 		{
-			// Code size: 122 (0x7a)
-			if (value != null)
+            // Code size: 164 (0xa4)
+            if (value != null)
 			{
-				int separatorIndex = value.IndexOf(SchemaSeparator);
-				string? tableName = separatorIndex > 0 ? value[(separatorIndex+1)..] : value;
-				string? schemaName = separatorIndex > 0 ? value[..separatorIndex] : null;
-				var table = Global.GetTable(schemaName, tableName);
+				var separatorIndex = value.IndexOf(SchemaSeparator);
+				var tableName = separatorIndex > 0 ? value[(separatorIndex+1)..] : value;
+				var schemaName = separatorIndex > 0 ? value[..separatorIndex] : null;
+				var table = Global.GetTable(schemaName, tableName ?? string.Empty); // table name cannot be null here !
 				if (table == null) ThrowRecordUnknownRecordType();
-				_type = table;
-				_data = new string?[table.RecordSize];
+				if (ReferenceEquals(table, _type)) ClearData(); // record type changed ? 
+				else
+				{
+					_type = table;
+					_data = new string?[table.RecordSize];
+					_offset = 0;
+				}
 			}
 			else 
 			{
 				_type = DefaultType;
 				_data = DefaultData;
+				_offset = 0;
 			}
 		}
 	}
@@ -154,7 +160,7 @@ public struct Record : IEquatable<Record>
 
 	public readonly void GetField(string name, out bool? value)
 	{
-		// Code size: 164 (0xa4) - no callvirt
+		// Code size: 164 (0xa4) - no 'callvirt'
 		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = _type.GetFieldIndex(name);
 		if (fieldId <= -1) ThrowRecordUnknownFieldName(name);
@@ -170,7 +176,7 @@ public struct Record : IEquatable<Record>
 
 	public readonly void GetField(string name, out byte[]? value)
 	{
-		// Code size: 118 (0x76) - no callvirt
+		// Code size: 118 (0x76) - no 'callvirt'
 		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = _type.GetFieldIndex(name);
 		if (fieldId <= -1) ThrowRecordUnknownFieldName(name);
@@ -184,7 +190,7 @@ public struct Record : IEquatable<Record>
 
 	public readonly void GetField(string name, out long? value)
 	{
-		// Code size: 145 (0x91) - no callvirt
+		// Code size: 145 (0x91) - no 'callvirt'
 		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = _type.GetFieldIndex(name);
 		if (fieldId <= -1) ThrowRecordUnknownFieldName(name);
@@ -205,7 +211,7 @@ public struct Record : IEquatable<Record>
 	/// </summary>
 	public readonly void GetField(string name, out DateTime? value)
 	{
-		// Code size: 143 (0x8f) - no callvirt
+		// Code size: 143 (0x8f) - no 'callvirt'
 		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = _type.GetFieldIndex(name);
 		if (fieldId <= -1) ThrowRecordUnknownFieldName(name);
@@ -381,7 +387,7 @@ public struct Record : IEquatable<Record>
 
 	internal void SetRelation(string name, long? value)
 	{
-		// Code size: 99 (0x63) - no callvirt
+		// Code size: 99 (0x63) - no 'callvirt'
 		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var relation = _type.GetRelation(name);
 		if (relation == null) ThrowRecordUnknownRelationName(name);
@@ -409,7 +415,7 @@ public struct Record : IEquatable<Record>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private void SetField(string name, long value, FieldType fieldType)
 	{
-		// Code size: 277 (0x115) - no callvirt
+		// Code size: 277 (0x115) - no 'callvirt'
 		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = _type.GetFieldIndex(name);
 		if (fieldId == -1) ThrowRecordUnknownFieldName(name);
@@ -453,7 +459,7 @@ public struct Record : IEquatable<Record>
 		// Code size: 120 (0x78)
 #pragma warning disable RCS1003 // Add braces to if-else (when expression spans over multiple lines)
 		if (!value.IsNumber()) ThrowWrongStringFormat();
-		else if (long.TryParse(value, NumberStyles.Integer, DefaultCulture, out long lng) &&
+		else if (long.TryParse(value, NumberStyles.Integer, DefaultCulture, out var lng) &&
 				(numberType == FieldType.Long ||
 				(numberType == FieldType.Int && lng <= MaxIntValue && lng >= MinIntValue) ||
 				(numberType == FieldType.Short && lng <= MaxShortValue && lng >= MinShortValue) ||
@@ -466,7 +472,7 @@ public struct Record : IEquatable<Record>
 	private void SetFloatField(FieldType fieldType, int fieldId, string value)
 	{
 		// see. ISO 6093:1985
-		// Code size: 103 (0x67) - no callvirt
+		// Code size: 103 (0x67) - no 'callvirt';  - smaller than a logical pattern
 		if (double.TryParse(value, NumberStyles.Float, DefaultCulture, out double dbl))
 		{
 			if (fieldType == FieldType.Double) SetData(fieldId, dbl.ToString(DefaultCulture));
@@ -487,7 +493,7 @@ public struct Record : IEquatable<Record>
 	private void SetBooleanField(int fieldId, string value)
 	{
 		// Code size: 40 (0x28)
-		if (bool.TryParse(value, out bool result)) SetData(fieldId, result ? BooleanTrue : BooleanFalse);
+		if (bool.TryParse(value, out var result)) SetData(fieldId, result ? BooleanTrue : BooleanFalse);
 		else ThrowWrongBooleanValue(value);
 	}
 
@@ -499,7 +505,7 @@ public struct Record : IEquatable<Record>
 
 	private void SetDateTimeField(int fieldId, FieldType fieldType, DateTime value, TimeSpan? offset)
 	{
-		// Code size: 51 (0x33)
+		// Code size: 51 (0x33) - smaller than a logical pattern
 		if (fieldType == FieldType.DateTime || fieldType == FieldType.LongDateTime || fieldType == FieldType.ShortDateTime)
 			SetData(fieldId, new string(value.ToString(fieldType, offset)));
 		else ThrowImpossibleConversion(FieldType.DateTime, fieldType);

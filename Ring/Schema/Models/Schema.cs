@@ -29,8 +29,7 @@ internal sealed class Schema : BaseEntity
 		SchemaType type, Sequence[] sequences, Table[] tablesById, Table[] tablesByName, TableSpace[] tableSpaces, DatabaseProvider provider,
 		int objectCount, bool active, bool baseline) : base(id, name, description, baseline, active)
 	{
-		Connections = new ConnectionPool(id, parameters.GetMinPoolSize(id), parameters.GetMaxPoolSize(id),
-		parameters.GetDbConnectionString(id));
+		Connections = new ConnectionPool(ConnectionPoolExtensions.GetId(null), parameters.GetMinPoolSize(id), parameters.GetMaxPoolSize(id), 0,	parameters.GetDbConnectionString(id));
 		Lexicons = lexicons;
 		LoadType = loadType;
 		Type = type;

@@ -16,7 +16,7 @@ public sealed class ConnectionPoolExtensionsTest : BaseTest
         // arrange 
         var maxConnectionCount = 5;
         var connectionString = _faker.Random.String();
-        var pool = new ConnectionPool(_faker.Random.Number(), 3, maxConnectionCount, connectionString);
+        var pool = new ConnectionPool(_faker.Random.Number(), 3, maxConnectionCount, 0, connectionString);
         var connList = new List<IConnection>();
         pool.Init(new ConnectionMock(1, DatabaseProvider.SqlLite, connectionString));
 
@@ -45,7 +45,7 @@ public sealed class ConnectionPoolExtensionsTest : BaseTest
         // arrange 
         var maxConnectionCount = 100;
         var connectionString = _faker.Random.String();
-        var pool = new ConnectionPool(_faker.Random.Number(), 10, maxConnectionCount, connectionString);
+        var pool = new ConnectionPool(_faker.Random.Number(), 10, maxConnectionCount, 0, connectionString);
         pool.Init(new ConnectionMock(1, DatabaseProvider.SqlLite, connectionString));
         var connList = new List<IConnection>();
         var hashSet = new HashSet<int>(maxConnectionCount*2);
@@ -84,7 +84,7 @@ public sealed class ConnectionPoolExtensionsTest : BaseTest
         // arrange 
         var maxConnectionCount = 64;
         var connectionString = _faker.Random.String();
-        var pool = new ConnectionPool(_faker.Random.Number(), 15, maxConnectionCount, connectionString);
+        var pool = new ConnectionPool(_faker.Random.Number(), 15, maxConnectionCount, 0, connectionString);
         pool.Init(new ConnectionMock(1, DatabaseProvider.SqlLite, connectionString));
         var hashSet = new HashSet<int>(maxConnectionCount * 2);
 
@@ -109,7 +109,7 @@ public sealed class ConnectionPoolExtensionsTest : BaseTest
         // arrange 
         var maxConnectionCount = 64;
         var connectionString = _faker.Random.String();
-        var pool = new ConnectionPool(_faker.Random.Number(), 15, maxConnectionCount, connectionString);
+        var pool = new ConnectionPool(_faker.Random.Number(), 15, maxConnectionCount, 0, connectionString);
         pool.Init(new ConnectionMock(1, DatabaseProvider.SqlLite, connectionString));
         var hashSet = new HashSet<int>(maxConnectionCount * 2);
 
@@ -134,7 +134,7 @@ public sealed class ConnectionPoolExtensionsTest : BaseTest
         // arrange 
         var maxConnectionCount = 128;
         var connectionString = _faker.Random.String();
-        var pool = new ConnectionPool(_faker.Random.Number(), 64, maxConnectionCount, connectionString);
+        var pool = new ConnectionPool(_faker.Random.Number(), 64, maxConnectionCount, 0, connectionString);
         await pool.InitAsync(new ConnectionMock(1, DatabaseProvider.SqlLite, connectionString));
         var hashSet = new HashSet<int>(maxConnectionCount * 2);
 
@@ -159,7 +159,7 @@ public sealed class ConnectionPoolExtensionsTest : BaseTest
         // arrange 
         var maxConnectionCount = 8;
         var connectionString = _faker.Random.String();
-        var pool = new ConnectionPool(_faker.Random.Number(), 8, maxConnectionCount, connectionString);
+        var pool = new ConnectionPool(_faker.Random.Number(), 8, maxConnectionCount, 0, connectionString);
         pool.Init(new ConnectionMock(1, DatabaseProvider.Oracle, connectionString));
         var lstConns = new List<IConnection>(maxConnectionCount);
         for (var i = 0; i < pool.Connections.Length; ++i)
@@ -191,7 +191,7 @@ public sealed class ConnectionPoolExtensionsTest : BaseTest
         // arrange 
         var maxConnectionCount = 6;
         var connectionString = _faker.Random.String();
-        var pool = new ConnectionPool(ConnectionPoolExtensions.GetId(null), 5, maxConnectionCount, connectionString);
+        var pool = new ConnectionPool(ConnectionPoolExtensions.GetId(null), 5, maxConnectionCount, 0, connectionString);
         pool.Init(new ConnectionMock(1, DatabaseProvider.PostgreSql, connectionString));
         var lstConns = new List<IConnection>(maxConnectionCount);
         for (var i = 0; i < pool.Connections.Length; ++i)
@@ -207,7 +207,7 @@ public sealed class ConnectionPoolExtensionsTest : BaseTest
         var newConnPool = pool.Resize(8, 10);
         pool.Put(conn2);
         pool.Put(conn1);
-        Thread.Sleep(150); // async close wait here 150 ms
+        Thread.Sleep(200); // async close wait here 150 ms
 
         // assert
         Assert.Equal(int.MinValue, pool.Cursor); // 1) check 'pool'
@@ -241,7 +241,7 @@ public sealed class ConnectionPoolExtensionsTest : BaseTest
         // arrange 
         var maxConnectionCount = 11;
         var connectionString = _faker.Random.String();
-        var pool = new ConnectionPool(ConnectionPoolExtensions.GetId(null), 8, maxConnectionCount, connectionString);
+        var pool = new ConnectionPool(ConnectionPoolExtensions.GetId(null), 8, maxConnectionCount, 0, connectionString);
         pool.Init(new ConnectionMock(1, DatabaseProvider.PostgreSql, connectionString));
         var lstConns = new List<IConnection>(maxConnectionCount);
         for (var i = 0; i < pool.Connections.Length; ++i)

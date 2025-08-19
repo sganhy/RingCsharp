@@ -12,8 +12,8 @@ internal sealed class ConnectionPool
 	internal long CreationCount;
 	internal long DestroyCount;
 	internal int ConnectionCount;
-	internal int ResizeCount;
 	internal int LastIndex;
+	internal readonly int ResizeCount;
 	internal readonly IConnection?[] Connections;
 	internal readonly string ConnectionString;
 	internal readonly DateTime CreationTime;
@@ -23,13 +23,13 @@ internal sealed class ConnectionPool
 	/// <summary>
 	/// 	Ctor
 	/// </summary>
-	internal ConnectionPool(int id, int minPoolSize, int maxPoolSize, string connectionString)
+	internal ConnectionPool(int id, int minPoolSize, int maxPoolSize, int resizeCount, string connectionString)
 	{
 		Id = id;
 		ConnectionCount = 0;
 		CreationCount = 0L;
 		DestroyCount = 0L;
-		ResizeCount = 0;
+		ResizeCount = resizeCount;
 		CreationTime = DateTime.Now;
 		SyncRoot = new object();
 		MinConnection = minPoolSize;
