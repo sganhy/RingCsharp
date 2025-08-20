@@ -28,7 +28,7 @@ public struct Record : IEquatable<Record>
 #pragma warning disable RCS1187 // Use constant instead of field
 	private static readonly string[] DefaultData = new string[2]; // 1 field + state info
 	private static readonly Table DefaultType = GetDefaultType();
-	private static readonly string NullField = "^^"; // skip convertion into constant
+	private static readonly string NullField = "^^"; // skip conversion into constant
 	private static readonly string NullString = "<Null>";
 	private static readonly string DefaultPrimaryKeyValue = "0";
 	private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
@@ -71,13 +71,14 @@ public struct Record : IEquatable<Record>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		set => _data[i + _offset] = value; // Code size: 17 (0x11)
 	}
-
-	internal readonly string?[] Data => _data; // skip auto-property here
+	
 #pragma warning disable RCS1085 // Use auto-implemented property
+	internal readonly string?[] Data => _data; // skip auto-property here
 	internal readonly int Offset => _offset; // skip auto-property here
 #pragma warning restore RCS1085
+	
 	public readonly bool IsDirty => _data[_type.RecordSize-1 + _offset] != null; // Code size: 31 (0x1f)
-    public readonly bool IsNew
+	public readonly bool IsNew
 	{
 		// Code size: 64 (0x40)
 		get
@@ -115,8 +116,8 @@ public struct Record : IEquatable<Record>
 		}
 		set 
 		{
-            // Code size: 152 (0x98)
-            if (value != null)
+			// Code size: 152 (0x98)
+			if (value != null)
 			{
 				var separatorIndex = value.IndexOf(SchemaSeparator);
 				var tableName = separatorIndex > 0 ? value[(separatorIndex+1)..] : value;
@@ -264,8 +265,8 @@ public struct Record : IEquatable<Record>
 	public void SetField(string name, sbyte value) => SetField(name, value, FieldType.Byte); // Code size: 11 (0xb)
 	public void SetField(string name, bool value)
 	{
-        // Code size: 99 (0x63) - no virtual call
-        if (_type.Id == -1) ThrowRecordUnknownRecordType();
+		// Code size: 99 (0x63) - no virtual call
+		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = _type.GetFieldIndex(name);
 		if (fieldId == -1) ThrowRecordUnknownFieldName(name);
 		var fieldType = _type.Fields[fieldId].Type;
@@ -274,16 +275,16 @@ public struct Record : IEquatable<Record>
 	}
 	public void SetField(string name, DateTime value)
 	{
-        // Code size: 79 (0x4f) - no virtual call
-        if (_type.Id == -1) ThrowRecordUnknownRecordType();
+		// Code size: 79 (0x4f) - no virtual call
+		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = _type.GetFieldIndex(name);
 		if (fieldId == -1) ThrowRecordUnknownFieldName(name);
 		SetDateTimeField(fieldId, _type.Fields[fieldId].Type, value, null);
 	}
 	public void SetField(string name, DateTimeOffset value)
 	{
-        // Code size: 88 (0x58) - no virtual call
-        if (_type.Id == -1) ThrowRecordUnknownRecordType();
+		// Code size: 88 (0x58) - no virtual call
+		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = _type.GetFieldIndex(name);
 		if (fieldId == -1) ThrowRecordUnknownFieldName(name);
 		SetDateTimeField(fieldId, _type.Fields[fieldId].Type, value.DateTime, value.Offset);
@@ -293,8 +294,8 @@ public struct Record : IEquatable<Record>
 
 	public void SetField<T>(string name, T value) where T : IEnumerable<byte>
 	{
-        // Code size: 99 (0x63) - no virtual call
-        if (_type.Id == -1) ThrowRecordUnknownRecordType();
+		// Code size: 99 (0x63) - no virtual call
+		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = _type.GetFieldIndex(name);
 		if (fieldId == -1) ThrowRecordUnknownFieldName(name);
 		var fieldType = _type.Fields[fieldId].Type;
@@ -306,8 +307,8 @@ public struct Record : IEquatable<Record>
 	public readonly override bool Equals(object? obj) => obj is Record record && Equals(record);
 	public readonly bool Equals(Record other)
 	{
-        // Code size: 88 (0x58) - no virtual call
-        if (ReferenceEquals(_type, other._type))
+		// Code size: 88 (0x58) - no virtual call
+		if (ReferenceEquals(_type, other._type))
 		{
 			var i = 0;
 			var offset1 = _offset;
@@ -341,8 +342,8 @@ public struct Record : IEquatable<Record>
 	internal readonly bool EqualTo(SaveQuery obj) => ReferenceEquals(obj.Data, _data) && obj.Offset == _offset; // Code size: 31 (0x1f)
 	internal readonly bool IsFieldChanged(string name)
 	{
-        // Code size: 87 (0x57) - no virtual call
-        if (_type.Id == -1) ThrowRecordUnknownRecordType();
+		// Code size: 87 (0x57) - no virtual call
+		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var index = _type.GetFieldIndex(name);
 		var trackerIndex = _offset + _type.RecordSize - 1;
 		if (index != -1) return _data[trackerIndex] != null && IsColumnChanged(index, trackerIndex);
@@ -354,8 +355,8 @@ public struct Record : IEquatable<Record>
 
 	internal readonly bool IsRelationChanged(string name)
 	{
-        // Code size: 124 (0x7c) - no virtual call
-        if (_type.Id == -1) ThrowRecordUnknownRecordType();
+		// Code size: 124 (0x7c) - no virtual call
+		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var relation = _type.GetRelation(name);
 		var trackerIndex = _offset + _type.RecordSize - 1;
 		if (relation == null) ThrowRecordUnknownRelationName(name);
@@ -375,8 +376,8 @@ public struct Record : IEquatable<Record>
 	/// <returns>relation ID value; if not defined, return null</returns>
 	internal readonly long? GetRelation(string name)
 	{
-        // Code size: 109 (0x6d) - no virtual call
-        if (_type.Id == -1) ThrowRecordUnknownRecordType();
+		// Code size: 109 (0x6d) - no virtual call
+		if (_type.Id == -1) ThrowRecordUnknownRecordType();
 		var relation = _type.GetRelation(name);
 		if (relation == null) ThrowRecordUnknownRelationName(name);
 		var column = _type.GetColumn(relation.Id, EntityType.Relation);
@@ -473,10 +474,10 @@ public struct Record : IEquatable<Record>
 	{
 		// see. ISO 6093:1985
 		// Code size: 103 (0x67) - no virtual call; - smaller than a logical pattern
-		if (double.TryParse(value, NumberStyles.Float, DefaultCulture, out double dbl))
+		if (double.TryParse(value, NumberStyles.Float, DefaultCulture, out var dbl))
 		{
 			if (fieldType == FieldType.Double) SetData(fieldId, dbl.ToString(DefaultCulture));
-			else if (fieldType == FieldType.Float && float.TryParse(value, NumberStyles.Float, DefaultCulture, out float flt))
+			else if (fieldType == FieldType.Float && float.TryParse(value, NumberStyles.Float, DefaultCulture, out var flt))
 				SetData(fieldId, flt.ToString(DefaultCulture));
 			else ThrowValueTooLarge(fieldType);
 			return;
@@ -543,26 +544,22 @@ public struct Record : IEquatable<Record>
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
 	private readonly void ThrowRecordUnknownFieldName(string fieldName) => 
-		throw new ArgumentException(string.Format(DefaultCulture,
-			ResourceHelper.GetErrorMessage(ResourceType.RecordUnkownFieldName), fieldName, _type.Name));
+		throw new ArgumentException(string.Format(DefaultCulture, ResourceHelper.GetErrorMessage(ResourceType.RecordUnkownFieldName), fieldName, _type.Name));
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
 	private readonly void ThrowRecordWrongRelationType(string relationName) =>
-		throw new ArgumentException(string.Format(DefaultCulture,
-			ResourceHelper.GetErrorMessage(ResourceType.RecordWrongRelationType), relationName, _type.Name));
+		throw new ArgumentException(string.Format(DefaultCulture, ResourceHelper.GetErrorMessage(ResourceType.RecordWrongRelationType), relationName, _type.Name));
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
 	private readonly void ThrowRecordUnknownRelationName(string relationName) =>
-		throw new ArgumentException(string.Format(DefaultCulture,
-			ResourceHelper.GetErrorMessage(ResourceType.RecordUnkownRelationName), relationName, _type.Name));
+		throw new ArgumentException(string.Format(DefaultCulture, ResourceHelper.GetErrorMessage(ResourceType.RecordUnkownRelationName), relationName, _type.Name));
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
 	private readonly void ThrowMandatoryFieldCannotBeNull(string fieldName) =>
-		throw new ArgumentException(string.Format(DefaultCulture,
-			ResourceHelper.GetErrorMessage(ResourceType.FieldIsMandatory), _type.Name, fieldName));
+		throw new ArgumentException(string.Format(DefaultCulture, ResourceHelper.GetErrorMessage(ResourceType.FieldIsMandatory), _type.Name, fieldName));
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
@@ -577,14 +574,12 @@ public struct Record : IEquatable<Record>
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
 	private static void ThrowValueTooLarge(FieldType fieldType) =>
-		throw new OverflowException(string.Format(DefaultCulture, 
-			ResourceHelper.GetErrorMessage(ResourceType.RecordValueTooLarge), fieldType.RecordTypeDisplay()));
+		throw new OverflowException(string.Format(DefaultCulture, ResourceHelper.GetErrorMessage(ResourceType.RecordValueTooLarge), fieldType.RecordTypeDisplay()));
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
 	private static void ThrowWrongBooleanValue(string? value) =>
-		throw new FormatException(string.Format(DefaultCulture,
-			ResourceHelper.GetErrorMessage(ResourceType.RecordWrongBooleanValue), value ?? NullString));
+		throw new FormatException(string.Format(DefaultCulture,	ResourceHelper.GetErrorMessage(ResourceType.RecordWrongBooleanValue), value ?? NullString));
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
