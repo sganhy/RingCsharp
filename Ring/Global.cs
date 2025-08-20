@@ -9,16 +9,16 @@ namespace Ring;
 
 internal static class Global
 {
-	private readonly static int MaxSchemaBucketSize = 4096;
-	private readonly static int MinSchemaBucketSize = 16;
-	private readonly static object _syncRoot = new();
+	private const int MaxSchemaBucketSize = 4096;
+	private const int MinSchemaBucketSize = 16;
+	private static readonly object SyncRoot = new();
 	private static int _currentMaxNumberOfSchema;
 	private static DbSchema? _defaultSchema;
 	private static int _maxSchemaId;
 	private static bool _initialized;
 	private static DbSchema?[] _schemas = Array.Empty<DbSchema>();
 	private static (string,int)[] _schemaMappers = Array.Empty<(string, int)>(); // (schemaName, schemaId)
-	private static int _schemaCount; // current number of schema
+	private static int _schemaCount; // current number of schemas
 
 	internal static void Init(IConfiguration configuration)
 	{
@@ -32,16 +32,17 @@ internal static class Global
 	}
 	internal static void SetDefaultSchema(DbSchema schema)
 	{
-		// Code size: 55 (0x37)
-		lock (_syncRoot)
+		// Code size: 62 (0x3e) - removed box statements - no virtual call
+		lock (SyncRoot)
 		{
-			if (schema.Id == (schema?.Id ?? -1)) _defaultSchema = schema; // assign schema if necessary
+			var defaultSchId = _defaultSchema?.Id ?? -1;
+			if (schema.Id != defaultSchId) _defaultSchema = schema; // assign schema if necessary
 		}
 	}
 	internal static void LoadSchema(DbSchema schema)
 	{
-        // Code size: 257 (0x101)
-        lock (_syncRoot)
+		// Code size: 257 (0x101)
+		lock (SyncRoot)
 		{
 			_defaultSchema ??= schema;
 			var currSchema = _schemas[schema.Id];
@@ -59,11 +60,9 @@ internal static class Global
 				for (var i = 0; i < lastSchemaId; ++i)
 				{
 					var sch = _schemas[i];
-					if (sch != null)
-					{
-						newMapping[index] = (sch.Name, sch.Id);
-						++index;
-					}
+					if (sch == null) continue;
+					newMapping[index] = (sch.Name, sch.Id);
+					++index;
 				}
 				newMapping[index] = (schema.Name, schema.Id); // add new one to last position
 				// sort mapper
@@ -90,9 +89,9 @@ internal static class Global
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static bool IsSchemaDefault(DbSchema schema) => ReferenceEquals(schema,_defaultSchema); // Code size: 9 (0x9)
-    internal static int MaxSchemaId() => MaxSchemaBucketSize; // Code size: 6 (0x6)
+	internal static int MaxSchemaId() => MaxSchemaBucketSize; // Code size: 6 (0x6)
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static DbSchema? GetSchema(int id)
 	{
 		// Code size: 8 (0x8)
@@ -118,8 +117,8 @@ internal static class Global
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static Table? GetTable(string? schemaName, string tableName)
 	{
-		// Code size: 44 (0x2c) - DatabaseProvider cannot be undefined !!!!
-		var schema = (schemaName != null) ? GetSchema(schemaName) ?? Meta.GetEmptySchema(new Meta(string.Empty), DatabaseProvider.SqlLite) : DefaultSchema;  
+		// Code size: 43 (0x2b) - DatabaseProvider cannot be undefined !!!!
+		var schema = schemaName != null ? GetSchema(schemaName) ?? Meta.GetEmptySchema(new Meta(string.Empty), DatabaseProvider.SqlLite) : DefaultSchema;  
 		return schema.GetTable(tableName);
 	}
 

@@ -308,20 +308,17 @@ public struct Record : IEquatable<Record>
 	public readonly bool Equals(Record other)
 	{
 		// Code size: 88 (0x58) - no virtual call
-		if (ReferenceEquals(_type, other._type))
+		if (!ReferenceEquals(_type, other._type)) return false;
+		var i = 0;
+		var offset1 = _offset;
+		var offset2 = other._offset;
+		var count = _type.RecordSize-1;
+		while (i < count)
 		{
-			var i = 0;
-			var offset1 = _offset;
-			var offset2 = other._offset;
-			var count = _type.RecordSize-1;
-			while (i < count)
-			{
-				if (!string.Equals(_data[i+offset1], other._data[i+offset2], StringComparison.Ordinal)) return false;
-				++i;
-			}
-			return true;
+			if (!string.Equals(_data[i+offset1], other._data[i+offset2], StringComparison.Ordinal)) return false;
+			++i;
 		}
-		return false;
+		return true;
 	}
 	public readonly override int GetHashCode()
 	{
