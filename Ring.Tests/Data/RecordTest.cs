@@ -1582,6 +1582,7 @@ public sealed class RecordTest : BaseTest
         var tableBook = _schema.GetTable("book");
         Assert.NotNull(tableBook);
         var rcd = new Record(tableBook);
+        
 
         // act 
         rcd.SetRelation("book2rule", _faker.Random.Long());
@@ -1601,6 +1602,10 @@ public sealed class RecordTest : BaseTest
         Global.LoadSchema(_schema);
         Assert.NotNull(tableBook);
         var rcd = new Record(tableBook);
+        
+        LogAssert($"_schema.Name: {_schema.Name}");
+        LogAssert($"IsDefaultShema(_schema.Name): {Global.IsSchemaDefault(_schema)}");
+        LogAssert($"Default schema id: {Global.DefaultSchema.Id}");
 
         // act 
         var result = rcd.RecordType;

@@ -32,11 +32,10 @@ internal static class Global
 	}
 	internal static void SetDefaultSchema(DbSchema schema)
 	{
-		// Code size: 62 (0x3e) - removed box statements - no virtual call
-		lock (SyncRoot)
+        // Code size: 43 (0x2b) - removed box statements - no virtual call
+        lock (SyncRoot)
 		{
-			var defaultSchId = _defaultSchema?.Id ?? -1;
-			if (schema.Id != defaultSchId) _defaultSchema = schema; // assign schema if necessary
+			if (!ReferenceEquals(schema, _defaultSchema)) _defaultSchema = schema; // assign schema if necessary
 		}
 	}
 	internal static void LoadSchema(DbSchema schema)

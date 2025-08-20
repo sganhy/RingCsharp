@@ -22,14 +22,11 @@ public abstract class BaseTest
         _output = output;
     }
 
-    protected void LogAssert(string message) =>
-        _output.WriteLine(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff") + "| ASSERT  | " + message);
+    protected void LogAssert(string message) => _output.WriteLine(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff") + "| ASSERT  | " + message);
 
-    protected void LogAct(string message) =>
-        _output.WriteLine(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff") + "|   ACT   | " + message);
+    protected void LogAct(string message) => _output.WriteLine(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff") + "|   ACT   | " + message);
 
-    protected void LogArrange(string message) =>
-        _output.WriteLine(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff") + "| ARRANGE | " + message);
+    protected void LogArrange(string message) => _output.WriteLine(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff") + "| ARRANGE | " + message);
 
     internal Table GetAnonymousTable(IDdlBuilder builder, int numberOfField = 0, int numberOfRelation = 0,
         char minChar = char.MinValue, char maxChar = char.MaxValue)

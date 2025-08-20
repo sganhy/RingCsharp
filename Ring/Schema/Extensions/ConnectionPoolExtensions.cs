@@ -44,8 +44,8 @@ internal static class ConnectionPoolExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static IConnection Get(this ConnectionPool connectionPool)
 	{
-		// Code size: 77 (0x4d) - no callvirt
-		Monitor.Enter(connectionPool.SyncRoot); // start lock 
+        // Code size: 77 (0x4d) -  no virtual call
+        Monitor.Enter(connectionPool.SyncRoot); // start lock 
 		if (connectionPool.Cursor >= 0)
 		{
 			var result = connectionPool.Connections[connectionPool.Cursor];
@@ -63,8 +63,8 @@ internal static class ConnectionPoolExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static void Put(this ConnectionPool connectionPool, IConnection connection)
 	{
-		// Code size: 155 (0x9b) - no callvirt
-		++connectionPool.PutRequestCount; // out of lock!!!
+        // Code size: 155 (0x9b) -  no virtual call
+        ++connectionPool.PutRequestCount; // out of lock!!!
 		Monitor.Enter(connectionPool.SyncRoot);	 // start lock to lock before comparison (_cursor < _lastIndex) 
 		if (connectionPool.Cursor < connectionPool.LastIndex)
 		{
