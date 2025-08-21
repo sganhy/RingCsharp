@@ -192,6 +192,7 @@ public sealed class ConnectionPoolExtensionsTest : BaseTest
         var maxConnectionCount = 6;
         var connectionString = _faker.Random.String();
         var pool = new ConnectionPool(ConnectionPoolExtensions.GetId(null), 5, maxConnectionCount, 0, connectionString);
+        LogArrange($"Min pool size: {pool.MinConnection}; Max pool size: {pool.MaxConnection}");
         pool.Init(new ConnectionMock(1, DatabaseProvider.PostgreSql, connectionString));
         var lstConns = new List<IConnection>(maxConnectionCount);
         for (var i = 0; i < pool.Connections.Length; ++i)
@@ -203,13 +204,17 @@ public sealed class ConnectionPoolExtensionsTest : BaseTest
 
         // act 
         var conn1 = pool.Get();
+        LogAct($"conn1 <== pool.Get()");
         var conn2 = pool.Get();
+        LogAct($"conn2 <== pool.Get()");
         var newConnPool = pool.Resize(8, 10);
+        LogAct($"pool.Resize() to: Min pool size: {newConnPool.MinConnection}; Max pool size: {newConnPool.MaxConnection}");
         pool.Put(conn2);
         pool.Put(conn1);
         Thread.Sleep(500); // async close wait here 500 ms
 
         // assert
+        LogAssert($"Starting...");
         Assert.Equal(int.MinValue, pool.Cursor); // 1) check 'pool'
         Assert.Equal(int.MinValue, pool.LastIndex);
         Assert.Equal(ConnectionState.Closed, conn1.State);
