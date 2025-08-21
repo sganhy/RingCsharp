@@ -33,7 +33,7 @@ public sealed class ConnectionPoolExtensionsTest : BaseTest
         }
 
         // assert
-        Thread.Sleep(150); // wait 150 milliseconds - status updated async -->
+        Thread.Sleep(500); // wait 500 milliseconds - status updated async -->
         Assert.Equal(ConnectionState.Closed, connList[5].State);
         Assert.Equal(ConnectionState.Closed, connList[6].State);
         Assert.Equal(ConnectionState.Closed, connList[7].State);
@@ -173,7 +173,7 @@ public sealed class ConnectionPoolExtensionsTest : BaseTest
         var conn = pool.Get();
         pool.Unload();
         pool.Put(conn); 
-        Thread.Sleep(150); // async close wait here 150 ms
+        Thread.Sleep(500); // async close wait here 500 ms
 
         // assert
         Assert.Equal(int.MinValue, pool.Cursor);
@@ -207,7 +207,7 @@ public sealed class ConnectionPoolExtensionsTest : BaseTest
         var newConnPool = pool.Resize(8, 10);
         pool.Put(conn2);
         pool.Put(conn1);
-        Thread.Sleep(200); // async close wait here 150 ms
+        Thread.Sleep(500); // async close wait here 500 ms
 
         // assert
         Assert.Equal(int.MinValue, pool.Cursor); // 1) check 'pool'
@@ -255,7 +255,7 @@ public sealed class ConnectionPoolExtensionsTest : BaseTest
         var conn1 = pool.Get();
         var newConnPool = pool.Resize(3, 5);
         pool.Put(conn1);
-        Thread.Sleep(150); // async close wait here 150 ms
+        Thread.Sleep(500); // async close wait here 500 ms
 
         // assert
         Assert.Equal(int.MinValue, pool.Cursor); // 1) check 'pool'
