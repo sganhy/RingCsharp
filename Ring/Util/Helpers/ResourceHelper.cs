@@ -1,6 +1,8 @@
 ﻿using Ring.Schema.Enums;
+using Ring.Schema.Extensions;
 using Ring.Util.Enums;
 using Ring.Util.Extensions;
+using Ring.Util.Models;
 using System.Globalization;
 using System.IO.Compression;
 using System.Reflection;
@@ -14,28 +16,35 @@ internal sealed class ResourceHelper
 	private static readonly string CompressedResourceSuffix = @".gz";
 	private static readonly string ResourceCrLf = @"|||";
 	private static readonly string ResourceNameSpace = @"Ring.Util.Resources.";
+	private static readonly string TemplateResourceNameSpace = ResourceNameSpace+ @"Templates.";
 	private static readonly string MessageDescSplitChar = "#$";
 	private const char ResourceEndOfLine = '\n';
 	private static bool _resourcesLoaded;
+	private static bool _schemaTemplateLoaded;
 	private static string?[] _logMessages = Array.Empty<string?>();
 	private static string?[] _logDescriptions = Array.Empty<string?>();
+	private static XmlSchemaTemplate?[] _schemaTemplates = Array.Empty<XmlSchemaTemplate?>();
 
 	internal ResourceHelper()
 	{
-		// Code size: 69 (0x45)
+		// Code size: 19 (0x13)
 		if (!_resourcesLoaded) LoadResources();
 	}
 
 	internal static string GetErrorMessage(ResourceType resourceType) 
 	{
-		// Code size: 97 (0x61)
-		lock (SyncRoot)
-		{
-			if (!_resourcesLoaded) LoadResources();
-		}
+		// Code size: 69 (0x45)
+		if (!_resourcesLoaded) LoadResources();
 		var message = string.Empty;
 		if ((int)resourceType <= _logMessages.Length) message= _logMessages[(int)resourceType - 1] ?? string.Empty;
 		return message.Replace(ResourceCrLf, ResourceEndOfLine.ToString());
+	}
+
+	internal static XmlSchemaTemplate? GetSchemaTemplate(XmlTemplateType resourceType)
+	{
+		// Code size: 20 (0x14)
+		if (!_schemaTemplateLoaded) LoadSchemaTemplates();
+		return _schemaTemplates[(int)resourceType];
 	}
 
 #pragma warning disable CA1822, S2325 // Mark members as static
@@ -49,14 +58,14 @@ internal sealed class ResourceHelper
 
 	internal static HashSet<string> GetReservedWords(DatabaseProvider databaseProvider)
 	{
-		// Code size: 241 (0xf1)
+		// Code size: 284 (0x11c)
 		return databaseProvider switch
 		{
-			DatabaseProvider.Oracle => GetCompressedResource(ResourceType.OracleReservedKeyWord + CompressedResourceSuffix, true).ToHashSet(),
-			DatabaseProvider.PostgreSql => GetCompressedResource(ResourceType.PostgreSQLReservedKeyWord + CompressedResourceSuffix, true).ToHashSet(),
-			DatabaseProvider.MySql => GetCompressedResource(ResourceType.MySQLReservedKeyWord + CompressedResourceSuffix, true).ToHashSet(),
-			DatabaseProvider.SqlServer => GetCompressedResource(ResourceType.SQLServerReservedKeyWord + CompressedResourceSuffix, true).ToHashSet(),
-			DatabaseProvider.SqlLite => GetCompressedResource(ResourceType.SQLiteReservedKeyWord + CompressedResourceSuffix, true).ToHashSet(),
+			DatabaseProvider.Oracle => GetCompressedResource(ResourceNameSpace, ResourceType.OracleReservedKeyWord + CompressedResourceSuffix, true).ToHashSet(),
+			DatabaseProvider.PostgreSql => GetCompressedResource(ResourceNameSpace, ResourceType.PostgreSQLReservedKeyWord + CompressedResourceSuffix, true).ToHashSet(),
+			DatabaseProvider.MySql => GetCompressedResource(ResourceNameSpace, ResourceType.MySQLReservedKeyWord + CompressedResourceSuffix, true).ToHashSet(),
+			DatabaseProvider.SqlServer => GetCompressedResource(ResourceNameSpace, ResourceType.SQLServerReservedKeyWord + CompressedResourceSuffix, true).ToHashSet(),
+			DatabaseProvider.SqlLite => GetCompressedResource(ResourceNameSpace, ResourceType.SQLiteReservedKeyWord + CompressedResourceSuffix, true).ToHashSet(),
 			_ => new HashSet<string>()
 		};
 	}
@@ -70,18 +79,45 @@ internal sealed class ResourceHelper
 			if (!_resourcesLoaded)
 			{
 				var resourceFile = ResourceType.LogMessage + ResourceSuffix;
-				(_logMessages, _logDescriptions) = GetLogResource(resourceFile);
+				(_logMessages, _logDescriptions) = GetLogResource(ResourceNameSpace, resourceFile);
 			}
 			_resourcesLoaded = true;
 		}
 	}
 
-	private static (string?[], string?[]) GetLogResource(string fileName)
+	private static void LoadSchemaTemplates()
+	{
+		lock (SyncRoot)
+		{
+			if (!_schemaTemplateLoaded)
+			{
+				_schemaTemplates = new XmlSchemaTemplate[byte.MaxValue];
+				var resourceFile = ResourceType.XmlSchemaTemplate.ToString() + XmlTemplateType.Native + CompressedResourceSuffix;
+				var resources = new ReadOnlySpan<string?>(GetCompressedResource(TemplateResourceNameSpace, resourceFile, true));
+				var items = new List<XmlSchemaTemplateItem>();
+				// just native for the moment
+				for (var i=0; i<resources.Length; ++i)
+				{
+					var entityType = i.ToEntityType();
+					if (entityType == EntityType.Undefined) continue;
+					if (string.IsNullOrWhiteSpace(resources[i])) continue;
+					var elements = resources[i]?.Split(';');
+					if (elements==null || elements.Length!=3) continue;
+					var templateItem = new XmlSchemaTemplateItem(entityType, elements[0], elements[1], ResourceType.Description.ToString(), GetXmlAttributes(elements[2]));
+					items.Add(templateItem);
+				}
+				_schemaTemplates[(int)XmlTemplateType.Native] = new XmlSchemaTemplate(XmlTemplateType.Native, items.ToArray());
+			}
+			_schemaTemplateLoaded = true;
+		}
+	}
+
+	private static (string?[], string?[]) GetLogResource(string resourceNamespace, string fileName)
 	{
 		// Code size: 251 (0xfb)
 		var resultMessage = Array.Empty<string?>();
 		var resultDesc = Array.Empty<string?>();
-		var resource = ResourceNameSpace + fileName;
+		var resource = resourceNamespace + fileName;
 		var assembly = Assembly.GetExecutingAssembly();
 		using (var stream = assembly.GetManifestResourceStream(resource))
 		{
@@ -117,23 +153,40 @@ internal sealed class ResourceHelper
 		return (resultMessage, resultDesc);
 	}
 
-	private static string?[] GetCompressedResource(string fileName, bool toUpper)
+	private static string?[] GetCompressedResource(string resourceNamespace, string fileName, bool toUpper)
 	{
 		// Code size: 140 (0x8c)
-		var resource = ResourceNameSpace + fileName;
+		var resource = resourceNamespace + fileName;
 		var assembly = Assembly.GetExecutingAssembly();
 		var result = Array.Empty<string>();
 		using var stream = assembly.GetManifestResourceStream(resource);
 		if (stream == null) return result;
 		using var decompressionStream = new GZipStream(stream, CompressionMode.Decompress);
 		using var reader = new StreamReader(decompressionStream);
-		result = toUpper ? 
-			reader.ReadToEnd().ToUpper(CultureInfo.InvariantCulture).Split(ResourceEndOfLine) :
+		result = toUpper ? reader.ReadToEnd().ToUpper(CultureInfo.InvariantCulture).Split(ResourceEndOfLine) :
 			reader.ReadToEnd().Split(ResourceEndOfLine);
 
 		return result;
 	}
 
-	#endregion 
+
+	private static XmlSchemaAttribute[] GetXmlAttributes(string attributes)
+	{
+        // Code size: 114 (0x72)
+        if (string.IsNullOrWhiteSpace(attributes)) return Array.Empty<XmlSchemaAttribute>();
+		var span = new ReadOnlySpan<string>(attributes.Split(','));
+		var xmlAttributes = new List<XmlSchemaAttribute>(span.Length);
+		for (var i = 0; i < span.Length; ++i)
+		{
+			var attribute = span[i];
+			var xmlSchemaAttributeType = i.ToXmlSchemaAttributeType();
+            if (!string.IsNullOrWhiteSpace(attribute) && 
+				xmlSchemaAttributeType != XmlSchemaAttributeType.Undefined) 
+				xmlAttributes.Add(new XmlSchemaAttribute(xmlSchemaAttributeType, attribute));
+		}
+		return xmlAttributes.ToArray();
+	}
+
+	#endregion
 
 }

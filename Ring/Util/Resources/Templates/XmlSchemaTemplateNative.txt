@@ -1,0 +1,4 @@
+table;schema;id,name,baseline,readonly,cached
+field;field_list;,name,baseline,,,type,size,case_sensitive,not_null,multilingual
+relation;relation_list;,name,baseline,,,type,,,,,to,inverse_relation,constraint
+index;index_list;,name,baseline,,,,,,,,,,,Unique

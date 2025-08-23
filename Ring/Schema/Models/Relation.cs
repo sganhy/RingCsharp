@@ -1,5 +1,4 @@
 ﻿using Ring.Schema.Enums;
-using System.Drawing;
 
 namespace Ring.Schema.Models;
 

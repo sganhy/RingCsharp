@@ -19,7 +19,6 @@ internal sealed class ConnectionPool
 	internal readonly DateTime CreationTime;
 	internal readonly object SyncRoot;
 
-
 	/// <summary>
 	/// 	Ctor
 	/// </summary>
