@@ -45,7 +45,23 @@ public sealed class ResourceHelperTest
         Assert.Equal("CONSTRAINT", template.Items[2].Attributes[5].Name);
 
         Assert.Equal("INDEX", template.Items[3].Tag); // INDEX
+        Assert.Equal("INDEX_LIST", template.Items[3].ParentTag);
+        Assert.Equal(3, template.Items[3].Attributes.Length);
 
+    }
+
+
+    [Fact]
+    public void GetErrorMessage_RecordValueTooLarge_Message()
+    {
+        // arrange 
+        var expectedValue = "Value was either too high or too low for an {0}.";
+
+        // act 
+        var result = ResourceHelper.GetErrorMessage(ResourceType.RecordValueTooLarge);
+
+        // assert
+        Assert.Equal(expectedValue, result);
     }
 
 }

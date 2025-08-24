@@ -78,7 +78,7 @@ internal sealed class ResourceHelper
 		{
 			if (!_resourcesLoaded)
 			{
-				var resourceFile = ResourceType.LogMessage + ResourceSuffix;
+				var resourceFile = ResourceType.LogMessage + CompressedResourceSuffix;
 				(_logMessages, _logDescriptions) = GetLogResource(ResourceNameSpace, resourceFile);
 			}
 			_resourcesLoaded = true;
@@ -117,16 +117,10 @@ internal sealed class ResourceHelper
 		// Code size: 251 (0xfb)
 		var resultMessage = Array.Empty<string?>();
 		var resultDesc = Array.Empty<string?>();
-		var resource = resourceNamespace + fileName;
-		var assembly = Assembly.GetExecutingAssembly();
-		using (var stream = assembly.GetManifestResourceStream(resource))
-		{
-			if (stream == null) return (resultMessage, resultDesc);
-			using var reader = new StreamReader(stream);
-			resultMessage = reader.ReadToEnd().Split(ResourceEndOfLine);
-		}
-		// build a description array
-		if (resultMessage.Length > 0)
+		resultMessage = GetCompressedResource(resourceNamespace, fileName, false);
+
+        // build a description array
+        if (resultMessage.Length > 0)
 		{
 			resultDesc = new string[resultMessage.Length];
 			for (var i=0; i < resultMessage.Length; ++i)

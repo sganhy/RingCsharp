@@ -42,7 +42,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<None Remove="Util\Resources\LogMessage.txt" />
+		<None Remove="Util\Resources\LogMessage.gz" />
 		<None Remove="Util\Resources\MySQLReservedKeyWord.gz" />
 		<None Remove="Util\Resources\OracleReservedKeyWord.gz" />
 		<None Remove="Util\Resources\PostgreSQLReservedKeyWord.gz" />
@@ -51,7 +51,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<EmbeddedResource Include="Util\Resources\LogMessage.txt" />
+		<EmbeddedResource Include="Util\Resources\LogMessage.gz" />
 		<EmbeddedResource Include="Util\Resources\MySQLReservedKeyWord.gz" />
 		<EmbeddedResource Include="Util\Resources\OracleReservedKeyWord.gz" />
 		<EmbeddedResource Include="Util\Resources\PostgreSQLReservedKeyWord.gz" />

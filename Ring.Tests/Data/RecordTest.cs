@@ -397,7 +397,7 @@ public sealed class RecordTest : BaseTest
         var ex = Assert.Throws<OverflowException>(() => rcd.SetField("id", "1000000"));
         
         // assert
-        Assert.Equal("Value was either too large or too small for an Int16.", ex.Message);
+        Assert.Equal("Value was either too high or too low for an Int16.", ex.Message);
     }
 
     [Fact]
@@ -412,7 +412,7 @@ public sealed class RecordTest : BaseTest
         var ex = Assert.Throws<OverflowException>(() => rcd.SetField("value", "1000000000000000000000000000000000000"));
 
         // assert
-        Assert.Equal("Value was either too large or too small for an Int64.", ex.Message);
+        Assert.Equal("Value was either too high or too low for an Int64.", ex.Message);
     }
 
 
@@ -527,7 +527,7 @@ public sealed class RecordTest : BaseTest
         var ex = Assert.Throws<OverflowException>(() => rcd.SetField("cost", expectedValue));
 
         // assert
-        Assert.Equal("Value was either too large or too small for an Int32.", ex.Message);
+        Assert.Equal("Value was either too high or too low for an Int32.", ex.Message);
     }
 
     [Fact]
@@ -559,7 +559,7 @@ public sealed class RecordTest : BaseTest
         var ex = Assert.Throws<OverflowException>(() => rcd.SetField("max_dex_bonus", expectedValue));
 
         // assert
-        Assert.Equal("Value was either too large or too small for an Int16.", ex.Message);
+        Assert.Equal("Value was either too high or too low for an Int16.", ex.Message);
     }
 
     [Fact]
@@ -575,7 +575,7 @@ public sealed class RecordTest : BaseTest
         var ex = Assert.Throws<OverflowException>(() => rcd.SetField("arcane_spell_failure", expectedValue));
 
         // assert
-        Assert.Equal("Value was either too large or too small for an Int8.", ex.Message);
+        Assert.Equal("Value was either too high or too low for an Int8.", ex.Message);
     }
 
     [Fact]
