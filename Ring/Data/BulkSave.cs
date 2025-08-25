@@ -241,8 +241,8 @@ public readonly struct BulkSave : IBulkSave
 		return metaTable.ToTable(new ArraySegment<Meta>(metaArray), PhysicalType.Undefined, GetDefaultDdlBuilder(), string.Empty, -1) !; // cannot be null here!!
 	}
 
-	private static IDmlBuilder GetDefaultDmlBuilder() => new Ring.Util.Builders.PostgreSQL.DmlBuilder();
-    private static IDdlBuilder GetDefaultDdlBuilder() => new Ring.Util.Builders.PostgreSQL.DdlBuilder();
+	private static IDmlBuilder GetDefaultDmlBuilder() => new Util.Builders.PostgreSQL.DmlBuilder();
+    private static IDdlBuilder GetDefaultDdlBuilder() => new Util.Builders.PostgreSQL.DdlBuilder();
 
     private static int GetHashCode(in BulkSave bulkSave)
 	{

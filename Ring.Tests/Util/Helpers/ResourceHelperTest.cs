@@ -16,6 +16,7 @@ public sealed class ResourceHelperTest
 
         // assert
         Assert.NotNull(template);
+        Assert.True(template.Items.Length>2); // TABLE
         Assert.Equal("TABLE", template.Items[0].Tag); // TABLE
         Assert.Equal(EntityType.Table, template.Items[0].EntityType);
         Assert.Equal("SCHEMA", template.Items[0].ParentTag);
@@ -59,6 +60,58 @@ public sealed class ResourceHelperTest
 
         // act 
         var result = ResourceHelper.GetErrorMessage(ResourceType.RecordValueTooLarge);
+
+        // assert
+        Assert.Equal(expectedValue, result);
+    }
+
+    [Fact]
+    public void GetErrorMessage_RecordWrongRelationType_Message()
+    {
+        // arrange 
+        var expectedValue = "Relation name '{0}' has a wrong RelationType.";
+
+        // act 
+        var result = ResourceHelper.GetErrorMessage(ResourceType.RecordWrongRelationType);
+
+        // assert
+        Assert.Equal(expectedValue, result);
+    }
+
+    [Fact]
+    public void GetErrorMessage_UnRepresentableDateTime_Message()
+    {
+        // arrange 
+        var expectedValue = "Year, Month, and Day parameters describe an un-representable DateTime.";
+
+        // act 
+        var result = ResourceHelper.GetErrorMessage(ResourceType.UnRepresentableDateTime);
+
+        // assert
+        Assert.Equal(expectedValue, result);
+    }
+
+    [Fact]
+    public void GetErrorMessage_CreateTableNotOk_Message()
+    {
+        // arrange 
+        var expectedValue = "create table";
+
+        // act 
+        var result = ResourceHelper.GetErrorMessage(ResourceType.CreateTableNotOk);
+
+        // assert
+        Assert.Equal(expectedValue, result);
+    }
+
+    [Fact]
+    public void GetErrorMessage_UnsuportedOperation_Message()
+    {
+        // arrange 
+        var expectedValue = "Operation {0}.{1} #{2} is not supported.";
+
+        // act 
+        var result = ResourceHelper.GetErrorMessage(ResourceType.UnsuportedOperation);
 
         // assert
         Assert.Equal(expectedValue, result);

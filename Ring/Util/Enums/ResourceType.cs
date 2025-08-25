@@ -33,21 +33,21 @@ internal enum ResourceType : short
 	/// <summary>
 	/// Miscellaneous
 	/// </summary>
-	UnRepresentableDateTime = 107,
-	NotSupportedInputDateTime = 108,
-	InvalidBase64String = 109,
-	FieldIsMandatory = 110,
+	UnRepresentableDateTime = 201,
+	NotSupportedInputDateTime = 202,
+	InvalidBase64String = 203,
+	FieldIsMandatory = 204,
 
 	/// <summary>
 	/// Sql operations description
 	/// </summary>
-	CreateTableNotOk = 151,
-	CreateTableOk = 152,
+	CreateTableNotOk = 245,
+	CreateTableOk = 246,
 
 	/// <summary>
 	/// IRingConnection messages 
 	/// </summary>
-	UnsuportedOperation = 200,
-	DdlException = 201,
-	DdlTableCreated = 202
+	UnsuportedOperation = 294,
+	DdlException = 295,
+	DdlTableCreated = 296
 }

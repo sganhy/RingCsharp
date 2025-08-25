@@ -12,7 +12,6 @@ namespace Ring.Util.Helpers;
 internal sealed class ResourceHelper
 {
 	private static readonly object SyncRoot = new();
-	private static readonly string ResourceSuffix = @".txt";
 	private static readonly string CompressedResourceSuffix = @".gz";
 	private static readonly string ResourceCrLf = @"|||";
 	private static readonly string ResourceNameSpace = @"Ring.Util.Resources.";
@@ -102,8 +101,8 @@ internal sealed class ResourceHelper
 					if (entityType == EntityType.Undefined) continue;
 					if (string.IsNullOrWhiteSpace(resources[i])) continue;
 					var elements = resources[i]?.Split(';');
-					if (elements==null || elements.Length!=3) continue;
-					var templateItem = new XmlSchemaTemplateItem(entityType, elements[0], elements[1], ResourceType.Description.ToString(), GetXmlAttributes(elements[2]));
+					if (elements==null || elements.Length!=4) continue; // invalid line
+					var templateItem = new XmlSchemaTemplateItem(entityType, elements[0], elements[1], ResourceType.Description.ToString(), elements[2], GetXmlAttributes(elements[3]));
 					items.Add(templateItem);
 				}
 				_schemaTemplates[(int)XmlTemplateType.Native] = new XmlSchemaTemplate(XmlTemplateType.Native, items.ToArray());
@@ -114,13 +113,13 @@ internal sealed class ResourceHelper
 
 	private static (string?[], string?[]) GetLogResource(string resourceNamespace, string fileName)
 	{
-		// Code size: 251 (0xfb)
+		// Code size: 148 (0x94)
 		var resultMessage = Array.Empty<string?>();
 		var resultDesc = Array.Empty<string?>();
 		resultMessage = GetCompressedResource(resourceNamespace, fileName, false);
 
-        // build a description array
-        if (resultMessage.Length > 0)
+		// build a description array
+		if (resultMessage.Length > 0)
 		{
 			resultDesc = new string[resultMessage.Length];
 			for (var i=0; i < resultMessage.Length; ++i)
@@ -166,15 +165,15 @@ internal sealed class ResourceHelper
 
 	private static XmlSchemaAttribute[] GetXmlAttributes(string attributes)
 	{
-        // Code size: 114 (0x72)
-        if (string.IsNullOrWhiteSpace(attributes)) return Array.Empty<XmlSchemaAttribute>();
+		// Code size: 114 (0x72)
+		if (string.IsNullOrWhiteSpace(attributes)) return Array.Empty<XmlSchemaAttribute>();
 		var span = new ReadOnlySpan<string>(attributes.Split(','));
 		var xmlAttributes = new List<XmlSchemaAttribute>(span.Length);
 		for (var i = 0; i < span.Length; ++i)
 		{
 			var attribute = span[i];
 			var xmlSchemaAttributeType = i.ToXmlSchemaAttributeType();
-            if (!string.IsNullOrWhiteSpace(attribute) && 
+			if (!string.IsNullOrWhiteSpace(attribute) && 
 				xmlSchemaAttributeType != XmlSchemaAttributeType.Undefined) 
 				xmlAttributes.Add(new XmlSchemaAttribute(xmlSchemaAttributeType, attribute));
 		}
