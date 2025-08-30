@@ -1,8 +1,11 @@
-﻿namespace Ring.Schema.Enums;
+﻿using Ring.Schema.Attributes;
+
+namespace Ring.Schema.Enums;
 
 /// <summary>
-/// 	values above 125 are reserved for unitesting; value should be defined as [0,125[ 
+/// 	values equal or above to 125 are reserved for testing; value should be defined as [0,125[
 /// </summary>
+[Range(0, 124)]
 internal enum EntityType : byte
 {
 	Table = 0,
@@ -16,7 +19,7 @@ internal enum EntityType : byte
 	Tablespace = 18,
 	Parameter = 23,
 	Alias = 25,
-	// columns definition [71, 79]
+	// specific column definition [71, 79]
 	SearchableColumn = 71,
 	TimeZoneColumn = 72,
 	// not stored in @meta table

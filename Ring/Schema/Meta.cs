@@ -289,7 +289,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	{
 		var parameterType = GetParameterType();
 		return IsParameter ? new Parameter(Id, Name, Description, parameterType,
-			GetParameterValueType(), GetParameterValue(), parameterType.GetDefaultValue(), ReferenceId,
+			GetParameterValueType(), GetParameterValue(), parameterType.GetDefaultValue(), ReferenceId, EntityType.Schema,
 				IsEntityBaseline, Active) : null;
 	}
 
@@ -484,7 +484,7 @@ internal readonly struct Meta : IEquatable<Meta>
 #pragma warning disable CS8604 // Possible null reference argument.
 		foreach (var meta in schema) if (meta.IsParameter) result.Add(meta.ToParameter());
 #pragma warning restore CS8604
-		return result.ToArray();
+		return result.ToArray(); // sorted by Id later !!!
 	}
 
 	private static Field[] GetFieldArray(ArraySegment<Meta> items)

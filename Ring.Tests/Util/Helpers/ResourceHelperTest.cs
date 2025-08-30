@@ -117,4 +117,20 @@ public sealed class ResourceHelperTest
         Assert.Equal(expectedValue, result);
     }
 
+    [Fact]
+    public void GetParameter_MinPoolSize_ParameterObject()
+    {
+        // arrange 
+        // act 
+        var result = ResourceHelper.GetParameter(ParameterType.MinPoolSize);
+
+        // assert
+        Assert.Equal((int)ParameterType.MinPoolSize, result.Id);
+        Assert.Equal(ParameterType.MinPoolSize, result.Type);
+        Assert.Equal("@minConnPoolSize", result.Name);
+        Assert.Equal("Mininimum database connection pool", result.Description);
+        Assert.Equal("1", result.DefaultValue);
+        Assert.Equal(EntityType.Schema, result.ReferenceType);
+    }
+
 }

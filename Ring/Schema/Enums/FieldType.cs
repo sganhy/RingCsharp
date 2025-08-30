@@ -1,5 +1,11 @@
-﻿namespace Ring.Schema.Enums;
+﻿using Ring.Schema.Attributes;
 
+namespace Ring.Schema.Enums;
+
+/// <summary>
+/// 	values equal or above to 125 are reserved for testing; value should be defined as [0,125[
+/// </summary>
+[Range(0, 124)]
 internal enum FieldType : byte
 {
 	Long = 0,

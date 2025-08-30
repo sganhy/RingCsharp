@@ -11,7 +11,7 @@ internal sealed class ParameterBuilder
     {
         var name = parameterType.GetName();
         return new((int)parameterType, name, parameterType.GetDescription(), parameterType,
-            parameterType.GetValueType(), value ?? string.Empty, parameterType.GetDefaultValue(), referenceId, true, true);
+            parameterType.GetValueType(), value ?? string.Empty, parameterType.GetDefaultValue(), referenceId, EntityType.Schema, true, true);
     }
 #pragma warning restore S2325, CA1822
 }

@@ -1,0 +1,22 @@
+@version,Schema version,16,7,
+@creation_time,Schema creation time,18,7,
+@last_upgrade,Last Schema upgrade,18,7,
+@language,Default language,16,7,
+
+
+
+
+
+
+
+
+
+
+@minConnPoolSize,Mininimum database connection pool,1,7,1
+@maxConnPoolSize,Maximum database connection pool,1,7,1
+
+
+
+
+@DbConnectionString,DataBase connectioon string,16,7,
+@DbConnectionType,DataBase connectioon type,1,7,

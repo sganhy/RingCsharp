@@ -1,6 +1,9 @@
 ﻿using CommandLine;
 using Ring.Data;
 using Ring.Schema;
+using Ring.Schema.Attributes;
+using Ring.Schema.Enums;
+using Ring.Util.Extensions;
 
 // See https://aka.ms/new-console-template for more information
 Console.WriteLine("Hello, World!");
@@ -10,3 +13,17 @@ var POSTGRE_CONN_STRING1 = "User ID=postgres; Password=sa;Host=localhost;Port=54
 Meta meta = new Meta();
 Console.WriteLine(meta.Name);
 //Parser.Default
+
+
+var test = new Ring.Util.Helpers.ResourceHelper();
+Console.WriteLine("1");
+
+Console.WriteLine(Ring.Util.Helpers.ResourceHelper.GetErrorMessage(Ring.Util.Enums.ResourceType.RecordValueTooLarge));
+
+Console.WriteLine("2");
+
+var paramType = ParameterType.LastUpdate;
+
+
+Console.WriteLine("3");
+

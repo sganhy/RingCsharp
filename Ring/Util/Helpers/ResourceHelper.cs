@@ -1,5 +1,7 @@
-﻿using Ring.Schema.Enums;
+﻿using Ring.Schema;
+using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
+using Ring.Schema.Models;
 using Ring.Util.Enums;
 using Ring.Util.Extensions;
 using Ring.Util.Models;
@@ -20,9 +22,11 @@ internal sealed class ResourceHelper
 	private const char ResourceEndOfLine = '\n';
 	private static bool _resourcesLoaded;
 	private static bool _schemaTemplateLoaded;
+	private static bool _parameterLoaded;
 	private static string?[] _logMessages = Array.Empty<string?>();
 	private static string?[] _logDescriptions = Array.Empty<string?>();
 	private static XmlSchemaTemplate?[] _schemaTemplates = Array.Empty<XmlSchemaTemplate?>();
+	private static string?[] _parameters = Array.Empty<string?>();
 
 	internal ResourceHelper()
 	{
@@ -55,21 +59,36 @@ internal sealed class ResourceHelper
 		=> ((int)logType <= _logDescriptions.Length) ? _logDescriptions[(int)logType - 1] : null;
 #pragma warning restore S2325, CA1822 // Mark members as static
 
+	internal static Parameter GetParameter(ParameterType parameterType)
+	{
+        // Code size: 133 (0x85)
+        var parameterTypeIndex = (int)parameterType -1;
+		if (!_parameterLoaded) LoadParameters();
+		var value = string.Empty;
+		if (parameterTypeIndex >= 0 && parameterTypeIndex < _parameters.Length) value = _parameters[parameterTypeIndex]?? string.Empty;
+		string?[] arr = value.Split(',');
+		//eg. @version,Schema version,16,7, ==> 0=name; 1=description; 2=fielType; 3=entityType; 4=defaultValue
+		return new Parameter((int)parameterType, GetValue(arr, 0) ?? string.Empty, GetValue(arr, 1), parameterType, GetValue(arr, 2).ToFieldType(), 
+			string.Empty, GetValue(arr, 4),0, GetValue(arr, 3).ToEntityType(),true,true);
+	}
+
 	internal static HashSet<string> GetReservedWords(DatabaseProvider databaseProvider)
 	{
-		// Code size: 284 (0x11c)
-		return databaseProvider switch
+		// Code size: 266 (0x10a)
+		switch (databaseProvider)
 		{
-			DatabaseProvider.Oracle => GetCompressedResource(ResourceNameSpace, ResourceType.OracleReservedKeyWord + CompressedResourceSuffix, true).ToHashSet(),
-			DatabaseProvider.PostgreSql => GetCompressedResource(ResourceNameSpace, ResourceType.PostgreSQLReservedKeyWord + CompressedResourceSuffix, true).ToHashSet(),
-			DatabaseProvider.MySql => GetCompressedResource(ResourceNameSpace, ResourceType.MySQLReservedKeyWord + CompressedResourceSuffix, true).ToHashSet(),
-			DatabaseProvider.SqlServer => GetCompressedResource(ResourceNameSpace, ResourceType.SQLServerReservedKeyWord + CompressedResourceSuffix, true).ToHashSet(),
-			DatabaseProvider.SqlLite => GetCompressedResource(ResourceNameSpace, ResourceType.SQLiteReservedKeyWord + CompressedResourceSuffix, true).ToHashSet(),
-			_ => new HashSet<string>()
+			case DatabaseProvider.Oracle: return GetCompressedResource(ResourceNameSpace, ResourceType.OracleReservedKeyWord + CompressedResourceSuffix, true).ToHashSet();
+			case DatabaseProvider.PostgreSql: return GetCompressedResource(ResourceNameSpace, ResourceType.PostgreSQLReservedKeyWord + CompressedResourceSuffix, true).ToHashSet();
+			case DatabaseProvider.MySql: return GetCompressedResource(ResourceNameSpace, ResourceType.MySQLReservedKeyWord + CompressedResourceSuffix, true).ToHashSet();
+			case DatabaseProvider.SqlServer: return GetCompressedResource(ResourceNameSpace, ResourceType.SQLServerReservedKeyWord + CompressedResourceSuffix, true).ToHashSet();
+			case DatabaseProvider.SqlLite: return GetCompressedResource(ResourceNameSpace, ResourceType.SQLiteReservedKeyWord + CompressedResourceSuffix, true).ToHashSet();
 		};
+		return new HashSet<string>();
 	}
 
 	#region private methods
+
+	private static string? GetValue(string?[] values, int index) => index < values.Length ? values[index] : null;
 
 	private static void LoadResources()
 	{
@@ -84,6 +103,19 @@ internal sealed class ResourceHelper
 		}
 	}
 
+	private static void LoadParameters()
+	{
+		lock (SyncRoot)
+		{
+			if (!_parameterLoaded)
+			{
+				var resourceFile = EntityType.Parameter.ToString() + CompressedResourceSuffix;
+				_parameters = GetCompressedResource(ResourceNameSpace, resourceFile, false);
+			}
+			_parameterLoaded = true;
+		}
+	}
+
 	private static void LoadSchemaTemplates()
 	{
 		lock (SyncRoot)
@@ -95,7 +127,7 @@ internal sealed class ResourceHelper
 				var resources = new ReadOnlySpan<string?>(GetCompressedResource(TemplateResourceNameSpace, resourceFile, true));
 				var items = new List<XmlSchemaTemplateItem>();
 				// just native for the moment
-				for (var i=0; i<resources.Length; ++i)
+				for (var i=0; i<resources.Length && i<127; ++i)
 				{
 					var entityType = i.ToEntityType();
 					if (entityType == EntityType.Undefined) continue;
@@ -114,7 +146,7 @@ internal sealed class ResourceHelper
 	private static (string?[], string?[]) GetLogResource(string resourceNamespace, string fileName)
 	{
 		// Code size: 148 (0x94)
-		var resultMessage = Array.Empty<string?>();
+		string?[] resultMessage;
 		var resultDesc = Array.Empty<string?>();
 		resultMessage = GetCompressedResource(resourceNamespace, fileName, false);
 
@@ -161,7 +193,6 @@ internal sealed class ResourceHelper
 
 		return result;
 	}
-
 
 	private static XmlSchemaAttribute[] GetXmlAttributes(string attributes)
 	{

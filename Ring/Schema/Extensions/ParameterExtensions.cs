@@ -8,50 +8,6 @@ internal static class ParameterExtensions
 {
 	private readonly static string DefaultConnPoolSize = "1";
 
-	/// <summary>
-	/// 	Get Parameter by parameterType, case sensitive search ==> O(log n) complexity
-	/// </summary>
-	internal static Parameter? GetParameter(this Parameter[] parameters, long hash)
-	{
-		int indexerLeft = 0, indexerRight = parameters.Length - 1, indexerMiddle, indexerCompare;
-
-		while (indexerLeft <= indexerRight)
-		{
-			indexerMiddle = indexerLeft + indexerRight;
-			indexerMiddle >>= 1; 	// indexerMiddle <-- indexerMiddle /2 
-			indexerCompare = hash.CompareTo(parameters[indexerMiddle].Hash);
-			if (indexerCompare == 0) return parameters[indexerMiddle];
-			if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
-			else indexerRight = indexerMiddle - 1;
-		}
-
-		return null;
-	}
-
-	internal static Parameter? GetParameter(this Parameter[] parameters, ParameterType type, int referenceId) =>
-		GetParameter(parameters, GetParameterHash(null, type, referenceId));
-
-	internal static long GetParameterHash(this Parameter? _, ParameterType type, int referenceId) =>
-		(((long)type) << 32) + (uint)referenceId;
-
-	internal static int GetMinPoolSize(this Parameter[] parameters, int schemaId)
-	{
-		var param = GetParameter(parameters, ParameterType.MinPoolSize, schemaId);
-		return param != null ? int.Parse(param.Value, CultureInfo.InvariantCulture) :
-			int.Parse(ParameterTypeExtensions.GetDefaultValue(ParameterType.MinPoolSize) ?? DefaultConnPoolSize,
-				CultureInfo.InvariantCulture);
-	}
-	internal static string GetDbConnectionString(this Parameter[] parameters, int schemaId)
-		=> GetParameter(parameters, ParameterType.DbConnectionString, schemaId)?.Value ?? string.Empty;
-
-	internal static int GetMaxPoolSize(this Parameter[] parameters, int schemaId)
-	{
-		var param = GetParameter(parameters, ParameterType.MaxPoolSize, schemaId);
-		return param != null ? int.Parse(param.Value, CultureInfo.InvariantCulture) :
-			int.Parse(ParameterTypeExtensions.GetDefaultValue(ParameterType.MinPoolSize) ??
-			DefaultConnPoolSize, CultureInfo.InvariantCulture);
-	}
-
 	internal static Meta ToMeta(this Parameter parameter)
 	{
 		var flags = 0L;
@@ -62,5 +18,47 @@ internal static class ParameterExtensions
 			parameter.Value, parameter.Active);
 		return meta;
 	}
+
+	/// <summary>
+	/// 	Get Parameter by parameterType, case sensitive search ==> O(log n) complexity
+	/// </summary>
+	internal static Parameter? GetParameter(this Parameter[] parameters, ParameterType parameterType)
+	{
+		// Code size: 64(0x40)
+		int indexerLeft = 0, indexerRight = parameters.Length - 1, indexerMiddle, indexerCompare;
+		var parameterTypeId = (int)parameterType;
+
+		while (indexerLeft <= indexerRight)
+		{
+			indexerMiddle = indexerLeft + indexerRight;
+			indexerMiddle >>= 1;	// indexerMiddle <-- indexerMiddle /2 
+			indexerCompare = parameterTypeId.CompareTo(parameters[indexerMiddle].Id);
+			if (indexerCompare == 0) return parameters[indexerMiddle];
+			if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
+			else indexerRight = indexerMiddle - 1;
+		}
+
+		return null;
+	}
+
+	internal static int GetMaxPoolSize(this Parameter[] parameters)
+	{
+		// Code size: 56 (0x38)
+		var param = GetParameter(parameters, ParameterType.MaxPoolSize);
+		return param != null ? int.Parse(param.Value, CultureInfo.InvariantCulture) :
+			int.Parse(ParameterTypeExtensions.GetDefaultValue(ParameterType.MaxPoolSize) ??
+			DefaultConnPoolSize, CultureInfo.InvariantCulture);
+	}
+
+	internal static string GetDbConnectionString(this Parameter[] parameters) => GetParameter(parameters, ParameterType.DbConnectionString)?.Value ?? string.Empty; // Code size: 30 (0x1e)
+
+	internal static int GetMinPoolSize(this Parameter[] parameters)
+	{
+		var param = GetParameter(parameters, ParameterType.MinPoolSize);
+		return param != null ? int.Parse(param.Value, CultureInfo.InvariantCulture) :
+			int.Parse(ParameterTypeExtensions.GetDefaultValue(ParameterType.MinPoolSize) ??
+			DefaultConnPoolSize, CultureInfo.InvariantCulture);
+	}
+
 
 }

@@ -7,8 +7,6 @@ namespace Ring.Schema.Extensions;
 
 internal static class SchemaExtensions
 {
-	internal static Parameter? GetParameter(this DbSchema schema, ParameterType parameterType)
-		=> ParameterExtensions.GetParameter(schema.Parameters, parameterType, schema.Id);
 
 	/// <summary>
 	/// 	Get table object by name (case sensitive) --> O(log n)

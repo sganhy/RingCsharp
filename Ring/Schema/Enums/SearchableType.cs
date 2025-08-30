@@ -1,6 +1,11 @@
-﻿namespace Ring.Schema.Enums;
+﻿using Ring.Schema.Attributes;
 
-// stored on 6 bits : value shoulbe included [0,63]
+namespace Ring.Schema.Enums;
+
+/// <summary>
+/// 	stored on 6 bits: value should be included [0,63]
+/// </summary>
+[Range(0, 63)]
 internal enum SearchableType : byte
 {
 	None = 0,
