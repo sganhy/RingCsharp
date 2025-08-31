@@ -91,8 +91,9 @@ internal sealed class ResourceHelper
 	private static string? GetValue(string?[] values, int index) => index < values.Length ? values[index] : null;
 
 	private static void LoadResources()
-	{
-		lock (SyncRoot)
+    {
+		// Code size: 100 (0x64)
+        lock (SyncRoot)
 		{
 			if (!_resourcesLoaded)
 			{
@@ -105,7 +106,8 @@ internal sealed class ResourceHelper
 
 	private static void LoadParameters()
 	{
-		lock (SyncRoot)
+        // Code size: 86 (0x56)
+        lock (SyncRoot)
 		{
 			if (!_parameterLoaded)
 			{
@@ -117,8 +119,9 @@ internal sealed class ResourceHelper
 	}
 
 	private static void LoadSchemaTemplates()
-	{
-		lock (SyncRoot)
+    {
+		// Code size: 308 (0x134)
+        lock (SyncRoot)
 		{
 			if (!_schemaTemplateLoaded)
 			{

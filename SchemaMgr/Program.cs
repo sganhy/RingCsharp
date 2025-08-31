@@ -4,6 +4,7 @@ using Ring.Schema;
 using Ring.Schema.Attributes;
 using Ring.Schema.Enums;
 using Ring.Util.Extensions;
+using Ring.Util.Helpers;
 
 // See https://aka.ms/new-console-template for more information
 Console.WriteLine("Hello, World!");
@@ -22,8 +23,9 @@ Console.WriteLine(Ring.Util.Helpers.ResourceHelper.GetErrorMessage(Ring.Util.Enu
 
 Console.WriteLine("2");
 
-var paramType = ParameterType.LastUpgrade;
+var paramType = ResourceHelper.GetParameter(ParameterType.LastUpgrade);
 
+Console.WriteLine(paramType.ValueType);
 
 Console.WriteLine("3");
 

@@ -44,8 +44,8 @@ internal static class ParameterExtensions
 
 	internal static int GetMaxPoolSize(this Parameter[] parameters)
 	{
-        // Code size: 63 (0x3f)
-        var param = GetParameter(parameters, ParameterType.MaxPoolSize);
+		// Code size: 63 (0x3f)
+		var param = GetParameter(parameters, ParameterType.MaxPoolSize);
 		var paramTemplate = ResourceHelper.GetParameter(ParameterType.MaxPoolSize);
 		return param != null ? int.Parse(param.Value, CultureInfo.InvariantCulture) :
 			int.Parse(paramTemplate.DefaultValue ?? DefaultConnPoolSize, CultureInfo.InvariantCulture);
