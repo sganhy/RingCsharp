@@ -22,7 +22,7 @@ Console.WriteLine(Ring.Util.Helpers.ResourceHelper.GetErrorMessage(Ring.Util.Enu
 
 Console.WriteLine("2");
 
-var paramType = ParameterType.LastUpdate;
+var paramType = ParameterType.LastUpgrade;
 
 
 Console.WriteLine("3");

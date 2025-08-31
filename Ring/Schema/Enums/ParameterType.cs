@@ -1,10 +1,11 @@
 ﻿namespace Ring.Schema.Enums;
 
+// Id define position into Ring.Util.Resources.Parameter.gz
 internal enum ParameterType
 {
 	SchemaVersion = 1,
 	SchemaCreationTime = 2,
-	LastUpdate = 3,
+	LastUpgrade = 3,
 	DefaultLanguage = 4,
 	MinPoolSize = 15,
 	MaxPoolSize = 16,

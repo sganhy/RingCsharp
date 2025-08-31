@@ -74,10 +74,17 @@ internal static class IntExtensions
 	private const int ProviderSqlServerId = (int)DatabaseProvider.SqlServer;
 	private const int ProviderSqlLiteId = (int)DatabaseProvider.SqlLite;
 
-	#endregion 
+	// parameter type
+	private const int SchemaVersionId = (int)ParameterType.SchemaVersion;
+	private const int SchemaCreationTimeId = (int)ParameterType.SchemaCreationTime;
+	private const int SchemaLastUpgradeId = (int)ParameterType.LastUpgrade;
+	private const int DefaultLanguageId = (int)ParameterType.DefaultLanguage;
+	private const int MinPoolSizeId = (int)ParameterType.MinPoolSize;
+	private const int MaxPoolSizeId = (int)ParameterType.MaxPoolSize;
+	private const int DbConnectionStringId = (int)ParameterType.DbConnectionString;
+	private const int DbConnectionTypeId = (int)ParameterType.DbConnectionType;
 
-	// cache of Ring.Schema.Enums.ParameterType
-	private static readonly Dictionary<int, ParameterType> ParameterTypeEnumsId = GetParameterTypeId();
+	#endregion
 
 	internal static DatabaseProvider ToDatabaseProvider(this int providerId)
 	{
@@ -175,11 +182,22 @@ internal static class IntExtensions
 		return RelationType.Undefined;
 	}
 
-	/// <summary>
-	/// 	Low performance!
-	/// </summary>
-	internal static ParameterType ToParameterType(this int id) =>
-		ParameterTypeEnumsId.ContainsKey(id) ? ParameterTypeEnumsId[id] : ParameterType.Undefined;
+	internal static ParameterType ToParameterType(this int id)
+	{
+		// Code size: 79 (0x4f)
+		switch (id)
+		{
+			case SchemaVersionId:  return ParameterType.SchemaVersion;
+			case SchemaCreationTimeId: return ParameterType.SchemaCreationTime;
+			case SchemaLastUpgradeId: return ParameterType.LastUpgrade;
+			case DefaultLanguageId: return ParameterType.DefaultLanguage;
+			case MinPoolSizeId: return ParameterType.MinPoolSize;
+			case MaxPoolSizeId: return ParameterType.MaxPoolSize;
+			case DbConnectionStringId: return ParameterType.DbConnectionString;
+			case DbConnectionTypeId: return ParameterType.DbConnectionType;
+		}
+		return ParameterType.Undefined;
+	}
 
 	internal static EntityType ToEntityType(this int entityType) 
 	{
@@ -204,22 +222,4 @@ internal static class IntExtensions
 		}
 		return EntityType.Undefined;
 	}
-
-	#region private methods
-
-	private static Dictionary<int, ParameterType> GetParameterTypeId()
-	{
-		var parameterTypes = Enum.GetValues<ParameterType>();
-		var result = new Dictionary<int, ParameterType>(parameterTypes.Length * 2); // multiply by two, the bucket size to reduce collisions
-		for (var i = 0; i < parameterTypes.Length; ++i)
-		{
-			var parameterType = parameterTypes[i];
-			var parameterTypeId = (int)parameterType;
-			if (!result.ContainsKey(parameterTypeId)) result.Add(parameterTypeId, parameterType);
-		}
-		return result;
-	}
-
-	#endregion 
-
 }

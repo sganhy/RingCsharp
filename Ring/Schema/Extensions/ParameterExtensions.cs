@@ -1,5 +1,6 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Models;
+using Ring.Util.Helpers;
 using System.Globalization;
 
 namespace Ring.Schema.Extensions;
@@ -43,11 +44,11 @@ internal static class ParameterExtensions
 
 	internal static int GetMaxPoolSize(this Parameter[] parameters)
 	{
-		// Code size: 56 (0x38)
-		var param = GetParameter(parameters, ParameterType.MaxPoolSize);
+        // Code size: 63 (0x3f)
+        var param = GetParameter(parameters, ParameterType.MaxPoolSize);
+		var paramTemplate = ResourceHelper.GetParameter(ParameterType.MaxPoolSize);
 		return param != null ? int.Parse(param.Value, CultureInfo.InvariantCulture) :
-			int.Parse(ParameterTypeExtensions.GetDefaultValue(ParameterType.MaxPoolSize) ??
-			DefaultConnPoolSize, CultureInfo.InvariantCulture);
+			int.Parse(paramTemplate.DefaultValue ?? DefaultConnPoolSize, CultureInfo.InvariantCulture);
 	}
 
 	internal static string GetDbConnectionString(this Parameter[] parameters) => GetParameter(parameters, ParameterType.DbConnectionString)?.Value ?? string.Empty; // Code size: 30 (0x1e)
@@ -55,9 +56,9 @@ internal static class ParameterExtensions
 	internal static int GetMinPoolSize(this Parameter[] parameters)
 	{
 		var param = GetParameter(parameters, ParameterType.MinPoolSize);
+		var paramTemplate = ResourceHelper.GetParameter(ParameterType.MinPoolSize);
 		return param != null ? int.Parse(param.Value, CultureInfo.InvariantCulture) :
-			int.Parse(ParameterTypeExtensions.GetDefaultValue(ParameterType.MinPoolSize) ??
-			DefaultConnPoolSize, CultureInfo.InvariantCulture);
+			int.Parse(paramTemplate.DefaultValue ?? DefaultConnPoolSize, CultureInfo.InvariantCulture);
 	}
 
 

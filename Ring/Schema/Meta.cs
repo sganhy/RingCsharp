@@ -175,8 +175,8 @@ internal readonly struct Meta : IEquatable<Meta>
 	#endregion
 
 	#region parameter methods
-	internal FieldType GetParameterValueType() => (DataType & 127).ToFieldType();
-	internal ParameterType GetParameterType() => Id.ToParameterType();
+	internal FieldType GetParameterValueType() => (DataType & 127).ToFieldType(); // Code size: 15 (0xf)
+	internal ParameterType GetParameterType() => Id.ToParameterType(); // Code size: 12 (0xc)
 	internal string GetParameterValue() => Value ?? string.Empty;
 	internal static int SetParameterValueType(int dataType, FieldType valueType) => (dataType & 0xFFF8) + ((byte)valueType) & 127;
 	#endregion
@@ -287,10 +287,11 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	internal Parameter? ToParameter()
 	{
+		// Code size: 86 (0x56)
 		var parameterType = GetParameterType();
+		var paramTemplate = ResourceHelper.GetParameter(parameterType);
 		return IsParameter ? new Parameter(Id, Name, Description, parameterType,
-			GetParameterValueType(), GetParameterValue(), parameterType.GetDefaultValue(), ReferenceId, EntityType.Schema,
-				IsEntityBaseline, Active) : null;
+			GetParameterValueType(), GetParameterValue(), paramTemplate.DefaultValue, ReferenceId, EntityType.Schema, IsEntityBaseline, Active) : null;
 	}
 
 	internal Index? ToIndex() // Code size: 65 (0x41)

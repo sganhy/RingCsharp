@@ -24,6 +24,6 @@ internal enum EntityType : byte
 	TimeZoneColumn = 72,
 	// not stored in @meta table
 	Constraint = 101,
-	// 125 reserved for unit tests
+	// 125 & 126 reserved for unit tests
 	Undefined = 127
 }
