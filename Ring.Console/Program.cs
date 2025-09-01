@@ -7,9 +7,10 @@ using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using System.Diagnostics;
 using System.Globalization;
+using System.Net.NetworkInformation;
 
 int op = 10;
-var tests = op.ToString("X2", CultureInfo.InvariantCulture); 
+var tests = op.ToString("X2", CultureInfo.InvariantCulture);
 
 /*
 var logger = new LoggerConfiguration()
@@ -45,12 +46,12 @@ var metaTable = schema.GetTable("@meta");
 var metaTest = schema.GetTable("@test");
 //var lexiconTable = schema.GetTable("@lexicon");
 
-List<int> testh= new List<int>();
+List<int> testh = new List<int>();
 testh.Sort();
 
 var POSTGRE_CONN_STRING1 = "User ID=postgres; Password=sa;Host=localhost;Port=5432;Database=postgres; Pooling=false;";
 
-var configuration = new Configuration { ConnectionString = POSTGRE_CONN_STRING1, LoggerFactory = null };
+var configuration = new Configuration { ConnectionString = POSTGRE_CONN_STRING1 };
 IConnection conn = new Ring.PostgreSQL.Connection(1, configuration);
 conn.Open();
 
@@ -108,7 +109,7 @@ bs.Save(conn, true);
 Console.WriteLine("End - " + (DateTime.Now - checkTime));
 
 proc = Process.GetCurrentProcess();
-Console.WriteLine("proc.PrivateMemorySize64=" + ((double)proc.PrivateMemorySize64)/(1024*1024) + " MB");
+Console.WriteLine("proc.PrivateMemorySize64=" + ((double)proc.PrivateMemorySize64) / (1024 * 1024) + " MB");
 Console.WriteLine("Version test 3");
 
 int oi = 0;

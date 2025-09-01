@@ -2,9 +2,11 @@
 using Ring.Data;
 using Ring.Schema;
 using Ring.Schema.Attributes;
+using Ring.Schema.Builders;
 using Ring.Schema.Enums;
 using Ring.Util.Extensions;
 using Ring.Util.Helpers;
+using System.Text;
 
 // See https://aka.ms/new-console-template for more information
 Console.WriteLine("Hello, World!");
@@ -28,4 +30,9 @@ var paramType = ResourceHelper.GetParameter(ParameterType.LastUpgrade);
 Console.WriteLine(paramType.ValueType);
 
 Console.WriteLine("3");
+
+var builder = new DocumentBuilder("C:/Coding/Ring/RingCsharp/Docs/rpg_schema.xml");
+var doc = builder.GetDocument(DocumentType.XmlNative);
+
+
 

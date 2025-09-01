@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.7.34031.279
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ring.Console", "Ring.Console\Ring.Console.csproj", "{88BC648F-8D01-4CCC-93BB-29EC4806E838}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ring.Tests", "Ring.Tests\Ring.Tests.csproj", "{015E9553-D6EE-4205-96E4-111E12B07EC3}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{A8B34576-0824-40BC-8889-F31C9EAAC228}"
@@ -27,6 +25,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ring.Oracle", "Ring.Oracle\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SchemaMgr", "SchemaMgr\SchemaMgr.csproj", "{7308BA31-AD52-F43A-84E4-F10EFCC43415}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ring.Console", "Ring.Console\Ring.Console.csproj", "{E5FEDA20-08A4-485F-987B-115CBB2AE4F7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -35,14 +35,6 @@ Global
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{88BC648F-8D01-4CCC-93BB-29EC4806E838}.Debug|Any CPU.ActiveCfg = Debug|x64
-		{88BC648F-8D01-4CCC-93BB-29EC4806E838}.Debug|Any CPU.Build.0 = Debug|x64
-		{88BC648F-8D01-4CCC-93BB-29EC4806E838}.Debug|x64.ActiveCfg = Debug|x64
-		{88BC648F-8D01-4CCC-93BB-29EC4806E838}.Debug|x64.Build.0 = Debug|x64
-		{88BC648F-8D01-4CCC-93BB-29EC4806E838}.Release|Any CPU.ActiveCfg = Release|x64
-		{88BC648F-8D01-4CCC-93BB-29EC4806E838}.Release|Any CPU.Build.0 = Release|x64
-		{88BC648F-8D01-4CCC-93BB-29EC4806E838}.Release|x64.ActiveCfg = Release|x64
-		{88BC648F-8D01-4CCC-93BB-29EC4806E838}.Release|x64.Build.0 = Release|x64
 		{015E9553-D6EE-4205-96E4-111E12B07EC3}.Debug|Any CPU.ActiveCfg = Debug|x64
 		{015E9553-D6EE-4205-96E4-111E12B07EC3}.Debug|Any CPU.Build.0 = Debug|x64
 		{015E9553-D6EE-4205-96E4-111E12B07EC3}.Debug|x64.ActiveCfg = Debug|x64
@@ -109,12 +101,20 @@ Global
 		{4573AFA9-6CE0-409C-A967-F4E4C94C5342}.Release|x64.Build.0 = Release|x64
 		{7308BA31-AD52-F43A-84E4-F10EFCC43415}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{7308BA31-AD52-F43A-84E4-F10EFCC43415}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7308BA31-AD52-F43A-84E4-F10EFCC43415}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{7308BA31-AD52-F43A-84E4-F10EFCC43415}.Debug|x64.Build.0 = Debug|Any CPU
+		{7308BA31-AD52-F43A-84E4-F10EFCC43415}.Debug|x64.ActiveCfg = Debug|x64
+		{7308BA31-AD52-F43A-84E4-F10EFCC43415}.Debug|x64.Build.0 = Debug|x64
 		{7308BA31-AD52-F43A-84E4-F10EFCC43415}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7308BA31-AD52-F43A-84E4-F10EFCC43415}.Release|Any CPU.Build.0 = Release|Any CPU
 		{7308BA31-AD52-F43A-84E4-F10EFCC43415}.Release|x64.ActiveCfg = Release|Any CPU
 		{7308BA31-AD52-F43A-84E4-F10EFCC43415}.Release|x64.Build.0 = Release|Any CPU
+		{E5FEDA20-08A4-485F-987B-115CBB2AE4F7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E5FEDA20-08A4-485F-987B-115CBB2AE4F7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E5FEDA20-08A4-485F-987B-115CBB2AE4F7}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{E5FEDA20-08A4-485F-987B-115CBB2AE4F7}.Debug|x64.Build.0 = Debug|Any CPU
+		{E5FEDA20-08A4-485F-987B-115CBB2AE4F7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E5FEDA20-08A4-485F-987B-115CBB2AE4F7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E5FEDA20-08A4-485F-987B-115CBB2AE4F7}.Release|x64.ActiveCfg = Release|Any CPU
+		{E5FEDA20-08A4-485F-987B-115CBB2AE4F7}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

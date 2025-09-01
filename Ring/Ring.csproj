@@ -49,7 +49,7 @@
 		<EmbeddedResource Include="Util\Resources\PostgreSQLReservedKeyWord.gz" />
 		<EmbeddedResource Include="Util\Resources\SQLiteReservedKeyWord.gz" />
 		<EmbeddedResource Include="Util\Resources\SQLServerReservedKeyWord.gz" />
-		<EmbeddedResource Include="Util\Resources\Templates\XmlSchemaTemplateNative.gz" />
+		<EmbeddedResource Include="Util\Resources\Templates\XmlNative.gz" />
 	</ItemGroup>
 
 	<ItemGroup>

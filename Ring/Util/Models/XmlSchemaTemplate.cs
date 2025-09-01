@@ -1,13 +1,13 @@
-﻿using Ring.Util.Enums;
+﻿using Ring.Schema.Enums;
 
 namespace Ring.Util.Models;
 
 internal sealed class XmlSchemaTemplate
 {
-	internal readonly XmlTemplateType Type;
+	internal readonly DocumentType Type;
 	internal readonly XmlSchemaTemplateItem[] Items;
 
-	public XmlSchemaTemplate(XmlTemplateType type, XmlSchemaTemplateItem[] xmlTemplateItems)
+	public XmlSchemaTemplate(DocumentType type, XmlSchemaTemplateItem[] xmlTemplateItems)
 	{
 		Type = type;
 		Items = xmlTemplateItems;

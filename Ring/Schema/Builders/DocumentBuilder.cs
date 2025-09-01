@@ -2,6 +2,7 @@
 using Ring.Schema.Models;
 using Ring.Util.Builders;
 using Ring.Util.Enums;
+using Ring.Util.Helpers;
 using Ring.Util.Models;
 
 namespace Ring.Schema.Builders;
@@ -19,19 +20,20 @@ internal sealed class DocumentBuilder
     private DatabaseProvider _provider = DatabaseProvider.Undefined;
     private string _schemaName = string.Empty;
     private readonly List<Log> _logs = new();
-    private readonly LogBuilder _logBuilder = new LogBuilder();
+    private readonly LogBuilder _logBuilder = new();
 
     /// <summary>
     /// Ctor
     /// </summary>
     public DocumentBuilder(string filePath) => FilePath = filePath ?? string.Empty;
         
-    internal Document GetDocument()
+    internal Document GetDocument(DocumentType documentType)
     {
         Reset(); // reset values
         if (File.Exists(FilePath))
         {
-
+            // load template
+            var template = ResourceHelper.GetSchemaTemplate(documentType);
         }
         else _logs.Add(_logBuilder.GetError(LogType.FileNotFound, FilePath));
         var result=new Document(_schemaId, FilePath, _creator, _creationTime, _updateTime, _result, _type, _jobId, _provider, _schemaName);
@@ -52,4 +54,5 @@ internal sealed class DocumentBuilder
         _schemaName = string.Empty;
         _logs.Clear();
     }
+
 }

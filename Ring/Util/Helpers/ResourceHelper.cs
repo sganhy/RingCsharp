@@ -43,7 +43,7 @@ internal sealed class ResourceHelper
 		return message.Replace(ResourceCrLf, ResourceEndOfLine.ToString());
 	}
 
-	internal static XmlSchemaTemplate? GetSchemaTemplate(XmlTemplateType resourceType)
+	internal static XmlSchemaTemplate? GetSchemaTemplate(DocumentType resourceType)
 	{
 		// Code size: 20 (0x14)
 		if (!_schemaTemplateLoaded) LoadSchemaTemplates();
@@ -126,7 +126,7 @@ internal sealed class ResourceHelper
 			if (!_schemaTemplateLoaded)
 			{
 				_schemaTemplates = new XmlSchemaTemplate[byte.MaxValue];
-				var resourceFile = ResourceType.XmlSchemaTemplate.ToString() + XmlTemplateType.Native + CompressedResourceSuffix;
+				var resourceFile = ResourceType.XmlSchemaTemplate.ToString() + DocumentType.XmlNative + CompressedResourceSuffix;
 				var resources = new ReadOnlySpan<string?>(GetCompressedResource(TemplateResourceNameSpace, resourceFile, true));
 				var items = new List<XmlSchemaTemplateItem>();
 				// just native for the moment
@@ -140,7 +140,7 @@ internal sealed class ResourceHelper
 					var templateItem = new XmlSchemaTemplateItem(entityType, elements[0], elements[1], ResourceType.Description.ToString(), elements[2], GetXmlAttributes(elements[3]));
 					items.Add(templateItem);
 				}
-				_schemaTemplates[(int)XmlTemplateType.Native] = new XmlSchemaTemplate(XmlTemplateType.Native, items.ToArray());
+				_schemaTemplates[(int)DocumentType.XmlNative] = new XmlSchemaTemplate(DocumentType.XmlNative, items.ToArray());
 			}
 			_schemaTemplateLoaded = true;
 		}

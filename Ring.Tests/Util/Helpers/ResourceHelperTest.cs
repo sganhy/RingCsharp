@@ -12,7 +12,7 @@ public sealed class ResourceHelperTest
     {
         // arrange
         // act 
-        var template = ResourceHelper.GetSchemaTemplate(XmlTemplateType.Native);
+        var template = ResourceHelper.GetSchemaTemplate(DocumentType.XmlNative);
 
         // assert
         Assert.NotNull(template);
