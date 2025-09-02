@@ -126,7 +126,7 @@ internal sealed class ResourceHelper
 			if (!_schemaTemplateLoaded)
 			{
 				_schemaTemplates = new XmlSchemaTemplate[byte.MaxValue];
-				var resourceFile = ResourceType.XmlSchemaTemplate.ToString() + DocumentType.XmlNative + CompressedResourceSuffix;
+				var resourceFile = DocumentType.XmlNative + CompressedResourceSuffix;
 				var resources = new ReadOnlySpan<string?>(GetCompressedResource(TemplateResourceNameSpace, resourceFile, true));
 				var items = new List<XmlSchemaTemplateItem>();
 				// just native for the moment
