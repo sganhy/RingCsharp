@@ -1,12 +1,9 @@
 ﻿using Bogus;
-using Bogus.DataSets;
-using Ring.Schema.Enums;
 using Ring.Util.Extensions;
-using System.Linq;
 
 namespace Ring.Tests.Util.Extensions;
 
-public sealed class ArrayExtensionsTest
+public sealed class SpanExtensionsTest
 {
     private readonly Faker _faker = new();
 
@@ -22,7 +19,7 @@ public sealed class ArrayExtensionsTest
         Array.Sort(arr); 
 
         // act 
-        var index = ArrayExtensions.GetIndex(arr, value); // last index
+        var index = SpanExtensions.GetIndex(new Span<int>(arr), value); // last index
 
         // assert
         Assert.Equal(arr[index], value);
@@ -38,7 +35,7 @@ public sealed class ArrayExtensionsTest
         Array.Sort(arr);
 
         // act 
-        var index = ArrayExtensions.GetIndex(arr, value);
+        var index = SpanExtensions.GetIndex(new Span<int>(arr), value);
 
         // assert
         Assert.Equal(-1, index);

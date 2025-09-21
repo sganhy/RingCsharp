@@ -10,9 +10,7 @@ using Ring.Schema;
 using Ring.Data.Enums;
 using Ring.Util.Builders.MySQL;
 using Ring.Data.Models;
-using Bogus;
 using Xunit.Abstractions;
-using Bogus.DataSets;
 using Ring.Data;
 
 namespace Ring.Tests.Data;
@@ -26,8 +24,10 @@ public sealed class RecordTest : BaseTest
         var metaList = GetSchema1();
         var meta = new Meta("Test");
         _schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql,SchemaType.Static,SchemaLoadType.Full) ?? Meta.GetEmptySchema(meta, DatabaseProvider.PostgreSql);
-        var config = new Configuration();
-        config.MaxNumberOfSchema = 2048;
+        var config = new Configuration
+        {
+            MaxNumberOfSchema = 2048
+        };
         Global.Init(config);
     }
 
@@ -1384,14 +1384,19 @@ public sealed class RecordTest : BaseTest
         rcd1.SetField("critical_multiplier_2", _faker.Random.Short());
         table = _schema.GetTable("book"); // book
         Assert.NotNull(table);
-        var rcd2 = new Record(table, GetBucket(table,4,80), 3 * table.RecordSize); // as fourth record
+        var bucket = GetBucket(table, 4, 80);
+        var rcd2 = new Record(table, bucket, 2 * table.RecordSize); // as fourth record
+        var rcd3 = new Record(table, bucket, 3 * table.RecordSize); // as fourth record
         rcd2.SetField("title", _faker.Random.String());
+        rcd3.SetField("core_rule", true);
 
         // act 
         rcd1.ClearData(); // test 1
         rcd2.ClearData(); // test 2
 
         // assert
+        Assert.NotNull(rcd3.GetField("core_rule"));
+        Assert.Equal("True", rcd3.GetField("core_rule"));
         for (var i = 0; i < rcd1.Table.RecordSize; ++i)
         {
             Assert.Null(rcd1[i]);
@@ -1400,6 +1405,8 @@ public sealed class RecordTest : BaseTest
         {
             Assert.Null(rcd2[i]);
         }
+        Assert.False(rcd1.IsDirty);
+        Assert.False(rcd2.IsDirty);
     }
 
     [Fact]

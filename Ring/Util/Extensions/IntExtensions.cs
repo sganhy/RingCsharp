@@ -1,5 +1,4 @@
-﻿using Ring.Schema.Enums;
-using Ring.Util.Enums;
+﻿using Ring.Util.Enums;
 
 namespace Ring.Util.Extensions;
 
@@ -22,12 +21,15 @@ internal static class IntExtensions
     private const int XmlAttributeInverseRelationId = (int)XmlSchemaAttributeType.InverseRelation;
     private const int XmlAttributeConstraintId = (int)XmlSchemaAttributeType.Constraint;
     private const int XmlAttributeUniqueId = (int)XmlSchemaAttributeType.Unique;
+    private const int XmlAttributeParentId = (int)XmlSchemaAttributeType.Parent;
+    private const int XmlAttributeValueId = (int)XmlSchemaAttributeType.Value;
+
 
     #endregion
 
     internal static XmlSchemaAttributeType ToXmlSchemaAttributeType(this int xmlAttributeId)
 	{
-        // Code size: 86 (0x56)
+        // Code size: 146 (0x92)
         switch (xmlAttributeId)
 		{
 			case XmlAttributeId: return XmlSchemaAttributeType.Id;
@@ -44,6 +46,8 @@ internal static class IntExtensions
             case XmlAttributeInverseRelationId: return XmlSchemaAttributeType.InverseRelation;
             case XmlAttributeConstraintId: return XmlSchemaAttributeType.Constraint;
             case XmlAttributeUniqueId: return XmlSchemaAttributeType.Unique;
+            case XmlAttributeParentId: return XmlSchemaAttributeType.Parent;
+            case XmlAttributeValueId: return XmlSchemaAttributeType.Value;
         }
         return XmlSchemaAttributeType.Undefined;
 	}

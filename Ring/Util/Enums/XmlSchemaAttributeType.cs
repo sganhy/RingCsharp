@@ -1,9 +1,6 @@
 ﻿namespace Ring.Util.Enums;
 
-/// <summary>
-/// 	values above 125 are reserved for unitesting; value should be defined as [0,125[ 
-/// </summary>
-internal enum XmlSchemaAttributeType : byte
+internal enum XmlSchemaAttributeType : short
 {
 	Id = 0,
 	Name = 1,
@@ -19,5 +16,7 @@ internal enum XmlSchemaAttributeType : byte
 	InverseRelation = 11,
 	Constraint = 12,
 	Unique = 13,
-	Undefined = 127
+	Parent = 22,
+	Value = 23,
+	Undefined = short.MaxValue
 }

@@ -6,7 +6,7 @@ internal sealed class Table : BaseEntity
 {
 	internal readonly int ObjectIndex;
 	internal readonly bool Cached;
-	internal readonly Field[] Fields;              // sorted by name (field.id should b).
+	internal readonly Field[] Fields;              // sorted by name.
 	internal readonly Relation[] Relations;        // sorted by name.
 	internal readonly Index[] Indexes;
 	internal readonly int RecordSize;
@@ -17,6 +17,7 @@ internal sealed class Table : BaseEntity
 	internal readonly TableType Type;
 	internal readonly CacheId CacheId;
 	internal readonly string PhysicalName;
+	internal readonly bool PhysicalDeletion;
 	internal readonly bool Readonly;
 
 	/// <summary>
@@ -24,7 +25,7 @@ internal sealed class Table : BaseEntity
 	/// </summary>
 	internal Table(int id, string name, string? description, string? subject, string physicalName, TableType type,
 		Relation[] relations, Field[] fields, Column[] columns, Index[] indexes, int schemaId,
-		PhysicalType physicalType, int objectIndex, int recordSize, bool baseline, bool active, bool cached, bool readonlyTable) 
+		PhysicalType physicalType, int objectIndex, int recordSize, bool baseline, bool active, bool cached, bool physicalDeletion, bool readonlyTable) 
 		: base(id, name, description, baseline, active)
 	{
 		Type = type;
@@ -42,6 +43,7 @@ internal sealed class Table : BaseEntity
 		Cached = cached;
 		PhysicalName = physicalName;
 		ObjectIndex = objectIndex;
+		PhysicalDeletion = physicalDeletion;
 	}
 
 #if DEBUG

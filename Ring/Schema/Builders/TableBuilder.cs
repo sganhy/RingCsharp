@@ -140,7 +140,7 @@ internal sealed class TableBuilder
 		flags = Meta.SetIndexUnique(flags, true);
 		var metaIndex = new Meta(0, (byte)EntityType.Index, 0, 0, flags, partialTable.Name, null, value, true);
 		var metaArr = new [] { metaRelation1, metaRelation2, metaIndex };
-		var segMent = new ArraySegment<Meta>(metaArr, 0, 3);
+		var segMent = new ReadOnlySpan<Meta>(metaArr, 0, 3);
 		var result = metaTable.ToTable(segMent, PhysicalType.Table, ddlBuilder, physicalName, objectIndex) ?? partialTable;
 		result.Relations[0] = relation1;
 		result.Relations[1] = relation2;
@@ -160,14 +160,15 @@ internal sealed class TableBuilder
 
 		var spanMeta = metaArray.AsSpan();
 		for (var i=0; i< spanMeta.Length; ++i) spanMeta[i] = Meta.Create(i,spanMeta[i]);
-		return metaTable.ToTable(new ArraySegment<Meta>(metaArray, 0, metaArray.Length),
+		return metaTable.ToTable(new ReadOnlySpan<Meta>(metaArray, 0, metaArray.Length),
 				physicalType ?? PhysicalType.Table, ddlBuilder, physicalName, 0) ?? emptyTable;
 	}
 
 	private static Meta GetTable(int id, string name, TableType tableType, bool active=true) {
 		var flags = 0L;
 		flags = Meta.SetEntityBaseline(flags, true);
-		return new(id, (byte)EntityType.Table, 0, (int)tableType, flags, name, null, null, active);
+        flags = Meta.SetTableReadonly(flags, true);
+        return new(id, (byte)EntityType.Table, 0, (int)tableType, flags, name, null, null, active);
 	}
 	private static Meta GetSchema(int id, string name) => new(id, (byte)EntityType.Schema, 0, 0, 0L, name, null, null, true);
 	private static Meta GetField(string name, FieldType fieldType, bool notNull)

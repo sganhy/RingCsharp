@@ -15,23 +15,4 @@ static internal class ArrayExtensions
 		return result;
 	}
 
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	internal static int GetIndex(this int[] array, int value)
-	{
-		// Code size: 70 (0x46)
-		var span = new ReadOnlySpan<int>(array);
-		int indexerLeft = 0, indexerRight = span.Length - 1, indexerMiddle, indexerCompare;
-		while (indexerLeft <= indexerRight)
-		{
-			indexerMiddle = indexerLeft + indexerRight;
-			indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
-			indexerCompare = value - span[indexerMiddle];
-			if (indexerCompare == 0) return indexerMiddle;
-			if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
-			else indexerRight = indexerMiddle - 1;
-		}
-		return -1;
-	}
-
-
 }
