@@ -42,10 +42,10 @@ public struct Record : IEquatable<Record>
 	private Table _type;
 	private int _offset; // cannot be readonly anymore! : Allows multiple records to share the same underlying array
 
-    /// <summary>
-    /// 	Ctor
-    /// </summary>
-    public Record()
+	/// <summary>
+	/// 	Ctor
+	/// </summary>
+	public Record()
 	{
 		_type = DefaultType;
 		_data = DefaultData;
@@ -80,11 +80,12 @@ public struct Record : IEquatable<Record>
 	public readonly bool IsDirty => _data[_type.RecordSize-1 + _offset] != null; // Code size: 31 (0x1f)
 	public readonly bool IsNew
 	{
-		// Code size: 64 (0x40)
+		// Code size: 56 (0x38)
 		get
 		{
-			if (_type.Id==-1) ThrowRecordUnknownRecordType();
-			if (_type.Type == TableType.Business) return _data[_type.Columns[0].RecordIndex]==null;
+			var table = _type;
+			if (table.Id==-1) ThrowRecordUnknownRecordType();
+			if (table.Type == TableType.Business) return _data[table.Columns[0].RecordIndex]==null;
 			// not managed ==> @lexicon_itm, @log, @meta, @meta_id; 
 			return true; // always New if there are no keys
 		}
@@ -92,21 +93,16 @@ public struct Record : IEquatable<Record>
 	internal readonly Table Table => _type;
 
 #pragma warning disable IDE0251 // Make member 'readonly'
-	internal void ClearData()
-	{
-        // Code size: 37 (0x25)
-        var span = _data.AsSpan(_offset, _type.RecordSize);
-        span.Clear();
-	}
+	internal void ClearData() => Array.Clear(_data, _offset, _type.RecordSize); // Code size: 29 (0x1d)
 #pragma warning restore IDE0251
 
 	public string? RecordType 
 	{
 		readonly get
 		{
-            // Code size: 67 (0x43)
-            var table = _type;
-            if (table == null) return null;
+			// Code size: 67 (0x43)
+			var table = _type;
+			if (table == null) return null;
 			var schema = Global.GetSchema(table.SchemaId);
 			var tableName = table.Name;
 			if (schema == null) ThrowRecordUnknownRecordType();
@@ -126,15 +122,15 @@ public struct Record : IEquatable<Record>
 				if (ReferenceEquals(table, _type)) ClearData(); // Is RecordType changed? 
 				else
 				{
-                    _data = new string?[table.RecordSize];
-                    _type = table;
+					_data = new string?[table.RecordSize];
+					_type = table;
 					_offset = 0;
 				}
 			}
 			else 
 			{
-                _data = DefaultData;
-                _type = DefaultType;
+				_data = DefaultData;
+				_type = DefaultType;
 				_offset = 0;
 			}
 		}
@@ -150,11 +146,11 @@ public struct Record : IEquatable<Record>
 	/// </summary>
 	public readonly string? GetField(string name)
 	{
-        // Code size: 82 (0x52) - no virtual call
-        var data = _data;
-        var table = _type;
-        if (table.Id == -1) ThrowRecordUnknownRecordType();
-		var fieldId = _type.GetFieldIndex(name);
+		// Code size: 77 (0x4d) - no virtual call
+		var data = _data;
+		var table = _type;
+		if (table.Id == -1) ThrowRecordUnknownRecordType();
+		var fieldId = table.GetFieldIndex(name);
 		if (fieldId > -1) return data[fieldId + _offset] ?? table.Fields[fieldId].DefaultValue;
 		ThrowRecordUnknownFieldName(table, name);
 		return null;
@@ -162,11 +158,11 @@ public struct Record : IEquatable<Record>
 
 	public readonly void GetField(string name, out bool? value)
 	{
-        // Code size: 159 (0x9f) - no virtual call
-        var data = _data;
+		// Code size: 159 (0x9f) - no virtual call
+		var data = _data;
 		var table = _type;
-        if (table.Id == -1) ThrowRecordUnknownRecordType();
-		var fieldId = _type.GetFieldIndex(name);
+		if (table.Id == -1) ThrowRecordUnknownRecordType();
+		var fieldId = table.GetFieldIndex(name);
 		if (fieldId <= -1) ThrowRecordUnknownFieldName(table, name);
 		var field = table.Fields[fieldId];
 		var type = field.Type;
@@ -180,9 +176,9 @@ public struct Record : IEquatable<Record>
 
 	public readonly void GetField(string name, out byte[]? value)
 	{
-        // Code size: 108 (0x6c) - no virtual call
-        var data = _data;
-        var table = _type;
+		// Code size: 113 (0x71) - no virtual call
+		var data = _data;
+		var table = _type;
 		if (table.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = table.GetFieldIndex(name);
 		if (fieldId <= -1) ThrowRecordUnknownFieldName(table, name);
@@ -196,10 +192,10 @@ public struct Record : IEquatable<Record>
 
 	public readonly void GetField(string name, out long? value)
 	{
-        // Code size: 140 (0x8c) - no virtual call
-        var data = _data;
-        var table = _type;
-        if (table.Id == -1) ThrowRecordUnknownRecordType();
+		// Code size: 140 (0x8c) - no virtual call
+		var data = _data;
+		var table = _type;
+		if (table.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = table.GetFieldIndex(name);
 		if (fieldId <= -1) ThrowRecordUnknownFieldName(table, name);
 		value = null;
@@ -219,10 +215,10 @@ public struct Record : IEquatable<Record>
 	/// </summary>
 	public readonly void GetField(string name, out DateTime? value)
 	{
-        // Code size: 133 (0x85) - no virtual call
-        var data = _data;
-        var table = _type;
-        if (table.Id == -1) ThrowRecordUnknownRecordType();
+		// Code size: 133 (0x85) - no virtual call
+		var data = _data;
+		var table = _type;
+		if (table.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = table.GetFieldIndex(name);
 		if (fieldId <= -1) ThrowRecordUnknownFieldName(table, name);
 		value = null;
@@ -240,10 +236,11 @@ public struct Record : IEquatable<Record>
 	/// </summary>
 	public void SetField(string name, string? value)
 	{
-        // Code size: 211 (0xd3)
-        var data = _data;
-        var table = _type;
-        if (table.Id == -1) ThrowRecordUnknownRecordType();
+		// Code size: 258 (0x102) - no virtual call
+		var data = new Span<string?>(_data);
+		var table = _type;
+		var offset = _offset;
+		if (table.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = table.GetFieldIndex(name);
 		if (fieldId == -1) ThrowRecordUnknownFieldName(table, name);
 		var field = table.Fields[fieldId];
@@ -252,34 +249,34 @@ public struct Record : IEquatable<Record>
 		if (value != null)
 			switch (fieldType)
 			{
-				case FieldType.String: SetStringField(data, field.Size, fieldId, value); break;
-				case FieldType.LongString: SetData(_data, _type, _offset, fieldId, value); break; // no size check!
+				case FieldType.String: SetStringField(data, table, offset, field.Size, fieldId, value); break;
+				case FieldType.LongString: SetData(data, table, offset, fieldId, value); break; // no size check!
 				case FieldType.Byte:
 				case FieldType.Short:
 				case FieldType.Int:
-				case FieldType.Long: SetIntegerField(fieldId, fieldType, value); break;
+				case FieldType.Long: SetIntegerField(data, table, offset, fieldId, fieldType, value); break;
 				case FieldType.Float:
-				case FieldType.Double: SetFloatField(fieldType, fieldId, value); break;
+				case FieldType.Double: SetFloatField(data, table, offset, fieldType, fieldId, value); break;
 				case FieldType.ShortDateTime:
 				case FieldType.DateTime:
-				case FieldType.LongDateTime: SetDateTimeField(fieldId, fieldType, value); break;
-				case FieldType.Boolean: SetBooleanField(fieldId, value); break;
-				case FieldType.ByteArray: SetByteArrayField(fieldId, value); break;
+				case FieldType.LongDateTime: SetDateTimeField(data, table, offset, fieldId, fieldType, value); break;
+				case FieldType.Boolean: SetBooleanField(data, table, offset, fieldId, value); break;
+				case FieldType.ByteArray: SetByteArrayField(data, table, offset, fieldId, value); break;
 			}
-		else SetData(_data, _type, _offset, fieldId, null);
+		else SetData(data, table, offset, fieldId, null);
 #pragma warning restore RCS1003
 	}
 
 #pragma warning disable IDE0251 // Make member 'readonly'
-    public void SetField(string name, long value) => SetField(_data, _type, _offset, name, value, FieldType.Long); // Code size: 27 (0x1b)
+	public void SetField(string name, long value) => SetField(_data, _type, _offset, name, value, FieldType.Long); // Code size: 27 (0x1b)
 	public void SetField(string name, int value) => SetField(_data, _type, _offset, name, value, FieldType.Int); // Code size: 27 (0x1b)
-    public void SetField(string name, short value) => SetField(_data, _type, _offset, name, value, FieldType.Short); // Code size: 27 (0x1b)
-    public void SetField(string name, sbyte value) => SetField(_data, _type, _offset, name, value, FieldType.Byte); // Code size: 27 (0x1b)
-    public void SetField(string name, bool value)
+	public void SetField(string name, short value) => SetField(_data, _type, _offset, name, value, FieldType.Short); // Code size: 27 (0x1b)
+	public void SetField(string name, sbyte value) => SetField(_data, _type, _offset, name, value, FieldType.Byte); // Code size: 27 (0x1b)
+	public void SetField(string name, bool value)
 	{
-        // Code size: 105 (0x69) - no virtual call
-        var data = _data;
-        var table = _type;
+		// Code size: 105 (0x69) - no virtual call
+		var data = _data;
+		var table = _type;
 		if (table.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = table.GetFieldIndex(name);
 		if (fieldId == -1) ThrowRecordUnknownFieldName(table, name);
@@ -289,20 +286,20 @@ public struct Record : IEquatable<Record>
 	}
 	public void SetField(string name, DateTime value)
 	{
-        // Code size: 79 (0x4f) - no virtual call
-        var data = _data;
-        var table = _type;
-        if (table.Id == -1) ThrowRecordUnknownRecordType();
+		// Code size: 79 (0x4f) - no virtual call
+		var data = _data;
+		var table = _type;
+		if (table.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = table.GetFieldIndex(name);
 		if (fieldId == -1) ThrowRecordUnknownFieldName(table, name);
 		SetDateTimeField(data, table, _offset, fieldId, table.Fields[fieldId].Type, value, null);
 	}
 	public void SetField(string name, DateTimeOffset value)
 	{
-        // Code size: 88 (0x58) - no virtual call
-        var data = _data;
-        var table = _type;
-        if (table.Id == -1) ThrowRecordUnknownRecordType();
+		// Code size: 88 (0x58) - no virtual call
+		var data = _data;
+		var table = _type;
+		if (table.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = table.GetFieldIndex(name);
 		if (fieldId == -1) ThrowRecordUnknownFieldName(table, name);
 		SetDateTimeField(data, table, _offset, fieldId, table.Fields[fieldId].Type, value.DateTime, value.Offset);
@@ -311,12 +308,12 @@ public struct Record : IEquatable<Record>
 	public void SetField(string name, float value) => SetField(name, value, FieldType.Float); // Code size: 12 (0xc)
 #pragma warning restore IDE0251
 
-    public void SetField<T>(string name, T value) where T : IEnumerable<byte>
+	public void SetField<T>(string name, T value) where T : IEnumerable<byte>
 	{
-        // Code size: 99 (0x63) - no virtual call
-        var data = _data;
-        var table = _type;
-        if (table.Id == -1) ThrowRecordUnknownRecordType();
+		// Code size: 99 (0x63) - no virtual call
+		var data = _data;
+		var table = _type;
+		if (table.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = table.GetFieldIndex(name);
 		if (fieldId == -1) ThrowRecordUnknownFieldName(table, name);
 		var fieldType = table.Fields[fieldId].Type;
@@ -328,12 +325,13 @@ public struct Record : IEquatable<Record>
 	public readonly override bool Equals(object? obj) => obj is Record record && Equals(record);
 	public readonly bool Equals(Record other)
 	{
-		// Code size: 88 (0x58) - no virtual call
-		if (!ReferenceEquals(_type, other._type)) return false;
+		// Code size: 87 (0x57) - no virtual call
+		var table = _type;
+		if (!ReferenceEquals(table, other._type)) return false;
 		var i = 0;
 		var offset1 = _offset;
 		var offset2 = other._offset;
-		var count = _type.RecordSize-1;
+		var count = table.RecordSize-1;
 		while (i < count)
 		{
 			if (!string.Equals(_data[i+offset1], other._data[i+offset2], StringComparison.Ordinal)) return false;
@@ -343,12 +341,13 @@ public struct Record : IEquatable<Record>
 	}
 	public readonly override int GetHashCode()
 	{
-        // Code size: 111 (0x6f)
-        var data = _data;
+		// Code size: 112 (0x70)
+		var data = _data;
+		var table = _type;
 		var result = new StringBuilder();
-		result.Append(_type.PhysicalName);
+		result.Append(table.PhysicalName);
 		var i = _offset;
-		var columnCount = _type.RecordSize - 1;
+		var columnCount = table.RecordSize - 1;
 		columnCount += i;
 		while (i < columnCount)
 		{
@@ -361,11 +360,11 @@ public struct Record : IEquatable<Record>
 	internal readonly bool EqualTo(SaveQuery obj) => ReferenceEquals(obj.Data, _data) && obj.Offset == _offset; // Code size: 31 (0x1f)
 	internal readonly bool IsFieldChanged(string name)
 	{
-        // Code size: 91 (0x5b) - no virtual call
-        var data = _data;
-        var table = _type;
-        if (table.Id == -1) ThrowRecordUnknownRecordType();
-		var index = _type.GetFieldIndex(name);
+		// Code size: 91 (0x5b) - no virtual call
+		var data = _data;
+		var table = _type;
+		if (table.Id == -1) ThrowRecordUnknownRecordType();
+		var index = table.GetFieldIndex(name);
 		var trackerIndex = _offset + table.RecordSize - 1;
 		if (index != -1) return _data[trackerIndex] != null && IsColumnChanged(data, index, trackerIndex);
 		ThrowRecordUnknownFieldName(table, name);
@@ -376,9 +375,9 @@ public struct Record : IEquatable<Record>
 
 	internal readonly bool IsRelationChanged(string name)
 	{
-        // Code size: 116 (0x74) - no virtual call
-        var data = _data;
-        var table = _type;
+		// Code size: 116 (0x74) - no virtual call
+		var data = _data;
+		var table = _type;
 		if (table.Id == -1) ThrowRecordUnknownRecordType();
 		var relation = table.GetRelation(name);
 		var trackerIndex = _offset + table.RecordSize - 1;
@@ -399,10 +398,10 @@ public struct Record : IEquatable<Record>
 	/// <returns>relation ID value; if not defined, return null</returns>
 	internal readonly long? GetRelation(string name)
 	{
-        // Code size: 99 (0x63) - no virtual call
-        var data = _data;
-        var table = _type;
-        if (table.Id == -1) ThrowRecordUnknownRecordType();
+		// Code size: 99 (0x63) - no virtual call
+		var data = _data;
+		var table = _type;
+		if (table.Id == -1) ThrowRecordUnknownRecordType();
 		var relation = table.GetRelation(name);
 		if (relation == null) ThrowRecordUnknownRelationName(name);
 		var column = table.GetColumn(relation.Id, EntityType.Relation);
@@ -412,12 +411,12 @@ public struct Record : IEquatable<Record>
 	}
 
 #pragma warning disable IDE0251 // Make member 'readonly'
-    internal void SetRelation(string name, long? value)
-    {
-        // Code size: 140 (0x8c) - no virtual call
-        var data = _data;
-        var table = _type;
-        if (table.Id == -1) ThrowRecordUnknownRecordType();
+	internal void SetRelation(string name, long? value)
+	{
+		// Code size: 140 (0x8c) - no virtual call
+		var data = _data;
+		var table = _type;
+		if (table.Id == -1) ThrowRecordUnknownRecordType();
 		var relation = table.GetRelation(name);
 		if (relation == null) ThrowRecordUnknownRelationName(name);
 		var column = table.GetColumn(relation.Id, EntityType.Relation);
@@ -428,16 +427,16 @@ public struct Record : IEquatable<Record>
 	}
 #pragma warning restore IDE0251 // Make member 'readonly'
 
-    #region private methods 
+	#region private methods 
 
 #pragma warning disable IDE0251 // Make member 'readonly'
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private void SetField(string name, double value, FieldType fieldType)
 	{
-        // Code size: 108 (0x6c) - no virtual call
-        var data = _data;
-        var table = _type;
-        if (table.Id == -1) ThrowRecordUnknownRecordType();
+		// Code size: 108 (0x6c) - no virtual call
+		var data = _data;
+		var table = _type;
+		if (table.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = _type.GetFieldIndex(name);
 		if (fieldId == -1) ThrowRecordUnknownFieldName(table, name);
 		var type = table.Fields[fieldId].Type;
@@ -446,11 +445,11 @@ public struct Record : IEquatable<Record>
 	}
 #pragma warning restore IDE0251 // Make member 'readonly'
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private static void SetField(string?[] data, Table table, int offset, string name, long value, FieldType fieldType)
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static void SetField(Span<string?> data, Table table, int offset, string name, long value, FieldType fieldType)
 	{
-        // Code size: 256 (0x100) - no virtual call; removed pattern merge!
-        if (table.Id == -1) ThrowRecordUnknownRecordType();
+		// Code size: 256 (0x100) - no virtual call; removed pattern merge!
+		if (table.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = table.GetFieldIndex(name);
 		if (fieldId == -1) ThrowRecordUnknownFieldName(table, name);
 		var type = table.Fields[fieldId].Type;
@@ -482,15 +481,23 @@ public struct Record : IEquatable<Record>
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private void SetStringField(string?[] data, int fieldSize, int fieldId, string value)
+	private static void SetStringField(Span<string?> data, Table table, int offset, int fieldSize, int fieldId, string value)
 	{
-		// Code size: 27 (0x1b)
-		SetData(_data, _type, _offset, fieldId, value.Length <= fieldSize ? value : value.Truncate(fieldSize)); // truncate or exception ?? // replace by Span<T>
+		// Code size: 48 (0x30)
+		if (value.Length <= fieldSize)
+		{
+			SetData(data, table, offset, fieldId, value);
+		}
+		else
+		{
+			// Use span to avoid allocation - add a condition to create exception
+			SetData(data, table, offset, fieldId, new string(value.AsSpan(0, fieldSize)));
+		}
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private void SetIntegerField(int fieldId, FieldType numberType, string value) {
-		// Code size: 120 (0x78) - pattern merge!
+	private static void SetIntegerField(Span<string?> data, Table table, int offset, int fieldId, FieldType numberType, string value) {
+		// Code size: 129 (0x81) - removed merge pattern!
 #pragma warning disable RCS1003 // Add braces to if-else (when expression spans over multiple lines)
 		if (!value.IsNumber()) ThrowWrongStringFormat();
 		else if (long.TryParse(value, NumberStyles.Integer, DefaultCulture, out var lng) &&
@@ -498,49 +505,56 @@ public struct Record : IEquatable<Record>
 				(numberType == FieldType.Int && lng <= MaxIntValue && lng >= MinIntValue) ||
 				(numberType == FieldType.Short && lng <= MaxShortValue && lng >= MinShortValue) ||
 				(numberType == FieldType.Byte && lng <= MaxByteValue && lng >= MinByteValue)))
-			SetData(_data, _type, _offset, fieldId, lng.ToString(DefaultCulture));
+			SetData(data, table, offset, fieldId, lng.ToString(DefaultCulture));
 		else ThrowValueTooLarge(numberType);
 #pragma warning restore RCS1003
 	}
 
-	private void SetFloatField(FieldType fieldType, int fieldId, string value)
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static void SetFloatField(Span<string?> data, Table table, int offset, FieldType fieldType, int fieldId, string value)
 	{
 		// see. ISO 6093:1985
-		// Code size: 103 (0x67) - no virtual call; - smaller than a logical pattern
+		// Code size: 111 (0x6f) - no virtual call; - smaller than a logical pattern
 		if (double.TryParse(value, NumberStyles.Float, DefaultCulture, out var dbl))
 		{
-			if (fieldType == FieldType.Double) SetData(_data, _type, _offset, fieldId, dbl.ToString(DefaultCulture));
+			if (fieldType == FieldType.Double) SetData(data, table, offset, fieldId, dbl.ToString(DefaultCulture));
 			else if (fieldType == FieldType.Float && float.TryParse(value, NumberStyles.Float, DefaultCulture, out var flt))
-				SetData(_data, _type, _offset, fieldId, flt.ToString(DefaultCulture));
+				SetData(data, table, offset, fieldId, flt.ToString(DefaultCulture));
 			else ThrowValueTooLarge(fieldType);
 			return;
 		}
 		ThrowWrongStringFormat();
 	}
 
-	private void SetByteArrayField(int fieldId, string value)
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static void SetDateTimeField(Span<string?> data, Table table, int offset, int fieldId, FieldType fieldType, string value)
 	{
-		if (value.IsBase64String()) SetData(_data, _type, _offset, fieldId, value);
+		// Code size: 39 (0x27)
+		var dateTimeOffset = value.ParseIso8601Date();
+		SetDateTimeField(data, table, offset, fieldId, fieldType, dateTimeOffset.DateTime, dateTimeOffset.Offset);
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static void SetByteArrayField(Span<string?> data, Table table, int offset, int fieldId, string value)
+	{
+		// Code size: 27 (0x1b)
+		if (value.IsBase64String()) SetData(data, table, offset, fieldId, value);
 		else ThrowInvalidBase64String();
 	}
 
-	private void SetBooleanField(int fieldId, string value)
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static void SetBooleanField(Span<string?> data, Table table, int offset, int fieldId, string value)
 	{
-		// Code size: 40 (0x28)
-		if (bool.TryParse(value, out var result)) SetData(_data, _type, _offset, fieldId, result ? BooleanTrue : BooleanFalse);
+		// Code size: 44 (0x2c) - no virtual call;
+		if (bool.TryParse(value, out var result)) SetData(data, table, offset, fieldId, result ? BooleanTrue : BooleanFalse);
 		else ThrowWrongBooleanValue(value);
 	}
 
-	private void SetDateTimeField(int fieldId, FieldType fieldType, string value)
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static void SetDateTimeField(Span<string?> data, Table table, int rcdOffset, int fieldId, FieldType fieldType, DateTime value, TimeSpan? offset)
 	{
-		var dateTimeOffset = value.ParseIso8601Date();
-		SetDateTimeField(_data, _type, _offset, fieldId, fieldType, dateTimeOffset.DateTime, dateTimeOffset.Offset);
-	}
-
-	private static void SetDateTimeField(string?[] data, Table table, int rcdOffset, int fieldId, FieldType fieldType, DateTime value, TimeSpan? offset)
-	{
-        // Code size: 59 (0x3b) - smaller than a logical pattern
-        if (fieldType == FieldType.DateTime || fieldType == FieldType.LongDateTime || fieldType == FieldType.ShortDateTime)
+		// Code size: 59 (0x3b) - smaller than a logical pattern - no virtual call;
+		if (fieldType == FieldType.DateTime || fieldType == FieldType.LongDateTime || fieldType == FieldType.ShortDateTime)
 			SetData(data, table, rcdOffset, fieldId, new string(value.ToString(fieldType, offset)));
 		else ThrowImpossibleConversion(FieldType.DateTime, fieldType);
 	}
@@ -553,19 +567,20 @@ public struct Record : IEquatable<Record>
 		}
 	}
 
-	private static void InitializeTracking(string?[] data, Table table, int trackerIndex) => data[trackerIndex] = new string(new char[(table.Fields.Length >> 4) + 1]); 
+	private static void InitializeTracking(Span<string?> data, Table table, int trackerIndex) => data[trackerIndex] = new string(new char[(table.Fields.Length >> 4) + 1]); // Code size: 32 (0x20)
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private static void SetData(string?[] data, Table table, int offset, int fieldId, string? value)
+	private static void SetData(Span<string?> data, Table table, int offset, int fieldId, string? value)
 	{
-        //  Code size: 82 (0x52)
-        var fieldIndex = fieldId + offset;
-		var trackerIndex = table.RecordSize -1 + offset;
+		// Code size: 118 (0x76) - no virtual call;
+		var fieldIndex = fieldId + offset;
+		var trackerIndex = table.RecordSize - 1 + offset;
+		if (data.Length < fieldIndex) fieldIndex = fieldId; // another thread changed RecordType avoiding crash; here offset is reset to 0
 		if (data[fieldIndex] == value) return; // detect no change
 		if (value == null && table.Fields[fieldId].NotNull) MandatoryField(table, fieldId); // manage mandatory fields !!
 		if (data[trackerIndex] == null) InitializeTracking(data, table, trackerIndex);
-        data[trackerIndex]!.SetBitValue(fieldId); // cannot be null here !!
-        data[fieldIndex] = value;
+		data[trackerIndex]!.SetBitValue(fieldId); // cannot be null here !!
+		data[fieldIndex] = value;
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -629,8 +644,8 @@ public struct Record : IEquatable<Record>
 
 	private static Table GetDefaultType()
 	{
-        // Code size: 82 (0x52)
-        var metaTable = new Meta(-1, (byte)EntityType.Table, 0, (int)TableType.Undefined, 0L, string.Empty, null, null, true);
+		// Code size: 82 (0x52)
+		var metaTable = new Meta(-1, (byte)EntityType.Table, 0, (int)TableType.Undefined, 0L, string.Empty, null, null, true);
 		var metaArray = new Meta[] { new(0, (byte)EntityType.Field, 0, 0, 0L, string.Empty, null, null, true) };
 		return metaTable.ToTable(new ReadOnlySpan<Meta>(metaArray), PhysicalType.Undefined, GetDefaultDdlBuilder(), string.Empty, 1)!; // cannot be null here!!
 	}

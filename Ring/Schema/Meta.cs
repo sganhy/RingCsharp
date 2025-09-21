@@ -45,8 +45,8 @@ internal readonly struct Meta : IEquatable<Meta>
 	private const byte BitPositionFirstPositionRelType = 18;
 	private const byte BitPositionRelationNotNull = 4;
 	private const byte BitPositionRelationConstraint = 5;
-    private const byte BitPositionTableSoftDelete= 8;
-    private const byte BitPositionTableCached = 9;
+	private const byte BitPositionTableSoftDelete= 8;
+	private const byte BitPositionTableCached = 9;
 	private const byte BitPositionTableReadonly = 10;
 	private const byte BitPositionTablespaceIndex = 11;
 	private const byte BitPositionTablespaceTable = 12;
@@ -173,12 +173,12 @@ internal readonly struct Meta : IEquatable<Meta>
 	internal static long SetTableCached(long flags, bool cached) => WriteFlag(flags, BitPositionTableCached, cached);
 	internal bool IsTableReadonly => ReadFlag(BitPositionTableReadonly);
 	internal bool IsTableCached => ReadFlag(BitPositionTableCached);
-    internal bool IsPhysicalDeletion => !ReadFlag(BitPositionTableSoftDelete);
-    
-    #endregion
+	internal bool IsPhysicalDeletion => !ReadFlag(BitPositionTableSoftDelete);
+	
+	#endregion
 
-    #region parameter methods
-    internal FieldType GetParameterValueType() => (DataType & 127).ToFieldType(); // Code size: 15 (0xf)
+	#region parameter methods
+	internal FieldType GetParameterValueType() => (DataType & 127).ToFieldType(); // Code size: 15 (0xf)
 	internal ParameterType GetParameterType() => Id.ToParameterType(); // Code size: 12 (0xc)
 	internal string GetParameterValue() => Value ?? string.Empty;
 	internal static int SetParameterValueType(int dataType, FieldType valueType) => (dataType & 0xFFF8) + ((byte)valueType) & 127;
@@ -214,18 +214,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	internal static Field GetEmptyField(Meta meta, FieldType fieldType) =>
 		new(meta.Id, meta.Name, meta.Description, fieldType, 0, null, SearchableType.None, true,
 			false, false, true);
-	internal static Meta? FirstOrDefault(Meta[] metas, EntityType entityType) 
-	{
-		Meta? result=null;
-		var span = new ReadOnlySpan<Meta>(metas);
-		var entityTypeId = (byte)entityType;
-		for (var i = 0; i < span.Length; ++i) {
-			var meta = span[i];
-			if (entityTypeId == meta.ObjectType) return meta;
-		}
-		return result;
-	}
-
+	
 	internal static Meta Create(int id,in Meta meta) =>
 		new(id, meta.ObjectType, meta.ReferenceId, meta.DataType, meta.Flags, meta.Name, 
 			meta.Description, meta.Value, meta.Active);
@@ -309,8 +298,8 @@ internal readonly struct Meta : IEquatable<Meta>
 	/// </summary>
 	internal Table? ToTable(ReadOnlySpan<Meta> tableItems, PhysicalType physicalType, IDdlBuilder ddlBuilder, string physicalName, int objectIndex)
 	{
-        // Code size: 258 (0x102)
-        if (IsTable)
+		// Code size: 268 (0x10c)
+		if (IsTable)
 		{
 			var tableType = DataType.ToTableType();
 			var fields = GetFieldArray(tableItems);
@@ -319,8 +308,8 @@ internal readonly struct Meta : IEquatable<Meta>
 			var (colCount, physRelationCount) = GetColumnCount(fields, tableItems, ddlBuilder);
 
 			// sort arrays (warn: relations not yet loaded here)
-			Array.Sort(fields, (x, y) => string.CompareOrdinal(x.Name, y.Name));
-			Array.Sort(indexes, (x, y) => string.CompareOrdinal(x.Name, y.Name));
+			fields.AsSpan().Sort((x, y) => string.CompareOrdinal(x.Name, y.Name));
+			indexes.AsSpan().Sort((x, y) => string.CompareOrdinal(x.Name, y.Name));
 			
 			var table = new Table(Id, Name, Description, Value, physicalName,
 				tableType, relations, fields, new Column[colCount], indexes,
@@ -549,10 +538,9 @@ internal readonly struct Meta : IEquatable<Meta>
 		return null;
 	}
 
-	private static Table[] GetTables(Meta[] schema, IDdlBuilder ddlBuilder, Meta metaSchema, DatabaseProvider provider,
-		int mtmCount)
+	private static Table[] GetTables(Meta[] schema, IDdlBuilder ddlBuilder, Meta metaSchema, DatabaseProvider provider,	int mtmCount)
 	{
-		// Code size: 417 (0x1a1)
+		// Code size: 449 (0x1c1)
 		int startIndex, count, i = 0;
 		var metaCount = schema.Length;
 		var tableCount = metaCount > 400 ? metaCount / 4 : 100;
@@ -579,15 +567,10 @@ internal readonly struct Meta : IEquatable<Meta>
 		{
 			if (meta.IsTable)
 			{
-				var segment = dico.ContainsKey(meta.Id) ?
-					new ReadOnlySpan<Meta>(schema, dico[meta.Id].Item1, dico[meta.Id].Item2) :
-					new ReadOnlySpan<Meta>(schema, 0, 0);
-				var physicalName = ddlBuilder.GetPhysicalName(GetEmptyTable(meta),emptySchema);
-				var table = meta.ToTable(segment, PhysicalType.Table, ddlBuilder, physicalName, mtmCount + tableIndex);
-
-#pragma warning disable CS8604 // Possible null reference argument.
+				var segment = dico.ContainsKey(meta.Id) ? new ReadOnlySpan<Meta>(schema, dico[meta.Id].Item1, dico[meta.Id].Item2) : new ReadOnlySpan<Meta>(schema, 0, 0);
+				var physicalName = ddlBuilder.GetPhysicalName(GetEmptyTable(meta), emptySchema);
+				var table = meta.ToTable(segment, PhysicalType.Table, ddlBuilder, physicalName, mtmCount + tableIndex) ?? GetEmptyTable(meta);
 				result.Add(table);
-#pragma warning restore CS8604
 				++tableIndex;
 			}
 		}

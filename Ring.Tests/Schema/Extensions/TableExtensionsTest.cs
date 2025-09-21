@@ -4,13 +4,10 @@ using Ring.Schema.Builders;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
-using Ring.Tests.Util.Builders.PostgreSQL;
 using Ring.Util.Builders;
-using System.Data.Common;
 using System.Globalization;
 using System.Linq.Expressions;
 using Xunit.Abstractions;
-using Xunit.Sdk;
 using PostGDdlBuilder = Ring.Util.Builders.PostgreSQL.DdlBuilder;
 
 namespace Ring.Tests.Schema.Extensions;
@@ -434,7 +431,7 @@ public class TableExtensionsTest : BaseTest
         Assert.NotNull(schema);
         Assert.NotNull(table1);
         var meta2 = table1.ToMeta(schema.Id);
-        var metaTable = Meta.FirstOrDefault(meta2, EntityType.Table);
+        var metaTable = FirstOrDefault(meta2, EntityType.Table);
         Assert.NotNull(metaTable);
         var table2 = metaTable.Value.ToTable(new ArraySegment<Meta>(meta2), table1.PhysicalType, new PostGDdlBuilder(), table1.PhysicalName, 0);
         Assert.NotNull(table2);
@@ -512,5 +509,18 @@ public class TableExtensionsTest : BaseTest
 
         // assert
         Assert.Equal(expectedStringCode, stringCode);
+    }
+
+    internal static Meta? FirstOrDefault(Meta[] metas, EntityType entityType)
+    {
+        Meta? result = null;
+        var span = new ReadOnlySpan<Meta>(metas);
+        var entityTypeId = (byte)entityType;
+        for (var i = 0; i < span.Length; ++i)
+        {
+            var meta = span[i];
+            if (entityTypeId == meta.ObjectType) return meta;
+        }
+        return result;
     }
 }
