@@ -53,19 +53,13 @@ internal static class TableExtensions
 	}
 
 	/// <summary>
-	/// 	Get Fields by id ==> O(n) complexity
+	/// 	Get Fields by id ==> O(log n) complexity
 	/// </summary>
 	internal static Field? GetField(this Table table, int id)
 	{
-		// Code size: 43 (0x2b)
-		var i = 0;
-		var fieldCount = table.Fields.Length;
-		while (i < fieldCount)
-		{
-			var field = table.Fields[i];
-			if (field.Id == id) return field;
-			++i;
-		}
+        // Code size: 28 (0x1c)
+        var column = GetColumn(table, id, EntityType.Field);
+		if (column != null) return table.Fields[column.RecordIndex];
 		return null;
 	}
 
@@ -178,7 +172,7 @@ internal static class TableExtensions
 	}
 
 	/// <summary>
-	/// 	Get column from logical name - O(log N)
+	/// 	Get column bye logical name - O(log N)
 	/// </summary>
 	/// <param name="table">table object</param>
 	/// <param name="name">Logical column name</param>
@@ -206,6 +200,9 @@ internal static class TableExtensions
 		return type != EntityType.Undefined ? GetColumn(table, id, type) : null;
 	}
 
+	/// <summary>
+	/// 	Get column bye id - O(log N)
+	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static Column? GetColumn(this Table table, int id, EntityType type)
 	{
