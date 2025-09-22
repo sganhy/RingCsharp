@@ -1,5 +1,4 @@
-﻿using Ring.Data;
-using Ring.Schema.Builders;
+﻿using Ring.Schema.Builders;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
@@ -7,7 +6,6 @@ using Ring.Util.Builders;
 using Ring.Util.Extensions;
 using Ring.Util.Helpers;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Globalization;
 using DbSchema = Ring.Schema.Models.Schema;
 using Index = Ring.Schema.Models.Index;
@@ -261,7 +259,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	{
 		// Code size: 359 (0x167)
 		// sort ASC by reference_id, name
-		Array.Sort(schema, (x, y) => MetaSchemaComparer(x, y));
+		schema.AsSpan().Sort(static (x, y) => MetaSchemaComparer(x, y));
 		var meta = GetSchema(schema);
 		if (meta.HasValue)
 		{
@@ -277,8 +275,8 @@ internal readonly struct Meta : IEquatable<Meta>
 			var tableSpaces = GetTableSpaces(schema, ddlBuilder);
 
 			// sort arrays - already pre-sorted by name
-			Array.Sort(parameters, (x, y) => x.Id.CompareTo(y.Id));
-			Array.Sort(tableById, (x, y) => x.Id.CompareTo(y.Id));
+			parameters.AsSpan().Sort(static (x, y) => x.Id.CompareTo(y.Id));
+			tableById.AsSpan().Sort(static (x, y) => x.Id.CompareTo(y.Id));
 
 			// build schema to result
 			var result = new DbSchema(meta.Value.Id, metaValue.Name, ddlBuilder.GetPhysicalName(EntityType.Schema, metaValue.Name), 
@@ -415,7 +413,7 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	private static int GetStringHash(string? value)
 	{
-		// Code size: 15 (0xf)
+		// Code size: 15 (0xf) - using DJB2 algorithm for better hash distribution
 		if (value == null) return 0;
 		HashHelper.Djb2X(value, out int hash);
 		return hash;
