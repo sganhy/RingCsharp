@@ -6,9 +6,9 @@ using Ring.Schema.Models;
 using Ring.Util.Builders;
 using Ring.Util.Extensions;
 using Ring.Util.Helpers;
-using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Globalization;
 using DbSchema = Ring.Schema.Models.Schema;
 using Index = Ring.Schema.Models.Index;
 
@@ -16,7 +16,7 @@ namespace Ring.Schema;
 
 internal readonly struct Meta : IEquatable<Meta>
 {
-	// Rider check 2025-07-22
+
 	#region constants
 
 	// entity type constants
@@ -32,25 +32,15 @@ internal readonly struct Meta : IEquatable<Meta>
 	private const byte TimeZoneColumnId = (byte)EntityType.TimeZoneColumn;
 
 	private const char IndexColumnDelimiter = ';';
-	private const char HashCodeSeparator = (char)7777;
+	private const char HashCodeSeparator = (char)7677;
 
 	// flags bit positions
 	private const byte BitPositionFieldSearchableType = 5; // first position [bit 5,bit 10]
-	private const byte BitPositionFieldNotNull = 3;
-	private const byte BitPositionFieldMultilingual = 4;
-	private const byte BitPositionIndexBitmap = 9;
-	private const byte BitPositionIndexUnique = 10;
-	private const byte BitPositionEntityBaseline = 14;
 	private const byte BitPositionFirstPositionSize = 18;
 	private const byte BitPositionFirstPositionRelType = 18;
-	private const byte BitPositionRelationNotNull = 4;
-	private const byte BitPositionRelationConstraint = 5;
-	private const byte BitPositionTableSoftDelete= 8;
-	private const byte BitPositionTableCached = 9;
-	private const byte BitPositionTableReadonly = 10;
-	private const byte BitPositionTablespaceIndex = 11;
-	private const byte BitPositionTablespaceTable = 12;
 	private static readonly FieldType DefaultColumnFieldType = FieldType.Long;
+	private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
+
 	#endregion
 
 	internal readonly int Id;
@@ -89,14 +79,19 @@ internal readonly struct Meta : IEquatable<Meta>
 	internal readonly bool IsTimeZoneColumn => ObjectType == TimeZoneColumnId;
 
 	#region entity methods 
-	internal bool IsEntityBaseline => ReadFlag(BitPositionEntityBaseline);
-	internal static long SetEntityBaseline(long flags, bool value) => WriteFlag(flags, BitPositionEntityBaseline, value);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal bool IsEntityBaseline() => (Flags & (long)MetaFlag.EntityBaseline)!=0; // Code size: 18 (0x12)
+	internal static long SetEntityBaseline(long flags, bool value) => WriteFlag(flags, MetaFlag.EntityBaseline, value); // Code size: 12 (0xc)
 	#endregion
 
 	#region field methods
 	internal FieldType GetFieldType() => (DataType & 127).ToFieldType(); // Code size: 15 (0xf)
-	internal bool IsFieldNotNull() => ReadFlag(BitPositionFieldNotNull); // Code size: 8 (0x8)
-	internal bool IsFieldMultilingual() => ReadFlag(BitPositionFieldMultilingual); // Code size: 8 (0x8)
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal bool IsFieldNotNull() => (Flags & (long)MetaFlag.FieldNotNull)!=0; // Code size: 14 (0xe)
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal bool IsFieldMultilingual() => (Flags & (long)MetaFlag.FieldMultilingual)!=0; // Code size: 14 (0xe)
 	internal int GetFieldSize() => (int)((Flags >> (BitPositionFirstPositionSize-1)) & (int.MaxValue)); // Code size: 18 (0x12)
 	internal SearchableType GetSearchableType() => ((int)((Flags >> (BitPositionFieldSearchableType-1)) & 0x3F)).ToSearchableType(); // Code size: 19 (0x13)
 
@@ -116,8 +111,8 @@ internal readonly struct Meta : IEquatable<Meta>
 		return dataType;
 	}
 	// field flags 
-	internal static long SetFieldNotNull(long flags, bool value) => WriteFlag(flags, BitPositionFieldNotNull, value); // Code size: 9 (0x9)
-	internal static long SetFieldMultilingual(long flags, bool value) => WriteFlag(flags, BitPositionFieldMultilingual, value); // Code size: 9 (0x9)
+	internal static long SetFieldNotNull(long flags, bool value) => WriteFlag(flags, MetaFlag.FieldNotNull, value); // Code size: 10 (0xa)
+	internal static long SetFieldMultilingual(long flags, bool value) => WriteFlag(flags, MetaFlag.FieldMultilingual, value); // Code size: 10 (0xa)
 	internal static long SetFieldSize(long flags, int size)
 	{
 		// Code size: 15 (0xf)
@@ -139,11 +134,18 @@ internal readonly struct Meta : IEquatable<Meta>
 	#endregion
 
 	#region relation methods
-	internal bool IsRelationNotNull => ReadFlag(BitPositionRelationNotNull);
-	internal bool HasRelationConstraint => ReadFlag(BitPositionRelationConstraint);
-	internal RelationType GetRelationType() => ((int)((Flags>>BitPositionFirstPositionRelType) & 127)).ToRelationType();
-	internal static long SetRelationdNotNull(long flags, bool value) => WriteFlag(flags, BitPositionRelationNotNull, value);
-	internal static long SetRelationConstraint(long flags, bool value) => WriteFlag(flags, BitPositionRelationConstraint, value); // Code size: 9 (0x9)
+	
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal bool IsRelationNotNull() => (Flags & (long)MetaFlag.RelationNotNull) != 0; // Code size: 15 (0xf)
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal bool HasRelationConstraint() => (Flags & (long)MetaFlag.RelationConstraint) != 0; // Code size: 15 (0xf)
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal RelationType GetRelationType() => ((int)((Flags>>BitPositionFirstPositionRelType) & 127)).ToRelationType(); // Code size: 20 (0x14)
+
+	internal static long SetRelationdNotNull(long flags, bool value) => WriteFlag(flags, MetaFlag.RelationNotNull, value); // Code size: 10 (0xa)
+	internal static long SetRelationConstraint(long flags, bool value) => WriteFlag(flags, MetaFlag.RelationConstraint, value); // Code size: 11 (0xb) 
 	internal static long SetRelationType(long flags, RelationType type)
 	{
 		// Code size: 32 (0x20)
@@ -157,24 +159,36 @@ internal readonly struct Meta : IEquatable<Meta>
 	#endregion
 
 	#region index methods
-	internal bool IsIndexBitmap => ReadFlag(BitPositionIndexBitmap);
-	internal bool IsIndexUnique => ReadFlag(BitPositionIndexUnique);
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal bool IsIndexBitmap() => (Flags & (long)MetaFlag.IndexBitmap) != 0; // Code size: 18 (0x12)
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal bool IsIndexUnique() => (Flags & (long)MetaFlag.IndexUnique) != 0; // Code size: 18 (0x12)
+
 	// index values
 	internal Column[] GetIndexedColumns() => Value != null ? new Column[Value.CharCount(IndexColumnDelimiter)+1] : Array.Empty<Column>();
 	internal static string GetColumnList(string[] columns) => string.Join(IndexColumnDelimiter, columns);
 	
 	// index flags 
-	internal static long SetIndexUnique(long flags, bool value) => WriteFlag(flags, BitPositionIndexUnique, value);
-	internal static long SetIndexBitmap(long flags, bool value) => WriteFlag(flags, BitPositionIndexBitmap, value);
+	internal static long SetIndexUnique(long flags, bool value) => WriteFlag(flags, MetaFlag.IndexUnique, value); // Code size: 14 (0xe)
+	internal static long SetIndexBitmap(long flags, bool value) => WriteFlag(flags, MetaFlag.IndexBitmap, value); // Code size: 14 (0xe)
 	#endregion
 
 	#region table methods
-	internal static long SetTableReadonly(long flags, bool readonlyValue) => WriteFlag(flags, BitPositionTableReadonly, readonlyValue);
-	internal static long SetTableCached(long flags, bool cached) => WriteFlag(flags, BitPositionTableCached, cached);
-	internal bool IsTableReadonly => ReadFlag(BitPositionTableReadonly);
-	internal bool IsTableCached => ReadFlag(BitPositionTableCached);
-	internal bool IsPhysicalDeletion => !ReadFlag(BitPositionTableSoftDelete);
-	
+	internal static long SetTableReadonly(long flags, bool value) => WriteFlag(flags, MetaFlag.TableReadonly, value); // Code size: 14 (0xe)
+	internal static long SetTableCached(long flags, bool value) => WriteFlag(flags, MetaFlag.TableCached, value); // Code size: 14 (0xe)
+	internal static long SetPhysicalDeletion(long flags, bool value) => WriteFlag(flags, MetaFlag.TableSoftDelete, !value); // Code size: 17 (0x11)
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal bool IsTableReadonly() => (Flags & (long)MetaFlag.TableReadonly) != 0; // Code size: 18 (0x12)
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal bool IsTableCached() => (Flags & (long)MetaFlag.TableCached) != 0; // Code size: 18 (0x12)
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal bool IsPhysicalDeletion() => (Flags & (long)MetaFlag.TableSoftDelete) == 0; // Code size: 18 (0x12) (by default physical deletion)
+
 	#endregion
 
 	#region parameter methods
@@ -185,26 +199,26 @@ internal readonly struct Meta : IEquatable<Meta>
 	#endregion
 
 	#region tablespace methods
-	internal static long SetTablespaceTable(long flags, bool isTablespaceTable) => WriteFlag(flags, BitPositionTablespaceTable, isTablespaceTable);
-	internal static long SetTablespaceIndex(long flags, bool isTablespaceIndex) => WriteFlag(flags, BitPositionTablespaceIndex, isTablespaceIndex);
-	internal bool IsTablespaceTable() => ReadFlag(BitPositionTablespaceTable);
-	internal bool IsTablespaceIndex() => ReadFlag(BitPositionTablespaceIndex);
+	internal static long SetTablespaceTable(long flags, bool isTablespaceTable) => WriteFlag(flags, MetaFlag.TablespaceTable, isTablespaceTable); // Code size: 14 (0xe)
+	internal static long SetTablespaceIndex(long flags, bool isTablespaceIndex) => WriteFlag(flags, MetaFlag.TablespaceIndex, isTablespaceIndex); // Code size: 14 (0xe)
+	internal bool IsTablespaceTable() => (Flags & (long)MetaFlag.TablespaceTable) != 0; // Code size: 18 (0x12)
+	internal bool IsTablespaceIndex() => (Flags & (long)MetaFlag.TablespaceIndex) != 0; // Code size: 18 (0x12)
 	#endregion
 
 	internal static DbSchema GetEmptySchema(Meta meta, DatabaseProvider provider) // Code size: 90 (0x5a)
 		=> new(meta.Id, meta.Name, provider.GetDdlBuilder().GetPhysicalName(EntityType.Schema,meta.Name), meta.Description, 
 			Array.Empty<Parameter>(), Array.Empty<Lexicon>(), SchemaLoadType.Full, SchemaType.Undefined, Array.Empty<Sequence>(), 
-			Array.Empty<Table>(), Array.Empty<Table>(), Array.Empty<TableSpace>(), provider, 0, meta.Active, meta.IsEntityBaseline);
+			Array.Empty<Table>(), Array.Empty<Table>(), Array.Empty<TableSpace>(), provider, 0, meta.Active, meta.IsEntityBaseline());
 
-	internal static Table GetEmptyTable(Meta meta) // Code size: 106 (0x6a)
+	internal static Table GetEmptyTable(Meta meta) // Code size: 103 (0x67)
 		=> new(meta.Id, meta.Name, meta.Description, meta.Value, string.Empty,
 			meta.DataType.ToTableType(), Array.Empty<Relation>(), Array.Empty<Field>(), Array.Empty<Column>(),
-			Array.Empty<Index>(), meta.ReferenceId, PhysicalType.Table, -1, 0, meta.IsEntityBaseline, meta.Active,
-			meta.IsTableCached, true, meta.IsTableReadonly);
+			Array.Empty<Index>(), meta.ReferenceId, PhysicalType.Table, -1, 0, meta.IsEntityBaseline(), meta.Active,
+			meta.IsTableCached(), true, meta.IsTableReadonly());
 
 	internal static Index GetEmptyIndex(Meta meta) // Code size: 64 (0x40)
-		=> new(meta.Id, meta.Name, meta.Description, meta.GetIndexedColumns(), meta.Value ?? string.Empty, meta.IsIndexUnique, 
-			meta.IsIndexBitmap, meta.Active, meta.IsEntityBaseline);
+		=> new(meta.Id, meta.Name, meta.Description, meta.GetIndexedColumns(), meta.Value ?? string.Empty, meta.IsIndexUnique(), 
+			meta.IsIndexBitmap(), meta.Active, meta.IsEntityBaseline());
 
 	internal static Relation GetEmptyRelation(Meta meta, RelationType relationType, TableType toTableType) =>
 		new(meta.Id, meta.Name, meta.Description, relationType,
@@ -225,20 +239,20 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	internal Relation? ToRelation(Table to)
 	{
-		// Code size: 134 (0x86)
+		// Code size: 114 (0x72)
 		if (IsRelation)
 		{
 			var fieldType = FieldType.Undefined;
 			if (to.Type == TableType.Business || to.Type == TableType.Lexicon)
 				fieldType = to.Fields[to.Columns[0].RecordIndex].Type;
-			return new Relation(Id, Name, Description, GetRelationType(), to, fieldType,IsRelationNotNull, HasRelationConstraint, IsEntityBaseline, Active);
+			return new Relation(Id, Name, Description, GetRelationType(), to, fieldType,IsRelationNotNull(), HasRelationConstraint(), IsEntityBaseline(), Active);
 		}
 		return null;
 	}
 	
 	internal Field? ToField() // Code size: 82 (0x52)
 		=> IsField ? new Field(Id, Name, Description, GetFieldType(), 
-			GetFieldSize(), GetFieldDefaultValue(), GetSearchableType(), IsEntityBaseline, IsFieldNotNull(), IsFieldMultilingual(), Active) : null;
+			GetFieldSize(), GetFieldDefaultValue(), GetSearchableType(), IsEntityBaseline(), IsFieldNotNull(), IsFieldMultilingual(), Active) : null;
 
 	/// <summary>
 	///		The static method orchestrates the complex process of building a complete database schema object.
@@ -269,7 +283,7 @@ internal readonly struct Meta : IEquatable<Meta>
 			// build schema to result
 			var result = new DbSchema(meta.Value.Id, metaValue.Name, ddlBuilder.GetPhysicalName(EntityType.Schema, metaValue.Name), 
 				metaValue.Description, parameters, lexicons.ToArray(), loadType, type, sequences.ToArray(), tableById.ToArray(), tableByName.ToArray(), 
-				tableSpaces.ToArray(), provider, tableCount + mtmCount, metaValue.Active, metaValue.IsEntityBaseline);
+				tableSpaces.ToArray(), provider, tableCount + mtmCount, metaValue.Active, metaValue.IsEntityBaseline());
 
 			LoadRelations(result, schema, mtmCount);
 
@@ -279,7 +293,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	}
 
 	internal TableSpace? ToTableSpace(string physicalName) => IsTableSpace ? new TableSpace(Id, Name, physicalName, Description, 
-		IsTablespaceIndex(), IsTablespaceTable(), false, Array.Empty<string>(), Value ?? string.Empty, Active, IsEntityBaseline) : null;
+		IsTablespaceIndex(), IsTablespaceTable(), false, Array.Empty<string>(), Value ?? string.Empty, Active, IsEntityBaseline()) : null;
 
 	internal Parameter? ToParameter()
 	{
@@ -287,11 +301,11 @@ internal readonly struct Meta : IEquatable<Meta>
 		var parameterType = GetParameterType();
 		var paramTemplate = ResourceHelper.GetParameter(parameterType);
 		return IsParameter ? new Parameter(Id, Name, Description, parameterType,
-			GetParameterValueType(), GetParameterValue(), paramTemplate.DefaultValue, ReferenceId, EntityType.Schema, IsEntityBaseline, Active) : null;
+			GetParameterValueType(), GetParameterValue(), paramTemplate.DefaultValue, ReferenceId, EntityType.Schema, IsEntityBaseline(), Active) : null;
 	}
 
-	internal Index? ToIndex() // Code size: 65 (0x41)
-		=> IsIndex ? new Index(Id, Name, Description, GetIndexedColumns(), Value ?? string.Empty, IsIndexUnique, IsIndexBitmap, Active, IsEntityBaseline) : null;
+	internal Index? ToIndex() //Code size: 79 (0x4f)
+		=> IsIndex ? new Index(Id, Name, Description, GetIndexedColumns(), Value ?? string.Empty, IsIndexUnique(), IsIndexBitmap(), Active, IsEntityBaseline()) : null;
 
 	/// <summary>
 	/// 	Create a instance of table, relation assigned later by schema creation
@@ -313,7 +327,7 @@ internal readonly struct Meta : IEquatable<Meta>
 			
 			var table = new Table(Id, Name, Description, Value, physicalName,
 				tableType, relations, fields, new Column[colCount], indexes,
-				ReferenceId, physicalType, objectIndex, relations.Length + fields.Length + 1, IsEntityBaseline, Active, IsTableCached, IsPhysicalDeletion, IsTableReadonly);
+				ReferenceId, physicalType, objectIndex, relations.Length + fields.Length + 1, IsEntityBaseline(), Active, IsTableCached(), IsPhysicalDeletion(), IsTableReadonly());
 
 			// load relations later, we need full schema to create relations
 			// load columns
@@ -351,8 +365,8 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	public static bool operator ==(Meta left, Meta right) => left.Equals(right); // Code size: 9 (0x9)
 	public static bool operator !=(Meta left, Meta right) => !left.Equals(right);
-	public readonly bool Equals(Meta other) =>
-		Id == other.Id &&
+	public readonly bool Equals(Meta other) => // Code size: 150 (0x96)
+        Id == other.Id &&
 		ObjectType == other.ObjectType &&
 		ReferenceId == other.ReferenceId &&
 		DataType == other.DataType &&
@@ -361,34 +375,8 @@ internal readonly struct Meta : IEquatable<Meta>
 		string.Equals(Description, other.Description, StringComparison.Ordinal) &&
 		string.Equals(Value, other.Value, StringComparison.Ordinal) &&
 		Active == other.Active;
-	public override readonly bool Equals(object? obj) => obj is Record record && Equals(record);
-	public override readonly int GetHashCode()
-	{
-		// Code size: 15 (0xf)
-		HashHelper.Djb2X(GetStringCode(), out int hash);
-		return hash;
-	}
-
-	// Code size: 190 (0xbe) - checked: 2025-07-16
-	internal readonly string GetStringCode()
-		=> new StringBuilder()
-			.Append(Id)
-			.Append(HashCodeSeparator)
-			.Append(ObjectType)
-			.Append(HashCodeSeparator)
-			.Append(ReferenceId)
-			.Append(HashCodeSeparator)
-			.Append(DataType)
-			.Append(HashCodeSeparator)
-			.Append(Flags)
-			.Append(HashCodeSeparator)
-			.Append(Name)
-			.Append(HashCodeSeparator)
-			.Append(Description)
-			.Append(HashCodeSeparator)
-			.Append(Value)
-			.Append(HashCodeSeparator)
-			.Append(Active).ToString();
+	
+	public override readonly bool Equals(object? obj) => obj is Meta record && Equals(record); // Code size: 25 (0x19) - unbox.any present!!
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static int ColumnTypeWeight(EntityType entityType)
@@ -427,21 +415,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private static long WriteFlag(long flags, byte bitPosition, bool value)
-	{ 
-		// Code size: 35 (0x23)
-		if (bitPosition < 65)
-		{
-			var mask = 1L;
-			mask <<= bitPosition - 1;
-			if (value) flags |= mask;
-			else flags &= ~mask;
-		}
-		return flags;
-	}
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private bool ReadFlag(byte bitPosition) => ((Flags >> (bitPosition - 1)) & 1) > 0; // Code size: 21 (0x15)
+	private static long WriteFlag(long flags, MetaFlag flag, bool value) => value ? flags | (long)flag : flags & (~((long)flag)); // Code size: 13 (0xd)
 
 	private static Index[] GetIndexes(ReadOnlySpan<Meta> items)
 	{
@@ -690,9 +664,9 @@ internal readonly struct Meta : IEquatable<Meta>
 					// meta not define for the searchable field
 					if (!extraFields.ContainsKey(field.Name))
 						table.Columns[columnIndex] = (SetObjectType(meta, TimeZoneColumnId)).ToColumn(id, ddlBuilder.GetPhysicalName(EntityType.TimeZoneColumn,
-							meta.Id.ToString(CultureInfo.InvariantCulture)), recordIndex);
+							meta.Id.ToString(DefaultCulture)), recordIndex);
 					else table.Columns[columnIndex] = extraFields[field.Name].ToColumn(meta.Id, ddlBuilder.GetPhysicalName(EntityType.TimeZoneColumn,
-							meta.Id.ToString(CultureInfo.InvariantCulture)), recordIndex);
+							meta.Id.ToString(DefaultCulture)), recordIndex);
 					++columnIndex;
 				}
 			} 
@@ -712,7 +686,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	private static void LoadIndexColumns(Table table, ReadOnlySpan<Meta> tableItems, int physRelationCount)
 	{
 		Dictionary<string, int>? relDico = null;
-		var defaultCol =  new Column(EntityType.Undefined, FieldType.Undefined, string.Empty, SearchableType.None, 0, 0);
+		var defaultCol = new Column(EntityType.Undefined, FieldType.Undefined, string.Empty, SearchableType.None, 0, 0);
 		if (physRelationCount > 0)
 		{
 			relDico = new Dictionary<string, int>(physRelationCount * 2); // allow bucket

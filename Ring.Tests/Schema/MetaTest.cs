@@ -20,67 +20,6 @@ public sealed class MetaTest : BaseTest
 
 
     [Theory]
-    [InlineData(1L, 1, true)]
-    [InlineData(2L, 2, true)]
-    [InlineData(4L, 3, true)]
-    [InlineData(8L, 4, true)]
-    [InlineData(16L, 5, true)]
-    [InlineData(32L, 6, true)]
-    [InlineData(64L, 7, true)]
-    [InlineData(65536L, 17, true)]
-    [InlineData(4294967296L, 33, true)]
-    [InlineData(long.MinValue, 64, true)]
-    internal void ReadFlag_Input_OnlyOneTrueFlag(long flags, byte bitPosition, bool expectedValue)
-    {
-        // arrange 
-        var meta  = new Meta(_faker.Random.Number(int.MinValue,int.MaxValue), (byte)_faker.PickRandom<EntityType>(), _faker.Random.Number(int.MinValue,int.MaxValue), _faker.Random.Number(int.MinValue,int.MaxValue), 
-            flags, _faker.Random.String(), _faker.Random.String(), _faker.Random.String(), _faker.Random.Bool());
-        var readFlagMethod = meta.GetType().GetMethod("ReadFlag", BindingFlags.NonPublic | BindingFlags.Instance);
-
-        // act 
-        var result = (bool?)readFlagMethod?.Invoke(meta,new object[] { bitPosition });
-        var result08Position = (bool?)readFlagMethod?.Invoke(meta, new object[] { (byte)8 });
-        var result11Position = (bool?)readFlagMethod?.Invoke(meta, new object[] { (byte)11 });
-        var result28Position = (bool?)readFlagMethod?.Invoke(meta, new object[] { (byte)28 });
-        var result42Position = (bool?)readFlagMethod?.Invoke(meta, new object[] { (byte)42 });
-
-        // assert
-        Assert.Equal(result, expectedValue);
-        Assert.False(result08Position);
-        Assert.False(result11Position);
-        Assert.False(result28Position);
-        Assert.False(result42Position);
-    }
-
-    [Theory]
-    [InlineData(long.MaxValue, 4)]
-    [InlineData(long.MaxValue / 2, 19)]
-    [InlineData(long.MaxValue / 4, 34)]
-    [InlineData(long.MaxValue / 8, 50)]
-    [InlineData(long.MaxValue, 64)]
-    internal void WriteFlag_Input_TrueFlag(long flags, byte bitPosition)
-    {
-        // arrange 
-        var meta = new Meta(_faker.Random.Number(int.MinValue,int.MaxValue), (byte)_faker.PickRandom<EntityType>(), _faker.Random.Number(int.MinValue,int.MaxValue), _faker.Random.Number(int.MinValue,int.MaxValue),
-            flags, _faker.Random.String(), _faker.Random.String(), _faker.Random.String(), _faker.Random.Bool());
-        var readFlagMethod = meta.GetType().GetMethod("ReadFlag", BindingFlags.NonPublic | BindingFlags.Instance);
-        var writeFlagMethod = meta.GetType().GetMethod("WriteFlag", BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
-
-        // act 
-#pragma warning disable CS8605,CS8602  
-        flags = (long)writeFlagMethod.Invoke(meta, new object[] { meta.Flags, bitPosition, false });
-        meta = new Meta(_faker.Random.Number(int.MinValue,int.MaxValue), (byte)_faker.PickRandom<EntityType>(), _faker.Random.Number(int.MinValue,int.MaxValue), _faker.Random.Number(int.MinValue,int.MaxValue),
-            flags, _faker.Random.String(), _faker.Random.String(), _faker.Random.String(), _faker.Random.Bool());
-        var result = (bool?)readFlagMethod?.Invoke(meta, new object[] { bitPosition });
-        var flagAfterWrite = (long)writeFlagMethod.Invoke(meta, new object[] { meta.Flags, bitPosition, false });
-#pragma warning restore CS8602, CS8605 
-
-        // assert
-        Assert.False(result);
-        Assert.Equal(flagAfterWrite, flags); // are flags altered after writting? 
-    }
-
-    [Theory]
     [InlineData(0, FieldType.Long)]
     [InlineData(1, FieldType.Int)]
     [InlineData(2, FieldType.Short)]
@@ -130,7 +69,7 @@ public sealed class MetaTest : BaseTest
             _faker.Random.String(), _faker.Random.String(), _faker.Random.String(), false);
 
         // act 
-        var result = meta.IsEntityBaseline;
+        var result = meta.IsEntityBaseline();
 
         // assert
         Assert.Equal(expectedResult, result);
@@ -702,10 +641,12 @@ public sealed class MetaTest : BaseTest
         var meta1 = Meta.Create(7777, baseMeta);
 
         // act 
-        var result = meta1 == meta2;
+        var result1 = meta1 == meta2;
+        var result2 = meta1.Equals((object)meta2);
 
         // assert
-        Assert.False(result);
+        Assert.False(result1);
+        Assert.False(result2);
     }
 
     [Fact]
@@ -719,9 +660,11 @@ public sealed class MetaTest : BaseTest
         // act 
         var result1 = meta1 == meta2;
         var result2 = meta1 != meta2;
+        var result3 = meta1.Equals((object)meta2);
 
         // assert
         Assert.True(result1);
         Assert.False(result2);
+        Assert.True(result3);
     }
 }

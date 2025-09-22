@@ -36,7 +36,7 @@ public class Program
         var starTime = DateTime.Now;
         //var builder = new DocumentBuilder("C:/Coding/Ring/RingCsharp/Docs/rpg_schema.xml");
         var builder = new DocumentBuilder("C:/Temp/Schema/schema.xml");
-        //var doc = await builder.GetDocumentAsync(DocumentType.XmlNative, cancellationToken);
+        var doc = await builder.GetDocumentAsync(DocumentType.XmlNative);
         Console.WriteLine(DateTime.Now - starTime);
     }
 }

@@ -31,51 +31,46 @@ internal sealed class DocumentBuilder
     /// </summary>
     public DocumentBuilder(string filePath) => FilePath = filePath ?? string.Empty;
 
-    internal async ValueTask<int> GetMetaCountAsync(XmlSchemaTemplate template, CancellationToken cancellationToken = default)
+    internal ValueTask<int> GetMetaCountAsync(XmlSchemaTemplate template, CancellationToken cancellationToken = default)
     {
+        // Code size: 64 (0x40)
         var readerSettings = new XmlReaderSettings
         {
             IgnoreWhitespace = true,
             CheckCharacters = false,
-            IgnoreComments = true
+            IgnoreComments = true,
+            Async = true
         };
 
-        var result = 0;
-        using var fs = new FileStream(FilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-        using var sr = new StreamReader(fs);
-        // start with sax
-        using var xmlTextReader = XmlReader.Create(sr, readerSettings);
+        return Core();
 
-        if (cancellationToken.IsCancellationRequested)
+        async ValueTask<int> Core()
         {
-            return 0;
-        }
+            var result = 0;
+            try
+            {
+                using var fs = new FileStream(FilePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                using var xmlReader = XmlReader.Create(fs, readerSettings);
 
-        // build dico <lower(table_name), table_id>
-        // first pass
-        /*while (await sr.Read().ConfigureAwait(false))
-        {
-            if (!xmlTextReader.IsStartElement()) continue;
-            if (!xmlTextReader.HasAttributes) continue;
-            if (xmlTextReader.NodeType != XmlNodeType.Element) continue;
-            if ("field".Equals(xmlTextReader.Name, StringComparison.OrdinalIgnoreCase)) ++result;
-            //Console.WriteLine(xmlTextReader.Name);
-                /*if (!string.Equals(xmlTextReader.Name, Constants.EntityTableName, StringComparison.OrdinalIgnoreCase) &&
-                    !string.Equals(xmlTextReader.Name, Constants.EntityObjectName, StringComparison.OrdinalIgnoreCase))
-                    continue;
-                var tableName = XmlHelper.GetAttributeValue(xmlTextReader, Constants.EntityName);
-                if (tableName == null) continue;
-                if (!dicoTable.ContainsKey(tableName.Trim().ToLower()))
-                    dicoTable.Add(tableName.Trim().ToLower(),
-                        GetTableId(xmlTextReader, detectClfySchema));
-                
+                while (await xmlReader.ReadAsync().ConfigureAwait(false))
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    if (xmlReader.NodeType == XmlNodeType.Element)
+                    {
 
+                    }
+                }
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                return 0;
+            }
+
+            return result;
         }
-        */
-        return result;
     }
 
-    internal async Task<Document> GetDocumentAsync(DocumentType documentType, CancellationToken cancellationToken)
+    internal async Task<Document> GetDocumentAsync(DocumentType documentType, CancellationToken cancellationToken = default)
     {
         Reset(); // reset values
         if (File.Exists(FilePath))
@@ -84,7 +79,7 @@ internal sealed class DocumentBuilder
             var template = ResourceHelper.GetSchemaTemplate(documentType);
             if (template != null)
             {
-                var metaCount = await GetMetaCountAsync(template, cancellationToken);
+                var metaCount = await GetMetaCountAsync(template, cancellationToken).ConfigureAwait(false);
             }
         }
         else _logs.Add(_logBuilder.GetError(LogType.FileNotFound, FilePath));
