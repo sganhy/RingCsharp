@@ -42,14 +42,14 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	// minimizing data padding by field reordering
 	internal readonly long Flags;			// 8 bytes (offset 0) --> 
-	internal readonly string Name;		   
-	internal readonly string? Description;   
-	internal readonly string? Value;		 
+	internal readonly string Name;
+	internal readonly string? Description;
+	internal readonly string? Value;
 	internal readonly int Id;				// 4 bytes (offset 32) -->
-	internal readonly int ReferenceId;	   
-	internal readonly int DataType;		  
-	internal readonly byte ObjectType;	   // 1 byte  (offset 44) -->
-	internal readonly bool Active;		   
+	internal readonly int ReferenceId;
+	internal readonly int DataType;
+	internal readonly byte ObjectType;		// 1 byte  (offset 44) -->
+	internal readonly bool Active;
 
 	internal Meta(string name) : this(default, default, default, default, default, name, null, default, true) {}
 	internal Meta(int id, byte objectType, int referenceId, int dataType, long flags, string name, string? description, string? value, bool active)
