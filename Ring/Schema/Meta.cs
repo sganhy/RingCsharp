@@ -32,7 +32,6 @@ internal readonly struct Meta : IEquatable<Meta>
 	private const byte TimeZoneColumnId = (byte)EntityType.TimeZoneColumn;
 
 	private const char IndexColumnDelimiter = ';';
-	private const char HashCodeSeparator = (char)7677;
 
 	// flags bit positions
 	private const byte BitPositionFieldSearchableType = 5; // first position [bit 5,bit 10]
@@ -43,15 +42,16 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	#endregion
 
-	internal readonly int Id;
-	internal readonly byte ObjectType;
-	internal readonly int ReferenceId;
-	internal readonly int DataType;
-	internal readonly long Flags;
-	internal readonly string Name;			// name of entity
-	internal readonly string? Description;	// late loading 
-	internal readonly string? Value;
-	internal readonly bool Active;
+	// minimizing data padding by field reordering
+	internal readonly long Flags;			// 8 bytes (offset 0) --> 
+	internal readonly string Name;		   
+	internal readonly string? Description;   
+	internal readonly string? Value;		 
+	internal readonly int Id;				// 4 bytes (offset 32) -->
+	internal readonly int ReferenceId;	   
+	internal readonly int DataType;		  
+	internal readonly byte ObjectType;	   // 1 byte  (offset 44) -->
+	internal readonly bool Active;		   
 
 	internal Meta(string name) : this(default, default, default, default, default, name, null, default, true) {}
 	internal Meta(int id, byte objectType, int referenceId, int dataType, long flags, string name, string? description, string? value, bool active)
@@ -366,7 +366,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	public static bool operator ==(Meta left, Meta right) => left.Equals(right); // Code size: 9 (0x9)
 	public static bool operator !=(Meta left, Meta right) => !left.Equals(right);
 	public readonly bool Equals(Meta other) => // Code size: 150 (0x96)
-        Id == other.Id &&
+		Id == other.Id &&
 		ObjectType == other.ObjectType &&
 		ReferenceId == other.ReferenceId &&
 		DataType == other.DataType &&
@@ -377,6 +377,21 @@ internal readonly struct Meta : IEquatable<Meta>
 		Active == other.Active;
 	
 	public override readonly bool Equals(object? obj) => obj is Meta record && Equals(record); // Code size: 25 (0x19) - unbox.any present!!
+
+	public override int GetHashCode()
+	{
+		// Code size: 119 (0x77)
+		var result = Id.GetHashCode(); 
+		result += ObjectType.GetHashCode();
+		result += ReferenceId.GetHashCode();
+		result += DataType.GetHashCode();
+		result += ((int)Flags.GetHashCode() & int.MaxValue);
+		result += GetStringHash(Name);
+		result += GetStringHash(Description);
+		result += GetStringHash(Value);
+		result += GetStringHash(Active.ToString());
+		return result;	
+	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static int ColumnTypeWeight(EntityType entityType)
@@ -397,6 +412,14 @@ internal readonly struct Meta : IEquatable<Meta>
 #endif
 
 	#region private methods 
+
+	private static int GetStringHash(string? value)
+	{
+		// Code size: 15 (0xf)
+		if (value == null) return 0;
+		HashHelper.Djb2X(value, out int hash);
+		return hash;
+	}
 
 	private static int GetTableCount(ReadOnlySpan<Meta> schema)
 	{
