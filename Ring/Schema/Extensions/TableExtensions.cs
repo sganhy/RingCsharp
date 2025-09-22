@@ -63,12 +63,6 @@ internal static class TableExtensions
 		return null;
 	}
 
-
-	/// <summary>
-	/// 	Get Fields by id ==> O(n) complexity
-	/// </summary>
-	internal static Field? GetField(this Table table, Column column) => GetField(table, column.Id); // Code size: 13 (0xd)
-
 	/// <summary>
 	/// 	Get index field by name, case-sensitive search ==> O(log n) complexity
 	/// </summary>

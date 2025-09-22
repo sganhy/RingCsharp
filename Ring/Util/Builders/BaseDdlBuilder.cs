@@ -197,7 +197,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 		var collateInformation = StringCollateInformation;
 
 		if (fieldType == FieldType.String)
-			result.Append(GetSizeInfo(size.HasValue ? size.Value : (table.GetField(column)?.Size ?? 0)));  // performance issue may be with GetField() ?
+			result.Append(GetSizeInfo(size.HasValue ? size.Value : (table.GetField(column.Id)?.Size ?? 0)));  // performance issue may be with GetField() ?
 		if ((fieldType == FieldType.String || fieldType == FieldType.LongString))
 			result.Append(SqlSpace).Append(collateInformation);
 		return result.ToString();
