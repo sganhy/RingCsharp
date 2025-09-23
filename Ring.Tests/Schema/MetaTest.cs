@@ -593,7 +593,7 @@ public sealed class MetaTest : BaseTest
             _faker.Random.String(), _faker.Random.String(), _faker.Random.String(), false);
 
         // act 
-        var relation = Meta.GetEmptyRelation(meta, RelationType.Otm, TableType.Fake);
+        var relation = Meta.GetDefaultRelation(meta, RelationType.Otm, TableType.Fake);
 
         // assert
         Assert.Equal(relation.Name, meta.Name);

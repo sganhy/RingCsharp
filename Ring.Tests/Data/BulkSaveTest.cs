@@ -17,7 +17,7 @@ public class BulkSaveTest : BaseTest
         var metaList = GetSchema1();
         var meta = new Meta("Test");
         _schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql) ??
-                    Meta.GetEmptySchema(meta, DatabaseProvider.PostgreSql);
+                    Meta.GetDefaultSchema(meta, DatabaseProvider.PostgreSql);
     }
 
     [Fact]

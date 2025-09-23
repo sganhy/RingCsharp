@@ -191,14 +191,14 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 
 	private string GetDataType(Table table, Column column, int? size)
 	{
-		// Code size: 96 (0x60)
-		var fieldType = column.FieldType;
+        // Code size: 125 (0x7d)
+        var fieldType = column.FieldType;
 		var result = new StringBuilder(DataType[fieldType]);
 		var collateInformation = StringCollateInformation;
 
 		if (fieldType == FieldType.String)
-			result.Append(GetSizeInfo(size.HasValue ? size.Value : (table.GetField(column.Id)?.Size ?? 0)));  // performance issue may be with GetField() ?
-		if ((fieldType == FieldType.String || fieldType == FieldType.LongString))
+            result.Append(GetSizeInfo(size ?? table.GetField(column.Id)?.Size ?? 0));
+        if ((fieldType == FieldType.String || fieldType == FieldType.LongString))
 			result.Append(SqlSpace).Append(collateInformation);
 		return result.ToString();
 	}

@@ -422,7 +422,7 @@ public class DdlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var meta = new Meta("RpgSheet");
-        var schema = Meta.GetEmptySchema(meta, DatabaseProvider.PostgreSql);
+        var schema = Meta.GetDefaultSchema(meta, DatabaseProvider.PostgreSql);
         var expectedResult = "rpg_sheet";
 
         // act 
@@ -437,7 +437,7 @@ public class DdlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var meta = new Meta("@Test");
-        var schema = Meta.GetEmptySchema(meta, DatabaseProvider.PostgreSql);
+        var schema = Meta.GetDefaultSchema(meta, DatabaseProvider.PostgreSql);
         var expectedResult = "\"@test\"";
 
         // act 
@@ -453,8 +453,8 @@ public class DdlBuilderTest : BaseBuilderTest
         // arrange 
         var metaTable = new Meta(_faker.Random.Number(int.MinValue,int.MaxValue), (byte)EntityType.Table, 0, (int)TableType.Mtm
             , 0L, "Test", null, null, true);
-        var emptyTable = Meta.GetEmptyTable(metaTable);
-        var emptySchema = Meta.GetEmptySchema(new Meta("Where"), DatabaseProvider.MySql);
+        var emptyTable = Meta.GetDefaultTable(metaTable);
+        var emptySchema = Meta.GetDefaultSchema(new Meta("Where"), DatabaseProvider.MySql);
         var ddlBuilder = DatabaseProvider.PostgreSql.GetDdlBuilder();
         var expectedValue = "\"where\".\"@mtm_test\"";
 

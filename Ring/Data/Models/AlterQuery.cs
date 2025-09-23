@@ -25,7 +25,7 @@ public readonly struct AlterQuery
 	public AlterQuery()
 	{
 		Id = -1;
-		Table = Meta.GetEmptyTable(new Meta(string.Empty));
+		Table = Meta.GetDefaultTable(new Meta(string.Empty));
 		Type = AlterQueryType.Undefined;
 		Builder = new Util.Builders.PostgreSQL.DdlBuilder();
 		Column = null;

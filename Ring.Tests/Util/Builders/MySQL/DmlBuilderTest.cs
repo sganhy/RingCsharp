@@ -21,7 +21,7 @@ public class DmlBuilderTest : BaseBuilderTest
         var metaList = GetSchema1();
         var meta = new Meta(_faker.Random.String());
         _schema = Meta.ToSchema(metaList,DatabaseProvider.MySql) ??
-            Meta.GetEmptySchema(meta, DatabaseProvider.MySql);
+            Meta.GetDefaultSchema(meta, DatabaseProvider.MySql);
         _sut = new DmlBuilder();
         _sut.Init(_schema);
     }

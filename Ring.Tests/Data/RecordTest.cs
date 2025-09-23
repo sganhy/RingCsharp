@@ -23,7 +23,7 @@ public sealed class RecordTest : BaseTest
     {
         var metaList = GetSchema1();
         var meta = new Meta("Test");
-        _schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql,SchemaType.Static,SchemaLoadType.Full) ?? Meta.GetEmptySchema(meta, DatabaseProvider.PostgreSql);
+        _schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql,SchemaType.Static,SchemaLoadType.Full) ?? Meta.GetDefaultSchema(meta, DatabaseProvider.PostgreSql);
         var config = new Configuration
         {
             MaxNumberOfSchema = 2048

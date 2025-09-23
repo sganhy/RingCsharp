@@ -24,7 +24,7 @@ public struct RetrieveQuery
     /// </summary>
     public RetrieveQuery()
     {
-        Table = Meta.GetEmptyTable(new Meta());
+        Table = Meta.GetDefaultTable(new Meta());
         Type = RetrieveQueryType.Undefined;
         Builder = new Util.Builders.PostgreSQL.DqlBuilder();
         ParentQueryId = 0;

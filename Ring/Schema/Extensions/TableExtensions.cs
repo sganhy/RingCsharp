@@ -319,8 +319,8 @@ internal static class TableExtensions
 
 	internal static string GetStringCode(this Table table)
 	{
-		// Code size: 232 (0xe8) - checked: 2025-07-23
-		/*
+        // Code size: 253 (0xfd) - checked: 2025-09-23
+        /*
 		* readonly bool Cached
 		* readonly Field[] Fields
 		* readonly Relation[] Relations
@@ -333,9 +333,10 @@ internal static class TableExtensions
 		* readonly string? Subject
 		* readonly TableType Type
 		* readonly CacheId CacheId
+		* readonly bool PhysicalDeletion
 		* readonly bool Readonly
 		*/
-		return new StringBuilder()
+        return new StringBuilder()
 			.Append(table.Cached)
 			.Append(HashCodeSeparator)
 			.Append(GetStringCode(table.Fields))
@@ -355,8 +356,10 @@ internal static class TableExtensions
 			.Append(HashCodeSeparator)
 			.Append(table.Readonly)
 			.Append(HashCodeSeparator)
-		/* + BaseEntity string code */
-			.Append(BaseEntityExtensions.GetStringCode(table))
+            .Append(table.PhysicalDeletion)
+            .Append(HashCodeSeparator)
+            /* + BaseEntity string code */
+            .Append(BaseEntityExtensions.GetStringCode(table))
 			.ToString();
 	}
 

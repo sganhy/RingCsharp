@@ -149,9 +149,9 @@ public class RelationExtensionsTest : BaseTest
         var meta1 = new Meta(_faker.Random.String());
         var meta2 = new Meta(_faker.Random.String());
         var meta3 = new Meta(_faker.Random.String());
-        var relation1 = Meta.GetEmptyRelation(meta1, RelationType.Otm, TableType.Fake);
-        var relation2 = Meta.GetEmptyRelation(meta2, RelationType.Mtm, TableType.Fake);
-        var relation3 = Meta.GetEmptyRelation(meta3, RelationType.Mto, TableType.Fake);
+        var relation1 = Meta.GetDefaultRelation(meta1, RelationType.Otm, TableType.Fake);
+        var relation2 = Meta.GetDefaultRelation(meta2, RelationType.Mtm, TableType.Fake);
+        var relation3 = Meta.GetDefaultRelation(meta3, RelationType.Mto, TableType.Fake);
 
         // act 
         relation1.SetInverseRelation(relation2); // we can only assign once
@@ -168,8 +168,8 @@ public class RelationExtensionsTest : BaseTest
         // arrange 
         var meta1 = new Meta(_faker.Random.String());
         var meta2 = new Meta(_faker.Random.String());
-        var relation1 = Meta.GetEmptyRelation(meta1, RelationType.Otm, TableType.Fake);
-        var relation2 = Meta.GetEmptyRelation(meta2, RelationType.Mtm, TableType.Fake);
+        var relation1 = Meta.GetDefaultRelation(meta1, RelationType.Otm, TableType.Fake);
+        var relation2 = Meta.GetDefaultRelation(meta2, RelationType.Mtm, TableType.Fake);
 
         // act 
         relation1.SetInverseRelation(relation2); // we can only assign once
@@ -184,8 +184,8 @@ public class RelationExtensionsTest : BaseTest
         // arrange 
         var meta2 = new Meta(_faker.Random.String());
         var meta3 = new Meta(_faker.Random.String());
-        var relation2 = Meta.GetEmptyRelation(meta2, RelationType.Mtm, TableType.Fake);
-        var relation3 = Meta.GetEmptyRelation(meta3, RelationType.Mtm, TableType.Fake);
+        var relation2 = Meta.GetDefaultRelation(meta2, RelationType.Mtm, TableType.Fake);
+        var relation3 = Meta.GetDefaultRelation(meta3, RelationType.Mtm, TableType.Fake);
 
         // act 
         relation2.SetInverseRelation(relation3); // we can only assign once
@@ -200,8 +200,8 @@ public class RelationExtensionsTest : BaseTest
         // arrange 
         var meta3 = new Meta(_faker.Random.String());
         var meta4 = new Meta(_faker.Random.String());
-        var relation3 = Meta.GetEmptyRelation(meta3, RelationType.Mtm, TableType.Mtm);
-        var relation4 = Meta.GetEmptyRelation(meta4, RelationType.Mtm, TableType.Fake);
+        var relation3 = Meta.GetDefaultRelation(meta3, RelationType.Mtm, TableType.Mtm);
+        var relation4 = Meta.GetDefaultRelation(meta4, RelationType.Mtm, TableType.Fake);
 
         // act 
         relation3.SetInverseRelation(relation4); // we can only assign once
@@ -215,7 +215,7 @@ public class RelationExtensionsTest : BaseTest
     {
         // arrange 
         var meta4 = new Meta(_faker.Random.String());
-        var relation4 = Meta.GetEmptyRelation(meta4, RelationType.Mtm, TableType.Fake);
+        var relation4 = Meta.GetDefaultRelation(meta4, RelationType.Mtm, TableType.Fake);
         // act 
         // assert
         Assert.False(relation4.Initialized());
@@ -248,8 +248,8 @@ public class RelationExtensionsTest : BaseTest
         var metaName = _faker.Random.String();
         var meta1 = new Meta(metaName);
         var meta2 = new Meta(metaName);
-        var relation1 = Meta.GetEmptyRelation(meta1, RelationType.Mtm, TableType.Fake);
-        var relation2 = Meta.GetEmptyRelation(meta2, RelationType.Mtm, TableType.Fake);
+        var relation1 = Meta.GetDefaultRelation(meta1, RelationType.Mtm, TableType.Fake);
+        var relation2 = Meta.GetDefaultRelation(meta2, RelationType.Mtm, TableType.Fake);
 
         // act 
         var hash1 = RelationExtensions.GetHashCode(relation1);
@@ -268,11 +268,11 @@ public class RelationExtensionsTest : BaseTest
         var meta2 = new Meta(metaName);
         var meta3 = new Meta(metaName + metaName);
         
-        var relation1 = Meta.GetEmptyRelation(meta1, RelationType.Mto, TableType.Fake);
+        var relation1 = Meta.GetDefaultRelation(meta1, RelationType.Mto, TableType.Fake);
         LogAssert($"relation1 = {relation1.Name} - {relation1.Type}");
-        var relation2 = Meta.GetEmptyRelation(meta2, RelationType.Mtm, TableType.Fake);
+        var relation2 = Meta.GetDefaultRelation(meta2, RelationType.Mtm, TableType.Fake);
         LogAssert($"relation2 = {relation2.Name} - {relation2.Type}");
-        var relation3 = Meta.GetEmptyRelation(meta3, RelationType.Mtm, TableType.Fake);
+        var relation3 = Meta.GetDefaultRelation(meta3, RelationType.Mtm, TableType.Fake);
         LogAssert($"relation3 = {relation3.Name} - {relation3.Type}");
 
         // act 

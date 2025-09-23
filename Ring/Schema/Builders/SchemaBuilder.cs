@@ -41,7 +41,7 @@ internal sealed class SchemaBuilder
 		if (!string.IsNullOrWhiteSpace(configuration.DefaultIndexStorage))
 			metaList.Add(GetStorage(configuration.DefaultIndexStorage, true, false));
 
-		var result = Meta.ToSchema(metaList.ToArray(),provider, type, loadType) ?? Meta.GetEmptySchema(schemaInfo, provider);
+		var result = Meta.ToSchema(metaList.ToArray(),provider, type, loadType) ?? Meta.GetDefaultSchema(schemaInfo, provider);
 		// initialise cache for : DmlBuilder & DqlBuilder
 		result.DmlBuiler.Init(result);
 		result.DqlBuiler.Init(result);

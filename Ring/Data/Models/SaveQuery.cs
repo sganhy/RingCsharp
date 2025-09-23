@@ -22,7 +22,7 @@ public readonly struct SaveQuery
     /// </summary>
     public SaveQuery()
     {
-        Table = Meta.GetEmptyTable(new Meta());
+        Table = Meta.GetDefaultTable(new Meta());
         Type = SaveQueryType.Undefined;
         Builder = new Util.Builders.PostgreSQL.DmlBuilder();
         Data = Array.Empty<string?>();

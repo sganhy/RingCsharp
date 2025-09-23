@@ -154,8 +154,8 @@ internal sealed class TableBuilder
 	{
 		// Code size: 127 (0x7f)
 		var ddlBuilder = provider.GetDdlBuilder();
-		var emptyTable = Meta.GetEmptyTable(metaTable);
-		var emptySchema = Meta.GetEmptySchema(GetSchema(0, schemaName), provider);
+		var emptyTable = Meta.GetDefaultTable(metaTable);
+		var emptySchema = Meta.GetDefaultSchema(GetSchema(0, schemaName), provider);
 		var physicalName = ddlBuilder.GetPhysicalName(emptyTable, emptySchema);
 
 		var spanMeta = metaArray.AsSpan();
