@@ -38,10 +38,10 @@ internal readonly struct Meta : IEquatable<Meta>
 	private static readonly FieldType DefaultColumnFieldType = FieldType.Long;
 	private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
 
-    #endregion
+	#endregion
 
-    // minimizing data padding by field reordering - total: ~46 bytes + heap allocations for strings
-    internal readonly long Flags;			// 8 bytes (offset 0) --> 
+	// minimizing data padding by field reordering - total: ~46 bytes + heap allocations for strings
+	internal readonly long Flags;			// 8 bytes (offset 0) --> 
 	internal readonly string Name;
 	internal readonly string? Description;
 	internal readonly string? Value;
@@ -218,17 +218,17 @@ internal readonly struct Meta : IEquatable<Meta>
 		=> new(meta.Id, meta.Name, meta.Description, meta.GetIndexedColumns(), meta.Value ?? string.Empty, meta.IsIndexUnique(), 
 			meta.IsIndexBitmap(), meta.Active, meta.IsEntityBaseline());
 
-	internal static Relation GetDefaultRelation(Meta meta, RelationType relationType, TableType toTableType) =>
-		new(meta.Id, meta.Name, meta.Description, relationType,
+	internal static Relation GetDefaultRelation(Meta meta, RelationType relationType, TableType toTableType)
+		=> new(meta.Id, meta.Name, meta.Description, relationType,
 			GetDefaultTable(new Meta(0, (byte)EntityType.Table, 0, (int)toTableType, 0L,
 			meta.Name,null, null, false)), FieldType.Undefined, false, false, true, true);
 
-	internal static Field GetDefaultField(Meta meta, FieldType fieldType) =>
-		new(meta.Id, meta.Name, meta.Description, fieldType, 0, null, SearchableType.None, true,
+	internal static Field GetDefaultField(Meta meta, FieldType fieldType)
+		=> new(meta.Id, meta.Name, meta.Description, fieldType, 0, null, SearchableType.None, true,
 			false, false, true);
-	
-	internal static Meta Create(int id,in Meta meta) =>
-		new(id, meta.ObjectType, meta.ReferenceId, meta.DataType, meta.Flags, meta.Name, 
+
+	internal static Meta Create(int id,in Meta meta)
+		=> new(id, meta.ObjectType, meta.ReferenceId, meta.DataType, meta.Flags, meta.Name, 
 			meta.Description, meta.Value, meta.Active);
 
 	internal EntityType GetEntityType() => ((int)ObjectType).ToEntityType();
@@ -257,7 +257,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	/// </summary>
 	internal static DbSchema? ToSchema(Meta[] schema, DatabaseProvider provider, SchemaType type = SchemaType.Static, SchemaLoadType loadType = SchemaLoadType.Full)
 	{
-		// Code size: 359 (0x167)
+		// Code size: 381 (0x17d)
 		// sort ASC by reference_id, name
 		schema.AsSpan().Sort(static (x, y) => MetaSchemaComparer(x, y));
 		var meta = GetSchema(schema);
@@ -271,7 +271,8 @@ internal readonly struct Meta : IEquatable<Meta>
 			var lexicons = new List<Lexicon>();
 			var sequences = new List<Sequence>();
 			var tableByName = GetTables(schema, ddlBuilder, metaValue, provider, mtmCount);
-			var tableById = ShallowCopy(tableByName);
+			var tableById = new Table[tableByName.Length];
+			tableByName.CopyTo(tableById,0);
 			var tableSpaces = GetTableSpaces(schema, ddlBuilder);
 
 			// sort arrays - already pre-sorted by name
@@ -460,26 +461,38 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	private static TableSpace[] GetTableSpaces(Span<Meta> schema, IDdlBuilder ddlBuilder)
 	{
+		// Code size: 91 (0x5b)
 		var result = new List<TableSpace>();
-#pragma warning disable CS8604 // Possible null reference argument.
-		foreach (var meta in schema) if (meta.IsTableSpace) 
-			result.Add(meta.ToTableSpace(ddlBuilder.GetPhysicalName(EntityType.Tablespace, meta.Name)));
-#pragma warning restore CS8604
+		foreach (var meta in schema)
+		{
+			if (meta.IsTableSpace)
+			{
+				var tablespace = meta.ToTableSpace(ddlBuilder.GetPhysicalName(EntityType.Tablespace, meta.Name));
+				if (tablespace!=null) result.Add(tablespace);
+			}
+		}
 		return result.ToArray();
 	}
 
 	private static Parameter[] GetParameters(Span<Meta> schema)
 	{
+		// Code size: 77 (0x4d)
 		var result = new List<Parameter>();
-#pragma warning disable CS8604 // Possible null reference argument.
-		foreach (var meta in schema) if (meta.IsParameter) result.Add(meta.ToParameter());
-#pragma warning restore CS8604
+		foreach (var meta in schema) 
+		{
+			if (meta.IsParameter)
+			{
+				var parameter = meta.ToParameter();
+				if (parameter!=null) result.Add(parameter);
+			}
+		}
+
 		return result.ToArray(); // sorted by Id later !!!
 	}
 
 	private static Field[] GetFieldArray(ReadOnlySpan<Meta> items)
 	{
-		// Code size: 239 (0xef)
+		// Code size: 228 (0xe4)
 		// count element
 		int fieldCount = 0;
 		var primaryKey = FieldExtensions.GetDefaultPrimaryKey(null, FieldType.Int);
@@ -488,8 +501,7 @@ internal readonly struct Meta : IEquatable<Meta>
 			if (item.IsField)
 			{
 				++fieldCount;
-				if (string.Equals(primaryKey?.Name, item.Name, StringComparison.OrdinalIgnoreCase))
-					primaryKey = primaryKey.GetDefaultPrimaryKey(item.GetFieldType());
+				if (string.Equals(primaryKey?.Name, item.Name, StringComparison.OrdinalIgnoreCase))	primaryKey = primaryKey.GetDefaultPrimaryKey(item.GetFieldType());
 			}
 		}
 		var result = new Field[fieldCount]; // allow once
@@ -498,10 +510,7 @@ internal readonly struct Meta : IEquatable<Meta>
 		{
 			if (item.IsField)
 			{
-#pragma warning disable CS8601 // Possible null reference assignment.
-				result[fieldIndex] = string.Equals(primaryKey?.Name, item.Name, StringComparison.OrdinalIgnoreCase) ?
-					primaryKey : item.ToField();
-#pragma warning restore CS8601
+				result[fieldIndex] = (string.Equals(primaryKey?.Name, item.Name, StringComparison.OrdinalIgnoreCase) ? primaryKey : item.ToField()) ?? GetDefaultField(item, item.GetFieldType());
 				++fieldIndex;
 			}
 		}
@@ -567,13 +576,6 @@ internal readonly struct Meta : IEquatable<Meta>
 			}
 		}
 		return result.ToArray();
-	}
-
-	private static Table[] ShallowCopy(Span<Table> tables)
-	{
-		var result = new Table[tables.Length]; //Modify start & length as required
-		tables.CopyTo(result.AsSpan());
-		return result;
 	}
 
 	private static int MetaSchemaComparer(Meta meta1, Meta meta2)
@@ -744,6 +746,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	/// </summary>
 	private static void LoadRelations(DbSchema schema, ReadOnlySpan<Meta> schemaItems, int mtmCount)
 	{
+		// Code size: 260 (0x104)
 		var relationDicoIndex = new Dictionary<int, int>(schema.TablesById.Length * 2); // (tableId, relation index)
 
 		// load dico
@@ -759,9 +762,7 @@ internal readonly struct Meta : IEquatable<Meta>
 				if (toTable != null && fromTable != null)
 				{
 					var relation = meta.ToRelation(toTable);
-#pragma warning disable CS8601 // Possible null reference assignment. Cannot be null here !!
-					fromTable.Relations[relationDicoIndex[fromTable.Id]] = relation;
-#pragma warning restore CS8601
+					fromTable.Relations[relationDicoIndex[fromTable.Id]] = relation ?? GetDefaultRelation(meta,RelationType.Undefined,TableType.Undefined);
 					++relationDicoIndex[fromTable.Id];
 				}
 			}
