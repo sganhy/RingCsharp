@@ -133,4 +133,17 @@ public sealed class ResourceHelperTest
         Assert.Equal(EntityType.Schema, result.ReferenceType);
     }
 
+    [Fact]
+    public void GetParameter_Undefined_ThrowArgumentException()
+    {
+        // arrange 
+        // act 
+        var ex = Assert.Throws<ArgumentException>(() => {
+            var test = ResourceHelper.GetParameter(ParameterType.Undefined);
+        });
+
+        // assert
+        Assert.Equal("Unsupported parameter type : Undefined.", ex.Message);
+    }
+
 }

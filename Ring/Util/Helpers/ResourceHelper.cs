@@ -1,5 +1,4 @@
-﻿using Ring.Schema;
-using Ring.Schema.Enums;
+﻿using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using Ring.Util.Enums;
@@ -11,6 +10,9 @@ using System.Reflection;
 
 namespace Ring.Util.Helpers;
 
+/// <summary>
+///		This class serves as the resource management backbone for the Ring0 class library
+/// </summary>
 internal sealed class ResourceHelper
 {
 	private static readonly object SyncRoot = new();
@@ -19,16 +21,17 @@ internal sealed class ResourceHelper
 	private static readonly string ResourceNameSpace = @"Ring.Util.Resources.";
 	private static readonly string TemplateResourceNameSpace = ResourceNameSpace+ @"Templates.";
 	private static readonly string MessageDescSplitChar = "#$";
-	private const char ResourceEndOfLine = '\n';
+    private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
+    private const char ResourceEndOfLine = '\n';
 	private static bool _resourcesLoaded;
 	private static bool _schemaTemplateLoaded;
 	private static bool _parameterLoaded;
 	private static string?[] _logMessages = Array.Empty<string?>();
 	private static string?[] _logDescriptions = Array.Empty<string?>();
-	private static XmlSchemaTemplate?[] _schemaTemplates = Array.Empty<XmlSchemaTemplate?>();
-	private static string?[] _parameters = Array.Empty<string?>();
+	private static Dictionary<int, XmlSchemaTemplate> _schemaTemplates = new();
+	private static Dictionary<int, Parameter> _parameters = new();
 
-	internal ResourceHelper()
+    internal ResourceHelper()
 	{
 		// Code size: 19 (0x13)
 		if (!_resourcesLoaded) LoadResources();
@@ -45,9 +48,10 @@ internal sealed class ResourceHelper
 
 	internal static XmlSchemaTemplate? GetSchemaTemplate(DocumentType resourceType)
 	{
-		// Code size: 20 (0x14)
-		if (!_schemaTemplateLoaded) LoadSchemaTemplates();
-		return _schemaTemplates[(int)resourceType];
+        // Code size: 39 (0x27)
+        if (!_schemaTemplateLoaded) LoadSchemaTemplates();
+		var key = (int)resourceType;
+        return _schemaTemplates.ContainsKey(key) ? _schemaTemplates[key] : null;
 	}
 
 #pragma warning disable CA1822, S2325 // Mark members as static
@@ -61,16 +65,12 @@ internal sealed class ResourceHelper
 
 	internal static Parameter GetParameter(ParameterType parameterType)
 	{
-        // Code size: 133 (0x85)
-        var parameterTypeIndex = (int)parameterType -1;
+        // Code size: 78 (0x4e)
+        var parameterTypeId = (int)parameterType;
 		if (!_parameterLoaded) LoadParameters();
-		var value = string.Empty;
-		if (parameterTypeIndex >= 0 && parameterTypeIndex < _parameters.Length) value = _parameters[parameterTypeIndex]?? string.Empty;
-		string?[] arr = value.Split(',');
-		//eg. @version,Schema version,16,7, ==> 0=name; 1=description; 2=fielType; 3=entityType; 4=defaultValue
-		return new Parameter((int)parameterType, GetValue(arr, 0) ?? string.Empty, GetValue(arr, 1), parameterType, GetValue(arr, 2).ToFieldType(), 
-			string.Empty, GetValue(arr, 4),0, GetValue(arr, 3).ToEntityType(),true,true);
-	}
+		if (_parameters.ContainsKey(parameterTypeId)) return _parameters[parameterTypeId];
+        throw new ArgumentException(string.Format(DefaultCulture, GetErrorMessage(ResourceType.WrongParameterType), parameterType.ToString()));
+    }
 
 	internal static HashSet<string> GetReservedWords(DatabaseProvider databaseProvider)
 	{
@@ -88,7 +88,7 @@ internal sealed class ResourceHelper
 
 	#region private methods
 
-	private static string? GetValue(string?[] values, int index) => index < values.Length ? values[index] : null;
+	private static string? GetValue(ReadOnlySpan<string?> values, int index) => index < values.Length ? values[index] : null;
 
 	private static void LoadResources()
     {
@@ -99,20 +99,39 @@ internal sealed class ResourceHelper
 			{
 				var resourceFile = ResourceType.LogMessage + CompressedResourceSuffix;
 				(_logMessages, _logDescriptions) = GetLogResource(ResourceNameSpace, resourceFile);
-			}
-			_resourcesLoaded = true;
+                _resourcesLoaded = true;
+            }
+			
 		}
 	}
 
 	private static void LoadParameters()
 	{
-        // Code size: 86 (0x56)
+        // Code size: 348 (0x15c)
         lock (SyncRoot)
 		{
 			if (!_parameterLoaded)
 			{
 				var resourceFile = EntityType.Parameter.ToString() + CompressedResourceSuffix;
-				_parameters = GetCompressedResource(ResourceNameSpace, resourceFile, false);
+				var parameters = new ReadOnlySpan<string?>(GetCompressedResource(ResourceNameSpace, resourceFile, false));
+				_parameters = new Dictionary<int, Parameter>(parameters.Length*2);
+
+                foreach (var param in parameters)
+				{
+					if (param != null)
+					{
+                        //eg. @version,Schema version,16,7, ==> 0=id, 1=name; 2=description; 3=fielType; 4=entityType; 5=defaultValue
+                        var id = int.Parse(param.AsSpan(0,param.IndexOf(',')), CultureInfo.InvariantCulture);
+						var paramType = id.ToParameterType();
+						if (paramType != ParameterType.Undefined)
+						{
+                            var arr = new ReadOnlySpan<string?>(param.Split(','));
+                            _parameters.Add(id, new Parameter((int)paramType, GetValue(arr, 1) ?? string.Empty, GetValue(arr, 2), paramType, GetValue(arr, 3).ToFieldType(),
+								string.Empty, GetValue(arr, 5), 0, GetValue(arr, 4).ToEntityType(), true, true));
+						} else throw new ArgumentException(string.Format(DefaultCulture, GetErrorMessage(ResourceType.WrongParameterType), id));
+
+                    }
+				}
 			}
 			_parameterLoaded = true;
 		}
@@ -120,17 +139,16 @@ internal sealed class ResourceHelper
 
 	private static void LoadSchemaTemplates()
     {
-		// Code size: 308 (0x134)
+        // Code size: 275 (0x113)
         lock (SyncRoot)
 		{
 			if (!_schemaTemplateLoaded)
 			{
-				_schemaTemplates = new XmlSchemaTemplate[byte.MaxValue];
 				var resourceFile = DocumentType.XmlNative + CompressedResourceSuffix;
 				var resources = new ReadOnlySpan<string?>(GetCompressedResource(TemplateResourceNameSpace, resourceFile, true));
 				var items = new List<XmlSchemaTemplateItem>();
 				// just native for the moment
-				for (var i=0; i<resources.Length && i<127; ++i)
+				for (var i=0; i<resources.Length; ++i)
 				{
 					var entityType = i.ToEntityType();
 					if (entityType == EntityType.Undefined) continue;
@@ -214,6 +232,6 @@ internal sealed class ResourceHelper
 		return xmlAttributes.ToArray();
 	}
 
-	#endregion
+    #endregion
 
 }

@@ -5,8 +5,8 @@ internal enum ResourceType : short
 	LogMessage = 1,
 	SqlCommand = 2,
 	XmlSchemaTemplate = 3,
-    Description = 6,
-    OracleReservedKeyWord = 17,
+	Description = 6,
+	OracleReservedKeyWord = 17,
 	PostgreSQLReservedKeyWord = 19,
 	MySQLReservedKeyWord = 21,
 	SQLServerReservedKeyWord = 36,
@@ -37,6 +37,7 @@ internal enum ResourceType : short
 	NotSupportedInputDateTime = 202,
 	InvalidBase64String = 203,
 	FieldIsMandatory = 204,
+	WrongParameterType = 205,
 
 	/// <summary>
 	/// Sql operations description

@@ -12,6 +12,9 @@ using Index = Ring.Schema.Models.Index;
 
 namespace Ring.Schema;
 
+/// <summary>
+/// 	The Meta struct is a compact, memory-optimized data structure that serves as a universal container for database logical schema metadata. 
+/// </summary>
 internal readonly struct Meta : IEquatable<Meta>
 {
 
@@ -224,12 +227,10 @@ internal readonly struct Meta : IEquatable<Meta>
 			meta.Name,null, null, false)), FieldType.Undefined, false, false, true, true);
 
 	internal static Field GetDefaultField(Meta meta, FieldType fieldType)
-		=> new(meta.Id, meta.Name, meta.Description, fieldType, 0, null, SearchableType.None, true,
-			false, false, true);
+		=> new(meta.Id, meta.Name, meta.Description, fieldType, 0, null, SearchableType.None, true, false, false, true);
 
-	internal static Meta Create(int id,in Meta meta)
-		=> new(id, meta.ObjectType, meta.ReferenceId, meta.DataType, meta.Flags, meta.Name, 
-			meta.Description, meta.Value, meta.Active);
+    internal static Meta Create(int id,in Meta meta)
+		=> new(id, meta.ObjectType, meta.ReferenceId, meta.DataType, meta.Flags, meta.Name, meta.Description, meta.Value, meta.Active);
 
 	internal EntityType GetEntityType() => ((int)ObjectType).ToEntityType();
 

@@ -15,6 +15,9 @@ using System.Text;
 
 namespace Ring.Data;
 
+/// <summary>
+/// 	The Record struct is a mutable data container that represents a single database record with built-in change tracking and type safety. 
+/// </summary>
 public struct Record : IEquatable<Record>
 {
 	private const char HashCodeSeparator = (char)3756;// end of text character
@@ -36,9 +39,9 @@ public struct Record : IEquatable<Record>
 	private static readonly string BooleanFalse = false.ToString(DefaultCulture);
 #pragma warning restore RCS1187
 
-	// should be instantiated when record type is defined
-	// _data.Length should be > _type.Fields.Length
-	private string?[] _data;
+    // should be instantiated when record type is defined
+    // _data.Length should be > _type.Fields.Length - total: ~24 bytes + heap allocations for array of string?
+    private string?[] _data;
 	private Table _type;
 	private int _offset; // cannot be readonly anymore! : Allows multiple records to share the same underlying array
 
@@ -587,17 +590,14 @@ public struct Record : IEquatable<Record>
 	private static bool IsColumnChanged(string?[] data, int fieldId, int trackerIndex) => data[trackerIndex]!.GetBitValue(fieldId); // cannot be null here - Code size: 15 (0xf)
 
 	// exceptions 
-	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
 	private static void ThrowRecordUnknownFieldName(Table table, string fieldName) => 
 		throw new ArgumentException(string.Format(DefaultCulture, ResourceHelper.GetErrorMessage(ResourceType.RecordUnkownFieldName), fieldName, table.Name));
 
-	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
 	private readonly void ThrowRecordWrongRelationType(string relationName) =>
 		throw new ArgumentException(string.Format(DefaultCulture, ResourceHelper.GetErrorMessage(ResourceType.RecordWrongRelationType), relationName, _type.Name));
 
-	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
 	private readonly void ThrowRecordUnknownRelationName(string relationName) =>
 		throw new ArgumentException(string.Format(DefaultCulture, ResourceHelper.GetErrorMessage(ResourceType.RecordUnkownRelationName), relationName, _type.Name));
@@ -609,13 +609,11 @@ public struct Record : IEquatable<Record>
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
-	private static void ThrowRecordUnknownRecordType() =>
-		throw new ArgumentException(ResourceHelper.GetErrorMessage(ResourceType.RecordUnkownRecordType));
+	private static void ThrowRecordUnknownRecordType() => throw new ArgumentException(ResourceHelper.GetErrorMessage(ResourceType.RecordUnkownRecordType));
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
-	private static void ThrowWrongStringFormat() =>
-		throw new FormatException(ResourceHelper.GetErrorMessage(ResourceType.RecordWrongStringFormat));
+	private static void ThrowWrongStringFormat() =>	throw new FormatException(ResourceHelper.GetErrorMessage(ResourceType.RecordWrongStringFormat));
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]

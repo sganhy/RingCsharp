@@ -42,6 +42,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <None Remove="Util\Resources\Parameter.gz" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<EmbeddedResource Include="Util\Resources\LogMessage.gz" />
 		<EmbeddedResource Include="Util\Resources\MySQLReservedKeyWord.gz" />
 		<EmbeddedResource Include="Util\Resources\OracleReservedKeyWord.gz" />

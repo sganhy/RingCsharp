@@ -557,6 +557,12 @@ public sealed class MetaTest : BaseTest
         Assert.True(fldName.Multilingual);
         Assert.True(fldName.Baseline);
         Assert.True(fldName.NotNull);
+        Assert.Equal(3, tblAbility.Fields.Length);
+        Assert.Equal("id", tblAbility.Fields[0].Name);
+        Assert.Equal("name", tblAbility.Fields[1].Name);
+        Assert.Equal("short_name", tblAbility.Fields[2].Name);
+        Assert.True(ReferenceEquals(tblAbility.Fields[1].Name, tblAbility.Columns[1].PhysicalName));
+        Assert.False(ReferenceEquals(tblAbility.Fields[1].Name, tblAbility.Columns[2].PhysicalName));
     }
 
     [Fact]
