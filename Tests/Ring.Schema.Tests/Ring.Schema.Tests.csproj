@@ -8,23 +8,15 @@
 		<Platforms>x64</Platforms>
 		<PlatformTarget>x64</PlatformTarget>
 		<SignAssembly>True</SignAssembly>
-		<AssemblyOriginatorKeyFile>Ring.Tests.snk</AssemblyOriginatorKeyFile>
+		<AssemblyOriginatorKeyFile>Ring.Schema.Tests.snk</AssemblyOriginatorKeyFile>
 		<NoWarn>RCS1196</NoWarn>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<None Remove="Resources\meta.csv" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<EmbeddedResource Include="Resources\meta.csv" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<PackageReference Include="Bogus" />
 		<PackageReference Include="coverlet.collector">
-		  <PrivateAssets>all</PrivateAssets>
-		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 		<PackageReference Include="Microsoft.DotNet.ILCompiler" />
 		<PackageReference Include="Microsoft.NET.ILLink.Tasks" />
@@ -37,7 +29,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\..\Ring\Ring.csproj" />
+	  <ProjectReference Include="..\..\Ring.Schema\Ring.Schema.csproj" />
 	</ItemGroup>
+
 
 </Project>

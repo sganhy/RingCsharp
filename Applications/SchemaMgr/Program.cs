@@ -1,14 +1,14 @@
-﻿using Ring.Schema;
-using Ring.Schema.Builders;
-using Ring.Schema.Enums;
-using Ring.Util.Helpers;
+﻿using System.Xml.Linq;
 
 namespace SchemaMgr;
 
-public class Program
+public static class Program
 {
-    public static async Task Main(string[] args)
+    public static void Main(string[] args)
     {
+
+        var te = 4 >> 1;
+        ++te;
         /*
         // See https://aka.ms/new-console-template for more information
         Console.WriteLine("Hello, World!");

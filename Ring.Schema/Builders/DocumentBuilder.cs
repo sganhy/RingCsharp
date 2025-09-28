@@ -1,11 +1,11 @@
 ﻿using Ring.Schema.Enums;
-using Ring.Schema.Models;
 using Ring.Util.Builders;
 using Ring.Util.Enums;
-using Ring.Util.Helpers;
 using Ring.Util.Models;
 using Document = Ring.Schema.Models.Document;
+using ResourceHelper = Ring.Schema.Helpers.ResourceHelper;
 using System.Xml;
+using Ring.Schema.Models;
 
 namespace Ring.Schema.Builders;
 

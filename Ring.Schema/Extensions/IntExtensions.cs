@@ -1,6 +1,6 @@
-﻿using Ring.Util.Enums;
+﻿using Ring.Schema.Enums;
 
-namespace Ring.Util.Extensions;
+namespace Ring.Schema.Extensions;
 
 internal static class IntExtensions
 {

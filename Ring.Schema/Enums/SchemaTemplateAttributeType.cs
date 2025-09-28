@@ -1,4 +1,4 @@
-﻿namespace Ring.Util.Enums;
+﻿namespace Ring.Schema.Enums;
 
 internal enum SchemaTemplateAttributeType : short
 {

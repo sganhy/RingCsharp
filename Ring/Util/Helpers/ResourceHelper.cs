@@ -3,11 +3,9 @@ using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using Ring.Util.Enums;
 using Ring.Util.Extensions;
-using Ring.Util.Models;
 using System.Globalization;
 using System.IO.Compression;
 using System.Reflection;
-using System.Xml;
 
 namespace Ring.Util.Helpers;
 
@@ -20,16 +18,13 @@ internal sealed class ResourceHelper
 	private static readonly string CompressedResourceSuffix = @".gz";
 	private static readonly string ResourceCrLf = @"|||";
 	private static readonly string ResourceNameSpace = @"Ring.Util.Resources.";
-	private static readonly string TemplateResourceNameSpace = ResourceNameSpace+ @"Templates.";
 	private static readonly string MessageDescSplitChar = "#$";
 	private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
 	private const char ResourceEndOfLine = '\n';
 	private static bool _resourcesLoaded;
-	private static bool _schemaTemplateLoaded;
 	private static bool _parameterLoaded;
 	private static string?[] _logMessages = Array.Empty<string?>();
-	private static string?[] _logDescriptions = Array.Empty<string?>();
-	private static Dictionary<int, SchemaTemplate> _schemaTemplates = new();
+	private static string?[] _logDescriptions = Array.Empty<string?>();	
 	private static Dictionary<int, Parameter> _parameters = new();
 
 	internal ResourceHelper()
@@ -46,15 +41,7 @@ internal sealed class ResourceHelper
 		if ((int)resourceType <= _logMessages.Length) message= _logMessages[(int)resourceType - 1] ?? string.Empty;
 		return message.Replace(ResourceCrLf, ResourceEndOfLine.ToString());
 	}
-
-	internal static SchemaTemplate? GetSchemaTemplate(DocumentType resourceType)
-	{
-        // Code size: 33 (0x21)
-        if (!_schemaTemplateLoaded) LoadSchemaTemplates();
-		var key = (int)resourceType;
-		return _schemaTemplates.TryGetValue(key, out var template) ? template : null;
-    }
-
+		
 #pragma warning disable CA1822, S2325 // Mark members as static
 	internal string GetMessage(ResourceType resourceType)
 		=> ((int)resourceType <= _logMessages.Length) ? _logMessages[(int)resourceType - 1] : null;
@@ -87,9 +74,9 @@ internal sealed class ResourceHelper
 		return new HashSet<string>();
 	}
 
-	#region private methods
+    #region private methods
 
-	private static string? GetValue(ReadOnlySpan<string?> values, int index) => index < values.Length ? values[index] : null;
+    private static string? GetValue(ReadOnlySpan<string?> values, int index) => index < values.Length ? values[index] : null;
 
 	private static void LoadResources()
 	{
@@ -138,24 +125,7 @@ internal sealed class ResourceHelper
 		}
 	}
 
-	private static void LoadSchemaTemplates()
-	{
-        // Code size: 124 (0x7c)
-        lock (SyncRoot)
-		{
-			if (!_schemaTemplateLoaded)
-			{
-				var doc = new XmlDocument();
-                var resourceFile = DocumentType.XmlNative + CompressedResourceSuffix;
-                var xmlStr = GetCompressedResource(TemplateResourceNameSpace, resourceFile, false, true)[0] ?? string.Empty;
-				_schemaTemplates = new Dictionary<int, SchemaTemplate>
-                {
-                    { (int)DocumentType.XmlNative, GetSchemaTemplate(DocumentType.XmlNative, xmlStr) }
-                };
-            }
-            _schemaTemplateLoaded = true;
-		}
-	}
+	
 
 	private static (string?[], string?[]) GetLogResource(string resourceNamespace, string fileName)
 	{
@@ -192,63 +162,20 @@ internal sealed class ResourceHelper
 		return (resultMessage, resultDesc);
 	}
 
-    private static SchemaTemplate GetSchemaTemplate(DocumentType documentType, string xmlString)
+    private static string?[] GetCompressedResource(string resourceNamespace, string fileName, bool toUpper)
     {
-        // Code size: 263 (0x107)
-        var subResult = new List<SchemaTemplateItem>();
-		var tagId = SchemaTemplateAttributeType.Id.ToString().ToUpper(DefaultCulture);
-        var tagParent = SchemaTemplateAttributeType.Parent.ToString().ToUpper(DefaultCulture);
-        var tagValue = SchemaTemplateAttributeType.Value.ToString().ToUpper(DefaultCulture);
-		var startTage = string.Empty;
-        var parent = string.Empty;
-		var entityType = EntityType.Undefined;
-        var attributeValues = new Dictionary<string, string>() {{tagId , string.Empty}, {tagParent , string.Empty}, {tagValue, string.Empty}};
-        using var stringReader = new StringReader(xmlString);
-        using var reader = XmlReader.Create(stringReader);
-		while (reader.Read())
-		{
-			attributeValues[tagId] = string.Empty;
-			if (reader.NodeType == XmlNodeType.Element)
-			{
-                startTage = reader.Name;
-				reader.LoadAttributes(attributeValues);
-                entityType = ToEntityType(attributeValues[tagId]);
-				if (entityType == EntityType.Undefined) continue;
-				parent = attributeValues[tagParent];
-				var dept = reader.Depth;
-
-            }
-			if (reader.NodeType == XmlNodeType.EndElement)
-			{
-                var item = new SchemaTemplateItem(entityType, startTage, parent, string.Empty, string.Empty, new SchemaTemplateAttribute[0]);
-                subResult.Add(item);
-            }
-		}
-        return new SchemaTemplate(documentType, subResult.ToArray());
+        // Code size: 136 (0x88)
+        var resource = resourceNamespace + fileName;
+        var assembly = Assembly.GetExecutingAssembly();
+        string?[] result = Array.Empty<string>();
+        using var stream = assembly.GetManifestResourceStream(resource);
+        if (stream == null) return result;
+        using var decompressionStream = new GZipStream(stream, CompressionMode.Decompress);
+        using var reader = new StreamReader(decompressionStream);
+        result = toUpper ? reader.ReadToEnd().ToUpper(CultureInfo.InvariantCulture).Split(ResourceEndOfLine) : reader.ReadToEnd().Split(ResourceEndOfLine);
+        return result;
     }
 
-	private static EntityType ToEntityType(string attributeValue) => int.TryParse(attributeValue, out int id) ? id.ToEntityType() : EntityType.Undefined; // Code size: 20 (0x14)
-
-    private static string?[] GetCompressedResource(string resourceNamespace, string fileName, bool toUpper, bool noSplit=false)
-	{
-        // Code size: 183 (0xb7)
-        var resource = resourceNamespace + fileName;
-		var assembly = Assembly.GetExecutingAssembly();
-        string?[] result = Array.Empty<string>();
-		using var stream = assembly.GetManifestResourceStream(resource);
-		if (stream == null) return result;
-		using var decompressionStream = new GZipStream(stream, CompressionMode.Decompress);
-		using var reader = new StreamReader(decompressionStream);
-		if (noSplit)
-		{
-			result = new string?[1];
-			result[0] = toUpper ? reader.ReadToEnd().ToUpper(CultureInfo.InvariantCulture) : reader.ReadToEnd();
-		}
-		else result = toUpper ? reader.ReadToEnd().ToUpper(CultureInfo.InvariantCulture).Split(ResourceEndOfLine) : reader.ReadToEnd().Split(ResourceEndOfLine);
-		return result;
-	}
-
-
-	#endregion
+    #endregion
 
 }

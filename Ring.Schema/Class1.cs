@@ -1,7 +1,10 @@
-﻿namespace Ring.Schema
+﻿using Ring.Schema.Enums;
+
+namespace Ring.Schema
 {
-    public class Class1
+    public class Test
     {
+        FieldType fieldType; 
 
     }
 }

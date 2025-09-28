@@ -28,6 +28,7 @@
 		<Product>Ring Zero</Product>
 		<EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
 		<ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+		<!--<IntermediateOutputPath>\obj\</IntermediateOutputPath>-->
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
