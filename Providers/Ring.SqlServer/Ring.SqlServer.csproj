@@ -1,41 +1,55 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-	  <TargetFrameworks>net8.0</TargetFrameworks>
-	  <ImplicitUsings>enable</ImplicitUsings>
-	  <Nullable>enable</Nullable>
-	  <LangVersion>10.0</LangVersion>
-	  <Platforms>x64</Platforms>
-	  <PlatformTarget>x64</PlatformTarget>
-	  <AnalysisLevel>6.0-all</AnalysisLevel>
-	  <AssemblyVersion>1.0.1.0</AssemblyVersion>
-	  <FileVersion>1.0.1.0</FileVersion>
-	  <RepositoryType>https://github.com/sganhy/RingCsharp.git</RepositoryType>
-	  <RepositoryUrl>https://github.com/sganhy/RingCsharp</RepositoryUrl>
-	  <Description>Ring.SqlServer</Description>
-	  <Title>Ring.SqlServer</Title>
-	  <NoWarn>CA1307;CA1802</NoWarn>
-	  <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-	  <SignAssembly>True</SignAssembly>
-	  <AssemblyOriginatorKeyFile>Ring.SqlServer.snk</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
-	
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-      <DebugType>full</DebugType>
-      <WarningLevel>6</WarningLevel>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFrameworks>net9.0;net8.0</TargetFrameworks>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<LangVersion>10.0</LangVersion>
+		<Platforms>x64</Platforms>
+		<PlatformTarget>x64</PlatformTarget>
+		<AnalysisLevel>6.0-all</AnalysisLevel>
+		<AssemblyVersion>1.0.1.0</AssemblyVersion>
+		<FileVersion>1.0.1.0</FileVersion>
+		<RepositoryType>https://github.com/sganhy/RingCsharp.git</RepositoryType>
+		<RepositoryUrl>https://github.com/sganhy/RingCsharp</RepositoryUrl>
+		<Description>Ring Zero - SqlServer provider</Description>
+		<Title>Ring 0 - SqlServer</Title>
+		<Version>1.0.0-beta</Version>
+		<IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+		<NoWarn>CA1307;CA1802;S3267;IDE0066</NoWarn>
+		<PublishTrimmed>True</PublishTrimmed>
+		<PublishAot>True</PublishAot>
+		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+		<SignAssembly>True</SignAssembly>
+		<AssemblyOriginatorKeyFile>Ring.SqlServer.snk</AssemblyOriginatorKeyFile>
+		<Copyright>Copyright © 2025</Copyright>
+		<NuGetAuditLevel>critical</NuGetAuditLevel>
+		<Product>Ring Zero</Product>
+		<EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
+		<ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+	</PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-      <WarningLevel>6</WarningLevel>
-  </PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+		<IsAotCompatible>True</IsAotCompatible>
+		<IsTrimmable>true</IsTrimmable>
+		<DebugType>full</DebugType>
+		<WarningLevel>6</WarningLevel>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+		<IsAotCompatible>True</IsAotCompatible>
+		<IsTrimmable>true</IsTrimmable>
+		<WarningLevel>6</WarningLevel>
+	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.NET.ILLink.Tasks" />
+		<PackageReference Include="Npgsql" />
 		<PackageReference Include="Microsoft.DotNet.ILCompiler" />
-  </ItemGroup>
+		<PackageReference Include="Microsoft.NET.ILLink.Tasks" />
+	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\..\Ring\Ring.csproj" />
+		<ProjectReference Include="..\..\Ring\Ring.csproj" />
 	</ItemGroup>
 	
 </Project>
