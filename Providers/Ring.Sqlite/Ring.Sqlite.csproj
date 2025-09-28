@@ -34,12 +34,12 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\Ring\Ring.csproj" />
+		<PackageReference Include="Microsoft.DotNet.ILCompiler" />
+		<PackageReference Include="Microsoft.NET.ILLink.Tasks" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.DotNet.ILCompiler" />
-		<PackageReference Include="Microsoft.NET.ILLink.Tasks" />
+	  <ProjectReference Include="..\..\Ring\Ring.csproj" />
 	</ItemGroup>
 
 </Project>

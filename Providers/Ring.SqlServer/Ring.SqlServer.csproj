@@ -33,5 +33,9 @@
 		<PackageReference Include="Microsoft.NET.ILLink.Tasks" />
 		<PackageReference Include="Microsoft.DotNet.ILCompiler" />
   </ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\..\Ring\Ring.csproj" />
+	</ItemGroup>
 	
 </Project>

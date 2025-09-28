@@ -21,10 +21,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Include="..\.editorconfig" Link=".editorconfig" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<PackageReference Include="Bogus" />
 		<PackageReference Include="coverlet.collector">
 		  <PrivateAssets>all</PrivateAssets>
@@ -41,7 +37,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\Ring\Ring.csproj" />
+	  <ProjectReference Include="..\..\Ring\Ring.csproj" />
 	</ItemGroup>
 
 </Project>

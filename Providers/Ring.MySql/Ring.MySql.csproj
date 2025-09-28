@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net9.0;net8.0</TargetFrameworks>
+		<TargetFramework>net8.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<LangVersion>10.0</LangVersion>
@@ -12,34 +12,33 @@
 		<FileVersion>1.0.1.0</FileVersion>
 		<RepositoryType>https://github.com/sganhy/RingCsharp.git</RepositoryType>
 		<RepositoryUrl>https://github.com/sganhy/RingCsharp</RepositoryUrl>
-		<Description>Ring.PostgreSQL</Description>
-		<Title>Ring.PostgreSQL</Title>
-		<Version>1.0.1-beta</Version>
-		<IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+		<Description>Ring.MySql</Description>
+		<Title>Ring.MySql</Title>
 		<NoWarn>CA1307;CA1802</NoWarn>
 		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 		<SignAssembly>True</SignAssembly>
-		<AssemblyOriginatorKeyFile>Ring.PostgreSQL.snk</AssemblyOriginatorKeyFile>
+		<AssemblyOriginatorKeyFile>Ring.MySql.snk</AssemblyOriginatorKeyFile>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+		<IsAotCompatible>True</IsAotCompatible>
 		<DebugType>full</DebugType>
 		<WarningLevel>6</WarningLevel>
 	</PropertyGroup>
-	
+
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
 		<IsAotCompatible>True</IsAotCompatible>
 		<WarningLevel>6</WarningLevel>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\Ring\Ring.csproj" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<PackageReference Include="Npgsql" />
 		<PackageReference Include="Microsoft.DotNet.ILCompiler" />
 		<PackageReference Include="Microsoft.NET.ILLink.Tasks" />
 	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\..\Ring\Ring.csproj" />
+	</ItemGroup>
+
 
 </Project>

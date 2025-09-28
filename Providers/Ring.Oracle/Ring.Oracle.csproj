@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net8.0</TargetFramework>
+		<TargetFrameworks>net9.0;net8.0</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<LangVersion>10.0</LangVersion>
@@ -12,26 +12,27 @@
 		<FileVersion>1.0.1.0</FileVersion>
 		<RepositoryType>https://github.com/sganhy/RingCsharp.git</RepositoryType>
 		<RepositoryUrl>https://github.com/sganhy/RingCsharp</RepositoryUrl>
-		<Description>Ring.InfluxDB</Description>
-		<Title>Ring.InfluxDB</Title>
+		<Description>Ring.Oracle</Description>
+		<Title>Ring.Oracle</Title>
 		<NoWarn>CA1307;CA1802</NoWarn>
 		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 		<SignAssembly>True</SignAssembly>
-		<AssemblyOriginatorKeyFile>Ring.InfluxDB.snk</AssemblyOriginatorKeyFile>
+		<AssemblyOriginatorKeyFile>Ring.Oracle.snk</AssemblyOriginatorKeyFile>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-			<IsAotCompatible>True</IsAotCompatible>
-			<DebugType>full</DebugType>
-			<WarningLevel>6</WarningLevel>
+		<IsAotCompatible>True</IsAotCompatible>
+		<DebugType>full</DebugType>
+		<WarningLevel>6</WarningLevel>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-			<IsAotCompatible>True</IsAotCompatible>
-			<WarningLevel>6</WarningLevel>
+		<IsAotCompatible>True</IsAotCompatible>
+		<WarningLevel>6</WarningLevel>
 	</PropertyGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\..\Ring\Ring.csproj" />
 		<ProjectReference Include="..\Ring\Ring.csproj" />
 	</ItemGroup>
 
