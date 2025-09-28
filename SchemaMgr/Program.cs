@@ -9,6 +9,7 @@ public class Program
 {
     public static async Task Main(string[] args)
     {
+        /*
         // See https://aka.ms/new-console-template for more information
         Console.WriteLine("Hello, World!");
 
@@ -41,5 +42,6 @@ public class Program
         var builder = new DocumentBuilder("C:/Temp/Schema/schema.xml");
         var doc = await builder.GetDocumentAsync(DocumentType.XmlNative);
         Console.WriteLine(DateTime.Now - starTime);
+        */
     }
 }
