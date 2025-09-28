@@ -29,7 +29,7 @@ internal sealed class DocumentBuilder
     /// </summary>
     public DocumentBuilder(string filePath) => FilePath = filePath ?? string.Empty;
 
-    internal ValueTask<int> GetMetaCountAsync(XmlSchemaTemplate template, CancellationToken cancellationToken = default)
+    internal ValueTask<int> GetMetaCountAsync(SchemaTemplate template, CancellationToken cancellationToken = default)
     {
         // Code size: 64 (0x40)
         var readerSettings = new XmlReaderSettings
@@ -57,6 +57,7 @@ internal sealed class DocumentBuilder
                     {
 
                     }
+                    
                 }
             }
             catch (Exception ex) when (ex is not OperationCanceledException)

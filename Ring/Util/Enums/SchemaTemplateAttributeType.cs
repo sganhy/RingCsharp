@@ -1,6 +1,6 @@
 ﻿namespace Ring.Util.Enums;
 
-internal enum XmlSchemaAttributeType : short
+internal enum SchemaTemplateAttributeType : short
 {
 	Id = 0,
 	Name = 1,

@@ -22,4 +22,9 @@ internal sealed class Parameter : BaseEntity
 		Type = type;
 		ReferenceType = referenceType;
 	}
+
+#if DEBUG
+	public sealed override string ToString() => $"{Id} - {Name} ({Value})";
+#endif
+
 }

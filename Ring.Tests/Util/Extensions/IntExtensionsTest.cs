@@ -13,7 +13,7 @@ public sealed class IntExtensionsTest : BaseTest
     public void ToXmlSchemaAttributeType_AllExistingEnumId_Enum()
     {
         // arrange 
-        var relationTypes = Enum.GetValues<XmlSchemaAttributeType>();
+        var relationTypes = Enum.GetValues<SchemaTemplateAttributeType>();
         foreach (var relType in relationTypes)
         {
             // act 

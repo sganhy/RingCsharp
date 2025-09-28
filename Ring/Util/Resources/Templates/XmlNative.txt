@@ -1,4 +1,34 @@
-table;schema;;id,name,baseline,readonly,cached
-field;field_list;;,name,baseline,,,type,size,case_sensitive,not_null,multilingual
-relation;relation_list;;,name,baseline,,,type,,,,,to,inverse_relation,constraint
-index;index_list;index_field;,name,baseline,,,,,,,,,,,Unique
+<?xml version="1.0" encoding="UTF-8"?>
+<template>
+	<table id="0" parent="schema">
+		<attribute id="0" value="id"/>
+		<attribute id="1" value="name"/>
+		<attribute id="2" value="baseline"/>
+		<attribute id="3" value="readonly"/>
+		<attribute id="4" value="cached"/>
+	</table>
+	<field id="1" parent="field_list">
+		<attribute id="1" value="name"/>
+		<attribute id="2" value="baseline"/>
+		<attribute id="5" value="type"/>
+		<attribute id="6" value="size"/>
+		<attribute id="7" value="case_sensitive"/>
+		<attribute id="8" value="not_null"/>
+		<attribute id="9" value="multilingual"/>
+	</field>
+	<relation id="2" parent="relation_list">
+		<attribute id="1" value="name"/>
+		<attribute id="2" value="baseline"/>
+		<attribute id="5" value="type"/>
+		<attribute id="8" value="not_null"/>
+		<attribute id="10" value="to"/>
+		<attribute id="11" value="inverse_relation"/>
+		<attribute id="12" value="constraint"/>
+	</relation>
+	<index id="3" parent="index_list">
+		<attribute id="1" value="name"/>
+		<attribute id="2" value="baseline"/>
+	</index>
+	<schema id="7">
+	</schema>
+</template>
