@@ -28,6 +28,8 @@ internal sealed class ResourceHelper
         return _schemaTemplates.TryGetValue(key, out var template) ? template : null;
     }
 
+    #region private methods
+
     private static void LoadSchemaTemplates()
     {
         // Code size: 124 (0x7c)
@@ -98,4 +100,7 @@ internal sealed class ResourceHelper
         result = toUpper ? reader.ReadToEnd().ToUpper(CultureInfo.InvariantCulture) : reader.ReadToEnd();
         return result;
     }
+
+    #endregion
+
 }

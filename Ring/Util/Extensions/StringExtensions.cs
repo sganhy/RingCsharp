@@ -10,17 +10,12 @@ internal static class StringExtensions
 
 	internal static int CharCount(this string? source, char chr) 
 	{
-		// Code size: 34 (0x22)
-		if (source != null)
+        // Code size: 50 (0x32)
+        if (source != null)
 		{
 			var count = 0;
-			var n = 0;
-			while ((n = source.IndexOf(chr, n)) != -1)
-			{
-				++n;
-				++count;
-			}
-			return count;
+            foreach (var c in source.AsSpan()) { if (c == chr) count++; }
+            return count;
 		}
 		return 0;
 	}

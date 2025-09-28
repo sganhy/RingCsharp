@@ -357,7 +357,7 @@ public struct Record : IEquatable<Record>
 			result.Append(data[i] ?? NullField).Append(HashCodeSeparator);
 			++i;
 		}
-		HashHelper.Djb2X(result.ToString(), out int hash);
+		HashHelper.Djb2A(result.ToString(), out int hash);
 		return hash;
 	}
 	internal readonly bool EqualTo(SaveQuery obj) => ReferenceEquals(obj.Data, _data) && obj.Offset == _offset; // Code size: 31 (0x1f)

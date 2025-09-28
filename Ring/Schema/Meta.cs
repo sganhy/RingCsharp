@@ -415,9 +415,9 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	private static int GetStringHash(string? value)
 	{
-		// Code size: 15 (0xf) - using DJB2 algorithm for better hash distribution
+		// Code size: 15 (0xf) - using DJB-2 algorithm for better hash distribution
 		if (value == null) return 0;
-		HashHelper.Djb2X(value, out int hash);
+		HashHelper.Djb2A(value, out int hash);
 		return hash;
 	}
 

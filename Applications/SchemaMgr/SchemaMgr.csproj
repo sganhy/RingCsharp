@@ -45,6 +45,7 @@
 	  <ProjectReference Include="..\..\Providers\Ring.SqlServer\Ring.SqlServer.csproj" />
 	  <ProjectReference Include="..\..\Ring.Data\Ring.Data.csproj" />
 	  <ProjectReference Include="..\..\Ring.Schema\Ring.Schema.csproj" />
+	  <ProjectReference Include="..\..\Ring\Ring.csproj" />
 	</ItemGroup>
 
 </Project>

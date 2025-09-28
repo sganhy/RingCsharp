@@ -74,9 +74,9 @@ internal sealed class ResourceHelper
 		return new HashSet<string>();
 	}
 
-    #region private methods
+	#region private methods
 
-    private static string? GetValue(ReadOnlySpan<string?> values, int index) => index < values.Length ? values[index] : null;
+	private static string? GetValue(ReadOnlySpan<string?> values, int index) => index < values.Length ? values[index] : null;
 
 	private static void LoadResources()
 	{
@@ -95,8 +95,8 @@ internal sealed class ResourceHelper
 
 	private static void LoadParameters()
 	{
-        // Code size: 322 (0x142)
-        lock (SyncRoot)
+		// Code size: 322 (0x142)
+		lock (SyncRoot)
 		{
 			if (!_parameterLoaded)
 			{
@@ -118,7 +118,7 @@ internal sealed class ResourceHelper
 								string.Empty, GetValue(arr, 5), 0, GetValue(arr, 4).ToEntityType(), true, true));
 						} else throw new ArgumentException(); // force exception just during unitest run ! avoid to call LoadResource here (Recursive Exception Issue risk)
 
-                    }
+					}
 				}
 			}
 			_parameterLoaded = true;
@@ -162,20 +162,20 @@ internal sealed class ResourceHelper
 		return (resultMessage, resultDesc);
 	}
 
-    private static string?[] GetCompressedResource(string resourceNamespace, string fileName, bool toUpper)
-    {
-        // Code size: 136 (0x88)
-        var resource = resourceNamespace + fileName;
-        var assembly = Assembly.GetExecutingAssembly();
-        string?[] result = Array.Empty<string>();
-        using var stream = assembly.GetManifestResourceStream(resource);
-        if (stream == null) return result;
-        using var decompressionStream = new GZipStream(stream, CompressionMode.Decompress);
-        using var reader = new StreamReader(decompressionStream);
-        result = toUpper ? reader.ReadToEnd().ToUpper(CultureInfo.InvariantCulture).Split(ResourceEndOfLine) : reader.ReadToEnd().Split(ResourceEndOfLine);
-        return result;
-    }
+	private static string?[] GetCompressedResource(string resourceNamespace, string fileName, bool toUpper)
+	{
+		// Code size: 136 (0x88)
+		var resource = resourceNamespace + fileName;
+		var assembly = Assembly.GetExecutingAssembly();
+		string?[] result = Array.Empty<string>();
+		using var stream = assembly.GetManifestResourceStream(resource);
+		if (stream == null) return result;
+		using var decompressionStream = new GZipStream(stream, CompressionMode.Decompress);
+		using var reader = new StreamReader(decompressionStream);
+		result = toUpper ? reader.ReadToEnd().ToUpper(CultureInfo.InvariantCulture).Split(ResourceEndOfLine) : reader.ReadToEnd().Split(ResourceEndOfLine);
+		return result;
+	}
 
-    #endregion
+	#endregion
 
 }
