@@ -1,5 +1,4 @@
-﻿using Bogus.DataSets;
-using Xunit.Abstractions;
+﻿using Xunit.Abstractions;
 using Ring.Schema.Models;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
@@ -15,7 +14,7 @@ public sealed class BaseEntityExtensionsTest : BaseTest
     internal void GetStringCode_AnonymousInput_StringCode()
     {
         // arrange 
-        const char sep = (char)8998;
+        const char sep = (char)8996;
         var id = _faker.Random.Number(int.MinValue, int.MaxValue);
         var name = _faker.Random.String();
         var description = _faker.Random.String();

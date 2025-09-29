@@ -222,4 +222,28 @@ internal static class IntExtensions
 		}
 		return EntityType.Undefined;
 	}
+
+    /// <summary>
+    ///		Gets the length of the string representation of an Int32 value. 
+    /// </summary>
+    internal static int GetInt32Length(this int value)
+	{
+		// Code size: 137 (0x89)
+		if (value == 0) return 1;
+		if (value == int.MinValue) return 11; // "-2147483648"
+		var length = value < 0 ? 1 : 0; // Sign
+		value = Math.Abs(value);
+		// Count digits
+		if (value < 10) return length + 1;
+		if (value < 100) return length + 2;
+		if (value < 1000) return length + 3;
+		if (value < 10000) return length + 4;
+		if (value < 100000) return length + 5;
+		if (value < 1000000) return length + 6;
+		if (value < 10000000) return length + 7;
+		if (value < 100000000) return length + 8;
+		if (value < 1000000000) return length + 9;
+		return length + 10;
+	}
+
 }

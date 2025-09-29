@@ -4,9 +4,9 @@ using Ring.Util.Models;
 namespace Ring.Schema.Models;
 
 /// <summary>
-/// Result of document parsing (sources: xml, json, ...)
+///		Result of document parsing (sources: xml, json, ...)
 /// </summary>
-internal sealed class Document
+public sealed class Document
 {
 	internal readonly int SchemaId;
 	internal readonly string FilePath;

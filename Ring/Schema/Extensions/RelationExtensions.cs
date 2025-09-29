@@ -1,6 +1,5 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Models;
-using Ring.Util.Builders;
 using Ring.Util.Helpers;
 using System.Globalization;
 using System.Text;
@@ -30,8 +29,7 @@ internal static class RelationExtensions
 	{
 		// Code size: 302 (0x12e)
 		// mtm relation already computed - find previous table_id
-		var toTableId = relation.ToTable.Type == TableType.Mtm? 
-			(relation.ToTable.GetRelation(relation.Name) ?? relation).ToTable.Id : relation.ToTable.Id;
+		var toTableId = relation.ToTable.Type == TableType.Mtm? (relation.ToTable.GetRelation(relation.Name) ?? relation).ToTable.Id : relation.ToTable.Id;
 		var fromTableId = relation.InverseRelation.ToTable.Id;
 		var sfromTableId = fromTableId.ToString(CultureInfo.InvariantCulture).PadLeft(5, PaddingChar);
 		var sToTableId = toTableId.ToString(CultureInfo.InvariantCulture).PadLeft(5, PaddingChar);

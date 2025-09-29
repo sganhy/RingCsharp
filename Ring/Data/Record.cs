@@ -423,8 +423,8 @@ public struct Record : IEquatable<Record>
 
 	private readonly unsafe int GetUnsafeHashCode()
 	{
-		// Code size: 199 (0xc7) - memory allocation reduced!
-		var data = _data;
+        // Code size: 179 (0xb3) - memory allocation reduced!
+        var data = _data;
 		var table = _type;
 		var offset = _offset;
 		var columnCount = table.RecordSize - 1;
@@ -432,7 +432,6 @@ public struct Record : IEquatable<Record>
 		const uint PRIME1 = 2654435761u;
 		const uint PRIME2 = 2246822519u;
 		const uint PRIME3 = 3266489917u;
-		const uint PRIME4 = 668265263u;
 		const uint PRIME5 = 374761393u;
 
 		uint h32 = (uint)initHash + PRIME5;
@@ -456,9 +455,6 @@ public struct Record : IEquatable<Record>
 		h32 ^= h32 >> 13;
 		h32 *= PRIME3;
 		h32 ^= h32 >> 16;
-		h32 *= PRIME4;
-		h32 ^= h32 >> 16;
-
 		return (int)h32;
 	}
 
