@@ -1,5 +1,4 @@
-﻿using System.Globalization;
-using System.Xml;
+﻿using System.Xml;
 
 namespace Ring.Util.Extensions;
 
@@ -11,12 +10,12 @@ internal static class XmlReaderExtensions
 	/// </summary>
 	internal static void LoadAttributes(this XmlReader reader, Dictionary<string,string> values, bool nameSpaceIncluded = true)
 	{
-		// Code size: 69 (0x45)
-		if (!reader.HasAttributes) return;
+        // Code size: 64 (0x40)
+        if (!reader.HasAttributes) return;
 		reader.MoveToFirstAttribute();
 		do
 		{
-			var attributeName = RemoveNameSpaceInfo(reader.Name).ToUpper(CultureInfo.InvariantCulture);
+			var attributeName = RemoveNameSpaceInfo(reader.Name).ToUpperInvariant();
 			if (values.ContainsKey(attributeName)) values[attributeName] = reader.Value;
 		}
 		while (reader.MoveToNextAttribute());

@@ -11,7 +11,6 @@ using Ring.Util.Helpers;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.CompilerServices;
-using System.Text;
 
 namespace Ring.Data;
 
@@ -20,7 +19,6 @@ namespace Ring.Data;
 /// </summary>
 public struct Record : IEquatable<Record>
 {
-	private const char HashCodeSeparator = (char)3756;// end of text character
 	private const long MaxIntValue = int.MaxValue;
 	private const long MinIntValue = int.MinValue;
 	private const long MaxShortValue = short.MaxValue;
@@ -33,15 +31,16 @@ public struct Record : IEquatable<Record>
 	private static readonly Table DefaultType = GetDefaultType();
 	private static readonly string NullField = "^^"; // skip conversion into constant
 	private static readonly string NullString = "<Null>";
+	private static readonly uint NullHash = (uint)GetHash(NullField);
 	private static readonly string DefaultPrimaryKeyValue = "0";
 	private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
 	private static readonly string BooleanTrue = true.ToString(DefaultCulture);
 	private static readonly string BooleanFalse = false.ToString(DefaultCulture);
 #pragma warning restore RCS1187
 
-    // should be instantiated when record type is defined
-    // _data.Length should be > _type.Fields.Length - total: ~24 bytes + heap allocations for array of string?
-    private string?[] _data;
+	// should be instantiated when record type is defined
+	// _data.Length should be > _type.Fields.Length - total: ~24 bytes + heap allocations for array of string?
+	private string?[] _data;
 	private Table _type;
 	private int _offset; // cannot be readonly anymore! : Allows multiple records to share the same underlying array
 
@@ -342,24 +341,7 @@ public struct Record : IEquatable<Record>
 		}
 		return true;
 	}
-	public readonly override int GetHashCode()
-	{
-		// Code size: 112 (0x70)
-		var data = _data;
-		var table = _type;
-		var result = new StringBuilder();
-		result.Append(table.PhysicalName);
-		var i = _offset;
-		var columnCount = table.RecordSize - 1;
-		columnCount += i;
-		while (i < columnCount)
-		{
-			result.Append(data[i] ?? NullField).Append(HashCodeSeparator);
-			++i;
-		}
-		HashHelper.Djb2A(result.ToString(), out int hash);
-		return hash;
-	}
+	public readonly override int GetHashCode() => GetUnsafeHashCode();
 	internal readonly bool EqualTo(SaveQuery obj) => ReferenceEquals(obj.Data, _data) && obj.Offset == _offset; // Code size: 31 (0x1f)
 	internal readonly bool IsFieldChanged(string name)
 	{
@@ -413,6 +395,7 @@ public struct Record : IEquatable<Record>
 		return long.Parse(data[index]!, CultureInfo.InvariantCulture);
 	}
 
+
 #pragma warning disable IDE0251 // Make member 'readonly'
 	internal void SetRelation(string name, long? value)
 	{
@@ -429,8 +412,56 @@ public struct Record : IEquatable<Record>
 		else ThrowRecordWrongRelationType(name);
 	}
 #pragma warning restore IDE0251 // Make member 'readonly'
-
+   
 	#region private methods 
+
+	internal static int GetHash(string name)
+	{
+		HashHelper.Djb2A(name, out int hash);
+		return hash;
+	}
+
+	private readonly unsafe int GetUnsafeHashCode()
+	{
+		// Code size: 199 (0xc7) - memory allocation reduced!
+		var data = _data;
+		var table = _type;
+		var offset = _offset;
+		var columnCount = table.RecordSize - 1;
+		HashHelper.Djb2A(table.PhysicalName, out int initHash);
+		const uint PRIME1 = 2654435761u;
+		const uint PRIME2 = 2246822519u;
+		const uint PRIME3 = 3266489917u;
+		const uint PRIME4 = 668265263u;
+		const uint PRIME5 = 374761393u;
+
+		uint h32 = (uint)initHash + PRIME5;
+
+		// Process each field
+		for (int i = 0; i < columnCount; i++)
+		{
+			uint fieldHash = NullHash; // pre-calculated hash for null values!
+			var value = data[i + offset];
+			if (value != null) {
+				var fieldValue = value;
+				fieldHash = (uint)fieldValue.GetHashCode();
+			}
+			h32 ^= fieldHash * PRIME2;
+			h32 = ((h32 << 13) | (h32 >> 19)) * PRIME1;
+		}
+
+		// Final avalanche
+		h32 ^= h32 >> 16;
+		h32 *= PRIME2;
+		h32 ^= h32 >> 13;
+		h32 *= PRIME3;
+		h32 ^= h32 >> 16;
+		h32 *= PRIME4;
+		h32 ^= h32 >> 16;
+
+		return (int)h32;
+	}
+
 
 #pragma warning disable IDE0251 // Make member 'readonly'
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -639,6 +670,7 @@ public struct Record : IEquatable<Record>
 		throw new FormatException(ResourceHelper.GetErrorMessage(ResourceType.InvalidBase64String));
 
 	private static IDdlBuilder GetDefaultDdlBuilder() => new Util.Builders.PostgreSQL.DdlBuilder(); // Code size: 6 (0x6)
+
 
 	private static Table GetDefaultType()
 	{

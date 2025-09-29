@@ -28,12 +28,13 @@ internal static class RelationExtensions
 
 	internal static string GetMtmName(this Relation relation)
 	{
+		// Code size: 302 (0x12e)
 		// mtm relation already computed - find previous table_id
 		var toTableId = relation.ToTable.Type == TableType.Mtm? 
 			(relation.ToTable.GetRelation(relation.Name) ?? relation).ToTable.Id : relation.ToTable.Id;
 		var fromTableId = relation.InverseRelation.ToTable.Id;
-		var sfromTableId = fromTableId.ToString(CultureInfo.InvariantCulture)?.PadLeft(5, PaddingChar);
-		var sToTableId = toTableId.ToString(CultureInfo.InvariantCulture)?.PadLeft(5, PaddingChar);
+		var sfromTableId = fromTableId.ToString(CultureInfo.InvariantCulture).PadLeft(5, PaddingChar);
+		var sToTableId = toTableId.ToString(CultureInfo.InvariantCulture).PadLeft(5, PaddingChar);
 		var result = new StringBuilder();
 		int relId;
 

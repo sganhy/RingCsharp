@@ -1,6 +1,6 @@
 ﻿using Ring.Schema.Enums;
-using Ring.Util.Builders;
 using Ring.Schema.Models;
+using Ring.Util.Builders;
 using Ring.Util.Helpers;
 
 namespace Ring.Schema.Extensions;
@@ -8,11 +8,11 @@ namespace Ring.Schema.Extensions;
 internal static class DatabaseProviderExtensions
 {
 	// reserved key words 
-	private readonly static HashSet<string> _oracleWords = ResourceHelper.GetReservedWords(DatabaseProvider.Oracle);
-	private readonly static HashSet<string> _postgreSqlWords = ResourceHelper.GetReservedWords(DatabaseProvider.PostgreSql);
-	private readonly static HashSet<string> _mySqlWords = ResourceHelper.GetReservedWords(DatabaseProvider.MySql);
-	private readonly static HashSet<string> _sqlServerWords = ResourceHelper.GetReservedWords(DatabaseProvider.SqlServer);
-	private readonly static HashSet<string> _sqlLiteWords = ResourceHelper.GetReservedWords(DatabaseProvider.SqlLite);
+	private readonly static Lazy<HashSet<string>> _oracleWords = new(() => ResourceHelper.GetReservedWords(DatabaseProvider.Oracle), true); 
+	private readonly static Lazy<HashSet<string>> _postgreSqlWords = new(() => ResourceHelper.GetReservedWords(DatabaseProvider.PostgreSql), true);
+	private readonly static Lazy<HashSet<string>> _mySqlWords = new(() => ResourceHelper.GetReservedWords(DatabaseProvider.MySql), true);
+	private readonly static Lazy<HashSet<string>> _sqlServerWords = new(() => ResourceHelper.GetReservedWords(DatabaseProvider.SqlServer), true);
+	private readonly static Lazy<HashSet<string>> _sqlLiteWords = new(() => ResourceHelper.GetReservedWords(DatabaseProvider.SqlLite), true);
 
 	// catalogs
 	private static readonly Dictionary<EntityType, Catalog> _postreSqlCatalog = new() {
@@ -63,15 +63,15 @@ internal static class DatabaseProviderExtensions
 
 	internal static bool IsReservedWord(this DatabaseProvider provider, string word)
 	{
-		// Code size: 115(0x73)
-		var currentWord = word.ToUpperInvariant();
+        // Code size: 140 (0x8c)
+        var currentWord = word.ToUpperInvariant();
 		switch (provider)
 		{
-			case DatabaseProvider.Oracle: return _oracleWords.Contains(currentWord);
-			case DatabaseProvider.PostgreSql: return _postgreSqlWords.Contains(currentWord);
-			case DatabaseProvider.MySql: return _mySqlWords.Contains(currentWord);
-			case DatabaseProvider.SqlServer: return _sqlServerWords.Contains(currentWord);
-			case DatabaseProvider.SqlLite: return _sqlLiteWords.Contains(currentWord);
+			case DatabaseProvider.Oracle: return _oracleWords.Value.Contains(currentWord);
+			case DatabaseProvider.PostgreSql: return _postgreSqlWords.Value.Contains(currentWord);
+			case DatabaseProvider.MySql: return _mySqlWords.Value.Contains(currentWord);
+			case DatabaseProvider.SqlServer: return _sqlServerWords.Value.Contains(currentWord);
+			case DatabaseProvider.SqlLite: return _sqlLiteWords.Value.Contains(currentWord);
 		}
 		throw new NotImplementedException();
 	}
