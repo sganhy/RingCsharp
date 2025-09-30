@@ -1,11 +1,12 @@
 ﻿using Ring.Schema.Enums;
+using Ring.Schema.Extensions;
 
 namespace Ring.Schema.Models;
 
 /// <summary>
 /// 	Logical field
 /// </summary>
-internal sealed class Field : BaseEntity
+internal sealed class Field : BaseEntity, IEquatable<Field>
 {
 	internal readonly SearchableType SearchableType;
 	internal readonly string? DefaultValue;
@@ -28,6 +29,12 @@ internal sealed class Field : BaseEntity
 		SearchableType = searchableType;
 		Multilingual = multilingual;
 	}
+
+    public static bool operator ==(Field left, Field right) => left.Equals(right);
+    public static bool operator !=(Field left, Field right) => !left.Equals(right);
+    public override bool Equals(object? obj) => obj is Field field && Equals(field);
+	public bool Equals(Field? other) => this.IsEquivalentTo(other);
+    public override int GetHashCode() => this.Hash();
 
 #if DEBUG
 	public override string ToString() => $"{Id} - {Name} ({Type})";

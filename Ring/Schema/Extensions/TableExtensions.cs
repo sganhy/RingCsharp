@@ -1,6 +1,5 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Models;
-using Ring.Util.Helpers;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Index = Ring.Schema.Models.Index;
@@ -310,58 +309,6 @@ internal static class TableExtensions
 		return result.ToArray();
 	}
 
-	internal static long GetHashCode(this Table table)
-	{
-		// Code size: 15 (0xf)
-		HashHelper.Djb2X(table.GetStringCode(), out long hash);
-		return hash;
-	}
-
-	internal static string GetStringCode(this Table table)
-	{
-        // Code size: 253 (0xfd) - checked: 2025-09-23
-        /*
-		* readonly bool Cached
-		* readonly Field[] Fields
-		* readonly Relation[] Relations
-		* readonly Index[] Indexes
-		* readonly int RecordSize
-		* readonly IColumn[] Columns
-		* readonly string PhysicalName
-		* readonly PhysicalType PhysicalType
-		* readonly int SchemaId
-		* readonly string? Subject
-		* readonly TableType Type
-		* readonly CacheId CacheId
-		* readonly bool PhysicalDeletion
-		* readonly bool Readonly
-		*/
-        return new StringBuilder()
-			.Append(table.Cached)
-			.Append(HashCodeSeparator)
-			.Append(GetStringCode(table.Fields))
-			.Append(GetStringCode(table.Relations))
-			.Append(GetStringCode(table.Indexes))
-			.Append(table.RecordSize)
-			.Append(HashCodeSeparator)
-		/* Columns[] Columns - removed from computing !! */
-		/* table.PhysicalName - removed from computing !! */
-			.Append((int)table.Type)
-			.Append(HashCodeSeparator)
-			.Append(table.SchemaId)
-			.Append(HashCodeSeparator)
-			.Append((int)table.PhysicalType) // avoid boxing here !! cast to int
-			.Append(HashCodeSeparator)
-			.Append(table.Subject)
-			.Append(HashCodeSeparator)
-			.Append(table.Readonly)
-			.Append(HashCodeSeparator)
-            .Append(table.PhysicalDeletion)
-            .Append(HashCodeSeparator)
-            /* + BaseEntity string code */
-            .Append(BaseEntityExtensions.GetStringCode(table))
-			.ToString();
-	}
 
 	#region private methods 
 
@@ -375,7 +322,7 @@ internal static class TableExtensions
 		foreach (var index in span) if (index.Unique) return index;
 		return null;
 	}	
-
+	/*
 	private static string GetStringCode(ReadOnlySpan<Field> fields)
 	{
 		// Code size: 68 (0x44)
@@ -411,6 +358,7 @@ internal static class TableExtensions
 		}
 		return result.ToString();
 	}
+	*/
 
 	#endregion
 

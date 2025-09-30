@@ -1,32 +1,27 @@
 ﻿using Ring.Schema.Models;
-using System.Text;
 
 namespace Ring.Schema.Extensions;
 
 internal static class BaseEntityExtensions
 {
-	private const int BoolMaxLength = 5;			   // "False".Length
-	private const char HashCodeSeparator = (char)8996;
+	internal static bool BaseEntityEquals(this BaseEntity value, BaseEntity? other) 
+	{
+		// Code size: 88 (0x58)
+		if (other==null) return false;
+		return value.Id == other.Id && string.Equals(value.Name, other.Name, StringComparison.Ordinal) &&
+            string.Equals(value.Description, other.Description, StringComparison.Ordinal) && value.Baseline == other.Baseline && value.Active == other.Active;
+	}
 
-    // Code size: 116 (0x74) - checked 2025-07-19
-    internal static StringBuilder GetStringCode(this BaseEntity baseEntity) 
-		=> new StringBuilder(baseEntity.GetStringCodeLength()) // compute capacity! 
-			.Append(baseEntity.Active)
-			.Append(HashCodeSeparator)
-			.Append(baseEntity.Baseline)
-			.Append(HashCodeSeparator)
-			.Append(baseEntity.Description ?? string.Empty)
-			.Append(HashCodeSeparator)
-			.Append(baseEntity.Id)
-			.Append(HashCodeSeparator)
-			.Append(baseEntity.Name); // name is an mandatory field!
-
-	internal static int GetStringCodeLength(this BaseEntity baseEntity)  // Code size: 48 (0x30) - checked 2025-09-30
-		=> BoolMaxLength +							 // Active: "True" or "False"
-			BoolMaxLength +							 // Baseline: "True" or "False"
-			(baseEntity.Description?.Length ?? 0) +	 // Description (nullable)
-			baseEntity.Id.GetInt32Length() +		 // Id (worst case: -2147483648)
-			baseEntity.Name.Length +				 // Name (nullable)
-			5;										 // 4 separators + 1 char	
+	internal static HashCode GetHashCodeInstance(this BaseEntity value)
+	{
+        // Code size: 93 (0x5d)
+        var hash = new HashCode();
+		hash.Add(value.Id);
+		hash.Add(value.Name, StringComparer.Ordinal);
+        if (value.Description!=null) hash.Add(value.Description, StringComparer.Ordinal);
+        hash.Add(value.Baseline);
+		hash.Add(value.Active);
+		return hash;
+	}
 
 }

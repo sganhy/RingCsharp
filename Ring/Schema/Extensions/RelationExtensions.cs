@@ -65,42 +65,5 @@ internal static class RelationExtensions
 	internal static Relation SetTypeAndId(this Relation relation, RelationType relationType, int id, bool notNull) => // Code size: 56 (0x38)
 		new (id, relation.Name, relation.Description, relationType, relation.ToTable, relation.FieldType, notNull, relation.HasConstraint, relation.Baseline, relation.Active);
 
-	internal static long GetHashCode(this Relation relation)
-	{
-		HashHelper.Djb2X(relation.GetStringCode(), out long hash);
-		return hash;
-	}
-
-	internal static string GetStringCode(this Relation relation)
-	{
-		// Code size: 206 (0xce)
-		/*
-		* Relation InverseRelation
-		* readonly bool HasConstraint
-		* readonly bool NotNull
-		* readonly Table ToTable
-		* readonly RelationType Type
-		* readonly FieldType FieldType
-		*/
-		return new StringBuilder() 
-			.Append(relation.InverseRelation.Name)
-			.Append(relation.InverseRelation.Id)
-			.Append(HashCodeSeparator)
-			.Append((int)relation.InverseRelation.Type)
-			.Append(HashCodeSeparator)
-			.Append(relation.HasConstraint)
-			.Append(HashCodeSeparator)
-			.Append(relation.NotNull)
-			.Append(HashCodeSeparator)
-			.Append(relation.ToTable.Id)
-			.Append(relation.ToTable.Name)
-			.Append(HashCodeSeparator)
-			.Append((int)relation.Type)
-			.Append(HashCodeSeparator)
-			.Append((int)relation.FieldType)
-		/* + BaseEntity string code */
-			.Append(BaseEntityExtensions.GetStringCode(relation))
-			.ToString();
-	}
 
 }

@@ -422,31 +422,6 @@ public class TableExtensionsTest : BaseTest
     }
 
     [Fact]
-    internal void GetHashCode_TableHashEqual_True()
-    {
-        // arrange 
-        var metaList = GetSchema1();
-        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
-        var table1 = schema?.GetTable("book");
-        Assert.NotNull(schema);
-        Assert.NotNull(table1);
-        var meta2 = table1.ToMeta(schema.Id);
-        var metaTable = FirstOrDefault(meta2, EntityType.Table);
-        Assert.NotNull(metaTable);
-        var table2 = metaTable.Value.ToTable(new ArraySegment<Meta>(meta2), table1.PhysicalType, new PostGDdlBuilder(), table1.PhysicalName, 0);
-        Assert.NotNull(table2);
-        // copy relations
-        for (var i = 0; i < table2.Relations.Length; ++i) table2.Relations[i] = table1.Relations[i];
-
-        // act 
-        var hash1 = TableExtensions.GetHashCode(table1);
-        var hash2 = TableExtensions.GetHashCode(table2);
-
-        // assert
-        Assert.Equal(hash1, hash2);
-    }
-
-    [Fact]
     internal void GetHashCode_TableHashEqual_False()
     {
         // arrange 
@@ -487,28 +462,6 @@ public class TableExtensionsTest : BaseTest
         Assert.Equal(hash1, hash3);
         Assert.Equal(hash1, hash4);
         Assert.NotEqual(hash1, hash5);
-    }
-
-    [Fact]
-    internal void GetStringCode_FeatType_StringCode()
-    {
-        // arrange 
-        var tableSeparator = (char)9999;
-        var metaList = GetSchema1();
-        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
-        Assert.NotNull(schema);
-        var table1 = schema.GetTable("feat_type");
-        Assert.NotNull(table1);
-        var expectedStringCode = $"{table1.Cached}{tableSeparator}{table1.Fields[0].GetStringCode()}{tableSeparator}{table1.Fields[1].GetStringCode()}{tableSeparator}";
-        expectedStringCode += $"{table1.Relations[0].GetStringCode()}{tableSeparator}{table1.Indexes[0].GetStringCode()}{tableSeparator}{table1.RecordSize}";
-        expectedStringCode += $"{tableSeparator}{(int)table1.Type}{tableSeparator}{table1.SchemaId}{tableSeparator}{(int)table1.PhysicalType}{tableSeparator}{table1.Subject}";
-        expectedStringCode += $"{tableSeparator}{table1.PhysicalDeletion}{tableSeparator}{table1.Readonly}{tableSeparator}{BaseEntityExtensions.GetStringCode(table1)}";
-
-        // act 
-        var stringCode = TableExtensions.GetStringCode(table1);
-
-        // assert
-        Assert.Equal(expectedStringCode, stringCode);
     }
 
     internal static Meta? FirstOrDefault(Meta[] metas, EntityType entityType)

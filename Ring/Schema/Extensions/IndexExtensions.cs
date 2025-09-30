@@ -37,30 +37,4 @@ internal static class IndexExtensions
 		return result;
 	}
 
-	internal static long GetHashCode(this Index index)
-	{
-		HashHelper.Djb2X(GetStringCode(index), out long hash);
-		return hash;
-	}
-
-	internal static string GetStringCode(this Index index)
-	{
-		// Code size: 95 (0x5f)
-		/*
-		* readonly bool Bitmap
-		* readonly string[] Columns
-		* readonly bool Unique
-		*/
-		return new StringBuilder()
-			.Append(index.Bitmap)
-			.Append(HashCodeSeparator)
-			.Append(index.ColumnList)
-			.Append(HashCodeSeparator)
-			.Append(index.Unique)
-			.Append(HashCodeSeparator)
-		/* + BaseEntity string code */
-			.Append(BaseEntityExtensions.GetStringCode(index))
-			.ToString();
-	}
-
 }

@@ -244,13 +244,16 @@ public sealed class RecordTest : BaseTest
         // arrange 
         var tableGender = _schema.GetTable("gender");
         Assert.NotNull(tableGender);
-        var rcd1 = new Record(tableGender, new string?[tableGender.RecordSize*3], tableGender.RecordSize); 
-        rcd1[1] = "45";
+        var bucket = new string?[tableGender.RecordSize * 3];
+        var rcd1 = new Record(tableGender, bucket, tableGender.RecordSize); 
+        rcd1[1] = "45"; // no tracker
         var rcd2 = new Record(tableGender);
-        rcd2.SetField("iso_code", 45);
+        var rcd3 = new Record(tableGender, bucket, 0);
+        rcd2.SetField("iso_code", 45); // with tracker
 
         // act 
         var result1 = rcd1.GetHashCode();
+        rcd3.SetField("status", 22); // just below offset
         var result2 = rcd2.GetHashCode();
 
         // assert
@@ -1477,7 +1480,9 @@ public sealed class RecordTest : BaseTest
         var bucket = GetBucket(table, 3, 20); // gender.name ==> lenght(20)
         var arr = bucket.ToArray();
         var rcd1 = new Record(table, arr, 0); // first record  ; offset = 0 
+        rcd1.ResetTracker();
         var rcd2 = new Record(table, arr, table.RecordSize); // second record  ; offset = 7 
+        rcd2.ResetTracker();
 
         // act 
         rcd1.SetField("name", rcd1.GetField("name"));
@@ -1626,10 +1631,10 @@ public sealed class RecordTest : BaseTest
     public void RecordType_SetValue_Armor()
     {
         // arrange 
-        var tableBook = _schema.GetTable("armor");
+        var tableArmor = _schema.GetTable("armor");
         Global.SetDefaultSchema(_schema);
         Global.LoadSchema(_schema);
-        Assert.NotNull(tableBook);
+        Assert.NotNull(tableArmor);
         var rcd = new Record();
 
         // act 

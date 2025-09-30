@@ -1,6 +1,5 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Models;
-using Ring.Util.Helpers;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -9,7 +8,6 @@ namespace Ring.Schema.Extensions;
 
 internal static class FieldExtensions
 {
-	private const char HashCodeSeparator = (char)3333;
 
 #pragma warning disable RCS1187 // Use constant instead of field
 	private static readonly string PrimaryKeyFieldName = "id";
@@ -97,28 +95,30 @@ internal static class FieldExtensions
 	internal static Field SetSize(this Field field, int size) // Code size: 67 (0x43)
 		=> new(field.Id, field.Name, field.Description, field.Type, size, field.DefaultValue, field.SearchableType, field.Baseline, field.NotNull, field.Multilingual, field.Active);
 
-	internal static long GetHashCode(this Field field)
+	internal static int Hash(this Field field)
 	{
-		HashHelper.Djb2X(GetStringCode(field), out long hash);
-		return hash;
+		// Code size: 98 (0x62)
+		var hash = field.GetHashCodeInstance();
+		hash.Add((int)field.Type);
+		hash.Add(field.Size);
+		hash.Add(field.DefaultValue, StringComparer.Ordinal);
+		hash.Add((int)field.SearchableType);
+		hash.Add(field.NotNull);
+		hash.Add(field.Multilingual);
+		return hash.ToHashCode();
 	}
 
-	// Code size: 148 (0x94) - checked 2025-07-18
-	internal static string GetStringCode(this Field field)
-		=> new StringBuilder()
-			.Append((int)field.SearchableType)
-			.Append(HashCodeSeparator)
-			.Append(field.DefaultValue)
-			.Append(HashCodeSeparator)
-			.Append(field.Multilingual)
-			.Append(HashCodeSeparator)
-			.Append(field.NotNull)
-			.Append(HashCodeSeparator)
-			.Append(field.Size)
-			.Append(HashCodeSeparator)
-			.Append((int)field.Type)
-			.Append(HashCodeSeparator)
-			.Append(BaseEntityExtensions.GetStringCode(field)) // + BaseEntity string code
-			.ToString();
-
+	/// <summary>
+	/// Determines if two Field instances have equivalent definitions,
+	/// regardless of whether they're the same object reference.
+	/// </summary>
+	internal static bool IsEquivalentTo(this Field field, Field? other)
+	{
+		// Code size: 110 (0x6e)
+		if (other is null) return false;
+		if (!field.BaseEntityEquals(other)) return false;
+		if (field.Type != other.Type || field.Size != other.Size || field.NotNull != other.NotNull || field.Multilingual != other.Multilingual
+			|| field.SearchableType != other.SearchableType || string.Equals(field.DefaultValue, other.DefaultValue, StringComparison.Ordinal) == false) return false;
+		return true;
+	}
 }

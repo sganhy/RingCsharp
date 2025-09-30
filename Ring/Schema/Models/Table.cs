@@ -2,7 +2,7 @@ using Ring.Schema.Enums;
 
 namespace Ring.Schema.Models;
 
-internal sealed class Table : BaseEntity
+internal sealed class Table : BaseEntity, IEquatable<Table>
 {
 	internal readonly int ObjectIndex;
 	internal readonly bool Cached;
@@ -45,6 +45,11 @@ internal sealed class Table : BaseEntity
 		ObjectIndex = objectIndex;
 		PhysicalDeletion = physicalDeletion;
 	}
+
+    public bool Equals(Table? other)
+    {
+        throw new NotImplementedException();
+    }
 
 #if DEBUG
 	public sealed override string ToString() => $"{Id} - {Name} ({ObjectIndex})";

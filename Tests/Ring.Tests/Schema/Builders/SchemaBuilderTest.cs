@@ -1,5 +1,4 @@
-﻿using Bogus;
-using Ring.Data;
+﻿using Ring.Data;
 using Ring.Schema.Builders;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
@@ -41,10 +40,13 @@ public sealed class SchemaBuilderTest
         Assert.Equal("test.\"@meta_id\"", metaId.PhysicalName);
         Assert.Equal(10, metaTable.Fields.Length);
         Assert.Equal(10, metaTable.Columns.Length);
+        Assert.Equal(11, metaTable.RecordSize);
         Assert.Equal(4, metaId.Fields.Length);
         Assert.Equal(4, metaId.Columns.Length);
+        Assert.Equal(5, metaId.RecordSize);
         Assert.Equal(11, metaLog.Fields.Length);
         Assert.Equal(11, metaLog.Columns.Length);
+        Assert.Equal(12, metaLog.RecordSize);
         // test max pool size
         Assert.Equal(maxPoolSize, metaSchema.Connections.Connections.Length);
     }

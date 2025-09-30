@@ -31,7 +31,6 @@ public struct Record : IEquatable<Record>
 	private static readonly Table DefaultType = GetDefaultType();
 	private static readonly string NullField = "^^"; // skip conversion into constant
 	private static readonly string NullString = "<Null>";
-	private static readonly uint NullHash = (uint)GetHash(NullField);
 	private static readonly string DefaultPrimaryKeyValue = "0";
 	private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
 	private static readonly string BooleanTrue = true.ToString(DefaultCulture);
@@ -233,10 +232,12 @@ public struct Record : IEquatable<Record>
 		value = result.ToDateTime(fieldType);
 	}
 
-	/// <summary>
-	/// 	Set field value
-	/// </summary>
-	public void SetField(string name, string? value)
+#pragma warning disable IDE0251 // Make member 'readonly'
+
+    /// <summary>
+    /// 	Set field value
+    /// </summary>
+    public void SetField(string name, string? value)
 	{
 		// Code size: 258 (0x102) - no virtual call
 		var data = new Span<string?>(_data);
@@ -269,7 +270,6 @@ public struct Record : IEquatable<Record>
 #pragma warning restore RCS1003
 	}
 
-#pragma warning disable IDE0251 // Make member 'readonly'
 	public void SetField(string name, long value) => SetField(_data, _type, _offset, name, value, FieldType.Long); // Code size: 27 (0x1b)
 	public void SetField(string name, int value) => SetField(_data, _type, _offset, name, value, FieldType.Int); // Code size: 27 (0x1b)
 	public void SetField(string name, short value) => SetField(_data, _type, _offset, name, value, FieldType.Short); // Code size: 27 (0x1b)
@@ -308,7 +308,7 @@ public struct Record : IEquatable<Record>
 	}
 	public void SetField(string name, double value) => SetField(name, value, FieldType.Double); // Code size: 11 (0xb)
 	public void SetField(string name, float value) => SetField(name, value, FieldType.Float); // Code size: 12 (0xc)
-#pragma warning restore IDE0251
+
 
 	public void SetField<T>(string name, T value) where T : IEnumerable<byte>
 	{
@@ -322,10 +322,13 @@ public struct Record : IEquatable<Record>
 		if (fieldType != FieldType.ByteArray) ThrowImpossibleConversion(FieldType.ByteArray, fieldType);
 		SetData(data, table, _offset, fieldId, Convert.ToBase64String(value.ToArray()));
 	}
-	public static bool operator ==(Record left, Record right) => left.Equals(right);
-	public static bool operator !=(Record left, Record right) => !left.Equals(right);
-	public readonly override bool Equals(object? obj) => obj is Record record && Equals(record);
-	public readonly bool Equals(Record other)
+
+#pragma warning restore IDE0251
+
+	public static bool operator ==(Record left, Record right) => left.Equals(right); // Code size: 9 (0x9)
+    public static bool operator !=(Record left, Record right) => !left.Equals(right); // Code size: 12 (0xc)
+    public readonly override bool Equals(object? obj) => obj is Record record && Equals(record); // Code size: 25 (0x19)
+    public readonly bool Equals(Record other)
 	{
 		// Code size: 87 (0x57) - no virtual call
 		var table = _type;
@@ -341,7 +344,20 @@ public struct Record : IEquatable<Record>
 		}
 		return true;
 	}
-	public readonly override int GetHashCode() => GetUnsafeHashCode();
+	public readonly override int GetHashCode()
+	{
+		// Code size: 122 (0x7a)
+		var table = _type;
+		var data = new ReadOnlySpan<string?>(_data, _offset, table.Columns.Length);
+		var hash = new HashCode();
+
+		hash.Add(table.PhysicalName); // pair of identification for a table if schema in different db
+		hash.Add(table.SchemaId);
+
+		// Process each field
+		foreach (var value in data) hash.Add(value?? NullField);
+		return hash.ToHashCode();
+	}
 	internal readonly bool EqualTo(SaveQuery obj) => ReferenceEquals(obj.Data, _data) && obj.Offset == _offset; // Code size: 31 (0x1f)
 	internal readonly bool IsFieldChanged(string name)
 	{
@@ -355,7 +371,7 @@ public struct Record : IEquatable<Record>
 		ThrowRecordUnknownFieldName(table, name);
 		return false;
 	}
-
+	internal void ResetTracker() => _data[_type.RecordSize - 1 + _offset] = null; // Code size: 29 (0x1d)
 	internal readonly bool IsFieldExist(string name) => _type.GetFieldIndex(name) != -1; // Code size: 19 (0x13)
 
 	internal readonly bool IsRelationChanged(string name)
@@ -414,50 +430,6 @@ public struct Record : IEquatable<Record>
 #pragma warning restore IDE0251 // Make member 'readonly'
    
 	#region private methods 
-
-	internal static int GetHash(string name)
-	{
-		HashHelper.Djb2A(name, out int hash);
-		return hash;
-	}
-
-	private readonly unsafe int GetUnsafeHashCode()
-	{
-        // Code size: 179 (0xb3) - memory allocation reduced!
-        var data = _data;
-		var table = _type;
-		var offset = _offset;
-		var columnCount = table.RecordSize - 1;
-		HashHelper.Djb2A(table.PhysicalName, out int initHash);
-		const uint PRIME1 = 2654435761u;
-		const uint PRIME2 = 2246822519u;
-		const uint PRIME3 = 3266489917u;
-		const uint PRIME5 = 374761393u;
-
-		uint h32 = (uint)initHash + PRIME5;
-
-		// Process each field
-		for (int i = 0; i < columnCount; i++)
-		{
-			uint fieldHash = NullHash; // pre-calculated hash for null values!
-			var value = data[i + offset];
-			if (value != null) {
-				var fieldValue = value;
-				fieldHash = (uint)fieldValue.GetHashCode();
-			}
-			h32 ^= fieldHash * PRIME2;
-			h32 = ((h32 << 13) | (h32 >> 19)) * PRIME1;
-		}
-
-		// Final avalanche
-		h32 ^= h32 >> 16;
-		h32 *= PRIME2;
-		h32 ^= h32 >> 13;
-		h32 *= PRIME3;
-		h32 ^= h32 >> 16;
-		return (int)h32;
-	}
-
 
 #pragma warning disable IDE0251 // Make member 'readonly'
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]

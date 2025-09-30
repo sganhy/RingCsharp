@@ -229,7 +229,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	internal static Field GetDefaultField(Meta meta, FieldType fieldType)
 		=> new(meta.Id, meta.Name, meta.Description, fieldType, 0, null, SearchableType.None, true, false, false, true);
 
-    internal static Meta Create(int id,in Meta meta)
+	internal static Meta Create(int id,in Meta meta)
 		=> new(id, meta.ObjectType, meta.ReferenceId, meta.DataType, meta.Flags, meta.Name, meta.Description, meta.Value, meta.Active);
 
 	internal EntityType GetEntityType() => ((int)ObjectType).ToEntityType();
@@ -312,7 +312,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	/// </summary>
 	internal Table? ToTable(ReadOnlySpan<Meta> tableItems, PhysicalType physicalType, IDdlBuilder ddlBuilder, string physicalName, int objectIndex)
 	{
-		// Code size: 268 (0x10c)
+		// Code size: 271 (0x10f)
 		if (IsTable)
 		{
 			var tableType = DataType.ToTableType();
@@ -320,14 +320,14 @@ internal readonly struct Meta : IEquatable<Meta>
 			var relations = GetRelationArray(tableItems);
 			var indexes = GetIndexes(tableItems);
 			var (colCount, physRelationCount) = GetColumnCount(fields, tableItems, ddlBuilder);
+			var recordSize = physRelationCount + fields.Length + 1;
 
 			// sort arrays (warn: relations not yet loaded here)
 			fields.AsSpan().Sort((x, y) => string.CompareOrdinal(x.Name, y.Name));
 			indexes.AsSpan().Sort((x, y) => string.CompareOrdinal(x.Name, y.Name));
 			
-			var table = new Table(Id, Name, Description, Value, physicalName,
-				tableType, relations, fields, new Column[colCount], indexes,
-				ReferenceId, physicalType, objectIndex, relations.Length + fields.Length + 1, IsEntityBaseline(), Active, IsTableCached(), IsPhysicalDeletion(), IsTableReadonly());
+			var table = new Table(Id, Name, Description, Value, physicalName, tableType, relations, fields, new Column[colCount], indexes,
+				ReferenceId, physicalType, objectIndex, recordSize, IsEntityBaseline(), Active, IsTableCached(), IsPhysicalDeletion(), IsTableReadonly());
 
 			// load relations later, we need full schema to create relations
 			// load columns
@@ -380,17 +380,18 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	public override int GetHashCode()
 	{
-		// Code size: 119 (0x77)
-		var result = Id.GetHashCode(); 
-		result += ObjectType.GetHashCode();
-		result += ReferenceId.GetHashCode();
-		result += DataType.GetHashCode();
-		result += ((int)Flags.GetHashCode() & int.MaxValue);
-		result += GetStringHash(Name);
-		result += GetStringHash(Description);
-		result += GetStringHash(Value);
-		result += GetStringHash(Active.ToString());
-		return result;	
+		// Code size: 133 (0x85)
+		var hashCode = new HashCode();
+		hashCode.Add(Id); //1
+		hashCode.Add(ObjectType);
+		hashCode.Add(ReferenceId);
+		hashCode.Add(DataType);
+		hashCode.Add(Flags); //5 
+		hashCode.Add(Name);
+		hashCode.Add(Description);
+		hashCode.Add(Value);
+		hashCode.Add(Active); //9
+		return hashCode.ToHashCode();	
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -412,15 +413,6 @@ internal readonly struct Meta : IEquatable<Meta>
 #endif
 
 	#region private methods 
-
-	private static int GetStringHash(string? value)
-	{
-		// Code size: 15 (0xf) - using DJB-2 algorithm for better hash distribution
-		if (value == null) return 0;
-		HashHelper.Djb2A(value, out int hash);
-		return hash;
-	}
-
 	private static int GetTableCount(ReadOnlySpan<Meta> schema)
 	{
 		// Code size: 51 (0x33)
