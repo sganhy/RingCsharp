@@ -27,6 +27,6 @@ internal static class BaseEntityExtensions
 			(baseEntity.Description?.Length ?? 0) +	 // Description (nullable)
 			baseEntity.Id.GetInt32Length() +		 // Id (worst case: -2147483648)
 			baseEntity.Name.Length +				 // Name (nullable)
-			4;										 // 4 separators	
+			5;										 // 4 separators + 1 char	
 
 }
