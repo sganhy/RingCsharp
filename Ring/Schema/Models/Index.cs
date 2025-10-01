@@ -1,9 +1,11 @@
-﻿namespace Ring.Schema.Models;
+﻿using Ring.Schema.Extensions;
+
+namespace Ring.Schema.Models;
 
 /// <summary>
 /// 	Logical index
 /// </summary>
-internal sealed class Index : BaseEntity
+internal sealed class Index : BaseEntity, IEquatable<Index>
 {
 	internal readonly bool Bitmap;
 	internal readonly Column[] Columns;
@@ -21,4 +23,10 @@ internal sealed class Index : BaseEntity
 		Bitmap = bitmap;
 		ColumnList = columnList;
 	}
+
+	public static bool operator ==(Index left, Index right) => left.Equals(right);
+	public static bool operator !=(Index left, Index right) => !left.Equals(right);
+	public override bool Equals(object? obj) => obj is Index index && Equals(index);
+	public bool Equals(Index? other) => this.IsEquivalentTo(other);
+	public override int GetHashCode() => this.Hash();
 }

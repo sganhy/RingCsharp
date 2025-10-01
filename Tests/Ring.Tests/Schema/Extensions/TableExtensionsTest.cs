@@ -450,11 +450,11 @@ public class TableExtensionsTest : BaseTest
         (table4.Columns[1], table4.Columns[0]) = (table4.Columns[0], table4.Columns[1]);
 
         // act 
-        var hash1 = TableExtensions.GetHashCode(table1);
-        var hash2 = TableExtensions.GetHashCode(table2);
-        var hash3 = TableExtensions.GetHashCode(table3);
-        var hash4 = TableExtensions.GetHashCode(table4);
-        var hash5 = TableExtensions.GetHashCode(table5);
+        var hash1 = TableExtensions.Hash(table1);
+        var hash2 = TableExtensions.Hash(table2);
+        var hash3 = TableExtensions.Hash(table3);
+        var hash4 = TableExtensions.Hash(table4);
+        var hash5 = TableExtensions.Hash(table5);
 
 
         // assert

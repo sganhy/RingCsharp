@@ -1,4 +1,7 @@
-﻿namespace Ring.Util.Extensions;
+﻿using Ring.Schema.Enums;
+using Ring.Schema.Extensions;
+
+namespace Ring.Util.Extensions;
 
 internal static class StringExtensions
 {
@@ -19,5 +22,8 @@ internal static class StringExtensions
 		}
 		return 0;
 	}
+
+    internal static FieldType ToFieldType(this string? value) => value != null && int.TryParse(value, out var intValue) ? intValue.ToFieldType() : FieldType.Undefined; // Code size: 23 (0x17)
+    internal static EntityType ToEntityType(this string? value) => value != null && int.TryParse(value, out var intValue) ? intValue.ToEntityType() : EntityType.Undefined; // Code size: 23 (0x17)
 
 }

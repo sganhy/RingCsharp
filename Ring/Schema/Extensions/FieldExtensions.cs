@@ -1,5 +1,6 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Models;
+using Ring.Util.Extensions;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -95,16 +96,11 @@ internal static class FieldExtensions
 	internal static Field SetSize(this Field field, int size) // Code size: 67 (0x43)
 		=> new(field.Id, field.Name, field.Description, field.Type, size, field.DefaultValue, field.SearchableType, field.Baseline, field.NotNull, field.Multilingual, field.Active);
 
-	internal static int Hash(this Field field)
+	internal static int Hash(this Field field) 
 	{
-		// Code size: 98 (0x62)
-		var hash = field.GetHashCodeInstance();
-		hash.Add((int)field.Type);
-		hash.Add(field.Size);
-		hash.Add(field.DefaultValue, StringComparer.Ordinal);
-		hash.Add((int)field.SearchableType);
-		hash.Add(field.NotNull);
-		hash.Add(field.Multilingual);
+        // // Code size: 24 (0x18)
+        var hash = new HashCode();
+		hash.AddField(field);
 		return hash.ToHashCode();
 	}
 
@@ -114,11 +110,10 @@ internal static class FieldExtensions
 	/// </summary>
 	internal static bool IsEquivalentTo(this Field field, Field? other)
 	{
-		// Code size: 110 (0x6e)
-		if (other is null) return false;
-		if (!field.BaseEntityEquals(other)) return false;
-		if (field.Type != other.Type || field.Size != other.Size || field.NotNull != other.NotNull || field.Multilingual != other.Multilingual
-			|| field.SearchableType != other.SearchableType || string.Equals(field.DefaultValue, other.DefaultValue, StringComparison.Ordinal) == false) return false;
-		return true;
+        // Code size: 102 (0x66)
+        if (!field.BaseEntityEquals(other)) return false;
+		// other cannot be null here 
+		return field.Type == other!.Type && field.Size == other.Size && field.NotNull == other.NotNull && field.Multilingual == other.Multilingual
+            && field.SearchableType == other.SearchableType && string.Equals(field.DefaultValue, other.DefaultValue, StringComparison.Ordinal);
 	}
 }

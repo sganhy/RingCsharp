@@ -252,8 +252,8 @@ public class RelationExtensionsTest : BaseTest
         var relation2 = Meta.GetDefaultRelation(meta2, RelationType.Mtm, TableType.Fake);
 
         // act 
-        var hash1 = RelationExtensions.GetHashCode(relation1);
-        var hash2 = RelationExtensions.GetHashCode(relation2);
+        var hash1 = RelationExtensions.Hash(relation1);
+        var hash2 = RelationExtensions.Hash(relation2);
 
         // assert
         Assert.Equal(hash1, hash2);
@@ -276,11 +276,11 @@ public class RelationExtensionsTest : BaseTest
         LogAssert($"relation3 = {relation3.Name} - {relation3.Type}");
 
         // act 
-        var hash1 = RelationExtensions.GetHashCode(relation1);
+        var hash1 = RelationExtensions.Hash(relation1);
         LogAssert($"hash1 = {hash1}");
-        var hash2 = RelationExtensions.GetHashCode(relation2);
+        var hash2 = RelationExtensions.Hash(relation2);
         LogAssert($"hash2 = {hash2}");
-        var hash3 = RelationExtensions.GetHashCode(relation3);
+        var hash3 = RelationExtensions.Hash(relation3);
         LogAssert($"hash3 = {hash3}");
 
         // assert

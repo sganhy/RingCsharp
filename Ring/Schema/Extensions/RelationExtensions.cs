@@ -1,6 +1,5 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Models;
-using Ring.Util.Helpers;
 using System.Globalization;
 using System.Text;
 
@@ -10,7 +9,6 @@ internal static class RelationExtensions
 {
 	private const char MtmSeparator = '_';
 	private const char PaddingChar = '0';
-	private const char HashCodeSeparator = (char)2222;
 
 	internal static Meta ToMeta(this Relation relation, int fromTableId, RelationType? newRelationType=null)
 	{
@@ -65,5 +63,17 @@ internal static class RelationExtensions
 	internal static Relation SetTypeAndId(this Relation relation, RelationType relationType, int id, bool notNull) => // Code size: 56 (0x38)
 		new (id, relation.Name, relation.Description, relationType, relation.ToTable, relation.FieldType, notNull, relation.HasConstraint, relation.Baseline, relation.Active);
 
+    internal static int Hash(this Relation relation)
+    {
+        return -1;
+    }
+
+    internal static bool IsEquivalentTo(this Relation relation, Relation? other)
+    {
+        // Code size: 105 (0x69)
+        if (!relation.BaseEntityEquals(other)) return false;
+        // other cannot be null here 
+        return relation.HasConstraint == other!.HasConstraint && relation.NotNull == other.NotNull && relation.ToTable.SchemaId == other.ToTable.SchemaId;
+    }
 
 }

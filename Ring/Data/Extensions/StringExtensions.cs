@@ -4,6 +4,8 @@ using Ring.Util.Helpers;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 
+
+// TODO move to Ring.Util
 namespace Ring.Data.Extensions;
 
 internal static class StringExtensions

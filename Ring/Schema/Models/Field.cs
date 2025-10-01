@@ -19,8 +19,7 @@ internal sealed class Field : BaseEntity, IEquatable<Field>
 	/// 	Ctor
 	/// </summary>
 	internal Field(int id, string name, string? description, FieldType type, int size, string? defaultValue,
-		SearchableType searchableType, bool baseline, bool notNull, bool multilingual, bool active)
-		: base(id, name, description, baseline, active)
+		SearchableType searchableType, bool baseline, bool notNull, bool multilingual, bool active)	: base(id, name, description, baseline, active)
 	{
 		Type = type;
 		Size = size;
@@ -30,11 +29,11 @@ internal sealed class Field : BaseEntity, IEquatable<Field>
 		Multilingual = multilingual;
 	}
 
-    public static bool operator ==(Field left, Field right) => left.Equals(right);
-    public static bool operator !=(Field left, Field right) => !left.Equals(right);
-    public override bool Equals(object? obj) => obj is Field field && Equals(field);
+	public static bool operator ==(Field left, Field right) => left.Equals(right);
+	public static bool operator !=(Field left, Field right) => !left.Equals(right);
+	public override bool Equals(object? obj) => obj is Field field && Equals(field);
 	public bool Equals(Field? other) => this.IsEquivalentTo(other);
-    public override int GetHashCode() => this.Hash();
+	public override int GetHashCode() => this.Hash();
 
 #if DEBUG
 	public override string ToString() => $"{Id} - {Name} ({Type})";

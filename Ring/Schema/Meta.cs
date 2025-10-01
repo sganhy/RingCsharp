@@ -789,8 +789,8 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	private static void LoadMtm(DbSchema schema, int mtmCount)
 	{
-		// Code size: 371 (0x173)
-		var ddlBuilder = schema.Provider.GetDdlBuilder();
+        // Code size: 364 (0x16c) - removed boxing
+        var ddlBuilder = schema.Provider.GetDdlBuilder();
 		var tableBuilder = new TableBuilder();
 		var span = new Span<Table>(schema.TablesById);
 		var mtm = new Dictionary<string, Table>(mtmCount * 2); // store mtm physical name
@@ -801,15 +801,13 @@ internal readonly struct Meta : IEquatable<Meta>
 				if (table.Relations[j].Type == RelationType.Mtm)
 				{
 					// step 1 - generate physical name
-					
 					var relation = table.Relations[j];
 					var metaTable = new Meta(0, (byte)EntityType.Relation, 0, (int)TableType.Mtm, 0L, relation.GetMtmName(), null, null, true);
 					var emptyTable = GetDefaultTable(metaTable);
 					var physicalName = ddlBuilder.GetPhysicalName(emptyTable, schema);
 					var inverseRelation = relation.InverseRelation;
 
-					Table mtmTable;
-					if (!mtm.ContainsKey(physicalName))
+					if (!mtm.TryGetValue(physicalName, out var mtmTable))
 					{
 						mtmTable = tableBuilder.GetMtm(emptyTable, ddlBuilder, physicalName, mtm.Count,
 							string.CompareOrdinal(relation.Name, inverseRelation.Name) < 0 ? relation.SetTypeAndId(RelationType.Mto,1, true) 
@@ -818,10 +816,9 @@ internal readonly struct Meta : IEquatable<Meta>
 							: relation.SetTypeAndId(RelationType.Mto, 2, true));
 						mtm.Add(physicalName, mtmTable);
 					}
-					else mtmTable = mtm[physicalName];
 
-					// step 2 - create two new relations
-					table.Relations[j] = CreateMtmRelation(relation, mtmTable, ddlBuilder);
+                    // step 2 - create two new relations -- mtmTable cannot be null here
+                    table.Relations[j] = CreateMtmRelation(relation, mtmTable, ddlBuilder);
 					table.Relations[j].SetInverseRelation(inverseRelation);
 				}
 			}

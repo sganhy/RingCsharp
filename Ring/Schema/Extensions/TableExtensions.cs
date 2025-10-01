@@ -1,5 +1,6 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Models;
+using System;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Index = Ring.Schema.Models.Index;
@@ -309,13 +310,17 @@ internal static class TableExtensions
 		return result.ToArray();
 	}
 
+    internal static int Hash(this Table table)
+    {
+        return -1;
+    }
 
-	#region private methods 
+    #region private methods 
 
-	/// <summary>
-	/// 	Get first unique index
-	/// </summary>
-	private static Index? GetFirstUniqueIndex(this Table table)
+    /// <summary>
+    /// 	Get first unique index
+    /// </summary>
+    private static Index? GetFirstUniqueIndex(this Table table)
 	{
 		// Code size: 52 (0x34)
 		var span = new ReadOnlySpan<Index>(table.Indexes);

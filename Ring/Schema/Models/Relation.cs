@@ -1,11 +1,12 @@
 ﻿using Ring.Schema.Enums;
+using Ring.Schema.Extensions;
 
 namespace Ring.Schema.Models;
 
 /// <summary>
 /// 	Logical relation
 /// </summary>
-internal sealed class Relation : BaseEntity
+internal sealed class Relation : BaseEntity, IEquatable<Relation>
 {
 	internal Relation InverseRelation { get; private set; } // assigned after initialization
 	internal readonly bool HasConstraint;
@@ -33,4 +34,9 @@ internal sealed class Relation : BaseEntity
 	/// </summary>
 	internal void SetInverseRelation(Relation relation) => InverseRelation = ReferenceEquals(InverseRelation,this) ? relation : InverseRelation;
 
+	public static bool operator ==(Relation left, Relation right) => left.Equals(right);
+	public static bool operator !=(Relation left, Relation right) => !left.Equals(right);
+	public override bool Equals(object? obj) => obj is Relation relation && Equals(relation);
+	public bool Equals(Relation? other) => this.IsEquivalentTo(other);
+	public override int GetHashCode() => this.Hash();
 }

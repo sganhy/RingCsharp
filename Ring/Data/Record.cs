@@ -37,9 +37,9 @@ public struct Record : IEquatable<Record>
 	private static readonly string BooleanFalse = false.ToString(DefaultCulture);
 #pragma warning restore RCS1187
 
-	// should be instantiated when record type is defined
-	// _data.Length should be > _type.Fields.Length - total: ~24 bytes + heap allocations for array of string?
-	private string?[] _data;
+    // should be instantiated when record type is defined - "Flyweight" Pattern
+    // _data.Length should be > _type.Fields.Length - total: ~24 bytes + heap allocations for array of string?
+    private string?[] _data;
 	private Table _type;
 	private int _offset; // cannot be readonly anymore! : Allows multiple records to share the same underlying array
 
@@ -103,10 +103,10 @@ public struct Record : IEquatable<Record>
 		{
 			// Code size: 67 (0x43)
 			var table = _type;
-			if (table == null) return null;
+			if (table is null) return null;
 			var schema = Global.GetSchema(table.SchemaId);
 			var tableName = table.Name;
-			if (schema == null) ThrowRecordUnknownRecordType();
+			if (schema is null) ThrowRecordUnknownRecordType();
 			if (Global.IsSchemaDefault(schema)) return tableName;
 			return schema.Name + SchemaSeparator + tableName;
 		}
@@ -119,7 +119,7 @@ public struct Record : IEquatable<Record>
 				var tableName = separatorIndex > 0 ? value[(separatorIndex+1)..] : value;
 				var schemaName = separatorIndex > 0 ? value[..separatorIndex] : null;
 				var table = Global.GetTable(schemaName, tableName);
-				if (table == null) ThrowRecordUnknownRecordType();
+				if (table is null) ThrowRecordUnknownRecordType();
 				if (ReferenceEquals(table, _type)) ClearData(); // Is RecordType changed? 
 				else
 				{
@@ -228,7 +228,7 @@ public struct Record : IEquatable<Record>
 		if (fieldType != FieldType.DateTime && fieldType != FieldType.LongDateTime && fieldType != FieldType.ShortDateTime)
 			ThrowImpossibleConversion(fieldType, FieldType.DateTime);
 		var result = data[fieldId + _offset] ?? field.DefaultValue;
-		if (result == null) return;
+		if (result is null) return;
 		value = result.ToDateTime(fieldType);
 	}
 
@@ -351,7 +351,7 @@ public struct Record : IEquatable<Record>
 		var data = new ReadOnlySpan<string?>(_data, _offset, table.Columns.Length);
 		var hash = new HashCode();
 
-		hash.Add(table.PhysicalName); // pair of identification for a table if schema in different db
+		hash.Add(table.Id); // pair of identification for a table
 		hash.Add(table.SchemaId);
 
 		// Process each field
@@ -382,9 +382,9 @@ public struct Record : IEquatable<Record>
 		if (table.Id == -1) ThrowRecordUnknownRecordType();
 		var relation = table.GetRelation(name);
 		var trackerIndex = _offset + table.RecordSize - 1;
-		if (relation == null) ThrowRecordUnknownRelationName(name);
+		if (relation is null) ThrowRecordUnknownRelationName(name);
 		var column = table.GetColumn(relation.Id, EntityType.Relation);
-		if (column == null) ThrowRecordWrongRelationType(name);
+		if (column is null) ThrowRecordWrongRelationType(name);
 		var index = column.RecordIndex;
 		if (index >= 0) return data[trackerIndex] != null && IsColumnChanged(data, index, trackerIndex);
 		return false;
@@ -400,31 +400,29 @@ public struct Record : IEquatable<Record>
 	internal readonly long? GetRelation(string name)
 	{
 		// Code size: 99 (0x63) - no virtual call
-		var data = _data;
 		var table = _type;
 		if (table.Id == -1) ThrowRecordUnknownRecordType();
 		var relation = table.GetRelation(name);
-		if (relation == null) ThrowRecordUnknownRelationName(name);
+		if (relation is null) ThrowRecordUnknownRelationName(name);
 		var column = table.GetColumn(relation.Id, EntityType.Relation);
-		if (column == null) ThrowRecordWrongRelationType(name);
+		if (column is null) ThrowRecordWrongRelationType(name);
 		var index = _offset + column.RecordIndex;
-		return long.Parse(data[index]!, CultureInfo.InvariantCulture);
+		return long.Parse(_data[index]!, CultureInfo.InvariantCulture);
 	}
 
 
 #pragma warning disable IDE0251 // Make member 'readonly'
 	internal void SetRelation(string name, long? value)
 	{
-		// Code size: 140 (0x8c) - no virtual call
-		var data = _data;
-		var table = _type;
+        // Code size: 142 (0x8e) - no virtual call
+        var table = _type;
 		if (table.Id == -1) ThrowRecordUnknownRecordType();
 		var relation = table.GetRelation(name);
-		if (relation == null) ThrowRecordUnknownRelationName(name);
+		if (relation is null) ThrowRecordUnknownRelationName(name);
 		var column = table.GetColumn(relation.Id, EntityType.Relation);
-		if (column == null) ThrowRecordUnknownRelationName(name);
+		if (column is null) ThrowRecordUnknownRelationName(name);
 		var index = column.RecordIndex;
-		if (index >= 0) SetData(data, table, _offset, column.RecordIndex, value?.ToString(DefaultCulture));
+		if (index >= 0) SetData(_data, table, _offset, column.RecordIndex, value?.ToString(DefaultCulture));
 		else ThrowRecordWrongRelationType(name);
 	}
 #pragma warning restore IDE0251 // Make member 'readonly'
@@ -563,7 +561,7 @@ public struct Record : IEquatable<Record>
 
 	private static void MandatoryField(Table table, int fieldId)
 	{
-		if (table.Fields[fieldId].DefaultValue == null) {
+		if (table.Fields[fieldId].DefaultValue is null) {
 			// throw exception mandatory field 
 			ThrowMandatoryFieldCannotBeNull(table, table.Fields[fieldId].Name);
 		}
@@ -579,8 +577,8 @@ public struct Record : IEquatable<Record>
 		var trackerIndex = table.RecordSize - 1 + offset;
 		if (data.Length < fieldIndex) fieldIndex = fieldId; // another thread changed RecordType avoiding crash; here offset is reset to 0
 		if (data[fieldIndex] == value) return; // detect no change
-		if (value == null && table.Fields[fieldId].NotNull) MandatoryField(table, fieldId); // manage mandatory fields !!
-		if (data[trackerIndex] == null) InitializeTracking(data, table, trackerIndex);
+		if (value is null && table.Fields[fieldId].NotNull) MandatoryField(table, fieldId); // manage mandatory fields !!
+		if (data[trackerIndex] is null) InitializeTracking(data, table, trackerIndex);
 		data[trackerIndex]!.SetBitValue(fieldId); // cannot be null here !!
 		data[fieldIndex] = value;
 	}

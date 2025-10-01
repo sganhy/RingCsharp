@@ -1,5 +1,4 @@
-﻿using Bogus;
-using Ring.Schema.Enums;
+﻿using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using System.Linq.Expressions;
@@ -83,8 +82,8 @@ public class FieldExtensionsTest : BaseTest
         var field2 = new Field(id, name, description, fieldType, size, defaultValue, SearchableType.IgnoreCaseAndDiacritics, false, false, false, true);
 
         // act 
-        var hash1 = FieldExtensions.GetHashCode(field1);
-        var hash2 = FieldExtensions.GetHashCode(field2);
+        var hash1 = FieldExtensions.Hash(field1);
+        var hash2 = FieldExtensions.Hash(field2);
 
         // assert
         Assert.Equal(hash1, hash2);
@@ -103,16 +102,19 @@ public class FieldExtensionsTest : BaseTest
         var field1 = new Field(id, name, description, fieldType, size, defaultValue, SearchableType.IgnoreCase, false, false, false, true);
         var field2 = new Field(id, name, description, fieldType, size, defaultValue, SearchableType.IgnoreCase, false, false, true, true);
         var field3 = new Field(id, name, description, fieldType, size, defaultValue, SearchableType.IgnoreCaseAndDiacritics, false, false, false, true);
+        var field4 = new Field(id*-1, name, description, fieldType, size, defaultValue, SearchableType.IgnoreCase, false, false, false, true);
 
         // act 
-        var hash1 = FieldExtensions.GetHashCode(field1);
-        var hash2 = FieldExtensions.GetHashCode(field2);
-        var hash3 = FieldExtensions.GetHashCode(field3);
+        var hash1 = FieldExtensions.Hash(field1);
+        var hash2 = FieldExtensions.Hash(field2);
+        var hash3 = FieldExtensions.Hash(field3);
+        var hash4 = field4.GetHashCode();
 
         // assert
         Assert.NotEqual(hash1, hash2);
         Assert.NotEqual(hash1, hash3);
         Assert.NotEqual(hash2, hash3);
+        Assert.NotEqual(hash1, hash4);
     }
 
     [Theory]
@@ -143,5 +145,59 @@ public class FieldExtensionsTest : BaseTest
         // assert
         Assert.Equal(expectedValue, result);
     }
+
+    [Fact]
+    internal void IsEquivalentTo_AnonymousFields_False()
+    {
+        // arrange 
+        var id = _faker.Random.Number(int.MinValue, int.MaxValue);
+        var name = _faker.Random.String();
+        var description = _faker.Random.String();
+        var fieldType = _faker.PickRandom<FieldType>();
+        var defaultValue = _faker.Random.Bool() ? null : _faker.Random.String();
+        var size = _faker.Random.Number(int.MinValue, int.MaxValue);
+        var field1 = new Field(id, name, description, fieldType, size, defaultValue, SearchableType.IgnoreCase, false, false, false, true);
+        var field2 = new Field(id, name, description, fieldType, size, defaultValue, SearchableType.IgnoreCase, false, false, true, true);
+        var field3 = new Field(id, name, description, fieldType, size, defaultValue, SearchableType.IgnoreCaseAndDiacritics, false, false, false, true);
+        var field4 = new Field(id * -1, name, description, fieldType, size, defaultValue, SearchableType.IgnoreCase, false, false, false, true);
+
+        // act 
+        var result1 = field1 == field2;
+        var result2 = FieldExtensions.IsEquivalentTo(field1, field2);
+        var result3 = field2 == field3;
+        var result4 = field1.Equals((object)field4);
+        var result5 = FieldExtensions.IsEquivalentTo(field1, null);
+        var result6 = field4.Equals(null);
+
+        // assert
+        Assert.False(result1);
+        Assert.False(result2);
+        Assert.False(result3);
+        Assert.False(result4);
+        Assert.False(result5);
+        Assert.False(result6);
+    }
+
+    [Fact]
+    internal void IsEquivalentTo_AnonymousField_True()
+    {
+        // arrange 
+        var id = _faker.Random.Number(int.MinValue, int.MaxValue);
+        var name = _faker.Random.String();
+        var description = _faker.Random.String();
+        var fieldType = _faker.PickRandom<FieldType>();
+        var defaultValue = _faker.Random.Bool() ? null : _faker.Random.String();
+        var size = _faker.Random.Number(int.MinValue, int.MaxValue);
+        var field1 = new Field(id, name, description, fieldType, size, defaultValue, SearchableType.IgnoreCase, false, false, false, true);
+        var field2 = new Field(id, name, description, fieldType, size, defaultValue, SearchableType.IgnoreCase, false, false, false, true);
+
+        // act 
+        var result = field1 != field2;
+        
+
+        // assert
+        Assert.False(result);
+    }
+
 
 }

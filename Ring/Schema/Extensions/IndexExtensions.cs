@@ -1,7 +1,6 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Models;
-using Ring.Util.Helpers;
-using System.Text;
+using Ring.Util.Extensions;
 using Index = Ring.Schema.Models.Index;
 
 namespace Ring.Schema.Extensions;
@@ -11,7 +10,6 @@ namespace Ring.Schema.Extensions;
 /// </summary>
 internal static class IndexExtensions
 {
-	private const char HashCodeSeparator = (char)1111;
 
 	internal static Meta ToMeta(this Index index, int tableId)
 	{
@@ -27,8 +25,8 @@ internal static class IndexExtensions
 
 	internal static bool IsPrimaryKey(this Index index, Table table)
 	{
-        // Code size: 51 (0x33)
-        var result = false;
+		// Code size: 51 (0x33)
+		var result = false;
 		if (index.Unique)
 		{
 			var pk = table.GetPrimaryKey().ToArray();
@@ -36,5 +34,25 @@ internal static class IndexExtensions
 		}
 		return result;
 	}
+
+	internal static int Hash(this Index index)
+	{
+        // // Code size: 24 (0x18)
+        var hash = new HashCode();
+        hash.AddIndex(index);
+        return hash.ToHashCode();
+	}
+
+    /// <summary>
+    /// Determines if two Field instances have equivalent definitions,
+    /// regardless of whether they're the same object reference.
+    /// </summary>
+    internal static bool IsEquivalentTo(this Index index, Index? other)
+    {
+        // Code size: 105 (0x69)
+        if (!index.BaseEntityEquals(other)) return false;
+        // other cannot be null here 
+        return index.Unique == other!.Unique && index.Bitmap == other.Bitmap && string.Equals(index.ColumnList, other.ColumnList, StringComparison.Ordinal);
+    }
 
 }

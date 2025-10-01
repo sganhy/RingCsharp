@@ -1,5 +1,4 @@
-﻿using Bogus;
-using Ring.Schema;
+﻿using Ring.Schema;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
@@ -78,8 +77,8 @@ public sealed class IndexExtensionsTest : BaseTest
         var index2 = new Index(id, name, description, columns.ToArray(), index1.ColumnList, true, false, true, false);
 
         // act 
-        var hash1 = IndexExtensions.GetHashCode(index1);
-        var hash2 = IndexExtensions.GetHashCode(index2);
+        var hash1 = IndexExtensions.Hash(index1);
+        var hash2 = index2.GetHashCode();
 
         // assert
         Assert.Equal(hash1, hash2);
@@ -105,14 +104,50 @@ public sealed class IndexExtensionsTest : BaseTest
         var index3 = new Index(id, name, description, columns.ToArray(), columnList1, true, false, true, true);
 
         // act 
-        var hash1 = IndexExtensions.GetHashCode(index1);
-        var hash2 = IndexExtensions.GetHashCode(index2);
-        var hash3 = IndexExtensions.GetHashCode(index3);
+        var hash1 = IndexExtensions.Hash(index1);
+        var hash2 = IndexExtensions.Hash(index2);
+        var hash3 = IndexExtensions.Hash(index3);
 
         // assert
         Assert.NotEqual(hash1, hash2);
         Assert.NotEqual(hash1, hash3);
         Assert.NotEqual(hash2, hash3);
     }
+
+    [Fact]
+    internal void Equals_2AnonymousIndexes_False()
+    {
+        // arrange 
+        var id = _faker.Random.Number(int.MinValue, int.MaxValue);
+        var name = _faker.Random.String();
+        var description = _faker.Random.String();
+        var columnList1 = _faker.Random.String(8);
+        var columnList2 = _faker.Random.String(9);
+        var colCount1 = 5;
+        var colCount2 = 7;
+        var columns = new List<Column>(colCount1);
+        for (var i = 0; i < colCount1; ++i) columns.Add(GetAnonymousColumn());
+        var columns2 = new List<Column>(colCount2);
+        for (var i = 0; i < colCount2; ++i) columns2.Add(GetAnonymousColumn());
+        var index1 = new Index(id, name, description, columns.ToArray(), columnList1, true, false, true, false);
+        var index2 = new Index(id, name, description, columns2.ToArray(), columnList2, true, false, true, false);
+        var index3 = new Index(id, name, description, columns.ToArray(), columnList1, true, false, true, true);
+        var index4 = new Index(id, name, description, columns2.ToArray(), columnList2, true, false, true, false);
+
+        // act 
+        var result1 = index1 == index2;
+        var result2 = index1.Equals(index3);
+        var result3 = index2.Equals((object)index3);
+        var result4 = index2 != index4;
+
+        // assert
+        Assert.False(result1);
+        Assert.False(result2);
+        Assert.False(result3);
+        Assert.False(result4);
+    }
+
+
+
 
 }
