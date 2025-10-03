@@ -8,14 +8,14 @@ namespace Ring.Schema.Models;
 /// </summary>
 internal sealed class Field : BaseEntity, IEquatable<Field>
 {
-    // 60 bytes with padding
-    internal readonly string? DefaultValue;
-    internal readonly int Size;
+	// 60 bytes with padding
+	internal readonly string? DefaultValue;
+	internal readonly int Size;
 	internal readonly FieldType Type;
 	internal readonly SearchableType SearchableType;
 	internal readonly bool Multilingual;
 	internal readonly bool NotNull;
-	internal readonly bool AllowTruncation;
+	internal readonly bool AllowTruncation; // Truncate data on insert, update if it exceeds size.
 
 	/// <summary>
 	/// 	Ctor

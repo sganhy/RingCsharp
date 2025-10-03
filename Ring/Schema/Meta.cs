@@ -183,16 +183,16 @@ internal readonly struct Meta : IEquatable<Meta>
 	internal static long SetTableReadonly(long flags, bool value) => WriteFlag(flags, MetaFlag.TableReadonly, value); // Code size: 14 (0xe)
 	internal static long SetTableCached(long flags, bool value) => WriteFlag(flags, MetaFlag.TableCached, value); // Code size: 14 (0xe)
 	internal static long SetPhysicalDeletion(long flags, bool value) => WriteFlag(flags, MetaFlag.TableSoftDelete, !value); // Code size: 17 (0x11)
-	internal static long SetPreparedStatement(long flags, bool value) => WriteFlag(flags, MetaFlag.TablePreparedStatment, !value); // Code size: 17 (0x11)
+	internal static long SetPreparedStatement(long flags, bool value) => WriteFlag(flags, MetaFlag.TablePreparedStatement, value); // Code size: 17 (0x11)
 	internal bool IsTableReadonly() => (Flags & (long)MetaFlag.TableReadonly) != 0; // Code size: 18 (0x12)
 	internal bool IsTableCached() => (Flags & (long)MetaFlag.TableCached) != 0; // Code size: 18 (0x12)
 	internal bool IsPhysicalDeletion() => (Flags & (long)MetaFlag.TableSoftDelete) == 0; // Code size: 18 (0x12) (by default physical deletion)
-	internal bool HasPreparedStatement() => (Flags & (long)MetaFlag.TablePreparedStatment) == 0; // Code size: 18 (0x12) (by default physical deletion)
+	internal bool HasPreparedStatement() => (Flags & (long)MetaFlag.TablePreparedStatement) != 0; // Code size: 15 (0xf) (by default no prepared statement)
 
-	#endregion
+    #endregion
 
-	#region parameter methods
-	internal FieldType GetParameterValueType() => (DataType & 127).ToFieldType(); // Code size: 15 (0xf)
+    #region parameter methods
+    internal FieldType GetParameterValueType() => (DataType & 127).ToFieldType(); // Code size: 15 (0xf)
 	internal ParameterType GetParameterType() => Id.ToParameterType(); // Code size: 12 (0xc)
 	internal string GetParameterValue() => Value ?? string.Empty;
 	internal static int SetParameterValueType(int dataType, FieldType valueType) => (dataType & 0xFFF8) + ((byte)valueType) & 127;
@@ -214,7 +214,7 @@ internal readonly struct Meta : IEquatable<Meta>
 		=> new(meta.Id, meta.Name, meta.Description, meta.Value, string.Empty,
 			meta.DataType.ToTableType(), Array.Empty<Relation>(), Array.Empty<Field>(), Array.Empty<Column>(),
 			Array.Empty<Index>(), meta.ReferenceId, PhysicalType.Table, -1, 0, meta.IsEntityBaseline(), meta.Active,
-			meta.IsTableCached(), true, meta.IsTableReadonly(), meta.HasRelationConstraint());
+			meta.IsTableCached(), true, meta.IsTableReadonly(), meta.HasPreparedStatement());
 
 	internal static Index GetDefaultIndex(Meta meta) // Code size: 64 (0x40)
 		=> new(meta.Id, meta.Name, meta.Description, meta.GetIndexedColumns(), meta.Value ?? string.Empty, meta.IsIndexUnique(), 
@@ -248,7 +248,7 @@ internal readonly struct Meta : IEquatable<Meta>
 		return null;
 	}
 	
-	internal Field? ToField() // Code size: 82 (0x52)
+	internal Field? ToField() // Code size: 88 (0x58)
 		=> IsField ? new Field(Id, Name, Description, GetFieldType(), 
 			GetFieldSize(), GetFieldDefaultValue(), GetSearchableType(), IsEntityBaseline(), IsFieldNotNull(), IsFieldMultilingual(), IsFieldAllowTruncation(), Active) : null;
 
@@ -311,7 +311,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	/// </summary>
 	internal Table? ToTable(ReadOnlySpan<Meta> tableItems, PhysicalType physicalType, IDdlBuilder ddlBuilder, string physicalName, int objectIndex)
 	{
-		// Code size: 271 (0x10f)
+		// Code size: 277 (0x115)
 		if (IsTable)
 		{
 			var tableType = DataType.ToTableType();
