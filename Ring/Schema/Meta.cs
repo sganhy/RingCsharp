@@ -93,7 +93,9 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal bool IsFieldMultilingual() => (Flags & (long)MetaFlag.FieldMultilingual)!=0; // Code size: 14 (0xe)
-	internal bool IsFieldAllowTruncation() => (Flags & (long)MetaFlag.FieldAllowTruncation) != 0; // Code size: 14 (0xe)
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal bool IsFieldAllowTruncation() => (Flags & (long)MetaFlag.FieldAllowTruncation) != 0; // Code size: 18 (0x12)
 	internal int GetFieldSize() => (int)((Flags >> (BitPositionFirstPositionSize-1)) & (int.MaxValue)); // Code size: 18 (0x12)
 	internal SearchableType GetSearchableType() => ((int)((Flags >> (BitPositionFieldSearchableType-1)) & 0x3F)).ToSearchableType(); // Code size: 19 (0x13)
 
@@ -181,15 +183,11 @@ internal readonly struct Meta : IEquatable<Meta>
 	internal static long SetTableReadonly(long flags, bool value) => WriteFlag(flags, MetaFlag.TableReadonly, value); // Code size: 14 (0xe)
 	internal static long SetTableCached(long flags, bool value) => WriteFlag(flags, MetaFlag.TableCached, value); // Code size: 14 (0xe)
 	internal static long SetPhysicalDeletion(long flags, bool value) => WriteFlag(flags, MetaFlag.TableSoftDelete, !value); // Code size: 17 (0x11)
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal static long SetPreparedStatement(long flags, bool value) => WriteFlag(flags, MetaFlag.TablePreparedStatment, !value); // Code size: 17 (0x11)
 	internal bool IsTableReadonly() => (Flags & (long)MetaFlag.TableReadonly) != 0; // Code size: 18 (0x12)
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal bool IsTableCached() => (Flags & (long)MetaFlag.TableCached) != 0; // Code size: 18 (0x12)
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal bool IsPhysicalDeletion() => (Flags & (long)MetaFlag.TableSoftDelete) == 0; // Code size: 18 (0x12) (by default physical deletion)
+	internal bool HasPreparedStatement() => (Flags & (long)MetaFlag.TablePreparedStatment) == 0; // Code size: 18 (0x12) (by default physical deletion)
 
 	#endregion
 
@@ -216,7 +214,7 @@ internal readonly struct Meta : IEquatable<Meta>
 		=> new(meta.Id, meta.Name, meta.Description, meta.Value, string.Empty,
 			meta.DataType.ToTableType(), Array.Empty<Relation>(), Array.Empty<Field>(), Array.Empty<Column>(),
 			Array.Empty<Index>(), meta.ReferenceId, PhysicalType.Table, -1, 0, meta.IsEntityBaseline(), meta.Active,
-			meta.IsTableCached(), true, meta.IsTableReadonly());
+			meta.IsTableCached(), true, meta.IsTableReadonly(), meta.HasRelationConstraint());
 
 	internal static Index GetDefaultIndex(Meta meta) // Code size: 64 (0x40)
 		=> new(meta.Id, meta.Name, meta.Description, meta.GetIndexedColumns(), meta.Value ?? string.Empty, meta.IsIndexUnique(), 
@@ -328,7 +326,7 @@ internal readonly struct Meta : IEquatable<Meta>
 			indexes.AsSpan().Sort((x, y) => string.CompareOrdinal(x.Name, y.Name));
 			
 			var table = new Table(Id, Name, Description, Value, physicalName, tableType, relations, fields, new Column[colCount], indexes,
-				ReferenceId, physicalType, objectIndex, recordSize, IsEntityBaseline(), Active, IsTableCached(), IsPhysicalDeletion(), IsTableReadonly());
+				ReferenceId, physicalType, objectIndex, recordSize, IsEntityBaseline(), Active, IsTableCached(), IsPhysicalDeletion(), IsTableReadonly(), HasPreparedStatement());
 
 			// load relations later, we need full schema to create relations
 			// load columns

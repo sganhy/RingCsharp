@@ -7,27 +7,28 @@ internal sealed class Table : BaseEntity, IEquatable<Table>
 {
 	internal readonly int ObjectIndex;
 	internal readonly bool Cached;
-	internal readonly Field[] Fields;              // sorted by name.
-	internal readonly Relation[] Relations;        // sorted by name.
+	internal readonly Field[] Fields; // sorted by name.
+	internal readonly Relation[] Relations; // sorted by name.
 	internal readonly Index[] Indexes;
 	internal readonly int RecordSize;
-	internal readonly Column[] Columns;            // mix Fields and Relations.
+	internal readonly Column[] Columns;			// mix Fields and Relations.
 	internal readonly PhysicalType PhysicalType;
 	internal readonly int SchemaId;
 	internal readonly string? Subject;
 	internal readonly TableType Type;
 	internal readonly CacheId CacheId;
 	internal readonly string PhysicalName;
-	internal readonly bool PhysicalDeletion;
+	internal readonly bool AllowHardDeletion;
 	internal readonly bool Readonly;
+	internal readonly bool UsePreparedStatement;
 
 	/// <summary>
 	/// 	Ctor
 	/// </summary>
 	internal Table(int id, string name, string? description, string? subject, string physicalName, TableType type,
-		Relation[] relations, Field[] fields, Column[] columns, Index[] indexes, int schemaId,
-		PhysicalType physicalType, int objectIndex, int recordSize, bool baseline, bool active, bool cached, bool physicalDeletion, bool readonlyTable) 
-		: base(id, name, description, baseline, active)
+		Relation[] relations, Field[] fields, Column[] columns, Index[] indexes, int schemaId, PhysicalType physicalType, 
+		int objectIndex, int recordSize, bool baseline, bool active, bool cached, bool allowHardDeletion, bool readonlyTable, 
+		bool usePreparedStatement) : base(id, name, description, baseline, active)
 	{
 		Type = type;
 		Fields = fields;
@@ -39,12 +40,12 @@ internal sealed class Table : BaseEntity, IEquatable<Table>
 		Subject = subject;
 		CacheId = new CacheId();
 		SchemaId = schemaId;
-		ObjectIndex = 0;
 		PhysicalType = physicalType;
 		Cached = cached;
 		PhysicalName = physicalName;
 		ObjectIndex = objectIndex;
-		PhysicalDeletion = physicalDeletion;
+		AllowHardDeletion = allowHardDeletion;
+		UsePreparedStatement = usePreparedStatement;
 	}
 
 	public static bool operator ==(Table left, Table right) => left.Equals(right);
