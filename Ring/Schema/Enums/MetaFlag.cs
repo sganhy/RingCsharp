@@ -10,12 +10,13 @@ internal enum MetaFlag : long
 	FieldMultilingual = 1L << 3,     // bit 4
 	RelationNotNull = 1L << 3,       // bit 4
 	RelationConstraint = 1L << 4,    // bit 5
-	TableSoftDelete = 1L << 7,       // bit 8
-	IndexBitmap = 1L << 8,           // bit 9
+    TableSoftDelete = 1L << 7,       // bit 8
+    IndexBitmap = 1L << 8,           // bit 9
 	TableCached = 1L << 8,           // bit 9
 	IndexUnique = 1L << 9,           // bit 10
 	TableReadonly = 1L << 9,         // bit 10
-	TablespaceIndex = 1L << 10,      // bit 11
+    FieldAllowTruncation = 1L << 10, // bit 11
+    TablespaceIndex = 1L << 10,      // bit 11
 	TablespaceTable = 1L << 11,      // bit 12
 	EntityBaseline = 1L << 13,       // bit 14
 

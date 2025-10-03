@@ -1,5 +1,6 @@
 using Ring.Schema.Enums;
 using Ring.Schema.Models;
+using Ring.Util.Extensions;
 using System.Data;
 using System.Runtime.CompilerServices;
 

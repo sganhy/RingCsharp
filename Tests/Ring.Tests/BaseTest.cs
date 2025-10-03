@@ -54,7 +54,7 @@ public abstract class BaseTest
         var result = table.ToTable(items, PhysicalType.Table, builder, builder.GetPhysicalName(EntityType.Table, table.Name), 0);
 
         // load relations 
-        if (result != null && numberOfRelation>0)
+        if (result is not null && numberOfRelation>0)
         {
             // we need a table with at least one field (pk)
             var tableTarget = GetAnonymousTable(builder, 1, 0);
@@ -71,7 +71,7 @@ public abstract class BaseTest
         new(id == null ? _faker.Random.Number(int.MinValue, int.MaxValue): id.Value, _faker.Random.String(null, minChar, maxChar),
             _faker.Random.String(), _faker.PickRandom<FieldType>(), _faker.Random.Number(int.MinValue, int.MaxValue),
             _faker.Random.String(), _faker.PickRandom<SearchableType>(), _faker.Random.Bool(), _faker.Random.Bool(),
-            _faker.Random.Bool(), _faker.Random.Bool());
+            _faker.Random.Bool(), _faker.Random.Bool(), _faker.Random.Bool());
 
     internal Column GetAnonymousColumn() =>
         new(_faker.PickRandom<EntityType>(), _faker.PickRandom<FieldType>(), _faker.Random.String(), _faker.PickRandom<SearchableType>(), 

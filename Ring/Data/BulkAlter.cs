@@ -35,7 +35,7 @@ internal struct BulkAlter : IEquatable<BulkAlter>
 	{
 		// Code size: 118 (0x76)
 		var table = _schema.GetTable(tableName);
-		if (table == null) ThrowInvalidObjectType(tableName);
+		if (table is null) ThrowInvalidObjectType(tableName);
 		AppendDdlCommand(AlterQueryType.CreateTable, table);
 		// create constraints 
 		foreach(var constraint in _schema.DdlBuiler.GetConstraints(table)) AppendDdlCommand(AlterQueryType.CreateTable, constraint);
@@ -47,10 +47,10 @@ internal struct BulkAlter : IEquatable<BulkAlter>
 	{
 		// Code size: 51 (0x33)
 		var table = _schema.GetTable(tableName);
-		if (table==null) ThrowInvalidObjectType(tableName);
+		if (table is null) ThrowInvalidObjectType(tableName);
 		// TODO throw exception if null 
 		var index = table.GetIndex(indexName);
-		if (index==null) ThrowInvalidIndexName(tableName, indexName);
+		if (index is null) ThrowInvalidIndexName(tableName, indexName);
 		AppendDdlCommand(AlterQueryType.CreateIndex, table, index);
 	}
 
@@ -60,7 +60,7 @@ internal struct BulkAlter : IEquatable<BulkAlter>
 		// columnName: logical column name
 		// Code size: 51 (0x33)
 		var table = _schema.GetTable(tableName);
-		if (table == null) ThrowInvalidObjectType(tableName);
+		if (table is null) ThrowInvalidObjectType(tableName);
 		var column = table.GetColumn(columnName);
 		if (column == null) ThrowInvalidFieldName(tableName, columnName);
 		AppendDdlCommand(AlterQueryType.AlterTableAddColumn, table, column);

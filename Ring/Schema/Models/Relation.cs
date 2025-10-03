@@ -33,7 +33,6 @@ internal sealed class Relation : BaseEntity, IEquatable<Relation>
 	/// 	Assign only once the property 
 	/// </summary>
 	internal void SetInverseRelation(Relation relation) => InverseRelation = ReferenceEquals(InverseRelation,this) ? relation : InverseRelation;
-
 	public static bool operator ==(Relation left, Relation right) => left.Equals(right);
 	public static bool operator !=(Relation left, Relation right) => !left.Equals(right);
 	public override bool Equals(object? obj) => obj is Relation relation && Equals(relation);

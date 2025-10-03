@@ -33,7 +33,7 @@ public class BaseBuilderTest
         var table = metaTable.ToTable(new ArraySegment<Meta>(result), PhysicalType.Table, builder, _faker.Random.String(), 0); // load Columns
 
         // add relations 
-        if (table != null)
+        if (table is not null)
         {
             for (var i = 0; i < numberOfRelation; ++i) table.Relations[i] = relations[i];
 
@@ -52,7 +52,7 @@ public class BaseBuilderTest
     internal Field GetAnonymousField(FieldType fieldType, int size, int? id = null, string? name = null) =>
         new (id ?? _faker.Random.Number(int.MinValue,int.MaxValue), name ?? _faker.Random.String(),
             _faker.Random.String(), fieldType, size, _faker.Random.Bool()?  null : _faker.Random.String(), _faker.PickRandom<SearchableType>(), _faker.Random.Bool(), 
-            _faker.Random.Bool(), _faker.Random.Bool(), _faker.Random.Bool());
+            _faker.Random.Bool(), _faker.Random.Bool(), _faker.Random.Bool(), _faker.Random.Bool());
 
     internal Relation GetAnonymousRelation(RelationType relationType, int id, string? name = null, bool notNull = true)
     {

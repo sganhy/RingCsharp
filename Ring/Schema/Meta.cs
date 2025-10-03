@@ -93,6 +93,7 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal bool IsFieldMultilingual() => (Flags & (long)MetaFlag.FieldMultilingual)!=0; // Code size: 14 (0xe)
+	internal bool IsFieldAllowTruncation() => (Flags & (long)MetaFlag.FieldAllowTruncation) != 0; // Code size: 14 (0xe)
 	internal int GetFieldSize() => (int)((Flags >> (BitPositionFirstPositionSize-1)) & (int.MaxValue)); // Code size: 18 (0x12)
 	internal SearchableType GetSearchableType() => ((int)((Flags >> (BitPositionFieldSearchableType-1)) & 0x3F)).ToSearchableType(); // Code size: 19 (0x13)
 
@@ -168,7 +169,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	internal bool IsIndexUnique() => (Flags & (long)MetaFlag.IndexUnique) != 0; // Code size: 18 (0x12)
 
 	// index values
-	internal Column[] GetIndexedColumns() => Value != null ? new Column[Value.CharCount(IndexColumnDelimiter)+1] : Array.Empty<Column>();
+	internal Column[] GetIndexedColumns() => Value is not null ? new Column[Value.CharCount(IndexColumnDelimiter)+1] : Array.Empty<Column>();
 	internal static string GetColumnList(string[] columns) => string.Join(IndexColumnDelimiter, columns);
 	
 	// index flags 
@@ -227,7 +228,7 @@ internal readonly struct Meta : IEquatable<Meta>
 			meta.Name,null, null, false)), FieldType.Undefined, false, false, true, true);
 
 	internal static Field GetDefaultField(Meta meta, FieldType fieldType)
-		=> new(meta.Id, meta.Name, meta.Description, fieldType, 0, null, SearchableType.None, true, false, false, true);
+		=> new(meta.Id, meta.Name, meta.Description, fieldType, 0, null, SearchableType.None, true, false, false, true, true);
 
 	internal static Meta Create(int id,in Meta meta)
 		=> new(id, meta.ObjectType, meta.ReferenceId, meta.DataType, meta.Flags, meta.Name, meta.Description, meta.Value, meta.Active);
@@ -251,7 +252,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	
 	internal Field? ToField() // Code size: 82 (0x52)
 		=> IsField ? new Field(Id, Name, Description, GetFieldType(), 
-			GetFieldSize(), GetFieldDefaultValue(), GetSearchableType(), IsEntityBaseline(), IsFieldNotNull(), IsFieldMultilingual(), Active) : null;
+			GetFieldSize(), GetFieldDefaultValue(), GetSearchableType(), IsEntityBaseline(), IsFieldNotNull(), IsFieldMultilingual(), IsFieldAllowTruncation(), Active) : null;
 
 	/// <summary>
 	///		The static method orchestrates the complex process of building a complete database schema object.
@@ -461,7 +462,7 @@ internal readonly struct Meta : IEquatable<Meta>
 			if (meta.IsTableSpace)
 			{
 				var tablespace = meta.ToTableSpace(ddlBuilder.GetPhysicalName(EntityType.Tablespace, meta.Name));
-				if (tablespace!=null) result.Add(tablespace);
+				if (tablespace is not null) result.Add(tablespace);
 			}
 		}
 		return result.ToArray();
@@ -476,7 +477,7 @@ internal readonly struct Meta : IEquatable<Meta>
 			if (meta.IsParameter)
 			{
 				var parameter = meta.ToParameter();
-				if (parameter!=null) result.Add(parameter);
+				if (parameter is not null) result.Add(parameter);
 			}
 		}
 
@@ -726,7 +727,7 @@ internal readonly struct Meta : IEquatable<Meta>
 				if (fieldIndex >= 0) index.Columns[j] = table.GetColumn(logicalName) ?? defaultCol;
 				else 
 				{
-					if (relDico != null && relDico.ContainsKey(logicalName))
+					if (relDico is not null && relDico.ContainsKey(logicalName))
 						index.Columns[j] = table.GetColumn(relDico[logicalName], EntityType.Relation) ?? defaultCol;
 				}
 
@@ -752,7 +753,7 @@ internal readonly struct Meta : IEquatable<Meta>
 			{
 				var fromTable = schema.GetTable(meta.ReferenceId); // get table by id
 				var toTable = schema.GetTable(meta.DataType);
-				if (toTable != null && fromTable != null)
+				if (toTable is not null && fromTable is not null)
 				{
 					var relation = meta.ToRelation(toTable);
 					fromTable.Relations[relationDicoIndex[fromTable.Id]] = relation ?? GetDefaultRelation(meta,RelationType.Undefined,TableType.Undefined);
@@ -777,11 +778,11 @@ internal readonly struct Meta : IEquatable<Meta>
 			if (meta.IsRelation)
 			{
 				var fromTable = schema.GetTable(meta.ReferenceId); // get table by id
-				if (fromTable != null)
+				if (fromTable is not null)
 				{
 					var relation = fromTable.GetRelation(meta.Name);
 					var invRelation = relation?.ToTable.GetRelation(meta.Value ?? string.Empty);
-					if (relation != null && invRelation != null) relation.SetInverseRelation(invRelation);
+					if (relation is not null && invRelation is not null) relation.SetInverseRelation(invRelation);
 				}
 			}
 		}
@@ -789,8 +790,8 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	private static void LoadMtm(DbSchema schema, int mtmCount)
 	{
-        // Code size: 364 (0x16c) - removed boxing
-        var ddlBuilder = schema.Provider.GetDdlBuilder();
+		// Code size: 364 (0x16c) - removed boxing
+		var ddlBuilder = schema.Provider.GetDdlBuilder();
 		var tableBuilder = new TableBuilder();
 		var span = new Span<Table>(schema.TablesById);
 		var mtm = new Dictionary<string, Table>(mtmCount * 2); // store mtm physical name
@@ -817,8 +818,8 @@ internal readonly struct Meta : IEquatable<Meta>
 						mtm.Add(physicalName, mtmTable);
 					}
 
-                    // step 2 - create two new relations -- mtmTable cannot be null here
-                    table.Relations[j] = CreateMtmRelation(relation, mtmTable, ddlBuilder);
+					// step 2 - create two new relations -- mtmTable cannot be null here
+					table.Relations[j] = CreateMtmRelation(relation, mtmTable, ddlBuilder);
 					table.Relations[j].SetInverseRelation(inverseRelation);
 				}
 			}

@@ -1,8 +1,6 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Models;
-using System;
 using System.Runtime.CompilerServices;
-using System.Text;
 using Index = Ring.Schema.Models.Index;
 
 namespace Ring.Schema.Extensions;
@@ -10,7 +8,6 @@ namespace Ring.Schema.Extensions;
 internal static class TableExtensions
 {
 	// Rider check 2025-07-23
-	private const char HashCodeSeparator = (char)9999;
 	private static readonly List<Column> EmptyColumnList = new(0);
 
 	/// <summary>
@@ -57,9 +54,9 @@ internal static class TableExtensions
 	/// </summary>
 	internal static Field? GetField(this Table table, int id)
 	{
-        // Code size: 28 (0x1c)
-        var column = GetColumn(table, id, EntityType.Field);
-		if (column != null) return table.Fields[column.RecordIndex];
+		// Code size: 28 (0x1c)
+		var column = GetColumn(table, id, EntityType.Field);
+		if (column is not null) return table.Fields[column.RecordIndex];
 		return null;
 	}
 
@@ -177,7 +174,7 @@ internal static class TableExtensions
 		var field = table.GetField(name);
 		var type = EntityType.Undefined;
 		var id=-1;
-		if (field != null)
+		if (field is not null)
 		{
 			id = field.Id;
 			type = field.SearchableType == SearchableType.None ? EntityType.Field : EntityType.SearchableColumn;
@@ -185,7 +182,7 @@ internal static class TableExtensions
 		else 
 		{ 
 			var relation = table.GetRelation(name);
-			if (relation != null)
+			if (relation is not null)
 			{
 				id = relation.Id;
 				type = EntityType.Relation;
@@ -281,7 +278,7 @@ internal static class TableExtensions
 		else
 		{
 			var index = table.GetFirstUniqueIndex();
-			if (index != null) return new List<Column>(index.Columns);
+			if (index is not null) return new List<Column>(index.Columns);
 		}
 		return EmptyColumnList;
 	}
@@ -310,17 +307,29 @@ internal static class TableExtensions
 		return result.ToArray();
 	}
 
-    internal static int Hash(this Table table)
-    {
-        return -1;
-    }
+	internal static int Hash(this Table table)
+	{
+		return -1;
+	}
 
-    #region private methods 
+	/// <summary>
+	/// Determines if two Table instances have equivalent definitions,
+	/// regardless of whether they're the same object reference.
+	/// </summary>
+	internal static bool IsEquivalentTo(this Table table, Table? other)
+	{
+		// Code size: 102 (0x66)
+		if (!table.BaseEntityEquals(other)) return false;
+		// other cannot be null here 
+		return true;
+	}
 
-    /// <summary>
-    /// 	Get first unique index
-    /// </summary>
-    private static Index? GetFirstUniqueIndex(this Table table)
+	#region private methods 
+
+	/// <summary>
+	/// 	Get first unique index
+	/// </summary>
+	private static Index? GetFirstUniqueIndex(this Table table)
 	{
 		// Code size: 52 (0x34)
 		var span = new ReadOnlySpan<Index>(table.Indexes);

@@ -1,7 +1,7 @@
 ﻿using Ring.Schema.Enums;
 using System.Runtime.CompilerServices;
 
-namespace Ring.Schema.Extensions;
+namespace Ring.Util.Extensions;
 
 internal static class IntExtensions
 {

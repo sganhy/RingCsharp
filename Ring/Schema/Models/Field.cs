@@ -8,18 +8,20 @@ namespace Ring.Schema.Models;
 /// </summary>
 internal sealed class Field : BaseEntity, IEquatable<Field>
 {
+    // 60 bytes with padding
+    internal readonly string? DefaultValue;
+    internal readonly int Size;
+	internal readonly FieldType Type;
 	internal readonly SearchableType SearchableType;
-	internal readonly string? DefaultValue;
 	internal readonly bool Multilingual;
 	internal readonly bool NotNull;
-	internal readonly int Size;
-	internal readonly FieldType Type;
+	internal readonly bool AllowTruncation;
 
 	/// <summary>
 	/// 	Ctor
 	/// </summary>
-	internal Field(int id, string name, string? description, FieldType type, int size, string? defaultValue,
-		SearchableType searchableType, bool baseline, bool notNull, bool multilingual, bool active)	: base(id, name, description, baseline, active)
+	internal Field(int id, string name, string? description, FieldType type, int size, string? defaultValue, SearchableType searchableType,
+		bool baseline, bool notNull, bool multilingual, bool allowTruncation, bool active) : base(id, name, description, baseline, active)
 	{
 		Type = type;
 		Size = size;
@@ -27,6 +29,7 @@ internal sealed class Field : BaseEntity, IEquatable<Field>
 		NotNull = notNull;
 		SearchableType = searchableType;
 		Multilingual = multilingual;
+		AllowTruncation = allowTruncation;
 	}
 
 	public static bool operator ==(Field left, Field right) => left.Equals(right);

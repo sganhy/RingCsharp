@@ -2,9 +2,10 @@
 
 internal abstract class BaseEntity
 {
-	internal readonly int Id;
+	// Total: 38 bytes + padding => With 8-byte alignment: 40 bytes 
 	internal readonly string Name;
 	internal readonly string? Description;
+	internal readonly int Id;
 	internal readonly bool Baseline;
 	internal readonly bool Active;
 

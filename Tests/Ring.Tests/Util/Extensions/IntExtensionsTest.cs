@@ -1,9 +1,9 @@
 using Ring.Schema.Enums;
-using Ring.Schema.Extensions;
+using Ring.Util.Extensions;
 using System.Linq.Expressions;
 using Xunit.Abstractions;
 
-namespace Ring.Tests.Schema.Extensions;
+namespace Ring.Tests.Util.Extensions;
 
 public sealed class IntExtensionsTest : BaseTest
 {

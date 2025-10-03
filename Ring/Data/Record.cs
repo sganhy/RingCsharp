@@ -113,7 +113,7 @@ public struct Record : IEquatable<Record>
 		set 
 		{
 			// Code size: 152 (0x98)
-			if (value != null)
+			if (value is not null)
 			{
 				var separatorIndex = value.IndexOf(SchemaSeparator);
 				var tableName = separatorIndex > 0 ? value[(separatorIndex+1)..] : value;
@@ -188,7 +188,7 @@ public struct Record : IEquatable<Record>
 		var fieldType = field.Type;
 		if (fieldType != FieldType.ByteArray) ThrowImpossibleConversion(fieldType, FieldType.ByteArray);
 		var result = data[fieldId + _offset] ?? field.DefaultValue;
-		if (result != null) value = Convert.FromBase64String(result);
+		if (result is not  null) value = Convert.FromBase64String(result);
 	}
 
 	public readonly void GetField(string name, out long? value)
@@ -208,7 +208,7 @@ public struct Record : IEquatable<Record>
 			ThrowImpossibleConversion(fieldType, FieldType.Long);
 #pragma warning restore RCS1001
 		var result = data[fieldId + _offset] ?? field.DefaultValue;
-		if (result != null) value = long.Parse(result, DefaultCulture);
+		if (result is not null) value = long.Parse(result, DefaultCulture);
 	}
 
 	/// <summary>
@@ -249,7 +249,7 @@ public struct Record : IEquatable<Record>
 		var field = table.Fields[fieldId];
 		var fieldType = field.Type;
 #pragma warning disable RCS1003 // Add braces to if-else (when expression spans over multiple lines)
-		if (value != null)
+		if (value is not null)
 			switch (fieldType)
 			{
 				case FieldType.String: SetStringField(data, table, offset, field.Size, fieldId, value); break;
@@ -367,7 +367,7 @@ public struct Record : IEquatable<Record>
 		if (table.Id == -1) ThrowRecordUnknownRecordType();
 		var index = table.GetFieldIndex(name);
 		var trackerIndex = _offset + table.RecordSize - 1;
-		if (index != -1) return _data[trackerIndex] != null && IsColumnChanged(data, index, trackerIndex);
+		if (index != -1) return _data[trackerIndex] is not null && IsColumnChanged(data, index, trackerIndex);
 		ThrowRecordUnknownFieldName(table, name);
 		return false;
 	}
@@ -386,7 +386,7 @@ public struct Record : IEquatable<Record>
 		var column = table.GetColumn(relation.Id, EntityType.Relation);
 		if (column is null) ThrowRecordWrongRelationType(name);
 		var index = column.RecordIndex;
-		if (index >= 0) return data[trackerIndex] != null && IsColumnChanged(data, index, trackerIndex);
+		if (index >= 0) return data[trackerIndex] is not null && IsColumnChanged(data, index, trackerIndex);
 		return false;
 	}
 

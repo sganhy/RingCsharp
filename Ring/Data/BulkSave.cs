@@ -34,7 +34,7 @@ public readonly struct BulkSave : IBulkSave
 	/// <param name="recordToCancel">The record you want to remove from the BulkSave object</param>
 	public void CancelRecord(Record? recordToCancel)
 	{
-		if (recordToCancel != null)
+		if (recordToCancel is not null)
 		{
 			var count = _info.Queries.Count;
 			for (var i=0; i<count; ++i)
@@ -52,7 +52,7 @@ public readonly struct BulkSave : IBulkSave
 	public int CountByType(string? objectType)
 	{
 		var result = 0;
-		if (objectType!=null)
+		if (objectType is null)
 		{
 			var count = _info.Queries.Count;
 			for (var i = 0; i < count; ++i)
@@ -75,7 +75,7 @@ public readonly struct BulkSave : IBulkSave
 	public void DeleteRecord(Record record)
 	{
 		// cannot use DeleteRecordById() coz of @meta objects
-		if (record.Table == null) return;
+		if (record.Table is null) return;
 		if (record.IsNew && record.Table.Type == TableType.Business) return;
 		_info.Queries.Add(new SaveQuery(record.Table, SaveQueryType.DeleteRecord, _info.Schema.DmlBuiler, record.Data, record.Offset));
 	}
@@ -116,7 +116,7 @@ public readonly struct BulkSave : IBulkSave
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public void InsertRecord(Record record)
 	{
-		if (record.Table == null) ThrowRecordUnknownRecordType();
+		if (record.Table is null) ThrowRecordUnknownRecordType();
 		if (record.Table.Readonly) return; // throw exception here ??
 		if (record.Table.Type == TableType.Business) ++_info.IdCount;
 		if (record.IsNew) _info.Queries.Add(new SaveQuery(record.Table, SaveQueryType.InsertRecord, _info.Schema.DmlBuiler, record.Data, record.Offset));
@@ -125,7 +125,7 @@ public readonly struct BulkSave : IBulkSave
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public void UpdateRecord(Record record)
 	{
-		if (record.Table == null) ThrowRecordUnknownRecordType();
+		if (record.Table is null) ThrowRecordUnknownRecordType();
 		if (record.Table.Readonly) return; // throw exception here !!
 		if (!record.IsNew) _info.Queries.Add(new SaveQuery(record.Table, SaveQueryType.UpdateRecord, _info.Schema.DmlBuiler, record.Data, record.Offset));
 	}

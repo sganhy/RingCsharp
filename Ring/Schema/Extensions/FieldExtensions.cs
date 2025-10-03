@@ -14,10 +14,10 @@ internal static class FieldExtensions
 	private static readonly string PrimaryKeyFieldName = "id";
 	private static readonly string PrimaryKeyDescription = "Internal record number";
 	private static readonly string NumberDefaultValue = "0";
-	private static readonly Field DefaultPrimaryKeyInt64 =	new(0, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Long, 0, NumberDefaultValue, SearchableType.None, true, true, false, true);
-	private static readonly Field DefaultPrimaryKeyInt32 =	new(0, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Int, 0, NumberDefaultValue, SearchableType.None, true, true, false, true);
-	private static readonly Field DefaultPrimaryKeyInt16 =	new(0, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Short, 0, NumberDefaultValue, SearchableType.None, true, true, false, true);
-	private static readonly Field DefaultPrimaryKeyInt08 =	new(0, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Byte, 0, NumberDefaultValue, SearchableType.None, true, true, false, true);
+	private static readonly Field DefaultPrimaryKeyInt64 =	new(0, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Long, 0, NumberDefaultValue, SearchableType.None, true, true, false, false, true);
+	private static readonly Field DefaultPrimaryKeyInt32 =	new(0, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Int, 0, NumberDefaultValue, SearchableType.None, true, true, false, false, true);
+	private static readonly Field DefaultPrimaryKeyInt16 =	new(0, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Short, 0, NumberDefaultValue, SearchableType.None, true, true, false, false, true);
+	private static readonly Field DefaultPrimaryKeyInt08 =	new(0, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Byte, 0, NumberDefaultValue, SearchableType.None, true, true, false, false, true);
 #pragma warning restore RCS1187
 
 	internal static bool IsValid(this Field field) => IsPrimaryKey(field) || field.Id > 0; 
@@ -42,7 +42,7 @@ internal static class FieldExtensions
 	internal static string? GetSearchableValue(this Field? _, SearchableType searchableType, string? value)
 	{
 		// Code size: 117 (0x75)
-		if (value == null) return null;
+		if (value is null) return null;
 		switch (searchableType)
 		{
 			case SearchableType.IgnoreCase:	return value.ToUpperInvariant();
@@ -88,13 +88,13 @@ internal static class FieldExtensions
 	}
 
 	internal static Field SetType(this Field field, FieldType fieldType) // Code size: 67 (0x43)
-		=> new(field.Id, field.Name, field.Description, fieldType, field.Size, field.DefaultValue, field.SearchableType, field.Baseline, field.NotNull, field.Multilingual, field.Active);
+		=> new(field.Id, field.Name, field.Description, fieldType, field.Size, field.DefaultValue, field.SearchableType, field.Baseline, field.NotNull, field.Multilingual, field.AllowTruncation, field.Active);
 
 	internal static Field SetNotNull(this Field field, bool notNull) // Code size: 67 (0x43)
-		=> new(field.Id, field.Name, field.Description, field.Type, field.Size, field.DefaultValue, field.SearchableType, field.Baseline, notNull, field.Multilingual, field.Active);
+		=> new(field.Id, field.Name, field.Description, field.Type, field.Size, field.DefaultValue, field.SearchableType, field.Baseline, notNull, field.Multilingual, field.AllowTruncation, field.Active);
 
 	internal static Field SetSize(this Field field, int size) // Code size: 67 (0x43)
-		=> new(field.Id, field.Name, field.Description, field.Type, size, field.DefaultValue, field.SearchableType, field.Baseline, field.NotNull, field.Multilingual, field.Active);
+		=> new(field.Id, field.Name, field.Description, field.Type, size, field.DefaultValue, field.SearchableType, field.Baseline, field.NotNull, field.Multilingual, field.AllowTruncation, field.Active);
 
 	internal static int Hash(this Field field) 
 	{

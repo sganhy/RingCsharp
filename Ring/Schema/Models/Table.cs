@@ -1,4 +1,5 @@
 using Ring.Schema.Enums;
+using Ring.Schema.Extensions;
 
 namespace Ring.Schema.Models;
 
@@ -46,10 +47,11 @@ internal sealed class Table : BaseEntity, IEquatable<Table>
 		PhysicalDeletion = physicalDeletion;
 	}
 
-    public bool Equals(Table? other)
-    {
-        throw new NotImplementedException();
-    }
+	public static bool operator ==(Table left, Table right) => left.Equals(right);
+	public static bool operator !=(Table left, Table right) => !left.Equals(right);
+	public override bool Equals(object? obj) => obj is Table table && Equals(table);
+	public bool Equals(Table? other) => this.IsEquivalentTo(other);
+	public override int GetHashCode() => this.Hash();
 
 #if DEBUG
 	public sealed override string ToString() => $"{Id} - {Name} ({ObjectIndex})";

@@ -343,13 +343,13 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	{
 		int? size = null;
 		var notNull = string.Empty;
-		if (field!=null)
+		if (field is not null)
 		{
 			size = field.Size;
 			if ((field.IsPrimaryKey() || table.Type != TableType.Business) && field.NotNull)
 				notNull = SqlSpace + DdlNotNull;
 		}
-		if (relation != null)
+		if (relation is not null)
 		{
 			if (table.Type != TableType.Business && relation.NotNull) 
 				notNull = SqlSpace + DdlNotNull;
