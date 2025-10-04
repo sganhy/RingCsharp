@@ -21,14 +21,15 @@ internal sealed class Table : BaseEntity, IEquatable<Table>
 	internal readonly bool AllowHardDeletion;
 	internal readonly bool Readonly;
 	internal readonly bool UsePreparedStatement;
+	internal readonly bool AllowAttributeExtension;
 
 	/// <summary>
 	/// 	Ctor
 	/// </summary>
-	internal Table(int id, string name, string? description, string? subject, string physicalName, TableType type,
-		Relation[] relations, Field[] fields, Column[] columns, Index[] indexes, int schemaId, PhysicalType physicalType, 
-		int objectIndex, int recordSize, bool baseline, bool active, bool cached, bool allowHardDeletion, bool readonlyTable, 
-		bool usePreparedStatement) : base(id, name, description, baseline, active)
+	internal Table(int id, string name, string? description, string? subject, string physicalName, TableType type, Relation[] relations,
+		Field[] fields, Column[] columns, Index[] indexes, int schemaId, PhysicalType physicalType, int objectIndex, int recordSize, bool baseline,
+		bool active, bool cached, bool allowHardDeletion, bool readonlyTable, bool usePreparedStatement, bool allowAttributeExtension) 
+		: base(id, name, description, baseline, active)
 	{
 		Type = type;
 		Fields = fields;
@@ -46,6 +47,7 @@ internal sealed class Table : BaseEntity, IEquatable<Table>
 		ObjectIndex = objectIndex;
 		AllowHardDeletion = allowHardDeletion;
 		UsePreparedStatement = usePreparedStatement;
+		AllowAttributeExtension = allowAttributeExtension;
 	}
 
 	public static bool operator ==(Table left, Table right) => left.Equals(right);

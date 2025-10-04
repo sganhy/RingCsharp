@@ -19,6 +19,7 @@ internal enum MetaFlag : long
 	FieldAllowTruncation = 1L << 10,  // bit 11
 	TablespaceIndex = 1L << 10,       // bit 11
 	TablespaceTable = 1L << 11,       // bit 12
+	TableAllowEAV = 1L << 12,         // bit 13
 	EntityBaseline = 1L << 13,        // bit 14
 
 #pragma warning restore CA1069
