@@ -1,5 +1,6 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Models;
+using Ring.Util.Extensions;
 using System.Globalization;
 using System.Text;
 
@@ -65,7 +66,9 @@ internal static class RelationExtensions
 
     internal static int Hash(this Relation relation)
     {
-        return -1;
+        var hash = new HashCode();
+		hash.AddRelation(relation);
+        return hash.ToHashCode();
     }
 
     internal static bool IsEquivalentTo(this Relation relation, Relation? other)

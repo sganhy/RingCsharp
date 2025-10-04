@@ -147,7 +147,4 @@ public sealed class IndexExtensionsTest : BaseTest
         Assert.False(result4);
     }
 
-
-
-
 }

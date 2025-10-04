@@ -8,7 +8,7 @@ namespace Ring.Schema.Models;
 /// </summary>
 internal sealed class Field : BaseEntity, IEquatable<Field>
 {
-	// 60 bytes with padding
+	// 60 bytes - 0 bytes padding - perfectly aligned!
 	internal readonly string? DefaultValue;
 	internal readonly int Size;
 	internal readonly FieldType Type;

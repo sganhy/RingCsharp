@@ -1,8 +1,9 @@
 ﻿using Ring.Schema.Enums;
+using Ring.Schema.Extensions;
 
 namespace Ring.Schema.Models;
 
-internal sealed class Column
+internal sealed class Column : IEquatable<Column>
 {
 	internal readonly int Id;
 	internal readonly EntityType Type;
@@ -20,6 +21,12 @@ internal sealed class Column
 		RecordIndex = recordIndex;
 		SearchableType = searchableType;
 	}
+
+	public static bool operator ==(Column left, Column right) => left.Equals(right);
+	public static bool operator !=(Column left, Column right) => !left.Equals(right);
+	public override bool Equals(object? obj) => obj is Column column && Equals(column);
+	public bool Equals(Column? other) => this.IsEquivalentTo(other);
+	public override int GetHashCode() => this.Hash();
 
 #if DEBUG
 	public override string ToString() => $"{Id} - {PhysicalName}";

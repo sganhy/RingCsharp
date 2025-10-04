@@ -62,7 +62,7 @@ internal struct BulkAlter : IEquatable<BulkAlter>
 		var table = _schema.GetTable(tableName);
 		if (table is null) ThrowInvalidObjectType(tableName);
 		var column = table.GetColumn(columnName);
-		if (column == null) ThrowInvalidFieldName(tableName, columnName);
+		if (column is null) ThrowInvalidFieldName(tableName, columnName);
 		AppendDdlCommand(AlterQueryType.AlterTableAddColumn, table, column);
 	}
 
