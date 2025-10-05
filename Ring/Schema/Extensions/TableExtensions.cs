@@ -310,22 +310,54 @@ internal static class TableExtensions
 
 	internal static int Hash(this Table table)
 	{
-        var hash = new HashCode();
-        hash.AddTable(table);
-        return hash.ToHashCode();
+		var hash = new HashCode();
+		hash.AddTable(table);
+		return hash.ToHashCode();
+	}
 
-    }
-
-    /// <summary>
-    /// Determines if two Table instances have equivalent definitions,
-    /// regardless of whether they're the same object reference.
-    /// </summary>
-    internal static bool IsEquivalentTo(this Table table, Table? other)
+	/// <summary>
+	/// Determines if two Table instances have equivalent definitions,
+	/// regardless of whether they're the same object reference.
+	/// </summary>
+	internal static bool IsEquivalentTo(this Table table, Table? other)
 	{
-		// Code size: 102 (0x66)
+		// Code size: 227 (0xe3)
 		if (!table.BaseEntityEquals(other)) return false;
 		// other cannot be null here 
-		return true;
+		/*
+		int ObjectIndex; ==> nok - not considered
+		bool Cached; 
+		Field[] Fields;
+		Relation[] Relations;
+		Index[] Indexes;
+		int RecordSize;
+		Column[] Columns; ==> nok - not considered
+		PhysicalType PhysicalType;
+		int SchemaId;
+		string? Subject;
+		TableType Type;
+		CacheId CacheId;  ==> nok - not considered
+		string PhysicalName;  ==> nok - not considered
+		bool AllowHardDeletion;
+		bool Readonly;
+		bool UsePreparedStatement;
+		bool AllowAttributeExtension;
+		*/
+		
+		/*
+		❌ What's intentionally excluded (as per your comments):
+
+			ObjectIndex - instance - specific identifier
+			Columns[] -derived from Fields and Relations
+			CacheId - runtime cache identifier
+			PhysicalName - physical / implementation detail, not logical definition
+		*/
+
+		// other cannot be null here !!
+		return table.Cached == other!.Cached && table.RecordSize == other.RecordSize && table.PhysicalType == other.PhysicalType && table.SchemaId == other.SchemaId &&
+			string.Equals(table.Subject, other.Subject, StringComparison.Ordinal) && table.Type == other.Type && table.AllowHardDeletion == other.AllowHardDeletion &&
+			table.Readonly == other.Readonly && table.UsePreparedStatement == other.UsePreparedStatement && table.AllowAttributeExtension == other.AllowAttributeExtension &&
+			table.Fields.ArraysEqual(other.Fields) && table.Relations.ArraysEqual(other.Relations) && table.Indexes.ArraysEqual(other.Indexes);
 	}
 
 	#region private methods 
