@@ -105,7 +105,7 @@ internal sealed class ResourceHelper
 
 				foreach (var param in parameters)
 				{
-					if (param != null)
+					if (param is not null)
 					{
 						//eg. @version,Schema version,16,7, ==> 0=id, 1=name; 2=description; 3=fielType; 4=entityType; 5=defaultValue
 						var arr = new ReadOnlySpan<string?>(param.Split(','));
@@ -168,7 +168,7 @@ internal sealed class ResourceHelper
 		var assembly = Assembly.GetExecutingAssembly();
 		string?[] result = Array.Empty<string>();
 		using var stream = assembly.GetManifestResourceStream(resource);
-		if (stream == null) return result;
+		if (stream is null) return result;
 		using var decompressionStream = new GZipStream(stream, CompressionMode.Decompress);
 		using var reader = new StreamReader(decompressionStream);
 		result = toUpper ? reader.ReadToEnd().ToUpper(CultureInfo.InvariantCulture).Split(ResourceEndOfLine) : reader.ReadToEnd().Split(ResourceEndOfLine);

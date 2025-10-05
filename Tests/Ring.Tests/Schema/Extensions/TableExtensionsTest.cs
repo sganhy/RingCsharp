@@ -5,6 +5,7 @@ using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using Ring.Util.Builders;
+using System;
 using System.Globalization;
 using System.Linq.Expressions;
 using Xunit.Abstractions;
@@ -451,9 +452,9 @@ public class TableExtensionsTest : BaseTest
 
         // act 
         var hash1 = TableExtensions.Hash(table1);
-        var hash2 = TableExtensions.Hash(table2);
+        var hash2 = table2.GetHashCode();
         var hash3 = TableExtensions.Hash(table3);
-        var hash4 = TableExtensions.Hash(table4);
+        var hash4 = table4.GetHashCode();
         var hash5 = TableExtensions.Hash(table5);
 
 
@@ -464,16 +465,47 @@ public class TableExtensionsTest : BaseTest
         Assert.NotEqual(hash1, hash5);
     }
 
-    internal static Meta? FirstOrDefault(Meta[] metas, EntityType entityType)
+
+    [Fact]
+    internal void Equals_2AnonymousTables_False()
     {
-        Meta? result = null;
-        var span = new ReadOnlySpan<Meta>(metas);
-        var entityTypeId = (byte)entityType;
-        for (var i = 0; i < span.Length; ++i)
-        {
-            var meta = span[i];
-            if (entityTypeId == meta.ObjectType) return meta;
-        }
-        return result;
+        // arrange 
+        var schemaName = "@Test2";
+        var schBuilder = new SchemaBuilder();
+        var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
+        var schema1 = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
+        var schema2 = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
+        var schema3 = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
+        var schema4 = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
+        var table1 = schema1.GetTable("@log");
+        var table2 = schema2.GetTable("@log");
+        var table3 = schema3.GetTable("@log"); // indentical
+        var table4 = schema4.GetTable("@log"); // invert two columns
+        var table5 = schema4.GetTable("@meta");
+
+        Assert.NotNull(table1);
+        Assert.NotNull(table2);
+        Assert.NotNull(table3);
+        Assert.NotNull(table4);
+        Assert.NotNull(table5);
+
+        table2.Columns[0] = new Column(EntityType.Field, FieldType.Long, "test", SearchableType.None, 11, 44);
+
+        // swap two columns 
+        (table4.Columns[1], table4.Columns[0]) = (table4.Columns[0], table4.Columns[1]);
+
+        // act 
+        var result1 = table1 == table5;
+        var result2 = table2 != table3;
+        var result3 = table5.Equals(table1);
+        var result4 = table1.Equals((object)table5);
+
+
+        // assert
+        Assert.False(result1);
+        Assert.False(result2);
+        Assert.False(result3);
+        Assert.False(result4);
     }
+
 }

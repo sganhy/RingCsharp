@@ -21,7 +21,7 @@ internal static class ConnectionPoolExtensions
 		for (var i = 0; i < minPoolSize; ++i)
 		{
 			var conn = connectionPool.Connections[i];
-			if (conn != null) tasks[i]= conn.OpenAsync(cancellationToken);
+			if (conn is not null) tasks[i]= conn.OpenAsync(cancellationToken);
 		}
 		return Task.WhenAll(tasks);
 	}
@@ -171,7 +171,7 @@ internal static class ConnectionPoolExtensions
 		// Code size: 70 (0x46)
 		var id = connectionPool.ConnectionCount + 1;
 		var connection = connectionPool.Connections[0];
-		if (connection != null)
+		if (connection is not null)
 		{
 			var newConnection = connection.CreateInstance(id);
 			++connectionPool.ConnectionCount;

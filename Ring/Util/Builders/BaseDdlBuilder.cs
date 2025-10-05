@@ -51,7 +51,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	protected abstract string SearchableFieldPrefix { get; }
 	protected abstract string? TimeZoneOffsetPrefix { get; }
 	protected abstract string GetPhysicalName(Constraint constraint);
-	public bool HasTimeZoneOffsetColumn => TimeZoneOffsetPrefix != null;
+	public bool HasTimeZoneOffsetColumn => TimeZoneOffsetPrefix is not null;
 
 	public string AlterAddColumn(Table table, Column column) // Code size: 90 (0x5a)
 		=> new StringBuilder()
@@ -233,7 +233,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 		}
 		result.Length--;
 		result.Append(')');
-		if (tablespace != null)
+		if (tablespace is not null)
 		{
 			result.Append(SqlSpace)
 				.Append(DdlTableSpace)
@@ -266,7 +266,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 					.Append(')');
 			 break; 
 		}
-		if (tablespace != null)
+		if (tablespace is not null)
 		{
 			result
 				.Append(SqlSpace)
@@ -320,7 +320,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 
 		if (i > 0) result.Length -= 2;
 		result.Append(')');
-		if (tablespace != null)
+		if (tablespace is not null)
 		{
 			result.Append(SqlSpace)
 				.Append(DdlTableSpace)

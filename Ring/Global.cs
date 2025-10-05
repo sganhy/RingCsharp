@@ -47,7 +47,7 @@ internal static class Global
 			var currSchema = _schemas[schema.Id];
 			
 			// new schema ?? -  schema change its name, not managed yet!!!
-			if (currSchema == null)
+			if (currSchema is null)
 			{
 				// prepare new mapper
 				var mappingCount = _schemaCount + 1;
@@ -59,7 +59,7 @@ internal static class Global
 				for (var i = 0; i < lastSchemaId; ++i)
 				{
 					var sch = _schemas[i];
-					if (sch == null) continue;
+					if (sch is null) continue;
 					newMapping[index] = (sch.Name, sch.Id);
 					++index;
 				}
@@ -74,7 +74,7 @@ internal static class Global
 			_schemas[schema.Id] = schema;
 			
 			// new schema ??
-			if (currSchema == null)  ++_schemaCount;
+			if (currSchema is null)  ++_schemaCount;
 		}
 	}
 	internal static void Clear()
@@ -117,7 +117,7 @@ internal static class Global
 	internal static Table? GetTable(string? schemaName, string tableName)
 	{
 		// Code size: 43 (0x2b) - DatabaseProvider cannot be undefined !!!!
-		var schema = schemaName != null ? GetSchema(schemaName) ?? Meta.GetDefaultSchema(new Meta(string.Empty), DatabaseProvider.SqlLite) : DefaultSchema;  
+		var schema = schemaName is not null ? GetSchema(schemaName) ?? Meta.GetDefaultSchema(new Meta(string.Empty), DatabaseProvider.SqlLite) : DefaultSchema;  
 		return schema.GetTable(tableName);
 	}
 

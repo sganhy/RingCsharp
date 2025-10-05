@@ -68,7 +68,7 @@ public abstract class BaseTest
     }
 
     internal Field GetAnonymousField(int? id, char minChar = char.MinValue, char maxChar = char.MaxValue) =>
-        new(id == null ? _faker.Random.Number(int.MinValue, int.MaxValue): id.Value, _faker.Random.String(null, minChar, maxChar),
+        new(id is null ? _faker.Random.Number(int.MinValue, int.MaxValue): id.Value, _faker.Random.String(null, minChar, maxChar),
             _faker.Random.String(), _faker.PickRandom<FieldType>(), _faker.Random.Number(int.MinValue, int.MaxValue),
             _faker.Random.String(), _faker.PickRandom<SearchableType>(), _faker.Random.Bool(), _faker.Random.Bool(),
             _faker.Random.Bool(), _faker.Random.Bool(), _faker.Random.Bool());
@@ -81,7 +81,7 @@ public abstract class BaseTest
     {
         var toTable = new Table(_faker.Random.Number(int.MinValue, int.MaxValue), _faker.Random.String(null, minChar, maxChar), _faker.Random.String(),
             _faker.Random.String(), _faker.Random.String(), TableType.Business, Array.Empty<Relation>(), Array.Empty<Field>(),
-            Array.Empty<Column>(), Array.Empty<Index>(), 12, PhysicalType.Table, 0, 0, true, true, true, true, _faker.Random.Bool(), true);
+            Array.Empty<Column>(), Array.Empty<Index>(), 12, PhysicalType.Table, 0, 0, true, true, true, true, _faker.Random.Bool(), true, _faker.Random.Bool());
         return new Relation(_faker.Random.Number(100, int.MaxValue), name ?? _faker.Random.String(null, minChar, maxChar), 
             _faker.Random.String(),  _faker.PickRandom<RelationType>(), toTable, FieldType.Long, _faker.Random.Bool(), _faker.Random.Bool(),
             _faker.Random.Bool(), _faker.Random.Bool());

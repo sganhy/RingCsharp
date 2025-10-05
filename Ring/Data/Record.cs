@@ -77,8 +77,8 @@ public struct Record : IEquatable<Record>
 	internal readonly int Offset => _offset; // skip auto-property here
 #pragma warning restore RCS1085
 	
-	public readonly bool IsDirty => _data[_type.RecordSize-1 + _offset] != null; // Code size: 31 (0x1f)
-	public readonly bool IsNew
+	public readonly bool IsDirty => _data[_type.RecordSize-1 + _offset] is not null; // Code size: 34 (0x22)
+    public readonly bool IsNew
 	{
 		// Code size: 56 (0x38)
 		get

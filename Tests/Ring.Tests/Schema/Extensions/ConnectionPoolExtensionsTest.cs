@@ -166,7 +166,7 @@ public sealed class ConnectionPoolExtensionsTest : BaseTest
         {
             // copy  connections; to test it later
             var connection = pool.Connections[i];
-            if (connection != null) lstConns.Add(connection);
+            if (connection is not null) lstConns.Add(connection);
         }
 
         // act 
@@ -199,7 +199,7 @@ public sealed class ConnectionPoolExtensionsTest : BaseTest
         {
             // copy  connections; to test it later
             var connection = pool.Connections[i];
-            if (connection != null) lstConns.Add(connection);
+            if (connection is not null) lstConns.Add(connection);
         }
 
         // act 
@@ -253,7 +253,7 @@ public sealed class ConnectionPoolExtensionsTest : BaseTest
         {
             // copy  connections; to test it later
             var connection = pool.Connections[i];
-            if (connection != null) lstConns.Add(connection);
+            if (connection is not null) lstConns.Add(connection);
         }
 
         // act 

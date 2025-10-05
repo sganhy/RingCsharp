@@ -2,6 +2,7 @@
 using Ring.Schema;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
+using Ring.Schema.Models;
 using System.Linq.Expressions;
 using Xunit.Abstractions;
 
@@ -278,7 +279,7 @@ public class RelationExtensionsTest : BaseTest
         // act 
         var hash1 = RelationExtensions.Hash(relation1);
         LogAssert($"hash1 = {hash1}");
-        var hash2 = RelationExtensions.Hash(relation2);
+        var hash2 = relation2.GetHashCode();
         LogAssert($"hash2 = {hash2}");
         var hash3 = RelationExtensions.Hash(relation3);
         LogAssert($"hash3 = {hash3}");
@@ -290,5 +291,41 @@ public class RelationExtensionsTest : BaseTest
         LogAssert($"{hash1} != {hash3}");
         Assert.NotEqual(hash2, hash3);
         LogAssert($"{hash2} != {hash3}");
+    }
+
+
+    [Fact]
+    internal void Equals_2AnonymousRelations_False()
+    {
+        // arrange 
+        var metaName = _faker.Random.String(15, 'A', 'z');
+        var meta1 = new Meta(metaName);
+        var meta2 = new Meta(metaName + metaName);
+        var meta3 = new Meta(metaName );
+        var meta4 = new Meta(metaName);
+
+        var relation1 = Meta.GetDefaultRelation(meta1, RelationType.Mto, TableType.Fake);
+        LogAssert($"relation1 = {relation1.Name} - {relation1.Type}");
+        var relation2 = Meta.GetDefaultRelation(meta2, RelationType.Mtm, TableType.Fake);
+        LogAssert($"relation2 = {relation2.Name} - {relation2.Type}");
+        var relation3 = Meta.GetDefaultRelation(meta3, RelationType.Mtm, TableType.Fake);
+        LogAssert($"relation3 = {relation3.Name} - {relation3.Type}");
+        var relation4 = Meta.GetDefaultRelation(meta3, RelationType.Mto, TableType.Fake);
+        LogAssert($"relation4 = {relation4.Name} - {relation4.Type}");
+
+
+        // act 
+        var result1 = relation1 == relation3;
+        var result2 = relation3.Equals(relation1);
+        var result3 = relation1.Equals((object)relation2);
+        var result4 = relation4 != relation1;
+        var result5 = relation1.Equals(meta4);
+
+        // assert
+        Assert.False(result1);
+        Assert.False(result2);
+        Assert.False(result3);
+        Assert.False(result4);
+        Assert.False(result5);
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Models;
+using Ring.Util.Extensions;
 using System.Runtime.CompilerServices;
 using Index = Ring.Schema.Models.Index;
 
@@ -309,14 +310,17 @@ internal static class TableExtensions
 
 	internal static int Hash(this Table table)
 	{
-		return -1;
-	}
+        var hash = new HashCode();
+        hash.AddTable(table);
+        return hash.ToHashCode();
 
-	/// <summary>
-	/// Determines if two Table instances have equivalent definitions,
-	/// regardless of whether they're the same object reference.
-	/// </summary>
-	internal static bool IsEquivalentTo(this Table table, Table? other)
+    }
+
+    /// <summary>
+    /// Determines if two Table instances have equivalent definitions,
+    /// regardless of whether they're the same object reference.
+    /// </summary>
+    internal static bool IsEquivalentTo(this Table table, Table? other)
 	{
 		// Code size: 102 (0x66)
 		if (!table.BaseEntityEquals(other)) return false;
@@ -335,44 +339,7 @@ internal static class TableExtensions
 		var span = new ReadOnlySpan<Index>(table.Indexes);
 		foreach (var index in span) if (index.Unique) return index;
 		return null;
-	}	
-	/*
-	private static string GetStringCode(ReadOnlySpan<Field> fields)
-	{
-		// Code size: 68 (0x44)
-		var result = new StringBuilder();
-		foreach (var field in fields)
-		{
-			result.Append(field.GetStringCode());
-			result.Append(HashCodeSeparator);
-		}
-		return result.ToString();
 	}
-
-	private static string GetStringCode(ReadOnlySpan<Relation> relations)
-	{
-		// Code size: 68 (0x44)
-		var result = new StringBuilder();
-		foreach (var relation in relations)
-		{
-			result.Append(relation.GetStringCode());
-			result.Append(HashCodeSeparator);
-		}
-		return result.ToString();
-	}
-
-	private static string GetStringCode(ReadOnlySpan<Index> indexes)
-	{
-		// Code size: 68 (0x44)
-		var result = new StringBuilder();
-		foreach (var index in indexes)
-		{
-			result.Append(index.GetStringCode());
-			result.Append(HashCodeSeparator);
-		}
-		return result.ToString();
-	}
-	*/
 
 	#endregion
 

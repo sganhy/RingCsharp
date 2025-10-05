@@ -47,7 +47,7 @@ internal static class ParameterExtensions
 		// Code size: 63 (0x3f)
 		var param = GetParameter(parameters, ParameterType.MaxPoolSize);
 		var paramTemplate = ResourceHelper.GetParameter(ParameterType.MaxPoolSize);
-		return param != null ? int.Parse(param.Value, CultureInfo.InvariantCulture) :
+		return param is not null ? int.Parse(param.Value, CultureInfo.InvariantCulture) :
 			int.Parse(paramTemplate.DefaultValue ?? DefaultConnPoolSize, CultureInfo.InvariantCulture);
 	}
 
@@ -57,7 +57,7 @@ internal static class ParameterExtensions
 	{
 		var param = GetParameter(parameters, ParameterType.MinPoolSize);
 		var paramTemplate = ResourceHelper.GetParameter(ParameterType.MinPoolSize);
-		return param != null ? int.Parse(param.Value, CultureInfo.InvariantCulture) :
+		return param is not null ? int.Parse(param.Value, CultureInfo.InvariantCulture) :
 			int.Parse(paramTemplate.DefaultValue ?? DefaultConnPoolSize, CultureInfo.InvariantCulture);
 	}
 

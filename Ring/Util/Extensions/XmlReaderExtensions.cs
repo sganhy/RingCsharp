@@ -27,7 +27,7 @@ internal static class XmlReaderExtensions
 	private static string RemoveNameSpaceInfo(string attributeName)
 	{
 		// Code size: 28 (0x1c)
-		if (attributeName == null) return null;
+		if (attributeName is null) return null;
 		var index = attributeName.LastIndexOf(':');
 		return index >= 0 ? attributeName.Substring(index) : attributeName;
 	}

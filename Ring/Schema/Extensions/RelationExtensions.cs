@@ -73,10 +73,19 @@ internal static class RelationExtensions
 
     internal static bool IsEquivalentTo(this Relation relation, Relation? other)
     {
-        // Code size: 105 (0x69)
+		/*
+            Relation InverseRelation { get; set; }
+			readonly bool HasConstraint;
+			readonly bool NotNull;
+			readonly Table ToTable;
+			readonly RelationType Type;
+			readonly FieldType FieldType;
+		*/
+        // Code size: 66 (0x42)
         if (!relation.BaseEntityEquals(other)) return false;
         // other cannot be null here 
-        return relation.HasConstraint == other!.HasConstraint && relation.NotNull == other.NotNull && relation.ToTable.SchemaId == other.ToTable.SchemaId;
+        return relation.HasConstraint == other!.HasConstraint && relation.NotNull == other.NotNull && relation.ToTable.SchemaId == other.ToTable.SchemaId 
+			&& relation.ToTable.Id == other.ToTable.Id && relation.Type == other.Type && relation.FieldType == other.FieldType;
     }
 
 }
