@@ -1,9 +1,0 @@
-C:\Temp\Coding\Ring\bin\Debug\netcoreapp2.0\Ring.deps.json
-C:\Temp\Coding\Ring\bin\Debug\netcoreapp2.0\Ring.dll
-C:\Temp\Coding\Ring\bin\Debug\netcoreapp2.0\Ring.pdb
-C:\Temp\Coding\Ring\obj\Debug\netcoreapp2.0\Ring.Core.2017.csprojResolveAssemblyReference.cache
-C:\Temp\Coding\Ring\obj\Debug\netcoreapp2.0\Ring.Core.2017.csproj.CoreCompileInputs.cache
-C:\Temp\Coding\Ring\obj\Debug\netcoreapp2.0\Ring.Core.2017.AssemblyInfoInputs.cache
-C:\Temp\Coding\Ring\obj\Debug\netcoreapp2.0\Ring.Core.2017.AssemblyInfo.cs
-C:\Temp\Coding\Ring\obj\Debug\netcoreapp2.0\Ring.dll
-C:\Temp\Coding\Ring\obj\Debug\netcoreapp2.0\Ring.pdb
