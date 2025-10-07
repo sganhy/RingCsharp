@@ -12,9 +12,7 @@ namespace Ring.Tests.Util.Builders.PostgreSQL;
 
 public class DdlBuilderTest : BaseBuilderTest
 {
-#pragma warning disable CA1859 // Use concrete types when possible for improved performance
     private readonly IDdlBuilder _sut = new DdlBuilder();
-#pragma warning restore CA1859
     private readonly Faker _faker = new();
 
     [Fact]
@@ -298,7 +296,7 @@ public class DdlBuilderTest : BaseBuilderTest
         var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
         var table = schema.GetTable("@meta");
         Assert.NotNull(table);
-        var pk = ((IEnumerable<Constraint>)schema.DdlBuiler.GetConstraints(table)).First(p => p.Type == ConstraintType.PrimaryKey);
+        var pk = schema.DdlBuiler.GetConstraints(table).First(p => p.Type == ConstraintType.PrimaryKey);
         var expectedSql = "ALTER TABLE \"@test\".\"@meta\" ADD CONSTRAINT \"pk_@meta\" PRIMARY KEY (id,schema_id,object_type,reference_id)";
 
         // act 

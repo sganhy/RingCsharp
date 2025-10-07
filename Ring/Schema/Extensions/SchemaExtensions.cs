@@ -1,5 +1,4 @@
-﻿using Ring.Schema.Enums;
-using Ring.Schema.Models;
+﻿using Ring.Schema.Models;
 using System.Runtime.CompilerServices;
 using DbSchema = Ring.Schema.Models.Schema;
 
