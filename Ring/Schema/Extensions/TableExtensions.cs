@@ -282,7 +282,7 @@ internal static class TableExtensions
 
 	internal static Meta[] ToMeta(this Table table, int schemaId) 
 	{
-		// Code size: 283 (0x11b)
+		// Code size: 322 (0x142)
 		var result = new List<Meta>(table.Fields.Length+table.Relations.Length+table.Indexes.Length+1);
 		int i;
 		for (i=0; i < table.Fields.Length; ++i) result.Add(table.Fields[i].ToMeta(table.Id));
@@ -293,6 +293,9 @@ internal static class TableExtensions
 		// set Table Flags
 		flags = Meta.SetTableCached(flags, table.Cached);
 		flags = Meta.SetTableReadonly(flags, table.Readonly);
+		flags = Meta.SetTableAllowAttributeExtension(flags, table.AllowAttributeExtension);
+		flags = Meta.SetPhysicalDeletion(flags, table.AllowHardDeletion);
+		flags = Meta.SetPreparedStatement(flags, table.UsePreparedStatement);
 		// set BaseEntity Flags
 		flags = Meta.SetEntityBaseline(flags, table.Baseline);
 

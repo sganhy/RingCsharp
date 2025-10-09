@@ -63,11 +63,10 @@ internal static class DatabaseProviderExtensions
 
 	internal static bool IsReservedWord(this DatabaseProvider provider, string word)
 	{
-		// Code size: 178 (0xb2)
+		// Code size: 150 (0x96)
 		//var currentWord = word.ToUpperInvariant();  // removed memory allocation on heap
-		Span<char> buffer = stackalloc char[word.Length];
-		word.AsSpan().ToUpperInvariant(buffer);
-		var upperWord = new string(buffer);
+		if (string.IsNullOrEmpty(word)) return false;
+		var upperWord = word.ToUpperInvariant();
 		switch (provider)
 		{
 			case DatabaseProvider.Oracle: return OracleWords.Value.Contains(upperWord);

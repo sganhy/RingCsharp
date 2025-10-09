@@ -11,7 +11,7 @@ internal enum MetaFlag : long
 	RelationNotNull = 1L << 3,          // bit 4
 	RelationConstraint = 1L << 4,       // bit 5
 	TablePreparedStatement = 1L << 6,   // bit 7
-	TableSoftDelete = 1L << 7,          // bit 8
+	TableHardDelete = 1L << 7,          // bit 8
 	IndexBitmap = 1L << 8,              // bit 9
 	TableCached = 1L << 8,              // bit 9
 	IndexUnique = 1L << 9,              // bit 10

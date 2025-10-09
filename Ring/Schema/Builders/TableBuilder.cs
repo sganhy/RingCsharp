@@ -164,8 +164,10 @@ internal sealed class TableBuilder
 				physicalType ?? PhysicalType.Table, ddlBuilder, physicalName, 0) ?? emptyTable;
 	}
 
-	private static Meta GetTable(int id, string name, TableType tableType, bool active=true) {
-		var flags = 0L;
+	private static Meta GetTable(int id, string name, TableType tableType, bool active=true) 
+	{
+        // Code size: 104 (0x68)
+        var flags = 0L;
 		flags = Meta.SetEntityBaseline(flags, true);
         flags = Meta.SetTableReadonly(flags, true);
         flags = Meta.SetTableAllowAttributeExtension(flags, false); // no flexible attributes!
