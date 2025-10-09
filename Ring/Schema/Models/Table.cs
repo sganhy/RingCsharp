@@ -6,7 +6,6 @@ namespace Ring.Schema.Models;
 internal sealed class Table : BaseEntity, IEquatable<Table>
 {
 	internal readonly int ObjectIndex;
-	internal readonly bool Cached;
 	internal readonly Field[] Fields; // sorted by name.
 	internal readonly Relation[] Relations; // sorted by name.
 	internal readonly Index[] Indexes;
@@ -18,6 +17,7 @@ internal sealed class Table : BaseEntity, IEquatable<Table>
 	internal readonly TableType Type;
 	internal readonly CacheId CacheId;
 	internal readonly string PhysicalName;
+	internal readonly bool Cached;
 	internal readonly bool AllowHardDeletion;
 	internal readonly bool Readonly;
 	internal readonly bool UsePreparedStatement;

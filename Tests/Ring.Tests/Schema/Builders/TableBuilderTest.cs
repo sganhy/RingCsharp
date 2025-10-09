@@ -26,8 +26,12 @@ public class TableBuilderTest
         Assert.Equal(10, metaTable.Fields.Length);
         Assert.Equal(TableType.Meta, metaTable.Type);
         Assert.True(metaTable.Baseline);
-        Assert.False(metaTable.Cached);
+        Assert.True(metaTable.Cached);
         Assert.True(metaTable.Readonly);
+        Assert.True(metaTable.Active);
+        Assert.False(metaTable.AllowHardDeletion);
+        Assert.False(metaTable.UsePreparedStatement);
+        Assert.False(metaTable.AllowAttributeExtension);
         Assert.NotNull(metaTable.GetField("id"));
         Assert.NotNull(metaTable.GetField("schema_id"));
         Assert.NotNull(metaTable.GetField("object_type"));

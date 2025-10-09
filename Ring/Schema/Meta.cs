@@ -433,7 +433,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static long WriteFlag(long flags, MetaFlag flag, bool value) => value ? flags | (long)flag : flags & (~(long)flag); // Code size: 12 (0xc)
 
-    private static Index[] GetIndexes(ReadOnlySpan<Meta> items)
+	private static Index[] GetIndexes(ReadOnlySpan<Meta> items)
 	{
 		// Code size: 150 (0x96)
 		// count element
@@ -535,8 +535,8 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	private static Table[] GetTables(Meta[] schema, IDdlBuilder ddlBuilder, Meta metaSchema, DatabaseProvider provider,	int mtmCount)
 	{
-		// Code size: 449 (0x1c1)
-		int startIndex, count, i = 0;
+		// Code size: 402 (0x192)
+		var i = 0;
 		var metaCount = schema.Length;
 		var tableCount = metaCount > 400 ? metaCount / 4 : 100;
 		var dico = new Dictionary<int, (int, int)>(tableCount); // table_id, start index , count
@@ -548,9 +548,8 @@ internal readonly struct Meta : IEquatable<Meta>
 		{
 			if (meta.IsField || meta.IsRelation || meta.IsIndex || meta.IsSearchableColumn || meta.IsTimeZoneColumn)
 			{
-				if (!dico.ContainsKey(meta.ReferenceId)) dico.Add(meta.ReferenceId, (i, 0));
-				(startIndex, count) = dico[meta.ReferenceId];
-				dico[meta.ReferenceId] = (startIndex, count + 1);
+				if (dico.TryGetValue(meta.ReferenceId, out var existing)) dico[meta.ReferenceId] = (existing.Item1, existing.Item2 + 1);
+				else dico[meta.ReferenceId] = (i, 1);
 			}
 			++i;
 		}
@@ -562,9 +561,10 @@ internal readonly struct Meta : IEquatable<Meta>
 		{
 			if (meta.IsTable)
 			{
-				var segment = dico.ContainsKey(meta.Id) ? new ReadOnlySpan<Meta>(schema, dico[meta.Id].Item1, dico[meta.Id].Item2) : new ReadOnlySpan<Meta>(schema, 0, 0);
+				var segment = dico.TryGetValue(meta.Id, out var range) ? new ReadOnlySpan<Meta>(schema, range.Item1, range.Item2) : ReadOnlySpan<Meta>.Empty;
 				var physicalName = ddlBuilder.GetPhysicalName(GetDefaultTable(meta), emptySchema);
-				var table = meta.ToTable(segment, PhysicalType.Table, ddlBuilder, physicalName, mtmCount + tableIndex) ?? GetDefaultTable(meta);
+				var table = meta.ToTable(segment, PhysicalType.Table, ddlBuilder, physicalName, mtmCount + tableIndex)
+					?? GetDefaultTable(meta);
 				result.Add(table);
 				++tableIndex;
 			}
@@ -618,7 +618,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	/// </summary>
 	private static void LoadColumns(Table table, ReadOnlySpan<Meta> tableItems, int physRelationCount, IDdlBuilder ddlBuilder)
 	{
-		// Code size: 846 (0x34e)
+		// Code size: 814 (0x32e)
 		// relation are not yet loaded here !!!!
 		var fieldCount = table.Fields.Length; // searchable fields + tz fields 
 		var extraFieldCount = table.Columns.Length - physRelationCount - table.Fields.Length; // searchable fields + tz fields 
@@ -662,25 +662,23 @@ internal readonly struct Meta : IEquatable<Meta>
 				if (field?.Type == FieldType.String && field.SearchableType != SearchableType.None)
 				{
 					// meta not define for the searchable field
-					if (!extraFields.ContainsKey(field.Name))
-						table.Columns[columnIndex] = meta.ToColumn(id, ddlBuilder.GetPhysicalName(EntityType.SearchableColumn, meta.Name), recordIndex, field.SearchableType);
-					else 
-					{
-						var metaExtra = extraFields[field.Name];
+					if (extraFields.TryGetValue(field.Name, out var metaExtra))
 						table.Columns[columnIndex] = metaExtra.ToColumn(metaExtra.Id, ddlBuilder.GetPhysicalName(EntityType.SearchableColumn, meta.Name), recordIndex);
-					}
+					else
+						table.Columns[columnIndex] = meta.ToColumn(id, ddlBuilder.GetPhysicalName(EntityType.SearchableColumn, meta.Name), recordIndex, field.SearchableType);
+					
 					++columnIndex;
 				}
 
 				// time zone extra column ?
 				if (field?.Type == FieldType.LongDateTime && hasTimeZoneOffsetColumn)
 				{
-					// meta not define for the searchable field
-					if (!extraFields.ContainsKey(field.Name))
-						table.Columns[columnIndex] = SetObjectType(meta, TimeZoneColumnId).ToColumn(id, ddlBuilder.GetPhysicalName(EntityType.TimeZoneColumn,
-							meta.Id.ToString(DefaultCulture)), recordIndex);
-					else table.Columns[columnIndex] = extraFields[field.Name].ToColumn(meta.Id, ddlBuilder.GetPhysicalName(EntityType.TimeZoneColumn,
-							meta.Id.ToString(DefaultCulture)), recordIndex);
+					if (extraFields.TryGetValue(field.Name, out var metaExtra))
+						table.Columns[columnIndex] = metaExtra.ToColumn(meta.Id,
+							ddlBuilder.GetPhysicalName(EntityType.TimeZoneColumn, meta.Id.ToString(DefaultCulture)), recordIndex);
+					else
+						table.Columns[columnIndex] = SetObjectType(meta, TimeZoneColumnId).ToColumn(id,
+							ddlBuilder.GetPhysicalName(EntityType.TimeZoneColumn, meta.Id.ToString(DefaultCulture)), recordIndex);
 					++columnIndex;
 				}
 			} 
@@ -699,6 +697,7 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	private static void LoadIndexColumns(Table table, ReadOnlySpan<Meta> tableItems, int physRelationCount)
 	{
+		// Code size: 271 (0x10f)
 		Dictionary<string, int>? relDico = null;
 		var defaultCol = new Column(EntityType.Undefined, FieldType.Undefined, string.Empty, SearchableType.None, 0, 0);
 		if (physRelationCount > 0)
@@ -727,10 +726,9 @@ internal readonly struct Meta : IEquatable<Meta>
 				if (fieldIndex >= 0) index.Columns[j] = table.GetColumn(logicalName) ?? defaultCol;
 				else 
 				{
-					if (relDico is not null && relDico.ContainsKey(logicalName))
-						index.Columns[j] = table.GetColumn(relDico[logicalName], EntityType.Relation) ?? defaultCol;
+					if (relDico is not null && relDico.TryGetValue(logicalName, out var relationId))
+						index.Columns[j] = table.GetColumn(relationId, EntityType.Relation) ?? defaultCol;
 				}
-
 			}
 		}
 	}

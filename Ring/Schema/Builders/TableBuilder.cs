@@ -168,6 +168,20 @@ internal sealed class TableBuilder
 		var flags = 0L;
 		flags = Meta.SetEntityBaseline(flags, true);
         flags = Meta.SetTableReadonly(flags, true);
+        flags = Meta.SetTableAllowAttributeExtension(flags, false); // no flexible attributes!
+        flags = Meta.SetTableReadonly(flags, true);
+        switch (tableType)
+		{ 
+			case TableType.Meta:
+                flags = Meta.SetPhysicalDeletion(flags, false);
+                flags = Meta.SetTableCached(flags, true);
+                flags = Meta.SetPreparedStatement(flags, false);
+                break;
+            case TableType.MetaId:
+                flags = Meta.SetTableCached(flags, true);
+                flags = Meta.SetPreparedStatement(flags, true);
+                break;
+        }
         return new(id, (byte)EntityType.Table, 0, (int)tableType, flags, name, null, null, active);
 	}
 	private static Meta GetSchema(int id, string name) => new(id, (byte)EntityType.Schema, 0, 0, 0L, name, null, null, true);

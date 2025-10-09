@@ -47,11 +47,11 @@ internal static class IndexExtensions
 		return hash.ToHashCode();
 	}
 
-	/// <summary>
-	/// Determines if two Field instances have equivalent definitions,
-	/// regardless of whether they're the same object reference.
-	/// </summary>
-	internal static bool IsEquivalentTo(this Index index, Index? other)
+    /// <summary>
+    /// Determines if two Index instances have equivalent definitions,
+    /// regardless of whether they're the same object reference.
+    /// </summary>
+    internal static bool IsEquivalentTo(this Index index, Index? other)
 	{
 		// Code size: 105 (0x69)
 		if (!index.BaseEntityEquals(other)) return false;
