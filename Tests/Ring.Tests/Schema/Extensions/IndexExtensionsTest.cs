@@ -1,7 +1,9 @@
 ﻿using Ring.Schema;
+using Ring.Schema.Builders;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
+using System.Data;
 using System.Linq.Expressions;
 using Xunit.Abstractions;
 
@@ -88,7 +90,7 @@ public sealed class IndexExtensionsTest : BaseTest
     internal void GetHashCode_IndexHashEqual_False()
     {
         // arrange 
-        var id = _faker.Random.Number(int.MinValue,int.MaxValue);
+        var id = _faker.Random.Number(int.MinValue, int.MaxValue);
         var name = _faker.Random.String();
         var description = _faker.Random.String();
         var columnList1 = _faker.Random.String(8);
@@ -147,4 +149,23 @@ public sealed class IndexExtensionsTest : BaseTest
         Assert.False(result4);
     }
 
+    [Fact]
+    internal void IsPrimaryKey_MetaTablesFirstIndex_True()
+    {
+        // arrange 
+        var builder = new TableBuilder();
+        var schemaName = _faker.Random.String(10);
+        var metaTable = builder.GetMeta(schemaName, DatabaseProvider.PostgreSql);
+        var metaIdTable = builder.GetMetaId(schemaName, DatabaseProvider.MySql);
+        var firstIndex1 = metaTable.Indexes.First();
+        var firstIndex2 = metaIdTable.Indexes.First();
+
+        // act 
+        var result1 = firstIndex1.IsPrimaryKey(metaTable);
+        var result2 = firstIndex2.IsPrimaryKey(metaIdTable);
+
+        // assert
+        Assert.True(result1);
+        Assert.True(result2);
+    }
 }

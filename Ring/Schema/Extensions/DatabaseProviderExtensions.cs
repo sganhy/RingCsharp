@@ -8,14 +8,14 @@ namespace Ring.Schema.Extensions;
 internal static class DatabaseProviderExtensions
 {
 	// reserved key words 
-	private readonly static Lazy<HashSet<string>> _oracleWords = new(() => ResourceHelper.GetReservedWords(DatabaseProvider.Oracle), true); 
-	private readonly static Lazy<HashSet<string>> _postgreSqlWords = new(() => ResourceHelper.GetReservedWords(DatabaseProvider.PostgreSql), true);
-	private readonly static Lazy<HashSet<string>> _mySqlWords = new(() => ResourceHelper.GetReservedWords(DatabaseProvider.MySql), true);
-	private readonly static Lazy<HashSet<string>> _sqlServerWords = new(() => ResourceHelper.GetReservedWords(DatabaseProvider.SqlServer), true);
-	private readonly static Lazy<HashSet<string>> _sqlLiteWords = new(() => ResourceHelper.GetReservedWords(DatabaseProvider.SqlLite), true);
+	private static readonly Lazy<HashSet<string>> OracleWords = new(() => ResourceHelper.GetReservedWords(DatabaseProvider.Oracle), true); 
+	private static readonly Lazy<HashSet<string>> PostgreSqlWords = new(() => ResourceHelper.GetReservedWords(DatabaseProvider.PostgreSql), true);
+	private static readonly Lazy<HashSet<string>> MySqlWords = new(() => ResourceHelper.GetReservedWords(DatabaseProvider.MySql), true);
+	private static readonly Lazy<HashSet<string>> SqlServerWords = new(() => ResourceHelper.GetReservedWords(DatabaseProvider.SqlServer), true);
+	private static readonly Lazy<HashSet<string>> SqlLiteWords = new(() => ResourceHelper.GetReservedWords(DatabaseProvider.SqlLite), true);
 
 	// catalogs
-	private static readonly Dictionary<EntityType, Catalog> _postreSqlCatalog = new() {
+	private static readonly Dictionary<EntityType, Catalog> PostreSqlCatalog = new() {
 		{ EntityType.Table, new Catalog { FieldSchemaName="table_schema", FieldEntityName= "table_name", ViewName="tables" } }
 	};
 
@@ -63,15 +63,18 @@ internal static class DatabaseProviderExtensions
 
 	internal static bool IsReservedWord(this DatabaseProvider provider, string word)
 	{
-        // Code size: 140 (0x8c)
-        var currentWord = word.ToUpperInvariant();
+		// Code size: 178 (0xb2)
+		//var currentWord = word.ToUpperInvariant();  // removed memory allocation on heap
+		Span<char> buffer = stackalloc char[word.Length];
+		word.AsSpan().ToUpperInvariant(buffer);
+		var upperWord = new string(buffer);
 		switch (provider)
 		{
-			case DatabaseProvider.Oracle: return _oracleWords.Value.Contains(currentWord);
-			case DatabaseProvider.PostgreSql: return _postgreSqlWords.Value.Contains(currentWord);
-			case DatabaseProvider.MySql: return _mySqlWords.Value.Contains(currentWord);
-			case DatabaseProvider.SqlServer: return _sqlServerWords.Value.Contains(currentWord);
-			case DatabaseProvider.SqlLite: return _sqlLiteWords.Value.Contains(currentWord);
+			case DatabaseProvider.Oracle: return OracleWords.Value.Contains(upperWord);
+			case DatabaseProvider.PostgreSql: return PostgreSqlWords.Value.Contains(upperWord);
+			case DatabaseProvider.MySql: return MySqlWords.Value.Contains(upperWord);
+			case DatabaseProvider.SqlServer: return SqlServerWords.Value.Contains(upperWord);
+			case DatabaseProvider.SqlLite: return SqlLiteWords.Value.Contains(upperWord);
 		}
 		throw new NotImplementedException();
 	}
@@ -96,7 +99,7 @@ internal static class DatabaseProviderExtensions
 			case DatabaseProvider.PostgreSql:
 			case DatabaseProvider.MySql:
 			case DatabaseProvider.SqlServer:
-				return _postreSqlCatalog[entityType].ViewName;
+				return PostreSqlCatalog[entityType].ViewName;
 		}
 		throw new NotImplementedException();
 	}
@@ -109,7 +112,7 @@ internal static class DatabaseProviderExtensions
 			case DatabaseProvider.PostgreSql:
 			case DatabaseProvider.MySql:
 			case DatabaseProvider.SqlServer:
-				result = _postreSqlCatalog[entityType].FieldSchemaName;
+				result = PostreSqlCatalog[entityType].FieldSchemaName;
 				break;
 		}
 		return result;
@@ -123,7 +126,7 @@ internal static class DatabaseProviderExtensions
 			case DatabaseProvider.PostgreSql:
 			case DatabaseProvider.MySql:
 			case DatabaseProvider.SqlServer:
-				result = _postreSqlCatalog[entityType].FieldEntityName;
+				result = PostreSqlCatalog[entityType].FieldEntityName;
 				break;
 		}
 		return result;

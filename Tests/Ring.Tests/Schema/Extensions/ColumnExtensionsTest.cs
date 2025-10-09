@@ -41,17 +41,20 @@ public sealed class ColumnExtensionsTest : BaseTest
         var column2 = new Column(EntityType.Constraint, FieldType.ByteArray, physicalName, SearchableType.IgnoreCaseAndDiacritics, id, -33);
         var column3 = new Column(EntityType.Alias, FieldType.ByteArray, physicalName, SearchableType.IgnoreCaseAndDiacritics, id, -44);
         var column4 = new Column(EntityType.Constraint, FieldType.ByteArray, physicalName, SearchableType.IgnoreCaseAndDiacritics, id, -33);
+        var column5 = new Column(EntityType.Constraint, FieldType.ByteArray, physicalName, SearchableType.None, id, _faker.Random.Number());
 
         // act 
         var result1 = column1 == column2;
         var result2 = column1.Equals(column3);
         var result3 = column2.Equals((object)column3);
         var result4 = column2 != column4;
+        var result5 = column4.IsEquivalentTo(column5);
 
         // assert
         Assert.False(result1);
         Assert.False(result2);
         Assert.False(result3);
         Assert.False(result4);
+        Assert.False(result5);
     }
 }

@@ -25,14 +25,18 @@ internal static class IndexExtensions
 
 	internal static bool IsPrimaryKey(this Index index, Table table)
 	{
-		// Code size: 51 (0x33)
-		var result = false;
+		// Code size: 104 (0x68) - remove memory allocation here!
 		if (index.Unique)
 		{
-			var pk = table.GetPrimaryKey().ToArray();
-			result = index.Columns.Join(',') == pk.Join(',');
+			var pk = new ReadOnlySpan<Column>(table.GetPrimaryKey().ToArray());
+			var indexCol = new ReadOnlySpan<Column>(index.Columns);
+			if (pk.Length == indexCol.Length)
+			{
+				for (var i = 0; i < pk.Length; ++i) if (pk[i] != indexCol[i]) return false;
+				return true;
+			}
 		}
-		return result;
+		return false;
 	}
 
 	internal static int Hash(this Index index)

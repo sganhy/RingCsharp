@@ -20,7 +20,7 @@ internal static class TableExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static Field? GetField(this Table table, string name)
 	{
-		// Code size: 92 (0x5c) - no callvirt
+		// Code size: 92 (0x5c) - no virtual call
 		var span = new ReadOnlySpan<Field>(table.Fields);
 		int indexerLeft = 0, indexerRight = span.Length - 1;
 		while (indexerLeft <= indexerRight)
@@ -44,7 +44,7 @@ internal static class TableExtensions
 	/// <returns>Field object</returns>
 	internal static Field? GetField(this Table table, string name, StringComparison comparisonType)
 	{
-		// Code size: 59 (0x3b) - no callvirt
+		// Code size: 59 (0x3b) - no virtual call
 		var span = new ReadOnlySpan<Field>(table.Fields);
 		foreach (var field in span) if (string.Equals(name, field.Name, comparisonType)) return field;
 		return null;
@@ -57,8 +57,7 @@ internal static class TableExtensions
 	{
 		// Code size: 28 (0x1c)
 		var column = GetColumn(table, id, EntityType.Field);
-		if (column is not null) return table.Fields[column.RecordIndex];
-		return null;
+		return column is not null ? table.Fields[column.RecordIndex] : null;
 	}
 
 	/// <summary>
@@ -70,7 +69,7 @@ internal static class TableExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static int GetFieldIndex(this Table table, string name)
 	{
-		// Code size: 84 (0x54) - no callvirt
+		// Code size: 84 (0x54) - no virtual call
 		var span = new ReadOnlySpan<Field>(table.Fields);
 		int indexerLeft = 0, indexerRight = span.Length - 1;
 		while (indexerLeft <= indexerRight)
@@ -213,7 +212,7 @@ internal static class TableExtensions
 				// sub search on Column.Type
 				var weightCompare = colWeight - Meta.ColumnTypeWeight(span[indexerMiddle].Type);
 				if (weightCompare == 0) return span[indexerMiddle];
-				else if (weightCompare > 0) indexerLeft = indexerMiddle + 1;
+				if (weightCompare > 0) indexerLeft = indexerMiddle + 1;
 				else indexerRight = indexerMiddle - 1;
 			}
 			else if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
@@ -239,7 +238,7 @@ internal static class TableExtensions
 				// sub search on Column.Type
 				var weightCompare = colWeight - Meta.ColumnTypeWeight(span[indexerMiddle].Type);
 				if (weightCompare == 0) return indexerMiddle;
-				else if (weightCompare > 0) indexerLeft = indexerMiddle + 1;
+				if (weightCompare > 0) indexerLeft = indexerMiddle + 1;
 				else indexerRight = indexerMiddle - 1;
 			}
 			else if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
@@ -272,16 +271,11 @@ internal static class TableExtensions
 	internal static List<Column> GetPrimaryKey(this Table table)
 	{
 		// Code size: 68 (0x44)
-		if (table.Type == TableType.Business || table.Type == TableType.Lexicon)
-		{
+		if (table.Type == TableType.Business || table.Type == TableType.Lexicon) 
 			return new List<Column>(1) { table.Columns[0] };
-		}
-		else
-		{
-			var index = table.GetFirstUniqueIndex();
-			if (index is not null) return new List<Column>(index.Columns);
-		}
-		return EmptyColumnList;
+
+		var index = table.GetFirstUniqueIndex();
+		return index is not null ? new List<Column>(index.Columns) : EmptyColumnList;
 	}
 
 	internal static bool HasPrimaryKey(this Table table) => GetPrimaryKey(table).Count > 0;

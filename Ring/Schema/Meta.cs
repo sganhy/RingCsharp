@@ -431,9 +431,9 @@ internal readonly struct Meta : IEquatable<Meta>
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private static long WriteFlag(long flags, MetaFlag flag, bool value) => value ? flags | (long)flag : flags & (~((long)flag)); // Code size: 13 (0xd)
+	private static long WriteFlag(long flags, MetaFlag flag, bool value) => value ? flags | (long)flag : flags & (~(long)flag); // Code size: 12 (0xc)
 
-	private static Index[] GetIndexes(ReadOnlySpan<Meta> items)
+    private static Index[] GetIndexes(ReadOnlySpan<Meta> items)
 	{
 		// Code size: 150 (0x96)
 		// count element
@@ -677,7 +677,7 @@ internal readonly struct Meta : IEquatable<Meta>
 				{
 					// meta not define for the searchable field
 					if (!extraFields.ContainsKey(field.Name))
-						table.Columns[columnIndex] = (SetObjectType(meta, TimeZoneColumnId)).ToColumn(id, ddlBuilder.GetPhysicalName(EntityType.TimeZoneColumn,
+						table.Columns[columnIndex] = SetObjectType(meta, TimeZoneColumnId).ToColumn(id, ddlBuilder.GetPhysicalName(EntityType.TimeZoneColumn,
 							meta.Id.ToString(DefaultCulture)), recordIndex);
 					else table.Columns[columnIndex] = extraFields[field.Name].ToColumn(meta.Id, ddlBuilder.GetPhysicalName(EntityType.TimeZoneColumn,
 							meta.Id.ToString(DefaultCulture)), recordIndex);
