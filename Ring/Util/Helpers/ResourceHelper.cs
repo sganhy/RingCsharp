@@ -118,11 +118,11 @@ internal sealed class ResourceHelper
 
 	private static (string?[], string?[]) GetLogResource(string resourceNamespace, string fileName)
 	{
-		// Code size: 219 (0xdb)
+		// Code size: 223 (0xdf)
 		var resultMessage = GetCompressedResource(resourceNamespace, fileName, false);
 		if (resultMessage.Length == 0) return (resultMessage, Array.Empty<string?>());
 		var resultDesc = new string?[resultMessage.Length];
-		var strResourceEof = ResourceEof.ToString();
+		var strResourceEof = ResourceEndOfLine.ToString();
 		for (var i = 0; i < resultMessage.Length; ++i)
 		{
 			var message = resultMessage[i];
@@ -135,7 +135,7 @@ internal sealed class ResourceHelper
 				resultMessage[i] = mainText.Replace(ResourceEof, strResourceEof, StringComparison.Ordinal);
 				resultDesc[i] = descText.Replace(ResourceEof, strResourceEof, StringComparison.Ordinal);
 			}
-			else resultMessage[i] = message.Replace(ResourceEof, "\n", StringComparison.Ordinal);
+			else resultMessage[i] = message.Replace(ResourceEof, strResourceEof, StringComparison.Ordinal);
 		}
 		return (resultMessage, resultDesc);
 	}
