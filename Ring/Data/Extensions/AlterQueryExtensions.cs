@@ -1,14 +1,11 @@
 ﻿using Ring.Data.Enums;
 using Ring.Data.Models;
-using Ring.Util.Helpers;
-using System.Text;
+using Ring.Util.Extensions;
 
 namespace Ring.Data.Extensions;
 
 internal static class AlterQueryExtensions
 {
-	private const char HashCodeSeparator = (char)5555;
-
 	internal static string? ToSql(this AlterQuery query)
 	{
 		var builder = query.Builder;
@@ -21,35 +18,24 @@ internal static class AlterQueryExtensions
 		return null;
 	}
 
-	internal static int GetHashCode(this AlterQuery alterQuery)
+	internal static int Hash(this AlterQuery alterQuery)
 	{
-		HashHelper.Djb2X(alterQuery.GetStringCode(), out int hash);
-		return hash;
+		// // Code size: 24 (0x18)
+		var hash = new HashCode();
+		hash.AddAlterQuery(alterQuery);
+		return hash.ToHashCode();
 	}
 
-	internal static string GetStringCode(this AlterQuery alterQuery)
-	{
-        // Code size: 126 (0x7e)
-        /*
-		*  readonly int Id
-		*  readonly Table Table
-		*  readonly AlterQueryType Type
-		*  readonly IDdlBuilder Builder
-		*  readonly IColumn? Column
-		*  readonly Constraint? Constraint
-		*  readonly Index? Index
-		*  readonly TableSpace? TableSpace
-		*/
-        return new StringBuilder()
-			.Append(alterQuery.Id)
-			.Append(HashCodeSeparator)
-			.Append(alterQuery.Table.PhysicalName)
-			.Append(HashCodeSeparator)
-			.Append(alterQuery.Type.ToString())
-			.Append(HashCodeSeparator)
-			// ignore Builder
-			.Append(alterQuery.Column?.PhysicalName)
-			.Append(HashCodeSeparator).ToString();
-	}
 
+	/// <summary>
+	/// Determines if two AlterQuery instances have equivalent definitions,
+	/// regardless of whether they're the same object reference.
+	/// </summary>
+	internal static bool IsEquivalentTo(this AlterQuery alterQuery, AlterQuery? other)
+	{
+		if (!other.HasValue) return false;
+		var otherValue = other.Value;
+        if (alterQuery.Type != otherValue.Type || alterQuery.Table.Id != otherValue.Table.Id || alterQuery.Table.SchemaId == otherValue.Table.SchemaId) return false;
+		return true;
+    }
 }

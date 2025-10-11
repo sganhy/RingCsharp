@@ -15,7 +15,7 @@ internal sealed class ResourceHelper
 {
 	private static readonly object SyncRoot = new();
 	private static readonly string CompressedResourceSuffix = @".gz";
-	private static readonly string ResourceCrLf = @"|||";
+	private static readonly string ResourceEof = @"|||";
 	private static readonly string ResourceNameSpace = @"Ring.Util.Resources.";
 	private static readonly string MessageDescSplitChar = "#$";
 	private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
@@ -34,11 +34,11 @@ internal sealed class ResourceHelper
 
 	internal static string GetErrorMessage(ResourceType resourceType) 
 	{
-		// Code size: 69 (0x45)
+		// Code size: 53 (0x35)
 		if (!_resourcesLoaded) LoadResources();
-		var message = string.Empty;
-		if ((int)resourceType <= _logMessages.Length) message= _logMessages[(int)resourceType - 1] ?? string.Empty;
-		return message.Replace(ResourceCrLf, ResourceEndOfLine.ToString());
+		var index = (int)resourceType - 1;
+		if (index < 0 || index >= _logMessages.Length) return string.Empty;
+		return _logMessages[index] ?? string.Empty;
 	}
 		
 #pragma warning disable CA1822, S2325 // Mark members as static
@@ -52,10 +52,10 @@ internal sealed class ResourceHelper
 
 	internal static Parameter GetParameter(ParameterType parameterType)
 	{
-		// Code size: 78 (0x4e)
+		// Code size: 70 (0x46)
 		var parameterTypeId = (int)parameterType;
 		if (!_parameterLoaded) LoadParameters();
-		if (_parameters.ContainsKey(parameterTypeId)) return _parameters[parameterTypeId];
+		if (_parameters.TryGetValue(parameterTypeId, out var parameter)) return parameter;
 		throw new ArgumentException(string.Format(DefaultCulture, GetErrorMessage(ResourceType.WrongParameterType), parameterType.ToString()));
 	}
 
@@ -75,8 +75,6 @@ internal sealed class ResourceHelper
 
 	#region private methods
 
-	private static string? GetValue(ReadOnlySpan<string?> values, int index) => index < values.Length ? values[index] : null;
-
 	private static void LoadResources()
 	{
 		// Code size: 100 (0x64)
@@ -88,91 +86,73 @@ internal sealed class ResourceHelper
 				(_logMessages, _logDescriptions) = GetLogResource(ResourceNameSpace, resourceFile);
 				_resourcesLoaded = true;
 			}
-			
 		}
 	}
 
 	private static void LoadParameters()
 	{
-		// Code size: 322 (0x142)
+		// Code size: 280 (0x118)
 		lock (SyncRoot)
 		{
 			if (!_parameterLoaded)
 			{
 				var resourceFile = EntityType.Parameter.ToString() + CompressedResourceSuffix;
-				var parameters = new ReadOnlySpan<string?>(GetCompressedResource(ResourceNameSpace, resourceFile, false));
-				_parameters = new Dictionary<int, Parameter>(parameters.Length*2);
+				var parameters = GetCompressedResource(ResourceNameSpace, resourceFile, false);
+				_parameters = new Dictionary<int, Parameter>(parameters.Length);
 
-				foreach (var param in parameters)
+				foreach (var param in new ReadOnlySpan<string?>(parameters))
 				{
-					if (param is not null)
-					{
-						//eg. @version,Schema version,16,7, ==> 0=id, 1=name; 2=description; 3=fielType; 4=entityType; 5=defaultValue
-						var arr = new ReadOnlySpan<string?>(param.Split(','));
-						var id = int.Parse(arr[0] ?? string.Empty, CultureInfo.InvariantCulture);
-						var paramType = id.ToParameterType();
-						if (paramType != ParameterType.Undefined)
-						{
-							_parameters.Add(id, new Parameter((int)paramType, GetValue(arr, 1) ?? string.Empty, GetValue(arr, 2), paramType, GetValue(arr, 3).ToFieldType(),
-								string.Empty, GetValue(arr, 5), 0, GetValue(arr, 4).ToEntityType(), true, true));
-						} else throw new ArgumentException(); // force exception just during unitest run ! avoid to call LoadResource here (Recursive Exception Issue risk)
+					if (string.IsNullOrEmpty(param)) continue;
+					var parts = param.Split(',');
+					if (parts.Length < 6) continue;  // Skip malformed entries
 
-					}
+					if (!int.TryParse(parts[0], NumberStyles.None, CultureInfo.InvariantCulture, out var id)) continue;
+					var paramType = id.ToParameterType();
+					if (paramType == ParameterType.Undefined)  continue;
+					_parameters.Add(id, new Parameter( id, parts[1] ?? string.Empty, parts[2], paramType, parts[3].ToFieldType(), string.Empty, parts[5], 0, parts[4].ToEntityType(), true, true));
 				}
 			}
 			_parameterLoaded = true;
 		}
 	}
 
-	
-
 	private static (string?[], string?[]) GetLogResource(string resourceNamespace, string fileName)
 	{
-		// Code size: 148 (0x94)
-		string?[] resultMessage;
-		var resultDesc = Array.Empty<string?>();
-		resultMessage = GetCompressedResource(resourceNamespace, fileName, false);
-
-		// build a description array
-		if (resultMessage.Length > 0)
+		// Code size: 219 (0xdb)
+		var resultMessage = GetCompressedResource(resourceNamespace, fileName, false);
+		if (resultMessage.Length == 0) return (resultMessage, Array.Empty<string?>());
+		var resultDesc = new string?[resultMessage.Length];
+		var strResourceEof = ResourceEof.ToString();
+		for (var i = 0; i < resultMessage.Length; ++i)
 		{
-			resultDesc = new string[resultMessage.Length];
-			for (var i=0; i < resultMessage.Length; ++i)
+			var message = resultMessage[i];
+			if (string.IsNullOrEmpty(message)) continue;
+			var index = message.IndexOf(MessageDescSplitChar, StringComparison.Ordinal);
+			if (index >= 0)
 			{
-				var message = resultMessage[i];
-				resultMessage[i] = null;
-				resultDesc[i] = null;
-				if (!string.IsNullOrEmpty(message))
-				{
-					var index = message.IndexOf(MessageDescSplitChar, StringComparison.Ordinal);
-					if (index >= 0)
-					{
-						resultMessage[i] = message[..index];
-						resultDesc[i] = message[(index + 1)..];
-					}
-					else
-					{
-						resultMessage[i] = message;
-						resultDesc[i] = null;
-					}
-				}
+				var mainText = message[..index];
+				var descText = message[(index + MessageDescSplitChar.Length)..];
+				resultMessage[i] = mainText.Replace(ResourceEof, strResourceEof, StringComparison.Ordinal);
+				resultDesc[i] = descText.Replace(ResourceEof, strResourceEof, StringComparison.Ordinal);
 			}
+			else resultMessage[i] = message.Replace(ResourceEof, "\n", StringComparison.Ordinal);
 		}
 		return (resultMessage, resultDesc);
 	}
 
 	private static string?[] GetCompressedResource(string resourceNamespace, string fileName, bool toUpper)
 	{
-		// Code size: 136 (0x88)
+		// Code size: 114 (0x72)
 		var resource = resourceNamespace + fileName;
 		var assembly = Assembly.GetExecutingAssembly();
-		string?[] result = Array.Empty<string>();
 		using var stream = assembly.GetManifestResourceStream(resource);
-		if (stream is null) return result;
+		if (stream is null) return Array.Empty<string?>();
+
 		using var decompressionStream = new GZipStream(stream, CompressionMode.Decompress);
 		using var reader = new StreamReader(decompressionStream);
-		result = toUpper ? reader.ReadToEnd().ToUpper(CultureInfo.InvariantCulture).Split(ResourceEndOfLine) : reader.ReadToEnd().Split(ResourceEndOfLine);
-		return result;
+		var content = reader.ReadToEnd();
+		if (toUpper) content = content.ToUpperInvariant();
+		return content.Split(ResourceEndOfLine);
 	}
 
 	#endregion

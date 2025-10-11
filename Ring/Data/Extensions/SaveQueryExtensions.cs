@@ -11,8 +11,8 @@ internal static class SaveQueryExtensions
 
 	internal static int GetHashCode(this SaveQuery saveQuery)
 	{
-        // Code size: 15 (0xf)
-        HashHelper.Djb2X(saveQuery.GetStringCode(), out int hash);
+		// Code size: 15 (0xf)
+		var hash = 55;
 		return hash;
 	}
 

@@ -1,4 +1,7 @@
-﻿using Ring.Schema.Models;
+﻿using Ring.Data.Enums;
+using Ring.Data.Models;
+using Ring.Schema.Models;
+using Ring.Util.Builders;
 using System.Runtime.CompilerServices;
 using Index = Ring.Schema.Models.Index;
 
@@ -60,27 +63,48 @@ internal static class HashCodeExtensions
 		hashCode.Add(column.RecordIndex);
 	}
 
-	internal static void AddTable(this ref HashCode hashCode, Table table)
+    internal static void AddAlterQuery(this ref HashCode hashCode, AlterQuery alterQuery)
+    {
+        /*
+			int Id;
+			Table Table;
+			AlterQueryType Type;
+			IDdlBuilder Builder;
+			Column? Column;
+			Constraint? Constraint;
+			Index? Index;
+			TableSpace? TableSpace;
+		*/
+        //hashCode.Add(alterQuery.Id); // ==> nok
+        hashCode.Add(alterQuery.Table.Id); // pair of identification for a table
+        hashCode.Add(alterQuery.Table.SchemaId);
+        hashCode.Add((int)alterQuery.Type);
+		//hashCode.Add(alterQuery.Builder); // ==> nok
+		if (alterQuery.Column is not null) AddColumn(ref hashCode, alterQuery.Column);
+		if (alterQuery.Index is not null) AddIndex(ref hashCode, alterQuery.Index);
+    }
+
+    internal static void AddTable(this ref HashCode hashCode, Table table)
 	{
 		// Code size: 192 (0xc0)
 		/* table definition: 
-			internal readonly int ObjectIndex;
-			internal readonly bool Cached;
-			internal readonly Field[] Fields; // sorted by name.
-			internal readonly Relation[] Relations; // sorted by name.
-			internal readonly Index[] Indexes;
-			internal readonly int RecordSize;
-			internal readonly Column[] Columns;		 // mix Fields and Relations.
-			internal readonly PhysicalType PhysicalType;
-			internal readonly int SchemaId;
-			internal readonly string? Subject;
-			internal readonly TableType Type;
-			internal readonly CacheId CacheId;
-			internal readonly string PhysicalName;
-			internal readonly bool AllowHardDeletion;
-			internal readonly bool Readonly;
-			internal readonly bool UsePreparedStatement;
-			internal readonly bool AllowAttributeExtension; 
+			int ObjectIndex;
+			bool Cached;
+			Field[] Fields; // sorted by name.
+			Relation[] Relations; // sorted by name.
+			Index[] Indexes;
+			int RecordSize;
+			Column[] Columns;		 // mix Fields and Relations.
+			PhysicalType PhysicalType;
+			int SchemaId;
+			string? Subject;
+			TableType Type;
+			CacheId CacheId;
+			string PhysicalName;
+			bool AllowHardDeletion;
+			bool Readonly;
+			bool UsePreparedStatement;
+			bool AllowAttributeExtension; 
 		*/
 		AddBaseEntity(ref hashCode, table);
 		// Table-specific properties

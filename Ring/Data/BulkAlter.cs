@@ -8,7 +8,6 @@ using Ring.Util.Enums;
 using Ring.Util.Helpers;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
-using System.Runtime.CompilerServices;
 using Database = Ring.Schema.Models.Schema;
 using Index = Ring.Schema.Models.Index;
 
@@ -145,20 +144,17 @@ internal struct BulkAlter : IEquatable<BulkAlter>
 		}
 	}
 
-	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
 	private static void ThrowInvalidObjectType(string objectType) =>
 		throw new ArgumentException(string.Format(DefaultCulture,
 				  ResourceHelper.GetErrorMessage(ResourceType.BulkAlterInvalidTableName), objectType));
 
 	//TODO - create a specific message for invalid index name
-	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
 	private static void ThrowInvalidIndexName(string objectType, string indexName) =>
 		throw new ArgumentException(string.Format(DefaultCulture,
 				ResourceHelper.GetErrorMessage(ResourceType.BulkAlterInvalidTableName), objectType));
 
-	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
 	private static void ThrowInvalidFieldName(string objectType, string fieldName) =>
 		throw new ArgumentException(string.Format(DefaultCulture,
@@ -226,9 +222,9 @@ internal struct BulkAlter : IEquatable<BulkAlter>
 	private static int GetHashCode(BulkAlter bulkAlter)
 	{
 		var span = bulkAlter._queries.AsReadOnlySpan();
-		var hash = 0;
-		foreach (var query in span) hash += AlterQueryExtensions.GetHashCode(query);
-		return hash;
+		var hash = new HashCode();
+		foreach (var query in span) hash.Add(query.GetHashCode());
+		return hash.ToHashCode();
 	}
 
 	#endregion

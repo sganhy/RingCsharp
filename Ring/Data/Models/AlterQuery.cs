@@ -1,13 +1,12 @@
 ﻿using Ring.Data.Enums;
-using Ring.Schema;
+using Ring.Data.Extensions;
 using Ring.Schema.Models;
-using Index = Ring.Schema.Models.Index;
 using Ring.Util.Builders;
+using Index = Ring.Schema.Models.Index;
 
 namespace Ring.Data.Models;
 
-#pragma warning disable CA1815 // Override equals and operator equals on value types
-public readonly struct AlterQuery
+public readonly struct AlterQuery : IEquatable<AlterQuery>
 {
 #pragma warning restore CA1815
 	internal readonly int Id;
@@ -20,22 +19,9 @@ public readonly struct AlterQuery
 	internal readonly TableSpace? TableSpace;
 
 	/// <summary>
-	/// Ctor
+	/// 	Ctor
 	/// </summary>
-	public AlterQuery()
-	{
-		Id = -1;
-		Table = Meta.GetDefaultTable(new Meta(string.Empty));
-		Type = AlterQueryType.Undefined;
-		Builder = new Util.Builders.PostgreSQL.DdlBuilder();
-		Column = null;
-		Constraint = null;
-		Index = null;
-		TableSpace = null;
-	}
-
-	internal AlterQuery(int id, Table table, AlterQueryType type, IDdlBuilder builder, Column? column, Constraint? constraint, 
-		Index? index, TableSpace? tableSpace)
+	internal AlterQuery(int id, Table table, AlterQueryType type, IDdlBuilder builder, Column? column, Constraint? constraint, Index? index, TableSpace? tableSpace)
 	{
 		Id = id;
 		Table = table;
@@ -46,6 +32,12 @@ public readonly struct AlterQuery
 		Index = index;
 		TableSpace = tableSpace;
 	}
+
+	public static bool operator ==(AlterQuery left, AlterQuery right) => left.Equals(right);
+	public static bool operator !=(AlterQuery left, AlterQuery right) => !left.Equals(right);
+	public override bool Equals(object? obj) => obj is AlterQuery field && Equals(field);
+	public bool Equals(AlterQuery other) => this.IsEquivalentTo(other);
+	public override int GetHashCode() => this.Hash();
 
 #if DEBUG
 	public override string ToString() => $"{Id} - {Type}";

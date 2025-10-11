@@ -52,7 +52,7 @@ public readonly struct BulkSave : IBulkSave
 	public int CountByType(string? objectType)
 	{
 		var result = 0;
-		if (objectType is null)
+		if (objectType is not null)
 		{
 			var count = _info.Queries.Count;
 			for (var i = 0; i < count; ++i)

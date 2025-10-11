@@ -865,6 +865,10 @@ internal readonly struct Meta : IEquatable<Meta>
 		return meta.ToRelation(mtmTable);
 	}
 
+	/// <summary>
+	/// Returns appropriate CacheId based on table type.
+	/// Business tables get a new CacheId, others get default.
+	/// </summary>
 	private static CacheId GetCacheId(TableType tableType)
 	{
 		return tableType == TableType.Business? new CacheId() : DefaulCacheId;
