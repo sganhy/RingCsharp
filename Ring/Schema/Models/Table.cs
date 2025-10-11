@@ -27,8 +27,8 @@ internal sealed class Table : BaseEntity, IEquatable<Table>
 	/// 	Ctor
 	/// </summary>
 	internal Table(int id, string name, string? description, string? subject, string physicalName, TableType type, Relation[] relations,
-		Field[] fields, Column[] columns, Index[] indexes, int schemaId, PhysicalType physicalType, int objectIndex, int recordSize, bool baseline,
-		bool active, bool cached, bool allowHardDeletion, bool readonlyTable, bool usePreparedStatement, bool allowAttributeExtension) 
+		Field[] fields, Column[] columns, Index[] indexes, int schemaId, PhysicalType physicalType, int objectIndex, int recordSize, CacheId cacheId,
+		bool baseline, bool active, bool cached, bool allowHardDeletion, bool readonlyTable, bool usePreparedStatement, bool allowAttributeExtension) 
 		: base(id, name, description, baseline, active)
 	{
 		Type = type;
@@ -39,7 +39,7 @@ internal sealed class Table : BaseEntity, IEquatable<Table>
 		Indexes = indexes;
 		Readonly = readonlyTable;
 		Subject = subject;
-		CacheId = new CacheId();
+		CacheId = cacheId;
 		SchemaId = schemaId;
 		PhysicalType = physicalType;
 		Cached = cached;

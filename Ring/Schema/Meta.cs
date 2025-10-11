@@ -40,7 +40,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	private const byte BitPositionFirstPositionRelType = 18;
 	private static readonly FieldType DefaultColumnFieldType = FieldType.Long;
 	private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
-
+	private static readonly CacheId DefaulCacheId = new(-1L,long.MinValue,0);
 	#endregion
 
 	// minimizing data padding by field reordering - total: ~46 bytes + heap allocations for strings
@@ -215,7 +215,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	internal static Table GetDefaultTable(Meta meta) // Code size: 103 (0x67)
 		=> new(meta.Id, meta.Name, meta.Description, meta.Value, string.Empty,
 			meta.DataType.ToTableType(), Array.Empty<Relation>(), Array.Empty<Field>(), Array.Empty<Column>(),
-			Array.Empty<Index>(), meta.ReferenceId, PhysicalType.Table, -1, 0, meta.IsEntityBaseline(), meta.Active,
+			Array.Empty<Index>(), meta.ReferenceId, PhysicalType.Table, -1, 0, DefaulCacheId, meta.IsEntityBaseline(), meta.Active,
 			meta.IsTableCached(), true, meta.IsTableReadonly(), meta.HasPreparedStatement(), meta.IsTableAllowAttributeExtension());
 
 	internal static Index GetDefaultIndex(Meta meta) // Code size: 64 (0x40)
@@ -313,7 +313,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	/// </summary>
 	internal Table? ToTable(ReadOnlySpan<Meta> tableItems, PhysicalType physicalType, IDdlBuilder ddlBuilder, string physicalName, int objectIndex)
 	{
-		// Code size: 283 (0x11b)
+		// Code size: 289 (0x121)
 		if (IsTable)
 		{
 			var tableType = DataType.ToTableType();
@@ -327,8 +327,9 @@ internal readonly struct Meta : IEquatable<Meta>
 			fields.AsSpan().Sort((x, y) => string.CompareOrdinal(x.Name, y.Name));
 			indexes.AsSpan().Sort((x, y) => string.CompareOrdinal(x.Name, y.Name));
 			
-			var table = new Table(Id, Name, Description, Value, physicalName, tableType, relations, fields, new Column[colCount], indexes, ReferenceId, physicalType, objectIndex, 
-				recordSize, IsEntityBaseline(), Active, IsTableCached(), IsPhysicalDeletion(), IsTableReadonly(), HasPreparedStatement(), IsTableAllowAttributeExtension());
+			var table = new Table(Id, Name, Description, Value, physicalName, tableType, relations, fields, new Column[colCount], indexes, ReferenceId, physicalType, 
+				objectIndex, recordSize, GetCacheId(tableType), IsEntityBaseline(), Active, IsTableCached(), IsPhysicalDeletion(), IsTableReadonly(), 
+				HasPreparedStatement(), IsTableAllowAttributeExtension());
 
 			// load relations later, we need full schema to create relations
 			// load columns
@@ -862,6 +863,11 @@ internal readonly struct Meta : IEquatable<Meta>
 	{
 		var meta = relation.ToMeta(0);
 		return meta.ToRelation(mtmTable);
+	}
+
+	private static CacheId GetCacheId(TableType tableType)
+	{
+		return tableType == TableType.Business? new CacheId() : DefaulCacheId;
 	}
 
 	private static int ColumnComparer(Column col1, Column col2)

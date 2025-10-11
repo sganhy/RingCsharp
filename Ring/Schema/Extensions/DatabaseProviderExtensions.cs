@@ -8,11 +8,11 @@ namespace Ring.Schema.Extensions;
 internal static class DatabaseProviderExtensions
 {
 	// reserved key words 
-	private static readonly Lazy<HashSet<string>> OracleWords = new(() => ResourceHelper.GetReservedWords(DatabaseProvider.Oracle), true); 
-	private static readonly Lazy<HashSet<string>> PostgreSqlWords = new(() => ResourceHelper.GetReservedWords(DatabaseProvider.PostgreSql), true);
-	private static readonly Lazy<HashSet<string>> MySqlWords = new(() => ResourceHelper.GetReservedWords(DatabaseProvider.MySql), true);
-	private static readonly Lazy<HashSet<string>> SqlServerWords = new(() => ResourceHelper.GetReservedWords(DatabaseProvider.SqlServer), true);
-	private static readonly Lazy<HashSet<string>> SqlLiteWords = new(() => ResourceHelper.GetReservedWords(DatabaseProvider.SqlLite), true);
+	private static readonly Lazy<HashSet<string>> OracleWords = new(() => new(ResourceHelper.GetReservedWords(DatabaseProvider.Oracle), StringComparer.OrdinalIgnoreCase), true);
+	private static readonly Lazy<HashSet<string>> PostgreSqlWords = new(() => new(ResourceHelper.GetReservedWords(DatabaseProvider.PostgreSql), StringComparer.OrdinalIgnoreCase), true);
+	private static readonly Lazy<HashSet<string>> MySqlWords = new(() => new(ResourceHelper.GetReservedWords(DatabaseProvider.MySql), StringComparer.OrdinalIgnoreCase), true);
+	private static readonly Lazy<HashSet<string>> SqlServerWords = new(() => new(ResourceHelper.GetReservedWords(DatabaseProvider.SqlServer), StringComparer.OrdinalIgnoreCase), true);
+	private static readonly Lazy<HashSet<string>> SqlLiteWords = new(() => new(ResourceHelper.GetReservedWords(DatabaseProvider.SqlLite), StringComparer.OrdinalIgnoreCase), true);
 
 	// catalogs
 	private static readonly Dictionary<EntityType, Catalog> PostreSqlCatalog = new() {
@@ -63,17 +63,14 @@ internal static class DatabaseProviderExtensions
 
 	internal static bool IsReservedWord(this DatabaseProvider provider, string word)
 	{
-		// Code size: 150 (0x96)
-		//var currentWord = word.ToUpperInvariant();  // removed memory allocation on heap
-		if (string.IsNullOrEmpty(word)) return false;
-		var upperWord = word.ToUpperInvariant();
+		// Code size: 133 (0x85)
 		switch (provider)
 		{
-			case DatabaseProvider.Oracle: return OracleWords.Value.Contains(upperWord);
-			case DatabaseProvider.PostgreSql: return PostgreSqlWords.Value.Contains(upperWord);
-			case DatabaseProvider.MySql: return MySqlWords.Value.Contains(upperWord);
-			case DatabaseProvider.SqlServer: return SqlServerWords.Value.Contains(upperWord);
-			case DatabaseProvider.SqlLite: return SqlLiteWords.Value.Contains(upperWord);
+			case DatabaseProvider.Oracle: return OracleWords.Value.Contains(word);
+			case DatabaseProvider.PostgreSql: return PostgreSqlWords.Value.Contains(word);
+			case DatabaseProvider.MySql: return MySqlWords.Value.Contains(word);
+			case DatabaseProvider.SqlServer: return SqlServerWords.Value.Contains(word);
+			case DatabaseProvider.SqlLite: return SqlLiteWords.Value.Contains(word);
 		}
 		throw new NotImplementedException();
 	}

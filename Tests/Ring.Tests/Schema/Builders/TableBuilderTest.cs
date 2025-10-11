@@ -16,13 +16,13 @@ public class TableBuilderTest
     internal void GetMeta_AnonymousSchema_MetaTableObject()
     {
         // arrange 
-        var schemaName = "Test";
+        var schemaName = "Test1";
 
         // act 
         var metaTable = _sut.GetMeta(schemaName, DatabaseProvider.PostgreSql);
 
         // assert
-        Assert.Equal("test.\"@meta\"", metaTable.PhysicalName);
+        Assert.Equal("test1.\"@meta\"", metaTable.PhysicalName);
         Assert.Equal(10, metaTable.Fields.Length);
         Assert.Equal(TableType.Meta, metaTable.Type);
         Assert.True(metaTable.Baseline);
@@ -42,11 +42,9 @@ public class TableBuilderTest
         Assert.NotNull(metaTable.GetField("description"));
         Assert.NotNull(metaTable.GetField("value"));
         Assert.NotNull(metaTable.GetField("active"));
-
         Assert.NotNull(metaTable.GetColumn("id"));
         Assert.NotNull(metaTable.GetColumn("schema_id"));
         Assert.NotNull(metaTable.GetColumn("object_type"));
-
         Assert.Equal("id", metaTable.Fields[metaTable.Columns[0].RecordIndex].Name);
         Assert.Equal("schema_id", metaTable.Fields[metaTable.Columns[1].RecordIndex].Name);
         Assert.Equal("object_type", metaTable.Fields[metaTable.Columns[2].RecordIndex].Name);
@@ -64,16 +62,22 @@ public class TableBuilderTest
     internal void GetMetaId_AnonymousSchema_MetaIdTableObject()
     {
         // arrange 
-        var schemaName = "Test";
+        var schemaName = "Test2";
 
         // act 
         var metaIdTable = _sut.GetMetaId(schemaName, DatabaseProvider.PostgreSql);
 
         // assert
-        Assert.Equal("test.\"@meta_id\"", metaIdTable.PhysicalName);
+        Assert.True(metaIdTable.Baseline);
+        Assert.True(metaIdTable.Cached);
+        Assert.True(metaIdTable.Readonly);
+        Assert.True(metaIdTable.Active);
+        Assert.False(metaIdTable.AllowHardDeletion);
+        Assert.True(metaIdTable.UsePreparedStatement);
+        Assert.False(metaIdTable.AllowAttributeExtension);
+        Assert.Equal("test2.\"@meta_id\"", metaIdTable.PhysicalName);
         Assert.Equal(TableType.MetaId, metaIdTable.Type);
         Assert.Equal(4, metaIdTable.Fields.Length);
-        Assert.True(metaIdTable.Baseline);
         Assert.NotNull(metaIdTable.GetField("id"));
         Assert.NotNull(metaIdTable.GetField("schema_id"));
         Assert.NotNull(metaIdTable.GetField("object_type"));
