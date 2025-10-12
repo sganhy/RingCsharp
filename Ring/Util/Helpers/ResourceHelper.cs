@@ -42,12 +42,14 @@ internal sealed class ResourceHelper
 	}
 		
 #pragma warning disable CA1822, S2325 // Mark members as static
-	internal string GetMessage(ResourceType resourceType)
-		=> ((int)resourceType <= _logMessages.Length) ? _logMessages[(int)resourceType - 1] : null;
-	internal string? GetMessage(LogType logType)
-		=> ((int)logType <= _logMessages.Length) ? _logMessages[(int)logType - 1] : null;
-	internal string? GetDescription(LogType logType) 
-		=> ((int)logType <= _logDescriptions.Length) ? _logDescriptions[(int)logType - 1] : null;
+
+	internal string GetMessage(ResourceType resourceType) // Code size: 22 (0x16)
+        => ((int)resourceType <= _logMessages.Length) ? _logMessages[(int)resourceType - 1] : null;
+	internal string? GetMessage(LogType logType) // Code size: 22 (0x16)
+        => ((int)logType <= _logMessages.Length) ? _logMessages[(int)logType - 1] : null;
+	internal string? GetDescription(LogType logType) // Code size: 22 (0x16)
+        => ((int)logType <= _logDescriptions.Length) ? _logDescriptions[(int)logType - 1] : null;
+
 #pragma warning restore S2325, CA1822 // Mark members as static
 
 	internal static Parameter GetParameter(ParameterType parameterType)
@@ -91,8 +93,8 @@ internal sealed class ResourceHelper
 
 	private static void LoadParameters()
 	{
-        // Code size: 282 (0x11a)
-        lock (SyncRoot)
+		// Code size: 282 (0x11a)
+		lock (SyncRoot)
 		{
 			if (!_parameterLoaded)
 			{

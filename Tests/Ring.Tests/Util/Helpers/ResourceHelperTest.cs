@@ -1,13 +1,18 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Util.Enums;
 using Ring.Util.Helpers;
+using Xunit.Abstractions;
 
 namespace Ring.Tests.Util.Helpers;
 
-public sealed class ResourceHelperTest
+public sealed class ResourceHelperTest : BaseTest
 {
+    private readonly ResourceHelper _sut;
 
-   
+    public ResourceHelperTest(ITestOutputHelper output) : base(output) 
+    {
+        _sut = new ResourceHelper();
+    }
 
     [Fact]
     public void GetErrorMessage_RecordValueTooLarge_Message()
@@ -43,6 +48,20 @@ public sealed class ResourceHelperTest
 
         // act 
         var result = ResourceHelper.GetErrorMessage(ResourceType.UnRepresentableDateTime);
+
+        // assert
+        Assert.Equal(expectedValue, result);
+    }
+
+    [Fact]
+    public void GetErrorMessage_RecordUnkownRecordType_Message()
+    {
+        // check multiline message
+        // arrange  
+        var expectedValue = "This Record object has an unknown RecordType.  The RecordType \nproperty must be set before performing this operation.";
+
+        // act 
+        var result = _sut.GetMessage(ResourceType.RecordUnkownRecordType);
 
         // assert
         Assert.Equal(expectedValue, result);
@@ -103,4 +122,16 @@ public sealed class ResourceHelperTest
         Assert.Equal("Unsupported parameter type : Undefined.", ex.Message);
     }
 
+    [Fact]
+    public void GetDescription_FileNotFound_Description()
+    {
+        // arrange 
+        var expectedValue = "File '{0}' not found.";
+
+        // act 
+        var result = _sut.GetDescription(LogType.FileNotFound);
+
+        // assert
+        Assert.Equal(expectedValue, result);
+    }
 }
