@@ -91,14 +91,14 @@ internal sealed class ResourceHelper
 
 	private static void LoadParameters()
 	{
-		// Code size: 280 (0x118)
-		lock (SyncRoot)
+        // Code size: 282 (0x11a)
+        lock (SyncRoot)
 		{
 			if (!_parameterLoaded)
 			{
 				var resourceFile = EntityType.Parameter.ToString() + CompressedResourceSuffix;
 				var parameters = GetCompressedResource(ResourceNameSpace, resourceFile, false);
-				_parameters = new Dictionary<int, Parameter>(parameters.Length);
+				_parameters = new Dictionary<int, Parameter>(parameters.Length*2);
 
 				foreach (var param in new ReadOnlySpan<string?>(parameters))
 				{
