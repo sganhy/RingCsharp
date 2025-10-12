@@ -7,7 +7,7 @@ internal enum SchemaTemplateAttributeType : short
 	BaseLine = 2,
 	ReadOnly = 3,
 	Cached = 4,
-    Type = 5,
+	Type = 5,
 	Size = 6,
 	CaseSensitive = 7,
 	NotNull = 8,
@@ -18,5 +18,6 @@ internal enum SchemaTemplateAttributeType : short
 	Unique = 13,
 	Parent = 22,
 	Value = 23,
+	Attribute = 24,
 	Undefined = short.MaxValue
 }

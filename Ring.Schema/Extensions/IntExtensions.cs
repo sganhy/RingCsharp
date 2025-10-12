@@ -23,14 +23,14 @@ internal static class IntExtensions
 	private const int XmlAttributeUniqueId = (int)SchemaTemplateAttributeType.Unique;
 	private const int XmlAttributeParentId = (int)SchemaTemplateAttributeType.Parent;
 	private const int XmlAttributeValueId = (int)SchemaTemplateAttributeType.Value;
-
+	private const int XmlAttributeAttributeId = (int)SchemaTemplateAttributeType.Attribute;
 
 	#endregion
 
 	internal static SchemaTemplateAttributeType ToXmlSchemaAttributeType(this int xmlAttributeId)
 	{
-		// Code size: 146 (0x92)
-		switch (xmlAttributeId)
+        // Code size: 156 (0x9c)
+        switch (xmlAttributeId)
 		{
 			case XmlAttributeId: return SchemaTemplateAttributeType.Id;
 			case XmlAttributeNameId: return SchemaTemplateAttributeType.Name;
@@ -48,6 +48,7 @@ internal static class IntExtensions
 			case XmlAttributeUniqueId: return SchemaTemplateAttributeType.Unique;
 			case XmlAttributeParentId: return SchemaTemplateAttributeType.Parent;
 			case XmlAttributeValueId: return SchemaTemplateAttributeType.Value;
+			case XmlAttributeAttributeId: return SchemaTemplateAttributeType.Attribute;
 		}
 		return SchemaTemplateAttributeType.Undefined;
 	}

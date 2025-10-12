@@ -31,6 +31,4 @@ internal sealed class Column : IEquatable<Column>
 #if DEBUG
 	public override string ToString() => $"{Id} - {PhysicalName}";
 #endif
-
-
 }

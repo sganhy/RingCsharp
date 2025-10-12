@@ -10,8 +10,8 @@ internal static class XmlReaderExtensions
 	/// </summary>
 	internal static void LoadAttributes(this XmlReader reader, Dictionary<string,string> values, bool nameSpaceIncluded = true)
 	{
-        // Code size: 64 (0x40)
-        if (!reader.HasAttributes) return;
+		// Code size: 64 (0x40)
+		if (!reader.HasAttributes) return;
 		reader.MoveToFirstAttribute();
 		do
 		{
