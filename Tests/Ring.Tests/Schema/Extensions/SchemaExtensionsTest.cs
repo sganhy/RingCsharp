@@ -14,7 +14,7 @@ public class SchemaExtensionsTest : BaseTest
     public SchemaExtensionsTest(ITestOutputHelper output) : base(output)
     {
         var metaList = GetSchema1();
-        var meta = new Meta("Test");
+        var meta = Meta.Create("Test");
         _schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql) ?? 
             Meta.GetDefaultSchema(meta, DatabaseProvider.PostgreSql);
     }

@@ -54,7 +54,6 @@ internal readonly struct Meta : IEquatable<Meta>
 	internal readonly byte ObjectType;		// 1 byte  (offset 44) -->
 	internal readonly bool Active;
 
-	internal Meta(string name) : this(default, default, default, default, default, name, null, default, true) {}
 	internal Meta(int id, byte objectType, int referenceId, int dataType, long flags, string name, string? description, string? value, bool active)
 	{
 		Id = id;
@@ -222,16 +221,16 @@ internal readonly struct Meta : IEquatable<Meta>
 		=> new(meta.Id, meta.Name, meta.Description, meta.GetIndexedColumns(), meta.Value ?? string.Empty, meta.IsIndexUnique(), 
 			meta.IsIndexBitmap(), meta.Active, meta.IsEntityBaseline());
 
-	internal static Relation GetDefaultRelation(Meta meta, RelationType relationType, TableType toTableType)
+	internal static Relation GetDefaultRelation(Meta meta, RelationType relationType, TableType toTableType) // Code size: 56 (0x38)
 		=> new(meta.Id, meta.Name, meta.Description, relationType,
 			GetDefaultTable(new Meta(0, (byte)EntityType.Table, 0, (int)toTableType, 0L,
 			meta.Name,null, null, false)), FieldType.Undefined, false, false, true, true);
 
-	internal static Field GetDefaultField(Meta meta, FieldType fieldType)
+	internal static Field GetDefaultField(Meta meta, FieldType fieldType) // Code size: 33 (0x21)
 		=> new(meta.Id, meta.Name, meta.Description, fieldType, 0, null, SearchableType.None, true, false, false, true, true);
 
-	internal static Meta Create(int id,in Meta meta)
-		=> new(id, meta.ObjectType, meta.ReferenceId, meta.DataType, meta.Flags, meta.Name, meta.Description, meta.Value, meta.Active);
+	internal static Meta Create(int id,in Meta meta) => new(id, meta.ObjectType, meta.ReferenceId, meta.DataType, meta.Flags, meta.Name, meta.Description, meta.Value, meta.Active);
+	internal static Meta Create(string name) => new(default, default, default, default, default, name, null, null, true);
 
 	internal EntityType GetEntityType() => ((int)ObjectType).ToEntityType();
 
@@ -524,6 +523,7 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	private static Meta? GetSchema(Span<Meta> schema)
 	{
+		// Code size: 82 (0x52)
 		var i = 0;
 		var count = schema.Length;
 		while (i<count)
@@ -856,11 +856,12 @@ internal readonly struct Meta : IEquatable<Meta>
 		}
 	}
 
-	private static Meta SetObjectType(Meta meta, byte objectType) =>
+	private static Meta SetObjectType(Meta meta, byte objectType) => // Code size: 55 (0x37)
 		new (meta.Id, objectType, meta.ReferenceId, meta.DataType, meta.Flags, meta.Name, meta.Description, meta.Value, meta.Active);
 
 	private static Relation CreateMtmRelation(Relation relation, Table mtmTable, IDdlBuilder ddlBuilder)
 	{
+		// Code size: 26 (0x1a)
 		var meta = relation.ToMeta(0);
 		return meta.ToRelation(mtmTable);
 	}
@@ -871,11 +872,13 @@ internal readonly struct Meta : IEquatable<Meta>
 	/// </summary>
 	private static CacheId GetCacheId(TableType tableType)
 	{
+		// Code size: 16 (0x10)
 		return tableType == TableType.Business? new CacheId() : DefaulCacheId;
 	}
 
 	private static int ColumnComparer(Column col1, Column col2)
 	{
+		// Code size: 56 (0x38)
 		// sort ASC by ID, then by Entity Type depend on weight see ColumnTypeWeight()
 		var result = col1.Id.CompareTo(col2.Id);
 		if (result != 0) return result;

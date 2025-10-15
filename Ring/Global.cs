@@ -84,7 +84,7 @@ internal static class Global
 		_schemas = new DbSchema[_currentMaxNumberOfSchema+1];
 	}
 
-	internal static DbSchema DefaultSchema => _defaultSchema ?? Meta.GetDefaultSchema(new Meta(string.Empty),DatabaseProvider.SqlLite); // Code size: 27 (0x1b) - DatabaseProvider cannot be undefined !!!!
+	internal static DbSchema DefaultSchema => _defaultSchema ?? Meta.GetDefaultSchema(Meta.Create(string.Empty),DatabaseProvider.SqlLite); // Code size: 27 (0x1b) - DatabaseProvider cannot be undefined !!!!
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static bool IsSchemaDefault(DbSchema schema) => ReferenceEquals(schema,_defaultSchema); // Code size: 9 (0x9)
@@ -117,7 +117,7 @@ internal static class Global
 	internal static Table? GetTable(string? schemaName, string tableName)
 	{
 		// Code size: 43 (0x2b) - DatabaseProvider cannot be undefined !!!!
-		var schema = schemaName is not null ? GetSchema(schemaName) ?? Meta.GetDefaultSchema(new Meta(string.Empty), DatabaseProvider.SqlLite) : DefaultSchema;  
+		var schema = schemaName is not null ? GetSchema(schemaName) ?? Meta.GetDefaultSchema(Meta.Create(string.Empty), DatabaseProvider.SqlLite) : DefaultSchema;
 		return schema.GetTable(tableName);
 	}
 

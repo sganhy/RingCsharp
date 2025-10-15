@@ -86,7 +86,8 @@ internal sealed class ResourceHelper
 			if (reader.NodeType == XmlNodeType.EndElement)
 			{
 				var item = new SchemaTemplateItem(entityType, startTage, parent, string.Empty, string.Empty, attributes.ToArray());
-				subResult.Add(item);
+				parent = string.Empty;
+                subResult.Add(item);
 			}
 		}
 		return new SchemaTemplate(documentType, subResult.ToArray());

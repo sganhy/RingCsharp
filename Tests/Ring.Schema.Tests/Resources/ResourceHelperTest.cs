@@ -48,5 +48,7 @@ public sealed class ResourceHelperTest
         Assert.Equal("index", template.Items[3].Tag); // INDEX
         Assert.Equal("index_list", template.Items[3].ParentTag);
         Assert.Equal(2, template.Items[3].Attributes.Length);
+        Assert.Equal("schema", template.Items[4].Tag); // SCHEMA
+        Assert.Equal("", template.Items[4].ParentTag);
     }
 }

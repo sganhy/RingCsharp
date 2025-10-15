@@ -6,10 +6,11 @@ using Document = Ring.Schema.Models.Document;
 using ResourceHelper = Ring.Schema.Helpers.ResourceHelper;
 using System.Xml;
 using Ring.Schema.Models;
+using Ring.Schema.Extensions;
 
 namespace Ring.Schema.Builders;
 
-internal sealed class DocumentBuilder
+public sealed class DocumentBuilder
 {
     internal string FilePath { get; set; }
     private int _schemaId = -1;
@@ -29,7 +30,7 @@ internal sealed class DocumentBuilder
     /// </summary>
     public DocumentBuilder(string filePath) => FilePath = filePath ?? string.Empty;
 
-    internal ValueTask<int> GetMetaCountAsync(SchemaTemplate template, CancellationToken cancellationToken = default)
+    internal ValueTask<int> GetMetaCountAsync(SchemaTemplate template, Dictionary<string, string> tagDico, CancellationToken cancellationToken = default)
     {
         // Code size: 64 (0x40)
         var readerSettings = new XmlReaderSettings
@@ -37,7 +38,8 @@ internal sealed class DocumentBuilder
             IgnoreWhitespace = true,
             CheckCharacters = false,
             IgnoreComments = true,
-            Async = true
+            Async = true,
+
         };
 
         return Core();
@@ -55,30 +57,38 @@ internal sealed class DocumentBuilder
                     cancellationToken.ThrowIfCancellationRequested();
                     if (xmlReader.NodeType == XmlNodeType.Element)
                     {
-
+                        if (tagDico.TryGetValue(xmlReader.Name, out var parent))
+                        {
+                            
+                            ++result;
+                        }
                     }
-                    
                 }
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 return 0;
             }
+            catch (XmlException xmlEx)
+            {
 
+                return 0;
+            }
             return result;
         }
     }
 
-    internal async Task<Document> GetDocumentAsync(DocumentType documentType, CancellationToken cancellationToken = default)
+    public async Task<Document> GetDocumentAsync(DocumentType documentType, CancellationToken cancellationToken = default)
     {
         Reset(); // reset values
         if (File.Exists(FilePath))
         {
             // load template
             var template = ResourceHelper.GetSchemaTemplate(documentType);
-            if (template != null)
+            if (template is not null)
             {
-                var metaCount = await GetMetaCountAsync(template, cancellationToken).ConfigureAwait(false);
+                var tagDico = template.ToTagDictionary(StringComparer.Ordinal);
+                var metaCount = await GetMetaCountAsync(template, tagDico, cancellationToken).ConfigureAwait(false);
             }
         }
         else _logs.Add(_logBuilder.GetError(LogType.FileNotFound, FilePath));

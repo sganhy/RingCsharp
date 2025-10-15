@@ -147,9 +147,9 @@ public class RelationExtensionsTest : BaseTest
     internal void SetInverseRelation_Meta_RelationObject()
     {
         // arrange 
-        var meta1 = new Meta(_faker.Random.String());
-        var meta2 = new Meta(_faker.Random.String());
-        var meta3 = new Meta(_faker.Random.String());
+        var meta1 = Meta.Create(_faker.Random.String());
+        var meta2 = Meta.Create(_faker.Random.String());
+        var meta3 = Meta.Create(_faker.Random.String());
         var relation1 = Meta.GetDefaultRelation(meta1, RelationType.Otm, TableType.Fake);
         var relation2 = Meta.GetDefaultRelation(meta2, RelationType.Mtm, TableType.Fake);
         var relation3 = Meta.GetDefaultRelation(meta3, RelationType.Mto, TableType.Fake);
@@ -167,8 +167,8 @@ public class RelationExtensionsTest : BaseTest
     internal void Initialized_Relation1_True()
     {
         // arrange 
-        var meta1 = new Meta(_faker.Random.String());
-        var meta2 = new Meta(_faker.Random.String());
+        var meta1 = Meta.Create(_faker.Random.String());
+        var meta2 = Meta.Create(_faker.Random.String());
         var relation1 = Meta.GetDefaultRelation(meta1, RelationType.Otm, TableType.Fake);
         var relation2 = Meta.GetDefaultRelation(meta2, RelationType.Mtm, TableType.Fake);
 
@@ -183,8 +183,8 @@ public class RelationExtensionsTest : BaseTest
     internal void Initialized_Relation2_False()
     {
         // arrange 
-        var meta2 = new Meta(_faker.Random.String());
-        var meta3 = new Meta(_faker.Random.String());
+        var meta2 = Meta.Create(_faker.Random.String());
+        var meta3 = Meta.Create(_faker.Random.String());
         var relation2 = Meta.GetDefaultRelation(meta2, RelationType.Mtm, TableType.Fake);
         var relation3 = Meta.GetDefaultRelation(meta3, RelationType.Mtm, TableType.Fake);
 
@@ -199,8 +199,8 @@ public class RelationExtensionsTest : BaseTest
     internal void Initialized_Relation3_True()
     {
         // arrange 
-        var meta3 = new Meta(_faker.Random.String());
-        var meta4 = new Meta(_faker.Random.String());
+        var meta3 = Meta.Create(_faker.Random.String());
+        var meta4 = Meta.Create(_faker.Random.String());
         var relation3 = Meta.GetDefaultRelation(meta3, RelationType.Mtm, TableType.Mtm);
         var relation4 = Meta.GetDefaultRelation(meta4, RelationType.Mtm, TableType.Fake);
 
@@ -215,7 +215,7 @@ public class RelationExtensionsTest : BaseTest
     internal void Initialized_Relation4_False()
     {
         // arrange 
-        var meta4 = new Meta(_faker.Random.String());
+        var meta4 = Meta.Create(_faker.Random.String());
         var relation4 = Meta.GetDefaultRelation(meta4, RelationType.Mtm, TableType.Fake);
         // act 
         // assert
@@ -247,8 +247,8 @@ public class RelationExtensionsTest : BaseTest
     {
         // arrange 
         var metaName = _faker.Random.String();
-        var meta1 = new Meta(metaName);
-        var meta2 = new Meta(metaName);
+        var meta1 = Meta.Create(metaName);
+        var meta2 = Meta.Create(metaName);
         var relation1 = Meta.GetDefaultRelation(meta1, RelationType.Mtm, TableType.Fake);
         var relation2 = Meta.GetDefaultRelation(meta2, RelationType.Mtm, TableType.Fake);
 
@@ -265,9 +265,9 @@ public class RelationExtensionsTest : BaseTest
     {
         // arrange -- TODO faile sometimes , to be investigated!!! 3 times already
         var metaName = _faker.Random.String(15,'A','z');
-        var meta1 = new Meta(metaName);
-        var meta2 = new Meta(metaName);
-        var meta3 = new Meta(metaName + metaName);
+        var meta1 = Meta.Create(metaName);
+        var meta2 = Meta.Create(metaName);
+        var meta3 = Meta.Create(metaName + metaName);
         
         var relation1 = Meta.GetDefaultRelation(meta1, RelationType.Mto, TableType.Fake);
         LogAssert($"relation1 = {relation1.Name} - {relation1.Type}");
@@ -299,10 +299,10 @@ public class RelationExtensionsTest : BaseTest
     {
         // arrange 
         var metaName = _faker.Random.String(15, 'A', 'z');
-        var meta1 = new Meta(metaName);
-        var meta2 = new Meta(metaName + metaName);
-        var meta3 = new Meta(metaName );
-        var meta4 = new Meta(metaName);
+        var meta1 = Meta.Create(metaName);
+        var meta2 = Meta.Create(metaName + metaName);
+        var meta3 = Meta.Create(metaName );
+        var meta4 = Meta.Create(metaName);
 
         var relation1 = Meta.GetDefaultRelation(meta1, RelationType.Mto, TableType.Fake);
         LogAssert($"relation1 = {relation1.Name} - {relation1.Type}");

@@ -19,7 +19,7 @@ public class DmlBuilderTest : BaseBuilderTest
     public DmlBuilderTest()
     {
         var metaList = GetSchema1();
-        var meta = new Meta(_faker.Random.String());
+        var meta = Meta.Create(_faker.Random.String());
         _schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql) ??
             Meta.GetDefaultSchema(meta, DatabaseProvider.PostgreSql);
         _sut = new DmlBuilder();

@@ -22,7 +22,7 @@ public sealed class RecordTest : BaseTest
     public RecordTest(ITestOutputHelper output) : base(output)
     {
         var metaList = GetSchema1();
-        var meta = new Meta("Test");
+        var meta = Meta.Create("Test");
         _schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql,SchemaType.Static,SchemaLoadType.Full) ?? Meta.GetDefaultSchema(meta, DatabaseProvider.PostgreSql);
         var config = new Configuration
         {

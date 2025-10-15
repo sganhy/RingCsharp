@@ -30,5 +30,6 @@
 		<attribute id="2" value="baseline"/>
 	</index>
 	<schema id="7">
+		<attribute id="1" value="name"/>
 	</schema>
 </template>

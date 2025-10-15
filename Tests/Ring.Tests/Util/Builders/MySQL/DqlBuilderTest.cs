@@ -17,7 +17,7 @@ public sealed class DqlBuilderTest : BaseBuilderTest
     public DqlBuilderTest()
     {
         var metaList = GetSchema1();
-        var meta = new Meta(_faker.Random.String());
+        var meta = Meta.Create(_faker.Random.String());
         _schema = Meta.ToSchema(metaList,DatabaseProvider.MySql) ??
             Meta.GetDefaultSchema(meta, DatabaseProvider.MySql);
         _sut = new DqlBuilder();

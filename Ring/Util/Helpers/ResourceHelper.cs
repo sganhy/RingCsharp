@@ -44,11 +44,11 @@ internal sealed class ResourceHelper
 #pragma warning disable CA1822, S2325 // Mark members as static
 
 	internal string GetMessage(ResourceType resourceType) // Code size: 22 (0x16)
-        => ((int)resourceType <= _logMessages.Length) ? _logMessages[(int)resourceType - 1] : null;
+		=> ((int)resourceType <= _logMessages.Length) ? _logMessages[(int)resourceType - 1] : null;
 	internal string? GetMessage(LogType logType) // Code size: 22 (0x16)
-        => ((int)logType <= _logMessages.Length) ? _logMessages[(int)logType - 1] : null;
+		=> ((int)logType <= _logMessages.Length) ? _logMessages[(int)logType - 1] : null;
 	internal string? GetDescription(LogType logType) // Code size: 22 (0x16)
-        => ((int)logType <= _logDescriptions.Length) ? _logDescriptions[(int)logType - 1] : null;
+		=> ((int)logType <= _logDescriptions.Length) ? _logDescriptions[(int)logType - 1] : null;
 
 #pragma warning restore S2325, CA1822 // Mark members as static
 
@@ -93,7 +93,7 @@ internal sealed class ResourceHelper
 
 	private static void LoadParameters()
 	{
-		// Code size: 282 (0x11a)
+		// Code size: 279 (0x117)
 		lock (SyncRoot)
 		{
 			if (!_parameterLoaded)
@@ -101,13 +101,12 @@ internal sealed class ResourceHelper
 				var resourceFile = EntityType.Parameter.ToString() + CompressedResourceSuffix;
 				var parameters = GetCompressedResource(ResourceNameSpace, resourceFile, false);
 				_parameters = new Dictionary<int, Parameter>(parameters.Length*2);
-
-				foreach (var param in new ReadOnlySpan<string?>(parameters))
+				var parametersSpan = parameters.AsSpan();
+				foreach (var param in parametersSpan)
 				{
 					if (string.IsNullOrEmpty(param)) continue;
 					var parts = param.Split(',');
 					if (parts.Length < 6) continue;  // Skip malformed entries
-
 					if (!int.TryParse(parts[0], NumberStyles.None, CultureInfo.InvariantCulture, out var id)) continue;
 					var paramType = id.ToParameterType();
 					if (paramType == ParameterType.Undefined)  continue;

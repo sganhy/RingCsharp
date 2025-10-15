@@ -142,7 +142,7 @@ public class BaseBuilderTest
             if (et == entityType) return metas[i];
             ++i; 
         }
-        return new Meta("Test");
+        return Meta.Create("Test");
     }
 
 
