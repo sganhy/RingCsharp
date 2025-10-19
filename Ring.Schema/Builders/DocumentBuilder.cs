@@ -1,12 +1,12 @@
 ﻿using Ring.Schema.Enums;
+using Ring.Schema.Extensions;
+using Ring.Schema.Models;
 using Ring.Util.Builders;
 using Ring.Util.Enums;
 using Ring.Util.Models;
+using System.Xml;
 using Document = Ring.Schema.Models.Document;
 using ResourceHelper = Ring.Schema.Helpers.ResourceHelper;
-using System.Xml;
-using Ring.Schema.Models;
-using Ring.Schema.Extensions;
 
 namespace Ring.Schema.Builders;
 
@@ -25,57 +25,74 @@ public sealed class DocumentBuilder
     private readonly List<Log> _logs = new();
     private readonly LogBuilder _logBuilder = new();
 
+    internal int TableCount { get; private set; }
+    internal int FieldCount { get; private set; }
+    internal int RelationCount { get; private set; }
+    internal int IndexCount { get; private set; }
+
     /// <summary>
     /// Ctor
     /// </summary>
     public DocumentBuilder(string filePath) => FilePath = filePath ?? string.Empty;
 
-    internal ValueTask<int> GetMetaCountAsync(SchemaTemplate template, Dictionary<string, string> tagDico, CancellationToken cancellationToken = default)
+    internal int GetMetaCount(SchemaTemplate template, Dictionary<string, SchemaTemplateItem> tagDico, CancellationToken cancellationToken = default)
     {
-        // Code size: 64 (0x40)
+        // Code size: 375 (0x177)
         var readerSettings = new XmlReaderSettings
         {
             IgnoreWhitespace = true,
             CheckCharacters = false,
             IgnoreComments = true,
-            Async = true,
-
+            Async = false,  // Synchronous
         };
 
-        return Core();
+        TableCount = 0;
+        FieldCount = 0;
+        RelationCount = 0;
+        IndexCount = 0;
+        var fieldItem = template.GetItem(EntityType.Field);
+        var fieldTypeAttribute = fieldItem.GetAttribute(SchemaTemplateAttributeType.Type).Name;
+        var fieldSearchableAttribute = fieldItem.GetAttribute(SchemaTemplateAttributeType.CaseSensitive).Name;
+        var result = 0;
+        var buffer = new string?[template.MaxDepth + 2];
+        buffer[0] = string.Empty;
 
-        async ValueTask<int> Core()
+        using var fs = new FileStream(FilePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+        using var xmlReader = XmlReader.Create(fs, readerSettings);
+
+        while (xmlReader.Read())  // Synchronous read
         {
-            var result = 0;
-            try
-            {
-                using var fs = new FileStream(FilePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-                using var xmlReader = XmlReader.Create(fs, readerSettings);
+            cancellationToken.ThrowIfCancellationRequested();
 
-                while (await xmlReader.ReadAsync().ConfigureAwait(false))
+            if (xmlReader.NodeType == XmlNodeType.Element)
+            {
+                var currentDepth = xmlReader.Depth;
+                if (currentDepth > template.MaxDepth) continue;
+
+                buffer[currentDepth + 1] = xmlReader.Name;
+
+                if (tagDico.TryGetValue(xmlReader.Name, out var item))
                 {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    if (xmlReader.NodeType == XmlNodeType.Element)
+                    var parent = buffer[currentDepth];
+                    if (StringComparer.Ordinal.Equals(item.ParentTag, parent))
                     {
-                        if (tagDico.TryGetValue(xmlReader.Name, out var parent))
+                        ++result;
+                        switch (item.EntityType)
                         {
-                            
-                            ++result;
+                            case EntityType.Table: ++TableCount; break;
+                            case EntityType.Field: 
+                                ++FieldCount;
+                                (var fieldType, var searchableType) = GetFieldInfo(xmlReader, fieldTypeAttribute, fieldSearchableAttribute); 
+                                break;
+                            case EntityType.Relation: ++RelationCount; break;
+                            case EntityType.Index: ++IndexCount; break;
                         }
                     }
                 }
             }
-            catch (Exception ex) when (ex is not OperationCanceledException)
-            {
-                return 0;
-            }
-            catch (XmlException xmlEx)
-            {
-
-                return 0;
-            }
-            return result;
         }
+
+        return result;
     }
 
     public async Task<Document> GetDocumentAsync(DocumentType documentType, CancellationToken cancellationToken = default)
@@ -88,7 +105,7 @@ public sealed class DocumentBuilder
             if (template is not null)
             {
                 var tagDico = template.ToTagDictionary(StringComparer.Ordinal);
-                var metaCount = await GetMetaCountAsync(template, tagDico, cancellationToken).ConfigureAwait(false);
+                var metaCount = GetMetaCount(template, tagDico, cancellationToken);
             }
         }
         else _logs.Add(_logBuilder.GetError(LogType.FileNotFound, FilePath));
@@ -111,6 +128,14 @@ public sealed class DocumentBuilder
         _provider = DatabaseProvider.Undefined;
         _schemaName = string.Empty;
         _logs.Clear();
+    }
+
+    private static (FieldType, SearchableType) GetFieldInfo(XmlReader reader, string attributeType, string attributeSearchable)
+    {
+        var fieldType = FieldType.Undefined;
+        var searchableType = SearchableType.None;
+        
+        return (fieldType, searchableType);
     }
 
     #endregion 

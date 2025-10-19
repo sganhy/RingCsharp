@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+
+	<!-- Root element -->
+	<xs:element name="schema">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="tablespace_list" minOccurs="0"/>
+				<xs:element ref="table" maxOccurs="unbounded"/>
+			</xs:sequence>
+			<xs:attribute name="version" type="xs:string" use="required"/>
+			<xs:attribute name="name" type="xs:string" use="required"/>
+			<xs:attribute name="default_port" type="xs:integer"/>
+			<xs:attribute name="default_language" type="xs:string"/>
+		</xs:complexType>
+	</xs:element>
+
+	<!-- Tablespace List -->
+	<xs:element name="tablespace_list">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="tablespace" maxOccurs="unbounded"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="tablespace">
+		<xs:complexType>
+			<xs:attribute name="name" type="xs:string" use="required"/>
+			<xs:attribute name="table" type="xs:boolean"/>
+			<xs:attribute name="index" type="xs:boolean"/>
+			<xs:attribute name="file" type="xs:string" use="required"/>
+		</xs:complexType>
+	</xs:element>
+
+	<!-- Table -->
+	<xs:element name="table">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="description" type="xs:string" minOccurs="0"/>
+				<xs:element ref="field_list"/>
+				<xs:element ref="relation_list" minOccurs="0"/>
+				<xs:element ref="index_list" minOccurs="0"/>
+			</xs:sequence>
+			<xs:attribute name="name" type="xs:string" use="required"/>
+			<xs:attribute name="id" type="xs:integer" use="required"/>
+			<xs:attribute name="baseline" type="xs:boolean"/>
+			<xs:attribute name="readonly" type="xs:boolean"/>
+		</xs:complexType>
+	</xs:element>
+
+	<!-- Field List -->
+	<xs:element name="field_list">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="field" maxOccurs="unbounded"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="field">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="description" type="xs:string" minOccurs="0"/>
+			</xs:sequence>
+			<xs:attribute name="name" type="xs:string" use="required"/>
+			<xs:attribute name="type" use="required">
+				<xs:simpleType>
+					<xs:restriction base="xs:string">
+						<xs:enumeration value="short"/>
+						<xs:enumeration value="int"/>
+						<xs:enumeration value="byte"/>
+						<xs:enumeration value="float"/>
+						<xs:enumeration value="string"/>
+						<xs:enumeration value="boolean"/>
+						<xs:enumeration value="shortDatetime"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
+			<xs:attribute name="size" type="xs:integer"/>
+			<xs:attribute name="case_sensitive" type="xs:boolean"/>
+			<xs:attribute name="not_null" type="xs:boolean"/>
+			<xs:attribute name="baseline" type="xs:boolean"/>
+			<xs:attribute name="multilingual" type="xs:boolean"/>
+			<xs:attribute name="default" type="xs:string"/>
+		</xs:complexType>
+	</xs:element>
+
+	<!-- Relation List -->
+	<xs:element name="relation_list">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="relation" maxOccurs="unbounded"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="relation">
+		<xs:complexType>
+			<xs:attribute name="name" type="xs:string" use="required"/>
+			<xs:attribute name="type" use="required">
+				<xs:simpleType>
+					<xs:restriction base="xs:string">
+						<xs:enumeration value="OTM"/>
+						<xs:enumeration value="MTO"/>
+						<xs:enumeration value="MTM"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
+			<xs:attribute name="to" type="xs:string" use="required"/>
+			<xs:attribute name="inverse_relation" type="xs:string" use="required"/>
+			<xs:attribute name="not_null" type="xs:boolean"/>
+			<xs:attribute name="constraint" type="xs:boolean"/>
+		</xs:complexType>
+	</xs:element>
+
+	<!-- Index List -->
+	<xs:element name="index_list">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="index" maxOccurs="unbounded"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="index">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="index_field" maxOccurs="unbounded"/>
+			</xs:sequence>
+			<xs:attribute name="name" type="xs:string" use="required"/>
+			<xs:attribute name="unique" type="xs:boolean"/>
+			<xs:attribute name="baseline" type="xs:boolean"/>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="index_field">
+		<xs:complexType>
+			<xs:attribute name="name" type="xs:string" use="required"/>
+		</xs:complexType>
+	</xs:element>
+
+</xs:schema>

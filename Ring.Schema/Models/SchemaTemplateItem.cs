@@ -5,16 +5,18 @@ namespace Ring.Schema.Models;
 internal sealed class SchemaTemplateItem
 {
 	internal readonly EntityType EntityType;
+	internal readonly int Depth;
 	internal readonly string Tag;
 	internal readonly string ParentTag;
 	internal readonly string ChildDescriptionTag;
 	internal readonly string ChildIndexColumnTag;
 	internal readonly SchemaTemplateAttribute[] Attributes;
 
-	internal SchemaTemplateItem(EntityType entityType, string startTag, string parentTag, string childDescriptionTag, string childIndexColumnTag, SchemaTemplateAttribute[] attributes)
+	internal SchemaTemplateItem(EntityType entityType, string startTag, string parentTag, string childDescriptionTag, string childIndexColumnTag, int depth, SchemaTemplateAttribute[] attributes)
 	{
 		EntityType = entityType;
 		Tag = startTag;
+		Depth = depth;
 		ParentTag = parentTag;
 		ChildDescriptionTag = childDescriptionTag;
 		Attributes = attributes;

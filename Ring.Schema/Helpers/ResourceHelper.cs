@@ -2,6 +2,7 @@
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using Ring.Util.Extensions;
+using System.Globalization;
 using System.IO.Compression;
 using System.Reflection;
 using System.Xml;
@@ -39,26 +40,28 @@ internal sealed class ResourceHelper
 				var xmlStr = GetCompressedResource(TemplateResourceNameSpace, resourceFile, false);
 				_schemaTemplates = new Dictionary<int, SchemaTemplate>
 				{
-					{ (int)DocumentType.XmlNative, GetSchemaTemplate(DocumentType.XmlNative, xmlStr) }
+					{ (int)DocumentType.XmlNative, GetSchemaTemplate(DocumentType.XmlNative, resourceFile,  xmlStr) }
 				};
 			}
 			_schemaTemplateLoaded = true;
 		}
 	}
 
-	private static SchemaTemplate GetSchemaTemplate(DocumentType documentType, string xmlString)
+	private static SchemaTemplate GetSchemaTemplate(DocumentType documentType, string resourceFile, string xmlString)
 	{
-		// Code size: 448 (0x1c0)
+		// Code size: 522 (0x20a)
 		var subResult = new List<SchemaTemplateItem>();
 		var attributes = new List<SchemaTemplateAttribute>();
 		var tagId = SchemaTemplateAttributeType.Id.ToString().ToUpperInvariant();
 		var tagParent = SchemaTemplateAttributeType.Parent.ToString().ToUpperInvariant();
 		var tagValue = SchemaTemplateAttributeType.Value.ToString().ToUpperInvariant();
+		var tagDepth = SchemaTemplateAttributeType.Depth.ToString().ToUpperInvariant();
 		var tagAttribute = SchemaTemplateAttributeType.Attribute.ToString().ToUpperInvariant();
 		var startTage = string.Empty;
 		var parent = string.Empty;
+		var depth = 0;
 		var entityType = EntityType.Undefined;
-		var attributeValues = new Dictionary<string, string>(6) { { tagId, string.Empty }, { tagParent, string.Empty }, { tagValue, string.Empty } };
+		var attributeValues = new Dictionary<string, string>(8) { { tagId, string.Empty }, { tagParent, string.Empty }, { tagValue, string.Empty } , { tagDepth , string.Empty } };
 		using var stringReader = new StringReader(xmlString);
 		using var reader = XmlReader.Create(stringReader);
 		while (reader.Read())
@@ -80,23 +83,34 @@ internal sealed class ResourceHelper
 					entityType = ToEntityType(attributeValues[tagId]);
 					if (entityType == EntityType.Undefined) continue;
 					parent = attributeValues[tagParent];
+					depth = int.Parse(attributeValues[tagDepth], CultureInfo.InvariantCulture);
 					attributes.Clear();
 				}
 			}
 			if (reader.NodeType == XmlNodeType.EndElement)
 			{
-				var item = new SchemaTemplateItem(entityType, startTage, parent, string.Empty, string.Empty, attributes.ToArray());
+				var item = new SchemaTemplateItem(entityType, startTage, parent, string.Empty, string.Empty, depth, attributes.ToArray());
 				parent = string.Empty;
-                subResult.Add(item);
+				subResult.Add(item);
 			}
 		}
-		return new SchemaTemplate(documentType, subResult.ToArray());
+		var templateItems = subResult.ToArray();
+		return new SchemaTemplate(resourceFile, documentType, templateItems, GetMaxDepth(templateItems));
 	}
 
 	private static EntityType ToEntityType(string attributeValue) => 
 		int.TryParse(attributeValue, out int id) ? id.ToEntityType() : EntityType.Undefined; // Code size: 20 (0x14)
 	private static SchemaTemplateAttributeType ToXmlSchemaAttributeType(string attributeValue) => 
 		int.TryParse(attributeValue, out int id) ? id.ToXmlSchemaAttributeType() : SchemaTemplateAttributeType.Undefined; // Code size: 23 (0x17)
+
+	private static int GetMaxDepth(SchemaTemplateItem[] items) 
+	{
+		// Code size: 55 (0x37)
+		var result = 0;
+		var span = new ReadOnlySpan<SchemaTemplateItem>(items);
+		foreach (var item in span) if (item.Depth > result) result = item.Depth;
+		return result;
+	}
 
 	private static string GetCompressedResource(string resourceNamespace, string fileName, bool toUpper)
 	{

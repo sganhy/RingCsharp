@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <template>
-	<table id="0" parent="schema">
+	<table id="0" parent="schema" depth="1">
 		<attribute id="0" value="id"/>
 		<attribute id="1" value="name"/>
 		<attribute id="2" value="baseline"/>
 		<attribute id="3" value="readonly"/>
 		<attribute id="4" value="cached"/>
 	</table>
-	<field id="1" parent="field_list">
+	<field id="1" parent="field_list" depth="3">
 		<attribute id="1" value="name"/>
 		<attribute id="2" value="baseline"/>
 		<attribute id="5" value="type"/>
@@ -16,7 +16,7 @@
 		<attribute id="8" value="not_null"/>
 		<attribute id="9" value="multilingual"/>
 	</field>
-	<relation id="2" parent="relation_list">
+	<relation id="2" parent="relation_list" depth="3">
 		<attribute id="1" value="name"/>
 		<attribute id="2" value="baseline"/>
 		<attribute id="5" value="type"/>
@@ -25,11 +25,11 @@
 		<attribute id="11" value="inverse_relation"/>
 		<attribute id="12" value="constraint"/>
 	</relation>
-	<index id="3" parent="index_list">
+	<index id="3" parent="index_list" depth="3">
 		<attribute id="1" value="name"/>
 		<attribute id="2" value="baseline"/>
 	</index>
-	<schema id="7">
+	<schema id="7" depth="0">
 		<attribute id="1" value="name"/>
 	</schema>
 </template>
