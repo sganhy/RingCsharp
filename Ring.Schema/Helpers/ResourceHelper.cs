@@ -18,6 +18,7 @@ internal sealed class ResourceHelper
 	private static readonly string TemplateResourceNameSpace = ResourceNameSpace + @"Templates.";
 	private static Dictionary<int, SchemaTemplate> _schemaTemplates = new();
 
+
 	internal static SchemaTemplate? GetSchemaTemplate(DocumentType resourceType)
 	{
 		// Code size: 33 (0x21)
@@ -49,21 +50,25 @@ internal sealed class ResourceHelper
 
 	private static SchemaTemplate GetSchemaTemplate(DocumentType documentType, string resourceFile, string xmlString)
 	{
-		// Code size: 522 (0x20a)
+		// Code size: 671 (0x29f)
 		var subResult = new List<SchemaTemplateItem>();
 		var attributes = new List<SchemaTemplateAttribute>();
 		var tagId = SchemaTemplateAttributeType.Id.ToString().ToUpperInvariant();
 		var tagParent = SchemaTemplateAttributeType.Parent.ToString().ToUpperInvariant();
 		var tagValue = SchemaTemplateAttributeType.Value.ToString().ToUpperInvariant();
+		var tagVal = SchemaTemplateAttributeType.Val.ToString().ToUpperInvariant();
 		var tagDepth = SchemaTemplateAttributeType.Depth.ToString().ToUpperInvariant();
 		var tagAttribute = SchemaTemplateAttributeType.Attribute.ToString().ToUpperInvariant();
+		var tagTemplate = SchemaTemplateAttributeType.Template.ToString().ToUpperInvariant();
 		var startTage = string.Empty;
 		var parent = string.Empty;
 		var depth = 0;
 		var entityType = EntityType.Undefined;
+		List<SchemaTemplateAttributeValue> attributeValuesLst = [];
 		var attributeValues = new Dictionary<string, string>(8) { { tagId, string.Empty }, { tagParent, string.Empty }, { tagValue, string.Empty } , { tagDepth , string.Empty } };
 		using var stringReader = new StringReader(xmlString);
 		using var reader = XmlReader.Create(stringReader);
+
 		while (reader.Read())
 		{
 			attributeValues[tagId] = string.Empty;
@@ -71,13 +76,21 @@ internal sealed class ResourceHelper
 			{
 				if (string.Equals(tagAttribute, reader.Name, StringComparison.OrdinalIgnoreCase))
 				{
+					// manage attribute
 					reader.LoadAttributes(attributeValues); // read attribute after node !!!
+					attributeValuesLst.Clear();
 					var xmlSchemaAttributeType = ToXmlSchemaAttributeType(attributeValues[tagId]);
-					var templateAttribute = new SchemaTemplateAttribute(xmlSchemaAttributeType, attributeValues[tagValue]);
-					attributes.Add(templateAttribute);
+					attributes.Add(new SchemaTemplateAttribute(attributeValues[tagValue], xmlSchemaAttributeType, []));
 				}
-				else 
-				{ 
+				else if (string.Equals(tagVal, reader.Name, StringComparison.OrdinalIgnoreCase))
+				{
+					// manage attribute value (domaine list) 
+					var id = reader.GetAttributeValue(tagId);
+					var value = reader.GetAttributeValue(tagValue)?.ToUpperInvariant();
+					if (id != null && value != null) attributeValuesLst.Add(new SchemaTemplateAttributeValue(int.Parse(id, CultureInfo.InvariantCulture), value));
+				}
+				else
+				{
 					startTage = reader.Name;
 					reader.LoadAttributes(attributeValues); // read attribute after node !!!
 					entityType = ToEntityType(attributeValues[tagId]);
@@ -89,12 +102,26 @@ internal sealed class ResourceHelper
 			}
 			if (reader.NodeType == XmlNodeType.EndElement)
 			{
-				var item = new SchemaTemplateItem(entityType, startTage, parent, string.Empty, string.Empty, depth, attributes.ToArray());
-				parent = string.Empty;
-				subResult.Add(item);
+				if (string.Equals(tagAttribute, reader.Name, StringComparison.OrdinalIgnoreCase))
+				{
+					var getLastItem = attributes.Last();
+					var attributeValuesArr = attributeValuesLst.ToArray();
+					attributeValuesArr.AsSpan().Sort((x, y) => string.CompareOrdinal(x.Value, y.Value));
+					getLastItem = getLastItem.SetValues(attributeValuesArr);
+					attributes[^1] = getLastItem;
+				}
+				else if (!string.Equals(tagTemplate, reader.Name, StringComparison.OrdinalIgnoreCase)) 
+				{
+					var attributeArr = attributes.ToArray();
+					attributeArr.AsSpan().Sort((x, y) => x.TypeId.CompareTo(y.TypeId));
+					var item = new SchemaTemplateItem(entityType, startTage, parent, string.Empty, string.Empty, depth, attributeArr);
+					parent = string.Empty;
+					subResult.Add(item);
+				}
 			}
 		}
 		var templateItems = subResult.ToArray();
+		templateItems.AsSpan().Sort((x, y) => x.EntityTypeId.CompareTo(y.EntityTypeId));
 		return new SchemaTemplate(resourceFile, documentType, templateItems, GetMaxDepth(templateItems));
 	}
 

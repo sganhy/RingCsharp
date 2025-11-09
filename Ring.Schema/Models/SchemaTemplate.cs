@@ -6,7 +6,7 @@ internal sealed class SchemaTemplate
 {
 	internal readonly string ResourceFile;
 	internal readonly DocumentType Type;
-	internal readonly SchemaTemplateItem[] Items;
+	internal readonly SchemaTemplateItem[] Items; // sorted by EntityTypeId
 	internal readonly int MaxDepth;
 
 	internal SchemaTemplate(string resourceFile, DocumentType type, SchemaTemplateItem[] xmlTemplateItems, int maxDepth)

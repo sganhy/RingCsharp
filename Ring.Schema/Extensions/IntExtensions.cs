@@ -1,4 +1,5 @@
 ﻿using Ring.Schema.Enums;
+using System.Runtime.CompilerServices;
 
 namespace Ring.Schema.Extensions;
 
@@ -23,14 +24,18 @@ internal static class IntExtensions
 	private const int XmlAttributeUniqueId = (int)SchemaTemplateAttributeType.Unique;
 	private const int XmlAttributeParentId = (int)SchemaTemplateAttributeType.Parent;
 	private const int XmlAttributeValueId = (int)SchemaTemplateAttributeType.Value;
+	private const int XmlAttributeValId = (int)SchemaTemplateAttributeType.Val;
+	private const int XmlAttributeDepthId = (int)SchemaTemplateAttributeType.Depth;
 	private const int XmlAttributeAttributeId = (int)SchemaTemplateAttributeType.Attribute;
+	private const int XmlAttributeTemplateId = (int)SchemaTemplateAttributeType.Template;
 
 	#endregion
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static SchemaTemplateAttributeType ToXmlSchemaAttributeType(this int xmlAttributeId)
 	{
-        // Code size: 156 (0x9c)
-        switch (xmlAttributeId)
+		// Code size: 156 (0x9c)
+		switch (xmlAttributeId)
 		{
 			case XmlAttributeId: return SchemaTemplateAttributeType.Id;
 			case XmlAttributeNameId: return SchemaTemplateAttributeType.Name;
@@ -48,7 +53,10 @@ internal static class IntExtensions
 			case XmlAttributeUniqueId: return SchemaTemplateAttributeType.Unique;
 			case XmlAttributeParentId: return SchemaTemplateAttributeType.Parent;
 			case XmlAttributeValueId: return SchemaTemplateAttributeType.Value;
+			case XmlAttributeValId:	return SchemaTemplateAttributeType.Val;
+			case XmlAttributeDepthId: return SchemaTemplateAttributeType.Depth;
 			case XmlAttributeAttributeId: return SchemaTemplateAttributeType.Attribute;
+			case XmlAttributeTemplateId: return SchemaTemplateAttributeType.Template;
 		}
 		return SchemaTemplateAttributeType.Undefined;
 	}

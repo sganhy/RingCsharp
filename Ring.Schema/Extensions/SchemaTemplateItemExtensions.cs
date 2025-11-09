@@ -1,21 +1,31 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Models;
+using System.Runtime.CompilerServices;
 
 namespace Ring.Schema.Extensions;
 
 internal static class SchemaTemplateItemExtensions
 {
 
-    internal static SchemaTemplateAttribute GetAttribute(this SchemaTemplateItem schemaTemplateItem, SchemaTemplateAttributeType schemaTemplateAttributeType)
-    { 
-        // Code size: 66 (0x42)
-        foreach (var attribute in schemaTemplateItem.Attributes)
-        {
-            if (attribute.Type == schemaTemplateAttributeType)
-            {
-                return attribute;
-            }
-        }
-        throw new InvalidOperationException($"SchemaTemplateItem '{schemaTemplateItem.Tag}' does not contain a 'Name' attribute.");
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal static SchemaTemplateAttribute? GetAttribute(this SchemaTemplateItem schemaTemplateItem, SchemaTemplateAttributeType attributeType)
+    {
+		//  Code size: 102 (0x66)
+		var attributeTypeId = (int)attributeType;
+		var span = new ReadOnlySpan<SchemaTemplateAttribute>(schemaTemplateItem.Attributes);
+		int indexerLeft = 0, indexerRight = span.Length - 1;
+		while (indexerLeft <= indexerRight)
+		{
+			var indexerMiddle = indexerLeft + indexerRight;
+			indexerMiddle >>= 1; // indexerMiddle <-- indexerMiddle /2 
+			var indexerCompare = attributeTypeId.CompareTo(span[indexerMiddle].TypeId);
+			if (indexerCompare == 0) return span[indexerMiddle];
+			if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
+			else indexerRight = indexerMiddle - 1;
+		}
+		return null;
     }
+
+
+
 }

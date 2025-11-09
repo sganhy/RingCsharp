@@ -18,7 +18,9 @@ internal enum SchemaTemplateAttributeType : short
 	Unique = 13,
 	Parent = 22,
 	Value = 23,
-	Attribute = 24,
+	Val = 24, 
+	Attribute = 25,
+	Template = 29,
 	Depth = 31,
 	Undefined = short.MaxValue
 }

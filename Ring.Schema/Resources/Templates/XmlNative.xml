@@ -3,31 +3,49 @@
 	<table id="0" parent="schema" depth="1">
 		<attribute id="0" value="id"/>
 		<attribute id="1" value="name"/>
-		<attribute id="2" value="baseline"/>
-		<attribute id="3" value="readonly"/>
-		<attribute id="4" value="cached"/>
+		<attribute id="2" value="baseline" type="flag"/>
+		<attribute id="3" value="readonly" type="flag"/>
+		<attribute id="4" value="cached" type="flag"/>
 	</table>
 	<field id="1" parent="field_list" depth="3">
 		<attribute id="1" value="name"/>
-		<attribute id="2" value="baseline"/>
-		<attribute id="5" value="type"/>
+		<attribute id="2" value="baseline" type="flag"/>
+		<attribute id="5" value="type">
+			<val id="0" value="long"/>
+			<val id="1" value="int"/>
+			<val id="2" value="short"/>
+			<val id="3" value="byte"/>
+			<val id="14" value="float"/>
+			<val id="15" value="double"/>
+			<val id="16" value="string"/>
+			<val id="17" value="shortDatetime"/>
+			<val id="18" value="DateTime"/>
+			<val id="21" value="Array"/>
+			<val id="23" value="Bool"/>
+		</attribute>
 		<attribute id="6" value="size"/>
 		<attribute id="7" value="case_sensitive"/>
-		<attribute id="8" value="not_null"/>
-		<attribute id="9" value="multilingual"/>
+		<attribute id="8" value="not_null" type="flag"/>
+		<attribute id="9" value="multilingual" type="flag"/>
 	</field>
 	<relation id="2" parent="relation_list" depth="3">
 		<attribute id="1" value="name"/>
-		<attribute id="2" value="baseline"/>
-		<attribute id="5" value="type"/>
-		<attribute id="8" value="not_null"/>
+		<attribute id="2" value="baseline" type="flag"/>
+		<attribute id="5" value="type">
+			<val id="1" value="OTOP"/>
+			<val id="2" value="OTM"/>
+			<val id="3" value="MTM"/>
+			<val id="11" value="MTO"/>
+			<val id="12" value="OTOF"/>
+		</attribute>
+		<attribute id="8" value="not_null" type="flag"/>
 		<attribute id="10" value="to"/>
 		<attribute id="11" value="inverse_relation"/>
-		<attribute id="12" value="constraint"/>
+		<attribute id="12" value="constraint" type="flag"/>
 	</relation>
 	<index id="3" parent="index_list" depth="3">
 		<attribute id="1" value="name"/>
-		<attribute id="2" value="baseline"/>
+		<attribute id="2" value="baseline" type="flag"/>
 	</index>
 	<schema id="7" depth="0">
 		<attribute id="1" value="name"/>

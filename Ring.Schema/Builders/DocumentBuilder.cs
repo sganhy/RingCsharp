@@ -50,8 +50,8 @@ public sealed class DocumentBuilder
         FieldCount = 0;
         RelationCount = 0;
         IndexCount = 0;
-        var fieldItem = template.GetItem(EntityType.Field);
-        var fieldTypeAttribute = fieldItem.GetAttribute(SchemaTemplateAttributeType.Type).Name;
+        var fieldItem = template.GetTemplateItem(EntityType.Field);
+        var fieldTypeAttribute = fieldItem.GetAttribute(SchemaTemplateAttributeType.Type);
         var fieldSearchableAttribute = fieldItem.GetAttribute(SchemaTemplateAttributeType.CaseSensitive).Name;
         var result = 0;
         var buffer = new string?[template.MaxDepth + 2];
@@ -82,7 +82,7 @@ public sealed class DocumentBuilder
                             case EntityType.Table: ++TableCount; break;
                             case EntityType.Field: 
                                 ++FieldCount;
-                                (var fieldType, var searchableType) = GetFieldInfo(xmlReader, fieldTypeAttribute, fieldSearchableAttribute); 
+                                (var fieldType, var searchableType) = GetFieldInfo(template, xmlReader, fieldTypeAttribute.Name, fieldSearchableAttribute); 
                                 break;
                             case EntityType.Relation: ++RelationCount; break;
                             case EntityType.Index: ++IndexCount; break;
@@ -122,7 +122,7 @@ public sealed class DocumentBuilder
         _creator = null;
         _creationTime = null;
         _updateTime = null;
-        _result = Array.Empty<Meta>();
+        _result = [];
         _type = DocumentType.Undefined;
         _jobId = 0L;
         _provider = DatabaseProvider.Undefined;
@@ -130,12 +130,22 @@ public sealed class DocumentBuilder
         _logs.Clear();
     }
 
-    private static (FieldType, SearchableType) GetFieldInfo(XmlReader reader, string attributeType, string attributeSearchable)
+    private static (FieldType, SearchableType) GetFieldInfo(SchemaTemplate template, XmlReader reader, string attributeType, string attributeSearchable)
     {
         var fieldType = FieldType.Undefined;
         var searchableType = SearchableType.None;
-        
-        return (fieldType, searchableType);
+        //var fieldType = template.GetFieldType("long");
+		var attInd = 0;
+		while (attInd < reader.AttributeCount)
+		{
+            reader.MoveToNextAttribute();
+            if (string.Equals(attributeType, reader.Name, StringComparison.OrdinalIgnoreCase))
+            {
+                                                
+            }
+            attInd++;
+		}
+		return (fieldType, searchableType);
     }
 
     #endregion 
