@@ -813,7 +813,7 @@ public sealed class RecordTest : BaseTest
         var logTable = tableBuilder.GetLog("Test", DatabaseProvider.MySql);
         var field = logTable.GetField("entry_time");
         var index = logTable.GetFieldIndex("entry_time");
-        var meta = field?.ToMeta(99, FieldType.LongDateTime);
+        var meta = field?.ToMeta(99, FieldType.DateTimeOffset);
         var newField = meta?.ToField();
         logTable.Fields[index] = newField ?? logTable.Fields[0];
         var rcd = new Record(logTable);
@@ -838,7 +838,7 @@ public sealed class RecordTest : BaseTest
         var logTable = tableBuilder.GetLog("Test", DatabaseProvider.MySql);
         var field = logTable.GetField("entry_time");
         var index = logTable.GetFieldIndex("entry_time");
-        var meta = field?.ToMeta(99, FieldType.LongDateTime);
+        var meta = field?.ToMeta(99, FieldType.DateTimeOffset);
         var newField = meta?.ToField();
         logTable.Fields[index] = newField ?? logTable.Fields[0];
         var rcd = new Record(logTable);

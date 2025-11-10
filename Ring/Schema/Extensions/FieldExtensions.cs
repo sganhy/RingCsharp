@@ -22,7 +22,7 @@ internal static class FieldExtensions
 
 	internal static bool IsValid(this Field field) => IsPrimaryKey(field) || field.Id > 0; 
 	internal static bool IsDateTime(this Field field) => field.Type == FieldType.DateTime ||
-		field.Type == FieldType.ShortDateTime || field.Type == FieldType.LongDateTime;
+		field.Type == FieldType.Date || field.Type == FieldType.DateTimeOffset;
 	internal static bool IsNumeric(this Field field) => field.Type == FieldType.Long || field.Type == FieldType.Int ||
 		field.Type == FieldType.Short || field.Type == FieldType.Byte || field.Type == FieldType.Float ||
 		field.Type == FieldType.Double;
@@ -46,7 +46,7 @@ internal static class FieldExtensions
 		switch (searchableType)
 		{
 			case SearchableType.IgnoreCase:	return value.ToUpperInvariant();
-			case SearchableType.IgnoreCaseAndDiacritics:
+			case SearchableType.IgnoreDiacritic:
 				var normalizedString = value.Normalize(NormalizationForm.FormD).AsSpan();
 				var result = new StringBuilder(normalizedString.Length);
 				foreach (var c in normalizedString)

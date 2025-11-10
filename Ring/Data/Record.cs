@@ -224,7 +224,7 @@ public struct Record : IEquatable<Record>
 		value = null;
 		var field = table.Fields[fieldId];
 		var fieldType = field.Type;
-		if (fieldType != FieldType.DateTime && fieldType != FieldType.LongDateTime && fieldType != FieldType.ShortDateTime)
+		if (fieldType != FieldType.DateTime && fieldType != FieldType.DateTimeOffset && fieldType != FieldType.Date)
 			ThrowImpossibleConversion(fieldType, FieldType.DateTime);
 		var result = data[fieldId + _offset] ?? field.DefaultValue;
 		if (result is null) return;
@@ -259,9 +259,9 @@ public struct Record : IEquatable<Record>
 				case FieldType.Long: SetIntegerField(data, table, offset, fieldId, fieldType, value); break;
 				case FieldType.Float:
 				case FieldType.Double: SetFloatField(data, table, offset, fieldType, fieldId, value); break;
-				case FieldType.ShortDateTime:
+				case FieldType.Date:
 				case FieldType.DateTime:
-				case FieldType.LongDateTime: SetDateTimeField(data, table, offset, fieldId, fieldType, value); break;
+				case FieldType.DateTimeOffset: SetDateTimeField(data, table, offset, fieldId, fieldType, value); break;
 				case FieldType.Boolean: SetBooleanField(data, table, offset, fieldId, value); break;
 				case FieldType.ByteArray: SetByteArrayField(data, table, offset, fieldId, value); break;
 			}
@@ -553,7 +553,7 @@ public struct Record : IEquatable<Record>
 	private static void SetDateTimeField(Span<string?> data, Table table, int rcdOffset, int fieldId, FieldType fieldType, DateTime value, TimeSpan? offset)
 	{
 		// Code size: 59 (0x3b) - smaller than a logical pattern - no virtual call;
-		if (fieldType == FieldType.DateTime || fieldType == FieldType.LongDateTime || fieldType == FieldType.ShortDateTime)
+		if (fieldType == FieldType.DateTime || fieldType == FieldType.DateTimeOffset || fieldType == FieldType.Date)
 			SetData(data, table, rcdOffset, fieldId, new string(value.ToString(fieldType, offset)));
 		else ThrowImpossibleConversion(FieldType.DateTime, fieldType);
 	}

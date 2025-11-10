@@ -9,7 +9,7 @@ internal static class SchemaTemplateItemExtensions
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static SchemaTemplateAttribute? GetAttribute(this SchemaTemplateItem schemaTemplateItem, SchemaTemplateAttributeType attributeType)
-    {
+	{
 		//  Code size: 102 (0x66)
 		var attributeTypeId = (int)attributeType;
 		var span = new ReadOnlySpan<SchemaTemplateAttribute>(schemaTemplateItem.Attributes);
@@ -24,8 +24,7 @@ internal static class SchemaTemplateItemExtensions
 			else indexerRight = indexerMiddle - 1;
 		}
 		return null;
-    }
-
+	}
 
 
 }

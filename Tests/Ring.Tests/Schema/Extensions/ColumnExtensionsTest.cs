@@ -16,9 +16,9 @@ public sealed class ColumnExtensionsTest : BaseTest
         // arrange 
         var id = _faker.Random.Number(int.MinValue, int.MaxValue);
         var physicalName = _faker.Random.String();
-        var column1 = new Column(EntityType.Alias, FieldType.ByteArray, physicalName, SearchableType.IgnoreCaseAndDiacritics,id,-33);
-        var column2 = new Column(EntityType.Constraint, FieldType.ByteArray, physicalName, SearchableType.IgnoreCaseAndDiacritics, id, -33);
-        var column3 = new Column(EntityType.Alias, FieldType.ByteArray, physicalName, SearchableType.IgnoreCaseAndDiacritics, id, -44);
+        var column1 = new Column(EntityType.Alias, FieldType.ByteArray, physicalName, SearchableType.IgnoreDiacritic,id,-33);
+        var column2 = new Column(EntityType.Constraint, FieldType.ByteArray, physicalName, SearchableType.IgnoreDiacritic, id, -33);
+        var column3 = new Column(EntityType.Alias, FieldType.ByteArray, physicalName, SearchableType.IgnoreDiacritic, id, -44);
 
         // act 
         var hash1 = ColumnExtensions.Hash(column1);
@@ -37,10 +37,10 @@ public sealed class ColumnExtensionsTest : BaseTest
         // arrange 
         var id = _faker.Random.Number(int.MinValue, int.MaxValue);
         var physicalName = _faker.Random.String();
-        var column1 = new Column(EntityType.Alias, FieldType.ByteArray, physicalName, SearchableType.IgnoreCaseAndDiacritics, id, -33);
-        var column2 = new Column(EntityType.Constraint, FieldType.ByteArray, physicalName, SearchableType.IgnoreCaseAndDiacritics, id, -33);
-        var column3 = new Column(EntityType.Alias, FieldType.ByteArray, physicalName, SearchableType.IgnoreCaseAndDiacritics, id, -44);
-        var column4 = new Column(EntityType.Constraint, FieldType.ByteArray, physicalName, SearchableType.IgnoreCaseAndDiacritics, id, -33);
+        var column1 = new Column(EntityType.Alias, FieldType.ByteArray, physicalName, SearchableType.IgnoreDiacritic, id, -33);
+        var column2 = new Column(EntityType.Constraint, FieldType.ByteArray, physicalName, SearchableType.IgnoreDiacritic, id, -33);
+        var column3 = new Column(EntityType.Alias, FieldType.ByteArray, physicalName, SearchableType.IgnoreDiacritic, id, -44);
+        var column4 = new Column(EntityType.Constraint, FieldType.ByteArray, physicalName, SearchableType.IgnoreDiacritic, id, -33);
         var column5 = new Column(EntityType.Constraint, FieldType.ByteArray, physicalName, SearchableType.None, id, _faker.Random.Number());
 
         // act 

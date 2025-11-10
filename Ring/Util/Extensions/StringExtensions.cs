@@ -129,7 +129,7 @@ internal static class StringExtensions
 		var year = int.Parse(value.AsSpan(0, 4), DefaultCulture);
 		var month = int.Parse(value.AsSpan(5, 2), NumberStyles.Integer, DefaultCulture);
 		var day = int.Parse(value.AsSpan(8, 2), NumberStyles.Integer, DefaultCulture);
-		if (fieldType == FieldType.ShortDateTime)
+		if (fieldType == FieldType.Date)
 		{
 			return new DateTime(year, month, day, 0, 0, 0, DateTimeKind.Local);
 		}

@@ -18,8 +18,9 @@
 			<val id="14" value="float"/>
 			<val id="15" value="double"/>
 			<val id="16" value="string"/>
-			<val id="17" value="shortDatetime"/>
+			<val id="17" value="Date"/>
 			<val id="18" value="DateTime"/>
+			<val id="19" value="DateTimeOffset"/>
 			<val id="21" value="Array"/>
 			<val id="23" value="Bool"/>
 		</attribute>

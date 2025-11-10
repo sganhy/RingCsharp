@@ -24,7 +24,7 @@ internal sealed class DqlBuilder : BaseDqlBuilder
     {
         switch (column.FieldType)
         {
-            case FieldType.ShortDateTime: 
+            case FieldType.Date: 
                 return string.Format(CultureInfo.InvariantCulture, ShortDateFormat, column.PhysicalName);
             case FieldType.DateTime: 
                 return string.Format(CultureInfo.InvariantCulture, DateTimeFormat, column.PhysicalName);

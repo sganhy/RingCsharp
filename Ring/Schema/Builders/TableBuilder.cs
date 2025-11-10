@@ -104,7 +104,7 @@ internal sealed class TableBuilder
 				metaList.Add(GetField(FieldTestPrefix + i++, fieldType, 16, false, SearchableType.None));
 				// add 2 searchable field 
 				metaList.Add(GetField(FieldTestPrefix + i++, fieldType, 512, false, SearchableType.IgnoreCase));
-				metaList.Add(GetField(FieldTestPrefix + i++, fieldType, 64, false, SearchableType.IgnoreCaseAndDiacritics));
+				metaList.Add(GetField(FieldTestPrefix + i++, fieldType, 64, false, SearchableType.IgnoreDiacritic));
 			}
 			else metaList.Add(GetField(FieldTestPrefix + i++, fieldType, false));
 		}

@@ -14,8 +14,8 @@ internal sealed class DmlBuilder : BaseDmlBuilder
 
 	protected override string WrapVariable(string variable, FieldType fieldType)
 	{
-		if (fieldType == FieldType.ShortDateTime) return string.Format(DefaultCulture, ShortDateTimeWrapper, variable);
-        else if (fieldType == FieldType.DateTime || fieldType == FieldType.LongDateTime) return string.Format(DefaultCulture, DateTimeWrapper, variable);
+		if (fieldType == FieldType.Date) return string.Format(DefaultCulture, ShortDateTimeWrapper, variable);
+        else if (fieldType == FieldType.DateTime || fieldType == FieldType.DateTimeOffset) return string.Format(DefaultCulture, DateTimeWrapper, variable);
         return variable;
 	}
 }

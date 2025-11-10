@@ -11,7 +11,7 @@ public  sealed class DateTimeExtensionsTest
         var dt = new DateTime(2222, 12, 22, 23, 59, 59);
 
         // act 
-        var result = DateTimeExtensions.ToString(dt, FieldType.ShortDateTime, null);
+        var result = DateTimeExtensions.ToString(dt, FieldType.Date, null);
 
         // assert
         Assert.Equal("2222-12-22", result);

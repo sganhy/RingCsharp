@@ -25,7 +25,7 @@ internal static class IntExtensions
 
 	// field searchable constants
 	private const int FieldStIgnoreCaseId = (int)SearchableType.IgnoreCase;
-	private const int FieldStIngoreCaseAndDiacriticsId = (int)SearchableType.IgnoreCaseAndDiacritics;
+	private const int FieldStIngoreCaseAndDiacriticsId = (int)SearchableType.IgnoreDiacritic;
 
 	// field types constants
 	private const int FieldTypeLongId = (int)FieldType.Long;
@@ -35,9 +35,9 @@ internal static class IntExtensions
 	private const int FieldTypeFloatId = (int)FieldType.Float;
 	private const int FieldTypeDoubleId = (int)FieldType.Double;
 	private const int FieldTypeStringId = (int)FieldType.String;
-	private const int FieldTypeShortDateTimeId = (int)FieldType.ShortDateTime;
+	private const int FieldTypeShortDateTimeId = (int)FieldType.Date;
 	private const int FieldTypeDateTimeId = (int)FieldType.DateTime;
-	private const int FieldTypeLongDateTimeId = (int)FieldType.LongDateTime;
+	private const int FieldTypeLongDateTimeId = (int)FieldType.DateTimeOffset;
 	private const int FieldTypeByteArrayId = (int)FieldType.ByteArray;
 	private const int FieldTypeBooleanId = (int)FieldType.Boolean;
 	private const int FieldTypeLongStringId = (int)FieldType.LongString;
@@ -143,9 +143,9 @@ internal static class IntExtensions
 			case FieldTypeFloatId: return FieldType.Float;
 			case FieldTypeDoubleId: return FieldType.Double;
 			case FieldTypeStringId: return FieldType.String;
-			case FieldTypeShortDateTimeId: return FieldType.ShortDateTime;
+			case FieldTypeShortDateTimeId: return FieldType.Date;
 			case FieldTypeDateTimeId: return FieldType.DateTime;
-			case FieldTypeLongDateTimeId: return FieldType.LongDateTime;
+			case FieldTypeLongDateTimeId: return FieldType.DateTimeOffset;
 			case FieldTypeByteArrayId: return FieldType.ByteArray;
 			case FieldTypeBooleanId: return FieldType.Boolean;
 			case FieldTypeLongStringId: return FieldType.LongString;
@@ -161,7 +161,7 @@ internal static class IntExtensions
 		switch (value)
 		{
 			case FieldStIgnoreCaseId: return SearchableType.IgnoreCase;
-			case FieldStIngoreCaseAndDiacriticsId: return SearchableType.IgnoreCaseAndDiacritics;
+			case FieldStIngoreCaseAndDiacriticsId: return SearchableType.IgnoreDiacritic;
 		}
 		return SearchableType.None;
 	}

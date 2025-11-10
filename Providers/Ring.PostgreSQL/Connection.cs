@@ -344,7 +344,7 @@ public sealed class Connection : IConnection
                     ++colIndex;
                 }
                 // LongDateTime
-                if (fieldType == FieldType.LongDateTime)
+                if (fieldType == FieldType.DateTimeOffset)
                 {
                     result[colIndex] = GetParameter(variableName, NpgsqlDbType.Smallint, FieldType.Short, "60");
                     ++colIndex;
@@ -392,7 +392,7 @@ public sealed class Connection : IConnection
                 };
                 break;
             case FieldType.DateTime:
-            case FieldType.LongDateTime:
+            case FieldType.DateTimeOffset:
                 result = new NpgsqlParameter(variableName, dbType)
                 {
                     Value = value.DateTimeValue(),
@@ -406,7 +406,7 @@ public sealed class Connection : IConnection
 
                 break;
             case FieldType.LongString:
-            case FieldType.ShortDateTime:
+            case FieldType.Date:
                 result = new NpgsqlParameter(variableName, dbType)
                 {
                     Value = value,

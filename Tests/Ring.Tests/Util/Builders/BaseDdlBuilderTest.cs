@@ -47,7 +47,7 @@ public sealed class BaseDdlBuilderTest : BaseBuilderTest
         table.Fields[11] = field;
         var col = table.GetColumn(field.Id, EntityType.Field);
         Assert.NotNull(col);
-        col = col.SetFieldType(FieldType.LongDateTime);
+        col = col.SetFieldType(FieldType.DateTimeOffset);
         var expectedSql = $"ALTER TABLE {table.PhysicalName} ADD {col.PhysicalName} timestamp without time zone";
 
         // act 

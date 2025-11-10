@@ -17,10 +17,10 @@ internal sealed class DdlBuilder : BaseDdlBuilder
 		{ FieldType.Short,         "int2"},
 		{ FieldType.Byte,          "int2"},
 		{ FieldType.Boolean,       "bool"},
-		{ FieldType.ShortDateTime, "date"},
+		{ FieldType.Date, "date"},
 		{ FieldType.ByteArray,     "bytea"},
 		{ FieldType.DateTime,      "timestamp without time zone"},
-		{ FieldType.LongDateTime,  "timestamp without time zone"}
+		{ FieldType.DateTimeOffset,  "timestamp without time zone"}
 	};
 
 	public DdlBuilder() : base() { }

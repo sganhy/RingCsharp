@@ -12,7 +12,7 @@ namespace Ring.Schema.Builders;
 
 public sealed class DocumentBuilder
 {
-    internal string FilePath { get; set; }
+	internal string FilePath { get; set; }
     private int _schemaId = -1;
     private string? _creator;
     private DateTime? _creationTime;
@@ -30,10 +30,11 @@ public sealed class DocumentBuilder
     internal int RelationCount { get; private set; }
     internal int IndexCount { get; private set; }
 
-    /// <summary>
-    /// Ctor
-    /// </summary>
-    public DocumentBuilder(string filePath) => FilePath = filePath ?? string.Empty;
+
+	/// <summary>
+	/// Ctor
+	/// </summary>
+	public DocumentBuilder(string filePath) => FilePath = filePath ?? string.Empty;
 
     internal int GetMetaCount(SchemaTemplate template, Dictionary<string, SchemaTemplateItem> tagDico, CancellationToken cancellationToken = default)
     {
@@ -50,9 +51,14 @@ public sealed class DocumentBuilder
         FieldCount = 0;
         RelationCount = 0;
         IndexCount = 0;
-        var fieldItem = template.GetTemplateItem(EntityType.Field);
-        var fieldTypeAttribute = fieldItem.GetAttribute(SchemaTemplateAttributeType.Type);
-        var fieldSearchableAttribute = fieldItem.GetAttribute(SchemaTemplateAttributeType.CaseSensitive).Name;
+		var fieldItem = template.GetTemplateItem(EntityType.Field);
+        var fieldTypeAttribute = fieldItem?.GetAttribute(SchemaTemplateAttributeType.Type);
+        var fieldCaseSensitiveAttribute = fieldItem?.GetAttribute(SchemaTemplateAttributeType.CaseSensitive);
+        if (fieldTypeAttribute is null || fieldCaseSensitiveAttribute is null)
+        {
+            // throw exception !!!
+            return 0;
+        }
         var result = 0;
         var buffer = new string?[template.MaxDepth + 2];
         buffer[0] = string.Empty;
@@ -82,8 +88,10 @@ public sealed class DocumentBuilder
                             case EntityType.Table: ++TableCount; break;
                             case EntityType.Field: 
                                 ++FieldCount;
-                                (var fieldType, var searchableType) = GetFieldInfo(template, xmlReader, fieldTypeAttribute.Name, fieldSearchableAttribute); 
-                                break;
+                                (var fieldType, var searchableType) = GetFieldInfo(xmlReader, fieldTypeAttribute, fieldCaseSensitiveAttribute);
+                                if (searchableType != SearchableType.None) ++result;
+
+								break;
                             case EntityType.Relation: ++RelationCount; break;
                             case EntityType.Index: ++IndexCount; break;
                         }
@@ -91,8 +99,8 @@ public sealed class DocumentBuilder
                 }
             }
         }
-
-        return result;
+        result += TableCount + FieldCount + RelationCount + IndexCount;
+		return result;
     }
 
     public async Task<Document> GetDocumentAsync(DocumentType documentType, CancellationToken cancellationToken = default)
@@ -130,20 +138,21 @@ public sealed class DocumentBuilder
         _logs.Clear();
     }
 
-    private static (FieldType, SearchableType) GetFieldInfo(SchemaTemplate template, XmlReader reader, string attributeType, string attributeSearchable)
+    private static (FieldType, SearchableType) GetFieldInfo(XmlReader reader, SchemaTemplateAttribute attributeType, SchemaTemplateAttribute attributeSearchable)
     {
-        var fieldType = FieldType.Undefined;
+		// Code size: 111 (0x6f)
+		var fieldType = FieldType.Undefined;
         var searchableType = SearchableType.None;
-        //var fieldType = template.GetFieldType("long");
+        var attributeTypeName = attributeType.Name;
+        var attributeSearchableName = attributeSearchable.Name;
 		var attInd = 0;
+
 		while (attInd < reader.AttributeCount)
 		{
             reader.MoveToNextAttribute();
-            if (string.Equals(attributeType, reader.Name, StringComparison.OrdinalIgnoreCase))
-            {
-                                                
-            }
-            attInd++;
+            if (string.Equals(attributeTypeName, reader.Name, StringComparison.OrdinalIgnoreCase)) fieldType = attributeType.GetFieldType(reader.Value);
+			if (string.Equals(attributeSearchableName, reader.Name, StringComparison.OrdinalIgnoreCase)) searchableType = attributeType.GetSearchableType(reader.Value);
+			attInd++;
 		}
 		return (fieldType, searchableType);
     }

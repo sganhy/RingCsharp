@@ -6,9 +6,10 @@ namespace Ring.Schema.Enums;
 /// 	stored on 6 bits: value should be included [0,63]
 /// </summary>
 [Range(0, 63)]
+[Flags]
 internal enum SearchableType : byte
 {
 	None = 0,
 	IgnoreCase = 1,
-	IgnoreCaseAndDiacritics = 2,
+	IgnoreDiacritic = 1 << 1,
 }

@@ -7,10 +7,10 @@ internal static class DateTimeExtensions
 {
 	private readonly static Dictionary<byte, char[]> DateTimeTemplates = new()
 	{
-	  { (byte)FieldType.ShortDateTime, new char[] { '0','0','0','0','-','0','0','-','0','0' } },
+	  { (byte)FieldType.Date, new char[] { '0','0','0','0','-','0','0','-','0','0' } },
 	  { (byte)FieldType.DateTime, new char[] { '0','0','0','0','-','0','0','-','0','0','T','0','0',':',
 		  '0','0',':','0','0','.','0','0','0','0','0','0','Z' } },
-	  { (byte)FieldType.LongDateTime, new char[] {'0','0','0','0','-','0','0','-','0','0','T','0','0',':',
+	  { (byte)FieldType.DateTimeOffset, new char[] {'0','0','0','0','-','0','0','-','0','0','T','0','0',':',
 		  '0','0',':','0','0','.','0','0','0','0','0','0','+','0','0',':','0','0' } }
 	};
 	private const int DecimalSys = 10;
@@ -22,13 +22,13 @@ internal static class DateTimeExtensions
 		var template = DateTimeTemplates[(byte)fieldType];
 		var count = template.Length;
 		var result = new char[count];
-		var dateToConv = fieldType == FieldType.DateTime || (offset==null && fieldType != FieldType.ShortDateTime) ?
+		var dateToConv = fieldType == FieldType.DateTime || (offset==null && fieldType != FieldType.Date) ?
 			value.ToUniversalTime() : value;
 		Array.Copy(template, result, count);
 		SetDateTime(result, 4, dateToConv.Year, 3);
 		SetDateTime(result, 2, dateToConv.Month, 6);
 		SetDateTime(result, 2, dateToConv.Day, 9);
-		if (fieldType != FieldType.ShortDateTime)
+		if (fieldType != FieldType.Date)
 		{
 			SetDateTime(result, 2, dateToConv.Hour, 12);
 			SetDateTime(result, 2, dateToConv.Minute, 15);
@@ -36,7 +36,7 @@ internal static class DateTimeExtensions
 			SetDateTime(result, 3, dateToConv.Millisecond, 22);
 			SetDateTime(result, 3, dateToConv.Microsecond, 25);
 
-			if (fieldType == FieldType.LongDateTime && offset!=null)
+			if (fieldType == FieldType.DateTimeOffset && offset!=null)
 			{
 				int hours = offset.Value.Hours;
 				int minutes = offset.Value.Minutes;

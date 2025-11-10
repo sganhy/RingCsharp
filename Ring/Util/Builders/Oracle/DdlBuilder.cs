@@ -17,10 +17,10 @@ internal sealed class DdlBuilder : BaseDdlBuilder
         { FieldType.Short,         "SMALLINT"  },
         { FieldType.Byte,          "TINYINT"   },
         { FieldType.Boolean,       "BOOLEAN"   },
-        { FieldType.ShortDateTime, "DATE"      },
+        { FieldType.Date, "DATE"      },
         { FieldType.ByteArray,     "VARBINARY" },
         { FieldType.DateTime,      "TIMESTAMP" },
-        { FieldType.LongDateTime,  "TIMESTAMP" }
+        { FieldType.DateTimeOffset,  "TIMESTAMP" }
     };
 
     public DdlBuilder() : base() { }

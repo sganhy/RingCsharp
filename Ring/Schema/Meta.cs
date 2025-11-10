@@ -594,7 +594,7 @@ internal readonly struct Meta : IEquatable<Meta>
 			var field = fields[i];
 			// searchable field ? 
 			if (field.Type == FieldType.String && field.SearchableType != SearchableType.None) ++count;
-			if (field.Type == FieldType.LongDateTime && hasTimeZoneOffsetColumn) ++count;
+			if (field.Type == FieldType.DateTimeOffset && hasTimeZoneOffsetColumn) ++count;
 		}
 
 		// count relations 
@@ -672,7 +672,7 @@ internal readonly struct Meta : IEquatable<Meta>
 				}
 
 				// time zone extra column ?
-				if (field?.Type == FieldType.LongDateTime && hasTimeZoneOffsetColumn)
+				if (field?.Type == FieldType.DateTimeOffset && hasTimeZoneOffsetColumn)
 				{
 					if (extraFields.TryGetValue(field.Name, out var metaExtra))
 						table.Columns[columnIndex] = metaExtra.ToColumn(meta.Id,
