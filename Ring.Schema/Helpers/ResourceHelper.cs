@@ -31,17 +31,20 @@ internal sealed class ResourceHelper
 
 	private static void LoadSchemaTemplates()
 	{
-		// Code size: 124 (0x7c)
+		// Code size: 169 (0xa9)
 		lock (SyncRoot)
 		{
 			if (!_schemaTemplateLoaded)
 			{
-				var doc = new XmlDocument();
-				var resourceFile = DocumentType.XmlNative + CompressedResourceSuffix;
-				var xmlStr = GetCompressedResource(TemplateResourceNameSpace, resourceFile, false);
+				var resourceNativeFile = DocumentType.XmlNative + CompressedResourceSuffix;
+				var resourceClfyFile = DocumentType.XmlClfy + CompressedResourceSuffix;
+				var xmlNativeStr = GetCompressedResource(TemplateResourceNameSpace, resourceNativeFile, false);
+				var xmlClfyStr = GetCompressedResource(TemplateResourceNameSpace, resourceNativeFile, false);
+
 				_schemaTemplates = new Dictionary<int, SchemaTemplate>
 				{
-					{ (int)DocumentType.XmlNative, GetSchemaTemplate(DocumentType.XmlNative, resourceFile,  xmlStr) }
+					{ (int)DocumentType.XmlNative, GetSchemaTemplate(DocumentType.XmlNative, resourceNativeFile,  xmlNativeStr) },
+					{ (int)DocumentType.XmlClfy, GetSchemaTemplate(DocumentType.XmlClfy, resourceClfyFile,  xmlClfyStr) }
 				};
 			}
 			_schemaTemplateLoaded = true;

@@ -1,12 +1,10 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="utf-8" ?>
 <template>
-	<table id="0" parent="schema" depth="1">
+	<object id="0" parent="cbo-schema" depth="1">
 		<attribute id="0" value="id"/>
 		<attribute id="1" value="name"/>
 		<attribute id="2" value="baseline" type="flag"/>
-		<attribute id="3" value="readonly" type="flag"/>
-		<attribute id="4" value="cached" type="flag"/>
-	</table>
+	</object>
 	<field id="1" parent="field_list" depth="3">
 		<attribute id="1" value="name"/>
 		<attribute id="2" value="baseline" type="flag"/>
@@ -48,7 +46,7 @@
 		<attribute id="1" value="name"/>
 		<attribute id="2" value="baseline" type="flag"/>
 	</index>
-	<schema id="7" depth="0">
+	<cbo-schema id="7" depth="0">
 		<attribute id="1" value="name"/>
-	</schema>
+	</cbo-schema>
 </template>

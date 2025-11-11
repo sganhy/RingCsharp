@@ -43,10 +43,10 @@
 			<field name="name" type="string" size="40" case_sensitive="false" not_null="true" baseline="true" multilingual="true" />
 			<field name="alt_name" type="string" size="40" not_null="true" baseline="true" multilingual="true" />
 			<field name="short_name" type="string" size="5" case_sensitive="false" not_null="true" baseline="true" multilingual="true" />
-			<field name="law" type="boolean" not_null="true"  />
-			<field name="chaos" type="boolean" not_null="true"  />
-			<field name="good" type="boolean" not_null="true"  />
-			<field name="evil" type="boolean" not_null="true"  />
+			<field name="law" type="boolean" not_null="true" />
+			<field name="chaos" type="boolean" not_null="true" />
+			<field name="good" type="boolean" not_null="true" />
+			<field name="evil" type="boolean" not_null="true" />
 		</field_list>
 		<relation_list>
 			<relation name="alignment2book" type="MTM" to="book" inverse_relation="book2alignment" />
@@ -86,12 +86,12 @@
 		<field_list>
 			<field name="id" type="short" />
 			<field name="name" type="string" size="80" case_sensitive="false" not_null="true" baseline="true" multilingual="true" />
-			<field name="shield" type="boolean" not_null="true"  />
-			<field name="exotic" type="boolean" not_null="true"  />
-			<field name="light" type="boolean" not_null="true"  />
-			<field name="medium" type="boolean" not_null="true"  />
-			<field name="heavy" type="boolean" not_null="true"  />
-			<field name="extra" type="boolean" not_null="true"  />
+			<field name="shield" type="boolean" not_null="true" />
+			<field name="exotic" type="boolean" not_null="true" />
+			<field name="light" type="boolean" not_null="true" />
+			<field name="medium" type="boolean" not_null="true" />
+			<field name="heavy" type="boolean" not_null="true" />
+			<field name="extra" type="boolean" not_null="true" />
 			<field name="ac_bonus" type="byte" />
 			<field name="fortitude_bonus" type="byte" />
 			<field name="check_penality" type="byte" />
@@ -119,14 +119,14 @@
 			<field name="id" type="int" />
 			<field name="title" type="string" size="80" case_sensitive="false" not_null="true" baseline="true" multilingual="true" />
 			<field name="sub_title" type="string" size="80" case_sensitive="false" baseline="true" multilingual="true" />
-			<field name="short_name" type="string" size="80" case_sensitive="false" baseline="true"  />
-			<field name="core_rule" type="boolean" not_null="true"  />
+			<field name="short_name" type="string" size="80" case_sensitive="false" baseline="true" />
+			<field name="core_rule" type="boolean" not_null="true" />
 			<field name="isbn" type="string" size="13" not_null="true" baseline="true" multilingual="true">
 			 	<description>International Standard Book Number (ISBN) - 13 digits long</description>
 			</field>
-			<field name="creation_time" type="shortDatetime" not_null="true"  />
-			<field name="update_stamp" type="shortDatetime" not_null="true"   />
-			<field name="publish_date" type="shortDatetime" not_null="true"   />
+			<field name="creation_time" type="Date" not_null="true" />
+			<field name="update_stamp" type="Date" not_null="true" />
+			<field name="publish_date" type="Date" not_null="true" />
 			<field name="language" type="string" size="2" not_null="true" case_sensitive="false" multilingual="true" />	
 			<field name="pages" type="short" multilingual="true" />
 		</field_list>
@@ -269,7 +269,7 @@
 			<field name="multiple_times" type="boolean" not_null="true" baseline="true" />
 			<field name="effects_stack" type="boolean" not_null="true" baseline="true" />
 			<field name="metamagic" type="boolean" not_null="true"  baseline="true" />
-			<field name="epic" type="boolean" not_null="true" baseline="true"  />
+			<field name="epic" type="boolean" not_null="true" baseline="true" />
 			<field name="target_object" type="string" size="40" baseline="true" />
 			<field name="prerequisites" type="string" size="1000" baseline="true" multilingual="true" />
 			<field name="benefit" type="string" size="1000" baseline="true" multilingual="true" />
@@ -324,7 +324,7 @@
 				<description>version of RPG</description>
 			</field>
 			<field name="short_name" type="string" size="4" not_null="true" case_sensitive="false" baseline="true" multilingual="true" />
-			<field name="iso_code" type="short" not_null="true"  />
+			<field name="iso_code" type="short" not_null="true" />
 			<field name="status" type="short"  not_null="true" />
 		</field_list>
 		<relation_list>

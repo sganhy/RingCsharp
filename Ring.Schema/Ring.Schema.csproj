@@ -43,6 +43,11 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <None Remove="Resources\Templates\XmlClfy.gz" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <EmbeddedResource Include="Resources\Templates\XmlClfy.gz" />
 	  <EmbeddedResource Include="Resources\Templates\XmlNative.gz" />
 	</ItemGroup>
 
