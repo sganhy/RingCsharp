@@ -347,7 +347,7 @@ public struct Record : IEquatable<Record>
 	{
 		// Code size: 122 (0x7a)
 		var table = _type;
-		var data = new ReadOnlySpan<string?>(_data, _offset, table.Columns.Length);
+		var data = new ReadOnlySpan<string?>(_data, _offset, table.RecordSize - 1);
 		var hash = new HashCode();
 
 		hash.Add(table.Id); // pair of identification for a table
@@ -398,7 +398,7 @@ public struct Record : IEquatable<Record>
 	/// <returns>relation ID value; if not defined, return null</returns>
 	internal readonly long? GetRelation(string name)
 	{
-		// Code size: 99 (0x63) - no virtual call
+		// Code size: 115 (0x73) - no virtual call
 		var table = _type;
 		if (table.Id == -1) ThrowRecordUnknownRecordType();
 		var relation = table.GetRelation(name);
@@ -406,7 +406,8 @@ public struct Record : IEquatable<Record>
 		var column = table.GetColumn(relation.Id, EntityType.Relation);
 		if (column is null) ThrowRecordWrongRelationType(name);
 		var index = _offset + column.RecordIndex;
-		return long.Parse(_data[index]!, CultureInfo.InvariantCulture);
+		var value = _data[index];
+		return value != null ? long.Parse(value, CultureInfo.InvariantCulture) : null;
 	}
 
 
@@ -574,7 +575,7 @@ public struct Record : IEquatable<Record>
 		// Code size: 118 (0x76) - no virtual call;
 		var fieldIndex = fieldId + offset;
 		var trackerIndex = table.RecordSize - 1 + offset;
-		if (data.Length < fieldIndex) fieldIndex = fieldId; // another thread changed RecordType avoiding crash; here offset is reset to 0
+		if (data.Length <= fieldIndex) fieldIndex = fieldId; // another thread changed RecordType avoiding crash; here offset is reset to 0
 		if (data[fieldIndex] == value) return; // detect no change
 		if (value is null && table.Fields[fieldId].NotNull) MandatoryField(table, fieldId); // manage mandatory fields !!
 		if (data[trackerIndex] is null) InitializeTracking(data, table, trackerIndex);

@@ -40,7 +40,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	private const byte BitPositionFirstPositionRelType = 18;
 	private static readonly FieldType DefaultColumnFieldType = FieldType.Long;
 	private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
-	private static readonly CacheId DefaulCacheId = new(-1L,long.MinValue,0);
+	private static readonly CacheId DefaultCacheId = new(-1L,long.MinValue,0);
 	#endregion
 
 	// minimizing data padding by field reordering - total: ~46 bytes + heap allocations for strings
@@ -122,7 +122,7 @@ internal readonly struct Meta : IEquatable<Meta>
 		var temp = (long)size;
 		// apply a mask here !!
 		temp <<= BitPositionFirstPositionSize-1;
-		flags += temp;
+		flags |= temp;
 		return flags;
 	}
 	internal static long SetSearchableType(long flags, SearchableType searchableType) {
@@ -156,7 +156,7 @@ internal readonly struct Meta : IEquatable<Meta>
 		// maxInt32 & size << ()
 		flags &= 0x7FFFFFFFFC03FFFF;
 		temp <<= BitPositionFirstPositionRelType;
-		flags += temp;
+		flags |= temp;
 		return flags;
 	}
 	#endregion
@@ -214,7 +214,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	internal static Table GetDefaultTable(Meta meta) // Code size: 103 (0x67)
 		=> new(meta.Id, meta.Name, meta.Description, meta.Value, string.Empty,
 			meta.DataType.ToTableType(), Array.Empty<Relation>(), Array.Empty<Field>(), Array.Empty<Column>(),
-			Array.Empty<Index>(), meta.ReferenceId, PhysicalType.Table, -1, 0, DefaulCacheId, meta.IsEntityBaseline(), meta.Active,
+			Array.Empty<Index>(), meta.ReferenceId, PhysicalType.Table, -1, 0, DefaultCacheId, meta.IsEntityBaseline(), meta.Active,
 			meta.IsTableCached(), true, meta.IsTableReadonly(), meta.HasPreparedStatement(), meta.IsTableAllowAttributeExtension());
 
 	internal static Index GetDefaultIndex(Meta meta) // Code size: 64 (0x40)
@@ -719,7 +719,7 @@ internal readonly struct Meta : IEquatable<Meta>
 		{
 			var index = table.Indexes[i];
 			var logicalCols = index.ColumnList.Split(IndexColumnDelimiter);
-			for (var j=0; j < logicalCols.Length; ++j)
+			for (var j=0; j < logicalCols.Length && j < index.Columns.Length; ++j)
 			{
 				var logicalName = logicalCols[j];
 				// field ?
@@ -873,7 +873,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	private static CacheId GetCacheId(TableType tableType)
 	{
 		// Code size: 16 (0x10)
-		return tableType == TableType.Business? new CacheId() : DefaulCacheId;
+		return tableType == TableType.Business? new CacheId() : DefaultCacheId;
 	}
 
 	private static int ColumnComparer(Column col1, Column col2)

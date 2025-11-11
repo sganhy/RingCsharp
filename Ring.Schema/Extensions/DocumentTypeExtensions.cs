@@ -8,6 +8,7 @@ internal static class DocumentTypeExtensions
 {
 	internal static IDocumentValidator GetValidator(this DocumentType documentType)
 	{
+		// Code size: 29 (0x1d)
 		switch (documentType)
 		{
 			case DocumentType.XmlNative: return new NativeDocumentValidator();

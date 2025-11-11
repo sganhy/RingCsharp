@@ -37,12 +37,11 @@ public sealed class DocumentBuilder
 			var template = documentType.GetSchemaTemplate();
 			if (template is not null)
 			{
-				var tagDico = template.ToTagDictionary(StringComparer.Ordinal);
-				Console.WriteLine("Start");
-				var dt = DateTime.Now;
-				var stats = await validator.GetMetaCountAsync(FilePath, cancellationToken).ConfigureAwait(false);;
-				Console.WriteLine("End");
-				Console.WriteLine(DateTime.Now - dt);
+				var stats = await validator.GetMetaCountAsync(FilePath, cancellationToken).ConfigureAwait(false); ;
+			}
+			else 
+			{
+				// unsupported document type
 			}
 		}
 		else _logs.Add(_logBuilder.GetError(LogType.FileNotFound, FilePath));
