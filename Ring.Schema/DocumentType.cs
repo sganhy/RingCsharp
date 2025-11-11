@@ -1,4 +1,4 @@
-﻿namespace Ring.Schema.Enums;
+﻿namespace Ring.Schema;
 
 #pragma warning disable CA1008 // Enums should have zero value
 public enum DocumentType

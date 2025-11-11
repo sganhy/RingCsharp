@@ -1,52 +1,32 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
-using Ring.Util.Builders;
-using Ring.Util.Enums;
-using Ring.Util.Models;
 using System.Runtime.CompilerServices;
 using System.Xml;
-using Document = Ring.Schema.Models.Document;
-using ResourceHelper = Ring.Schema.Helpers.ResourceHelper;
 
-namespace Ring.Schema.Builders;
+namespace Ring.Schema.Validators;
 
-public sealed class DocumentBuilder
+internal sealed class NativeDocumentValidator : BaseDocumentValidator, IDocumentValidator
 {
-	internal string FilePath { get; set; }
-	private int _schemaId = -1;
-	private string? _creator;
-	private DateTime? _creationTime;
-	private DateTime? _updateTime;
-	private Meta[] _result = Array.Empty<Meta>();
-	private DocumentType _type = DocumentType.Undefined;
-	private long _jobId = -1L;
-	private DatabaseProvider _provider = DatabaseProvider.Undefined;
-	private string _schemaName = string.Empty;
-	private readonly List<Log> _logs = new();
-	private readonly LogBuilder _logBuilder = new();
 
-	internal int SchemaCount { get; private set; }
-	internal int TableCount { get; private set; }
-	internal int FieldCount { get; private set; }
-	internal int UndefinedFieldTypeCount { get; private set; }
-	internal int RelationCount { get; private set; }
-	internal int IndexCount { get; private set; }
-	internal int WrongParentCount { get; private set; }
-	internal int TableSpaceCount { get; private set; }
-	internal int LineCount { get; private set; }
+	internal NativeDocumentValidator() : base (
+		DocumentType.XmlNative.GetSchemaTemplate() ?? DefaultTemplate, 
+		DocumentType.XmlNative.GetSchemaTemplate().ToTagDictionary(StringComparer.Ordinal), 
+		DocumentType.XmlNative)
+	{ 
+	}
 
-	/// <summary>
-	/// Ctor
-	/// </summary>
-	public DocumentBuilder(string filePath) => FilePath = filePath ?? string.Empty;
+	public ValueTask<DocumentStats> GetMetaCountAsync(string FilePath, CancellationToken cancellationToken = default)
+	{ 
+		return GetMetaCountAsync(FilePath, TagDictionary, true, Template, cancellationToken);
+	}
 
 	/// <summary>
 	///	 Compute the number of meta, before allocation + light validation of xml structure
 	/// </summary>
-	internal async ValueTask<int> GetMetaCountAsync(SchemaTemplate template, Dictionary<string, SchemaTemplateItem> tagDico, bool hasTimeZoneOffsetColumn, CancellationToken cancellationToken = default)
-	{
-		// Code size: 687 (0x2af)
+	private async ValueTask<DocumentStats> GetMetaCountAsync(string FilePath, Dictionary<string, SchemaTemplateItem> tagDico, bool hasTimeZoneOffsetColumn, SchemaTemplate template, CancellationToken cancellationToken = default)
+    {
+		
 		var readerSettings = new XmlReaderSettings
 		{
 			IgnoreWhitespace = true,
@@ -56,28 +36,22 @@ public sealed class DocumentBuilder
 			Async = true,
 			CloseInput = false // We manage disposal ourselves
 		};
-		
+
 		// initialize
-		SchemaCount = 0;
-		TableCount = 0;
-		FieldCount = 0;
-		UndefinedFieldTypeCount = 0;
-		RelationCount = 0;
-		IndexCount = 0;
-		WrongParentCount = 0;
-		TableSpaceCount = 0;
-		LineCount = 0;
+		ResetStats();
 
 		var fieldItem = template.GetTemplateItem(EntityType.Field);
 		var fieldTypeAttribute = fieldItem?.GetAttribute(SchemaTemplateAttributeType.Type);
 		var fieldCaseSensitiveAttribute = fieldItem?.GetAttribute(SchemaTemplateAttributeType.CaseSensitive);
 		var result = 0;
 		var buffer = new string?[template.MaxDepth + 2];
+
 		if (fieldTypeAttribute is null || fieldCaseSensitiveAttribute is null)
 		{
 			// throw exception !!!
-			return 0;
+			return new DocumentStats( SchemaCount, TableCount, FieldCount, UndefinedFieldTypeCount, RelationCount, IndexCount, WrongParentCount, TableSpaceCount, LineCount);
 		}
+
 		buffer[0] = string.Empty;
 
 		var fs = new FileStream(FilePath, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 8192, useAsync: true);
@@ -127,44 +101,9 @@ public sealed class DocumentBuilder
 		{
 			await fs.DisposeAsync().ConfigureAwait(false);
 		}
-		return result;
+		return new DocumentStats(SchemaCount, TableCount, FieldCount, UndefinedFieldTypeCount, RelationCount, IndexCount, WrongParentCount, TableSpaceCount, LineCount);
 	}
 
-	public async Task<Document> GetDocumentAsync(DocumentType documentType, CancellationToken cancellationToken = default)
-	{
-		Reset(); // reset values
-		if (File.Exists(FilePath))
-		{
-			// load template
-			var template = ResourceHelper.GetSchemaTemplate(documentType);
-			if (template is not null)
-			{
-				var tagDico = template.ToTagDictionary(StringComparer.Ordinal);
-				var metaCount = await GetMetaCountAsync(template, tagDico, true, cancellationToken).ConfigureAwait(false);
-
-		   }
-		}
-		else _logs.Add(_logBuilder.GetError(LogType.FileNotFound, FilePath));
-		Document result=new(_schemaId, FilePath, _creator, _creationTime, _updateTime, _result, _type, _jobId, _provider, _schemaName);
-		result.Logs.AddRange(_logs);
-		return result;
-	}
-
-	#region private methods 
-
-	private void Reset()
-	{
-		_schemaId = -1;
-		_creator = null;
-		_creationTime = null;
-		_updateTime = null;
-		_result = [];
-		_type = DocumentType.Undefined;
-		_jobId = 0L;
-		_provider = DatabaseProvider.Undefined;
-		_schemaName = string.Empty;
-		_logs.Clear();
-	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static (FieldType, SearchableType) GetFieldInfo(XmlReader reader, SchemaTemplateAttribute attributeType, SchemaTemplateAttribute attributeSearchable)
@@ -189,7 +128,4 @@ public sealed class DocumentBuilder
 		}
 		return (fieldType, searchableType);
 	}
-
-	#endregion 
-
 }

@@ -1,6 +1,4 @@
-﻿using Ring.Schema.Enums;
-
-namespace Ring.Schema.Models;
+﻿namespace Ring.Schema.Models;
 
 internal sealed class SchemaTemplate
 {

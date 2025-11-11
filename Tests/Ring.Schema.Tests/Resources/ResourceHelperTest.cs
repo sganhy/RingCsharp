@@ -1,5 +1,4 @@
-﻿using Ring.Schema.Enums;
-using ResourceHelper = Ring.Schema.Helpers.ResourceHelper;
+﻿using ResourceHelper = Ring.Schema.Helpers.ResourceHelper;
 using Xunit;
 
 namespace Ring.Schema.Tests.Resources;

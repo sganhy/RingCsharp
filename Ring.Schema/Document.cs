@@ -1,23 +1,23 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Util.Models;
 
-namespace Ring.Schema.Models;
+namespace Ring.Schema;
 
 /// <summary>
 ///		Result of document parsing (sources: xml, json, ...)
 /// </summary>
 public sealed class Document
 {
-	internal readonly int SchemaId;
-	internal readonly string FilePath;
-	internal readonly string? Creator;
-	internal readonly DateTime? CreationTime;
-	internal readonly DateTime? UpdateTime;
+	public int SchemaId { get; private set; }
+	public string FilePath { get; private set; }
+	public string? Creator { get; private set; }
+	public DateTime? CreationTime { get; private set; }
+	public DateTime? UpdateTime { get; private set; }
+	public long JobId { get; private set; }
+	public string SchemaName { get; private set; }
 	internal readonly Meta[] Result;
 	internal readonly DocumentType Type;
-	internal readonly long JobId;
 	internal readonly DatabaseProvider Provider;
-	internal readonly string SchemaName;
 	internal readonly List<Log> Logs;
 
 	internal Document(int schemaId, string filePath, string? creator, DateTime? creationTime, DateTime? updateTime, Meta[] result, DocumentType type,
@@ -33,6 +33,6 @@ public sealed class Document
 		JobId = jobId;
 		Provider = provider;
 		SchemaName = schemaName;
-		Logs = new List<Log>();
+		Logs = [];
 	}
 }

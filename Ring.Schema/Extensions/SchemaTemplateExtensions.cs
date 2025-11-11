@@ -5,11 +5,12 @@ namespace Ring.Schema.Extensions;
 
 internal static class SchemaTemplateExtensions
 {
-	internal static Dictionary<string, SchemaTemplateItem> ToTagDictionary(this SchemaTemplate template, StringComparer stringComparer)
+	internal static Dictionary<string, SchemaTemplateItem> ToTagDictionary(this SchemaTemplate? template, StringComparer stringComparer)
 	{
-		// Code size: 99 (0x63)
+		// Code size: 108 (0x6c)
+		if (template is null) return new Dictionary<string, SchemaTemplateItem>();
 		var dict = new Dictionary<string, SchemaTemplateItem>(template.Items.Length*2, stringComparer);
-		var items = new ReadOnlySpan<SchemaTemplateItem>(template.Items);
+        var items = new ReadOnlySpan<SchemaTemplateItem>(template.Items);
 		foreach (var item in items) if (!string.IsNullOrWhiteSpace(item.Tag) && !dict.ContainsKey(item.Tag))  dict.Add(item.Tag, item);
 		return dict;
 	}
