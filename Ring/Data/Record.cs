@@ -555,7 +555,7 @@ public struct Record : IEquatable<Record>
 	{
 		// Code size: 59 (0x3b) - smaller than a logical pattern - no virtual call;
 		if (fieldType == FieldType.DateTime || fieldType == FieldType.DateTimeOffset || fieldType == FieldType.Date)
-			SetData(data, table, rcdOffset, fieldId, new string(value.ToString(fieldType, offset)));
+			SetData(data, table, rcdOffset, fieldId, value.ToString(fieldType, offset));
 		else ThrowImpossibleConversion(FieldType.DateTime, fieldType);
 	}
 

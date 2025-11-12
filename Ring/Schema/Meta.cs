@@ -19,6 +19,7 @@ internal readonly struct Meta : IEquatable<Meta>
 {
 
 	#region constants
+	private static Meta DefaultMetaRelation = new(0, (byte)EntityType.Relation, 0, 0, 0L, string.Empty, null, null, true);
 
 	// entity type constants
 	private const byte TableId = (byte)EntityType.Table;
@@ -126,11 +127,13 @@ internal readonly struct Meta : IEquatable<Meta>
 		return flags;
 	}
 	internal static long SetSearchableType(long flags, SearchableType searchableType) {
-		// Code size: 14 (0xe)
-		var temp = (int)searchableType;
-		// apply a mask here !!
-		temp <<= BitPositionFieldSearchableType-1;
-		flags += temp;
+		// Code size: 28 (0x1c)
+		// Clear existing searchable type bits (6 bits at position 5-10)
+		flags &= ~(0x3FL << (BitPositionFieldSearchableType - 1));
+		// Set new value
+		var temp = ((long)searchableType) & 0x3F;
+		temp <<= BitPositionFieldSearchableType - 1;
+		flags |= temp;
 		return flags;
 	}
 
@@ -196,7 +199,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	internal FieldType GetParameterValueType() => (DataType & 127).ToFieldType(); // Code size: 15 (0xf)
 	internal ParameterType GetParameterType() => Id.ToParameterType(); // Code size: 12 (0xc)
 	internal string GetParameterValue() => Value ?? string.Empty;
-	internal static int SetParameterValueType(int dataType, FieldType valueType) => (dataType & 0xFFF8) + ((byte)valueType) & 127;
+	internal static int SetParameterValueType(int dataType, FieldType valueType) => (dataType & 0xFFF8) + (((byte)valueType) & 127); // Code size: 13 (0xd)
 	#endregion
 
 	#region tablespace methods
@@ -818,7 +821,7 @@ internal readonly struct Meta : IEquatable<Meta>
 					}
 
 					// step 2 - create two new relations -- mtmTable cannot be null here
-					table.Relations[j] = CreateMtmRelation(relation, mtmTable, ddlBuilder);
+					table.Relations[j] = CreateMtmRelation(relation, mtmTable);
 					table.Relations[j].SetInverseRelation(inverseRelation);
 				}
 			}
@@ -859,11 +862,11 @@ internal readonly struct Meta : IEquatable<Meta>
 	private static Meta SetObjectType(Meta meta, byte objectType) => // Code size: 55 (0x37)
 		new (meta.Id, objectType, meta.ReferenceId, meta.DataType, meta.Flags, meta.Name, meta.Description, meta.Value, meta.Active);
 
-	private static Relation CreateMtmRelation(Relation relation, Table mtmTable, IDdlBuilder ddlBuilder)
+	private static Relation CreateMtmRelation(Relation relation, Table mtmTable)
 	{
-		// Code size: 26 (0x1a)
+		// Code size: 44 (0x2c)
 		var meta = relation.ToMeta(0);
-		return meta.ToRelation(mtmTable);
+		return meta.ToRelation(mtmTable) ?? GetDefaultRelation(DefaultMetaRelation, RelationType.Undefined,TableType.Undefined);
 	}
 
 	/// <summary>
