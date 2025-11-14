@@ -15,8 +15,8 @@ internal abstract class BaseDocumentValidator
 	protected int TableSpaceCount;
 	protected int LineCount;
 
-	// temmplate 
-	protected readonly static SchemaTemplate DefaultTemplate = new SchemaTemplate(string.Empty, DocumentType.Undefined, [], 0);
+	// template 
+	protected readonly static SchemaTemplate DefaultTemplate = new(string.Empty, DocumentType.Undefined, [], 0);
 	protected readonly Dictionary<string, SchemaTemplateItem> TagDictionary;
 	protected readonly SchemaTemplate Template;
 	protected readonly DocumentType DocumentType;

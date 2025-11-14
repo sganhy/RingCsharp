@@ -49,7 +49,7 @@ internal sealed class NativeDocumentValidator : BaseDocumentValidator, IDocument
 		if (fieldTypeAttribute is null || fieldCaseSensitiveAttribute is null)
 		{
 			// throw exception !!!
-			return new DocumentStats( SchemaCount, TableCount, FieldCount, UndefinedFieldTypeCount, RelationCount, IndexCount, WrongParentCount, TableSpaceCount, LineCount);
+			return new DocumentStats(SchemaCount, TableCount, FieldCount, UndefinedFieldTypeCount, RelationCount, IndexCount, WrongParentCount, TableSpaceCount, LineCount, result);
 		}
 
 		buffer[0] = string.Empty;
@@ -101,7 +101,7 @@ internal sealed class NativeDocumentValidator : BaseDocumentValidator, IDocument
 		{
 			await fs.DisposeAsync().ConfigureAwait(false);
 		}
-		return new DocumentStats(SchemaCount, TableCount, FieldCount, UndefinedFieldTypeCount, RelationCount, IndexCount, WrongParentCount, TableSpaceCount, LineCount);
+		return new DocumentStats(SchemaCount, TableCount, FieldCount, UndefinedFieldTypeCount, RelationCount, IndexCount, WrongParentCount, TableSpaceCount, LineCount, result);
 	}
 
 

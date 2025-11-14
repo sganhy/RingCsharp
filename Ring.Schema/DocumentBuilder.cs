@@ -1,4 +1,5 @@
-﻿using Ring.Schema.Enums;
+﻿using Ring.Schema.Builders;
+using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Util.Builders;
 using Ring.Util.Enums;
@@ -27,7 +28,7 @@ public sealed class DocumentBuilder
 	public DocumentBuilder(string filePath) => FilePath = filePath ?? string.Empty;
 
 
-	public async Task<Document> GetDocumentAsync(DocumentType documentType, CancellationToken cancellationToken = default)
+	public async ValueTask<Document> GetDocumentAsync(DocumentType documentType, CancellationToken cancellationToken = default)
 	{
 		Reset(); // reset values
 		if (File.Exists(FilePath))
@@ -35,9 +36,16 @@ public sealed class DocumentBuilder
 			// load template
 			var validator = documentType.GetValidator();
 			var template = documentType.GetSchemaTemplate();
+			var metaBuilder = documentType.GetMetaBuilder();
+
 			if (template is not null)
 			{
-				var stats = await validator.GetMetaCountAsync(FilePath, cancellationToken).ConfigureAwait(false); ;
+				var stats = await validator.GetMetaCountAsync(FilePath, cancellationToken).ConfigureAwait(false);
+				// validate stats here
+				if (stats.MetaCount > 0)
+				{
+					var metaArray = await metaBuilder.GetMeta(FilePath, stats.MetaCount, cancellationToken).ConfigureAwait(false);
+				}
 			}
 			else 
 			{

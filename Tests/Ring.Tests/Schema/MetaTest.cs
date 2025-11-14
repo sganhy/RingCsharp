@@ -669,4 +669,33 @@ public sealed class MetaTest : BaseTest
         Assert.False(result2);
         Assert.True(result3);
     }
+
+	[Fact]
+	public void GetSearchableType_SearchableTypeIgnoreCase_IgnoreCase()
+	{
+        // arrange 
+        var flags = 0L;
+        var expectedFieldSize = 99999999;
+		flags = Meta.SetSearchableType(flags, SearchableType.IgnoreCase);
+		flags = Meta.SetFieldSize(flags, expectedFieldSize);
+		flags = Meta.SetFieldMultilingual(flags, true);
+		flags = Meta.SetFieldNotNull(flags, true);
+		flags = Meta.SetFieldAllowTruncation(flags, true);
+		var meta = new Meta(_faker.Random.Number(int.MinValue, int.MaxValue), (byte)EntityType.Schema, _faker.Random.Number(int.MinValue, int.MaxValue), 0, flags, "Test",	_faker.Random.String(), null, false);
+
+		// act 
+		var searchableType = meta.GetSearchableType();
+        var fieldSize = meta.GetFieldSize();
+		var notNull = meta.IsFieldNotNull();
+		var isMultilingual = meta.IsFieldMultilingual();
+		var allowTruncation = meta.IsFieldAllowTruncation();
+
+		// assert
+		Assert.Equal(SearchableType.IgnoreCase, searchableType);
+		Assert.Equal(expectedFieldSize, fieldSize);
+		Assert.True(notNull);
+		Assert.True(isMultilingual);
+		Assert.True(allowTruncation);
+	}
+
 }

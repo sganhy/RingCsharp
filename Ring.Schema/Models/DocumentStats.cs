@@ -2,6 +2,7 @@
 
 internal readonly struct DocumentStats
 {
+	readonly internal int MetaCount;
 	readonly internal int SchemaCount;
 	readonly internal int TableCount;
 	readonly internal int FieldCount;
@@ -12,7 +13,7 @@ internal readonly struct DocumentStats
 	readonly internal int TableSpaceCount;
 	readonly internal int LineCount;
 
-	internal DocumentStats(int schemaCount, int tableCount, int fieldCount, int undefinedFieldTypeCount, int relationCount, int indexCount, int wrongParentCount, int tableSpaceCount, int lineCount)
+	internal DocumentStats(int schemaCount, int tableCount, int fieldCount, int undefinedFieldTypeCount, int relationCount, int indexCount, int wrongParentCount, int tableSpaceCount, int lineCount, int metaCount)
 	{
 		SchemaCount = schemaCount;
 		TableCount = tableCount;
@@ -23,5 +24,6 @@ internal readonly struct DocumentStats
 		WrongParentCount = wrongParentCount;
 		TableSpaceCount = tableSpaceCount;
 		LineCount = lineCount;
+		MetaCount = metaCount;
 	}
 }

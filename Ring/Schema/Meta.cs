@@ -96,7 +96,7 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal bool IsFieldAllowTruncation() => (Flags & (long)MetaFlag.FieldAllowTruncation) != 0; // Code size: 18 (0x12)
-	internal int GetFieldSize() => (int)((Flags >> (BitPositionFirstPositionSize-1)) & (int.MaxValue)); // Code size: 18 (0x12)
+	internal int GetFieldSize() => (int)((Flags >> (BitPositionFirstPositionSize-1)) & int.MaxValue); // Code size: 18 (0x12)
 	internal SearchableType GetSearchableType() => ((int)((Flags >> (BitPositionFieldSearchableType-1)) & 0x3F)).ToSearchableType(); // Code size: 19 (0x13)
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -107,6 +107,7 @@ internal readonly struct Meta : IEquatable<Meta>
 		if (IsFieldNotNull()) return GetFieldType().GetDefaultValue();
 		return null;
 	}
+
 	internal static int SetFieldType(int dataType, FieldType fieldType)
 	{
 		// Code size: 16 (0x10)
@@ -116,6 +117,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	}
 	// field flags 
 	internal static long SetFieldNotNull(long flags, bool value) => WriteFlag(flags, MetaFlag.FieldNotNull, value); // Code size: 10 (0xa)
+	internal static long SetFieldAllowTruncation(long flags, bool value) => WriteFlag(flags, MetaFlag.FieldAllowTruncation, value); // Code size: 14 (0xe)
 	internal static long SetFieldMultilingual(long flags, bool value) => WriteFlag(flags, MetaFlag.FieldMultilingual, value); // Code size: 10 (0xa)
 	internal static long SetFieldSize(long flags, int size)
 	{
@@ -413,7 +415,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	}
 
 #if DEBUG
-	public override string ToString() => string.IsNullOrEmpty(Name) ? string.Empty : $"{Id} - {Name}";
+	public override string ToString() => string.IsNullOrEmpty(Name) ? string.Empty : $"{IntExtensions.ToEntityType((int)ObjectType)} {Id} - {Name}";
 #endif
 
 	#region private methods 

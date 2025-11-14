@@ -16,10 +16,10 @@ internal enum MetaFlag : long
 	TableCached = 1L << 8,              // bit 9
 	IndexUnique = 1L << 9,              // bit 10
 	TableReadonly = 1L << 9,            // bit 10
-	FieldAllowTruncation = 1L << 10,    // bit 11
 	TablespaceIndex = 1L << 10,         // bit 11
 	TablespaceTable = 1L << 11,         // bit 12
 	TableAttributeExtension = 1L << 12, // bit 13
+	FieldAllowTruncation = 1L << 13,    // bit 14
 	EntityBaseline = 1L << 13,          // bit 14
 
 #pragma warning restore CA1069
