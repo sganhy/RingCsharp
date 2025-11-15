@@ -5,18 +5,12 @@ namespace Ring.Schema.Validators;
 
 internal class ClfyDocumentValidator : BaseDocumentValidator, IDocumentValidator
 {
-
-	internal ClfyDocumentValidator() : 
-		base(GetTemplate(DocumentType.XmlClfy), GetTemplate(DocumentType.XmlClfy).ToTagDictionary(StringComparer.Ordinal), DocumentType.XmlClfy)
-	{
-	}
-
+	internal ClfyDocumentValidator() : this(GetTemplate(DocumentType.XmlClfy)) { }
+	internal ClfyDocumentValidator(DocumentType documentType) : this(GetTemplate(documentType)) { }
+	private ClfyDocumentValidator(SchemaTemplate template) : base(template, template.ToTagDictionary(StringComparer.Ordinal), template.Type) { }
 	public ValueTask<DocumentStats> GetMetaCountAsync(string filePath, CancellationToken cancellationToken = default)
 	{
-		return GetMetaCountAsync(filePath, TagDictionary, true, Template, cancellationToken);
+		var validator = new NativeDocumentValidator(DocumentType.XmlNative);
+		return validator.GetMetaCountAsync(filePath, cancellationToken);
 	}
-	public ValueTask<DocumentStats> GetMetaCountAsync(string filePath, Dictionary<string, SchemaTemplateItem> tagDico, bool hasTimeZoneOffsetColumn, SchemaTemplate template, CancellationToken cancellationToken = default)
-	{
-        throw new NotImplementedException();
-    }
 }

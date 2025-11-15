@@ -19,7 +19,7 @@ internal readonly struct Meta : IEquatable<Meta>
 {
 
 	#region constants
-	private static Meta DefaultMetaRelation = new(0, (byte)EntityType.Relation, 0, 0, 0L, string.Empty, null, null, true);
+	private static readonly Meta DefaultMetaRelation = new(0, (byte)EntityType.Relation, 0, 0, 0L, string.Empty, null, null, true);
 
 	// entity type constants
 	private const byte TableId = (byte)EntityType.Table;

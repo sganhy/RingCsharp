@@ -28,6 +28,8 @@ internal static class IntExtensions
 	private const int XmlAttributeDepthId = (int)SchemaTemplateAttributeType.Depth;
 	private const int XmlAttributeAttributeId = (int)SchemaTemplateAttributeType.Attribute;
 	private const int XmlAttributeTemplateId = (int)SchemaTemplateAttributeType.Template;
+	private const int XmlAttributeDefaultValue = (int)SchemaTemplateAttributeType.DefaultValue;
+
 
 	#endregion
 
@@ -57,6 +59,7 @@ internal static class IntExtensions
 			case XmlAttributeDepthId: return SchemaTemplateAttributeType.Depth;
 			case XmlAttributeAttributeId: return SchemaTemplateAttributeType.Attribute;
 			case XmlAttributeTemplateId: return SchemaTemplateAttributeType.Template;
+			case XmlAttributeDefaultValue: return SchemaTemplateAttributeType.DefaultValue;
 		}
 		return SchemaTemplateAttributeType.Undefined;
 	}

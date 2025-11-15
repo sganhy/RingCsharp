@@ -28,6 +28,7 @@
 		<attribute id="7" value="case_sensitive"/>
 		<attribute id="8" value="not_null" type="flag"/>
 		<attribute id="9" value="multilingual" type="flag"/>
+		<attribute id="26" value="default"/>
 	</field>
 	<relation id="2" parent="relation_list" depth="3">
 		<attribute id="1" value="name"/>

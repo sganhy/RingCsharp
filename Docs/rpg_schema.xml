@@ -14,7 +14,7 @@
 	<!-- ******************* -->
 	
 	
-	<table name="ability" id="1011" baseline="true" readonly="true">
+	<table name="ability" id="1011" baseline="true" readonly="true" cached="true" >
 		<description></description>
 		<field_list>
 			<field name="id" type="short" />

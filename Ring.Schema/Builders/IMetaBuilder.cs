@@ -2,5 +2,5 @@
 
 internal interface IMetaBuilder
 {
-	ValueTask<Meta[]> GetMeta(string FilePath, int count, CancellationToken cancellationToken = default);
+	ValueTask<Meta[]> GetMetaAsync(string filePath, int count, CancellationToken cancellationToken = default);
 }

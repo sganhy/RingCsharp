@@ -44,7 +44,8 @@ public sealed class DocumentBuilder
 				// validate stats here
 				if (stats.MetaCount > 0)
 				{
-					var metaArray = await metaBuilder.GetMeta(FilePath, stats.MetaCount, cancellationToken).ConfigureAwait(false);
+					Console.WriteLine("Count= " + stats.MetaCount);
+					var metaArray = await metaBuilder.GetMetaAsync(FilePath, stats.MetaCount, cancellationToken).ConfigureAwait(false);
 				}
 			}
 			else 

@@ -27,6 +27,15 @@ internal static class SchemaTemplateAttributeExtensions
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal static int GetFieldSize(this SchemaTemplateAttribute schemaTemplateAttribute, string value)
+	{
+		var attributeValue = value.Trim();
+		// Code size: 36 (0x24)
+		if (int.TryParse(attributeValue,out var result)) return result;
+		return -1;
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static RelationType GetRelationType(this SchemaTemplateAttribute schemaTemplateAttribute, string value)
 	{
 		// Code size: 36 (0x24)
@@ -40,9 +49,24 @@ internal static class SchemaTemplateAttributeExtensions
 		// Code size: 23 (0x17)
 		switch (schemaTemplateAttribute.Type)
 		{
-			case SchemaTemplateAttributeType.CaseSensitive: return GetFlagValue(value) == false ? SearchableType.IgnoreCase : SearchableType.None;
+			case SchemaTemplateAttributeType.CaseSensitive: return GetFlagValue(schemaTemplateAttribute, value) == false ? SearchableType.IgnoreCase : SearchableType.None;
 		}
 		return SearchableType.None;
+	}
+
+	internal static bool? GetFlagValue(this SchemaTemplateAttribute _, string value)
+	{
+		// Code size: 115 (0x73)
+		var comparedvalue = value.Trim();
+		if (string.Equals(TrueString, comparedvalue, StringComparison.OrdinalIgnoreCase) ||
+			string.Equals(Number1String, comparedvalue, StringComparison.OrdinalIgnoreCase) ||
+			string.Equals(YesString, comparedvalue, StringComparison.OrdinalIgnoreCase))
+			return true;
+		if (string.Equals(FalseString, comparedvalue, StringComparison.OrdinalIgnoreCase) ||
+			string.Equals(Number0String, comparedvalue, StringComparison.OrdinalIgnoreCase) ||
+			string.Equals(NoString, comparedvalue, StringComparison.OrdinalIgnoreCase))
+			return false;
+		return null;
 	}
 
 	#region private methods 
@@ -62,21 +86,6 @@ internal static class SchemaTemplateAttributeExtensions
 			if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
 			else indexerRight = indexerMiddle - 1;
 		}
-		return null;
-	}
-
-	private static bool? GetFlagValue(string value)
-	{
-		// Code size: 115 (0x73)
-		var comparedvalue = value.Trim();
-		if (string.Equals(TrueString, comparedvalue, StringComparison.OrdinalIgnoreCase) || 
-			string.Equals(Number1String, comparedvalue, StringComparison.OrdinalIgnoreCase) ||
-			string.Equals(YesString, comparedvalue, StringComparison.OrdinalIgnoreCase))
-			return true;
-		if (string.Equals(FalseString, comparedvalue, StringComparison.OrdinalIgnoreCase) || 
-			string.Equals(Number0String, comparedvalue, StringComparison.OrdinalIgnoreCase) ||
-			string.Equals(NoString, comparedvalue, StringComparison.OrdinalIgnoreCase)) 
-			return false;
 		return null;
 	}
 
