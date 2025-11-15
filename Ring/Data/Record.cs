@@ -614,13 +614,11 @@ public struct Record : IEquatable<Record>
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
-	private static void ThrowValueTooLarge(FieldType fieldType) =>
-		throw new OverflowException(string.Format(DefaultCulture, ResourceHelper.GetErrorMessage(ResourceType.RecordValueTooLarge), fieldType.RecordTypeDisplay()));
+	private static void ThrowValueTooLarge(FieldType fieldType) => throw new OverflowException(string.Format(DefaultCulture, ResourceHelper.GetErrorMessage(ResourceType.RecordValueTooLarge), fieldType.RecordTypeDisplay()));
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
-	private static void ThrowWrongBooleanValue(string? value) =>
-		throw new FormatException(string.Format(DefaultCulture,	ResourceHelper.GetErrorMessage(ResourceType.RecordWrongBooleanValue), value ?? NullString));
+	private static void ThrowWrongBooleanValue(string? value) => throw new FormatException(string.Format(DefaultCulture, ResourceHelper.GetErrorMessage(ResourceType.RecordWrongBooleanValue), value ?? NullString));
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
@@ -632,11 +630,9 @@ public struct Record : IEquatable<Record>
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
-	private static void ThrowInvalidBase64String() =>
-		throw new FormatException(ResourceHelper.GetErrorMessage(ResourceType.InvalidBase64String));
+	private static void ThrowInvalidBase64String() => throw new FormatException(ResourceHelper.GetErrorMessage(ResourceType.InvalidBase64String));
 
 	private static IDdlBuilder GetDefaultDdlBuilder() => new Util.Builders.PostgreSQL.DdlBuilder(); // Code size: 6 (0x6)
-
 
 	private static Table GetDefaultType()
 	{

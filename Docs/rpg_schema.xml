@@ -82,7 +82,14 @@
 	
 	
 	<table name="armor" id="1015" baseline="true" readonly="true">
-		<description></description>
+		<description><![CDATA[(
+select 	objid, territory_objid as team_objid, login_name, login_name, first_name, first_name, last_name, last_name, phone, 1 as user_type, name as site_name, name as site_name, empl_objid as contact_employee_objid, user_objid, role_name, role_name, role_hgbst_elm as xxx_role2hgbst_elm, status
+from 	table_empl_ter_assgn_team
+union
+select objid, territory_objid as team_objid, login_name, login_name,first_name, first_name,last_name, last_name, phone,2 as user_type, name as site_name, name as site_name, contact_objid as contact_employee_objid, user_objid, role_name, role_name, role_hgbst_elm as xxx_role2hgbst_elm, status
+from 	table_cnt_ter_assgn_team
+where 	primary_site = '1'
+)]]></description>
 		<field_list>
 			<field name="id" type="short" />
 			<field name="name" type="string" size="80" case_sensitive="false" not_null="true" baseline="true" multilingual="true" />

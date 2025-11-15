@@ -39,7 +39,7 @@ internal sealed class ResourceHelper
 				var resourceNativeFile = DocumentType.XmlNative + CompressedResourceSuffix;
 				var resourceClfyFile = DocumentType.XmlClfy + CompressedResourceSuffix;
 				var xmlNativeStr = GetCompressedResource(TemplateResourceNameSpace, resourceNativeFile, false);
-				var xmlClfyStr = GetCompressedResource(TemplateResourceNameSpace, resourceNativeFile, false);
+				var xmlClfyStr = GetCompressedResource(TemplateResourceNameSpace, resourceClfyFile, false);
 
 				_schemaTemplates = new Dictionary<int, SchemaTemplate>
 				{

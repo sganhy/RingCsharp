@@ -1,30 +1,28 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
-using System.Runtime.CompilerServices;
 using System.Xml;
 
 namespace Ring.Schema.Validators;
 
 internal sealed class NativeDocumentValidator : BaseDocumentValidator, IDocumentValidator
 {
+	private const int FileStreamBufferSize = 8192;
+	private const int CancellationCheckMask = 0xFF; // Check every 256 iterations
 
-	internal NativeDocumentValidator() : base (
-		DocumentType.XmlNative.GetSchemaTemplate() ?? DefaultTemplate, 
-		DocumentType.XmlNative.GetSchemaTemplate().ToTagDictionary(StringComparer.Ordinal), 
-		DocumentType.XmlNative)
-	{ 
-	}
+	internal NativeDocumentValidator() : this(GetTemplate(DocumentType.XmlNative)) {}
+	private NativeDocumentValidator(SchemaTemplate template) : base(template, template.ToTagDictionary(StringComparer.Ordinal), DocumentType.XmlNative)	{}
 
-	public ValueTask<DocumentStats> GetMetaCountAsync(string FilePath, CancellationToken cancellationToken = default)
+
+	public ValueTask<DocumentStats> GetMetaCountAsync(string filePath, CancellationToken cancellationToken = default)
 	{ 
-		return GetMetaCountAsync(FilePath, TagDictionary, true, Template, cancellationToken);
+		return GetMetaCountAsync(filePath, TagDictionary, true, Template, cancellationToken);
 	}
 
 	/// <summary>
 	///	 Compute the number of meta, before allocation + light validation of xml structure
 	/// </summary>
-	private async ValueTask<DocumentStats> GetMetaCountAsync(string FilePath, Dictionary<string, SchemaTemplateItem> tagDico, bool hasTimeZoneOffsetColumn, SchemaTemplate template, CancellationToken cancellationToken = default)
+	private async ValueTask<DocumentStats> GetMetaCountAsync(string filePath, Dictionary<string, SchemaTemplateItem> tagDico, bool hasTimeZoneOffsetColumn, SchemaTemplate template, CancellationToken cancellationToken = default)
     {
 		
 		var readerSettings = new XmlReaderSettings
@@ -34,7 +32,6 @@ internal sealed class NativeDocumentValidator : BaseDocumentValidator, IDocument
 			IgnoreComments = true,
 			IgnoreProcessingInstructions = true,
 			Async = true,
-			CloseInput = false // We manage disposal ourselves
 		};
 
 		// initialize
@@ -43,19 +40,21 @@ internal sealed class NativeDocumentValidator : BaseDocumentValidator, IDocument
 		var fieldItem = template.GetTemplateItem(EntityType.Field);
 		var fieldTypeAttribute = fieldItem?.GetAttribute(SchemaTemplateAttributeType.Type);
 		var fieldCaseSensitiveAttribute = fieldItem?.GetAttribute(SchemaTemplateAttributeType.CaseSensitive);
-		var result = 0;
+		var extraFieldCount = 0;
 		var buffer = new string?[template.MaxDepth + 2];
+		var iterationCount = 0;
+		var metaCount = 0;
 
 		if (fieldTypeAttribute is null || fieldCaseSensitiveAttribute is null)
 		{
 			// throw exception !!!
-			return new DocumentStats(SchemaCount, TableCount, FieldCount, UndefinedFieldTypeCount, RelationCount, IndexCount, WrongParentCount, TableSpaceCount, LineCount, result);
+			return new DocumentStats(SchemaCount, TableCount, FieldCount, UndefinedFieldTypeCount, RelationCount, IndexCount, WrongParentCount, TableSpaceCount, LineCount, metaCount);
 		}
 
 		buffer[0] = string.Empty;
 
-		var fs = new FileStream(FilePath, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 8192, useAsync: true);
-		try
+		var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: FileStreamBufferSize, useAsync: true);
+		await using (fs.ConfigureAwait(false))
 		{
 			using var xmlReader = XmlReader.Create(fs, readerSettings);
 
@@ -63,14 +62,15 @@ internal sealed class NativeDocumentValidator : BaseDocumentValidator, IDocument
 			{
 				// Check cancellation periodically, not every iteration for perf
 				// Check every 256 iterations
-				if ((result & 0xFF) == 0) cancellationToken.ThrowIfCancellationRequested();
+				if ((++iterationCount & CancellationCheckMask) == 0) cancellationToken.ThrowIfCancellationRequested();
 				if (xmlReader.NodeType != XmlNodeType.Element) continue;
 
+				var elementName = xmlReader.Name;
 				var currentDepth = xmlReader.Depth;
 				if (currentDepth > template.MaxDepth) continue;
-				buffer[currentDepth + 1] = xmlReader.Name;
+				buffer[currentDepth + 1] = elementName;
 
-				if (tagDico.TryGetValue(xmlReader.Name, out var item))
+				if (tagDico.TryGetValue(elementName, out var item))
 				{
 					var parent = buffer[currentDepth];
 					if (StringComparer.Ordinal.Equals(item.ParentTag, parent))
@@ -81,10 +81,10 @@ internal sealed class NativeDocumentValidator : BaseDocumentValidator, IDocument
 							case EntityType.Table: ++TableCount; break;
 							case EntityType.Field:
 								++FieldCount;
-								(var fieldType, var searchableType) = GetFieldInfo(xmlReader, fieldTypeAttribute, fieldCaseSensitiveAttribute);
-								if (searchableType != SearchableType.None) ++result; // extra column for searchable
+								var (fieldType, searchableType) = xmlReader.GetFieldInfo(fieldTypeAttribute, fieldCaseSensitiveAttribute);
+								if (searchableType != SearchableType.None) ++extraFieldCount; // extra column for searchable
 								if (fieldType == FieldType.Undefined) ++UndefinedFieldTypeCount;
-								if (fieldType == FieldType.DateTimeOffset && hasTimeZoneOffsetColumn) ++result; // extra field of date offset
+								if (fieldType == FieldType.DateTimeOffset && hasTimeZoneOffsetColumn) ++extraFieldCount; // extra field of date offset
 								break;
 							case EntityType.Relation: ++RelationCount; break;
 							case EntityType.Index: ++IndexCount; break;
@@ -94,38 +94,11 @@ internal sealed class NativeDocumentValidator : BaseDocumentValidator, IDocument
 					else ++WrongParentCount;
 				}
 			}
-			result += TableCount + FieldCount + RelationCount + IndexCount + TableSpaceCount + SchemaCount;
 			LineCount = (xmlReader as IXmlLineInfo)?.LineNumber ?? 0;
+			metaCount = extraFieldCount + TableCount + FieldCount + RelationCount + IndexCount + TableSpaceCount + SchemaCount;
 		}
-		finally
-		{
-			await fs.DisposeAsync().ConfigureAwait(false);
-		}
-		return new DocumentStats(SchemaCount, TableCount, FieldCount, UndefinedFieldTypeCount, RelationCount, IndexCount, WrongParentCount, TableSpaceCount, LineCount, result);
+
+		return new DocumentStats(SchemaCount, TableCount, FieldCount, UndefinedFieldTypeCount, RelationCount, IndexCount, WrongParentCount, TableSpaceCount, LineCount, metaCount);
 	}
 
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private static (FieldType, SearchableType) GetFieldInfo(XmlReader reader, SchemaTemplateAttribute attributeType, SchemaTemplateAttribute attributeSearchable)
-	{
-		// Code size: 106 (0x6a)
-		const StringComparison comparison = StringComparison.OrdinalIgnoreCase;
-		var fieldType = FieldType.Undefined;
-		var searchableType = SearchableType.None;
-		var attributeTypeName = attributeType.Name;
-		var attributeSearchableName = attributeSearchable.Name;
-		if (reader.MoveToFirstAttribute())
-		{
-			do
-			{
-				if (string.Equals(attributeTypeName, reader.Name, comparison))
-					fieldType = attributeType.GetFieldType(reader.Value);
-				if (string.Equals(attributeSearchableName, reader.Name, comparison))
-					searchableType = attributeSearchable.GetSearchableType(reader.Value);
-			}
-			while (reader.MoveToNextAttribute());
-			reader.MoveToElement();
-		}
-		return (fieldType, searchableType);
-	}
 }

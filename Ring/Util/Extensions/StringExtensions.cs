@@ -50,6 +50,7 @@ internal static class StringExtensions
 	/// <summary>
 	/// Set to true a bit value
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static void SetBitValue(this string value, int position)
 	{
 		// Code size: 68 (0x44)

@@ -1,4 +1,5 @@
-﻿using Ring.Schema.Models;
+﻿using Ring.Schema.Extensions;
+using Ring.Schema.Models;
 
 namespace Ring.Schema.Validators;
 
@@ -20,6 +21,7 @@ internal abstract class BaseDocumentValidator
 	protected readonly Dictionary<string, SchemaTemplateItem> TagDictionary;
 	protected readonly SchemaTemplate Template;
 	protected readonly DocumentType DocumentType;
+	
 
 	internal BaseDocumentValidator(SchemaTemplate template, Dictionary<string, SchemaTemplateItem> tagDico, DocumentType documentType)
 	{
@@ -40,5 +42,8 @@ internal abstract class BaseDocumentValidator
 		TableSpaceCount = 0;
 		LineCount = 0;
 	}
+
+	protected static SchemaTemplate GetTemplate(DocumentType documentType) => documentType.GetSchemaTemplate() ?? DefaultTemplate;
+
 
 }
