@@ -10,9 +10,9 @@ internal sealed class ClfyMetaBuilder : BaseMetaBuilder, IMetaBuilder
 	internal ClfyMetaBuilder(DocumentType documentType) : this(GetTemplate(documentType)) { } // reuse same logic with another document type
 	private ClfyMetaBuilder(SchemaTemplate template) : base(template, template.ToTagDictionary(StringComparer.Ordinal), template.Type) { }
 
-	public ValueTask<Meta[]> GetMetaAsync(string filePath, int count, CancellationToken cancellationToken = default)
+	public ValueTask<Meta[]> GetMetaAsync(string filePath, int count, Dictionary<string, int> referenceTable, CancellationToken cancellationToken = default)
 	{
 		var builder = new NativeMetaBuilder(DocumentType.XmlClfy);
-		return builder.GetMetaAsync(filePath, count, cancellationToken);
+		return builder.GetMetaAsync(filePath, count, referenceTable, cancellationToken);
 	}
 }

@@ -9,11 +9,13 @@ internal sealed class NativeDocumentValidator : BaseDocumentValidator, IDocument
 {
 	private const int FileStreamBufferSize = 8192;
 	private const int CancellationCheckMask = 0xFF; // Check every 256 iterations
+	private Dictionary<string, int> _tableDictionary = [];
 
 	internal NativeDocumentValidator() : this(GetTemplate(DocumentType.XmlNative)) {}
 	internal NativeDocumentValidator(DocumentType documentType) : this(GetTemplate(documentType)) { }
 	private NativeDocumentValidator(SchemaTemplate template) : base(template, template.ToTagDictionary(StringComparer.Ordinal), template.Type)	{}
 
+	public Dictionary<string, int> ReferenceTables => _tableDictionary;
 
 	public ValueTask<DocumentStats> GetMetaCountAsync(string filePath, CancellationToken cancellationToken = default) 
 		=> GetMetaCountAsync(filePath, TagDictionary, true, Template, cancellationToken);
@@ -36,16 +38,21 @@ internal sealed class NativeDocumentValidator : BaseDocumentValidator, IDocument
 
 		// initialize
 		ResetStats();
-
+		_tableDictionary = [];
 		var fieldItem = template.GetTemplateItem(EntityType.Field);
 		var fieldTypeAttribute = fieldItem?.GetAttribute(SchemaTemplateAttributeType.Type);
 		var fieldCaseSensitiveAttribute = fieldItem?.GetAttribute(SchemaTemplateAttributeType.CaseSensitive);
+		var tableItem = template.GetTemplateItem(EntityType.Table);
+		var tableIdAttribute = tableItem?.GetAttribute(SchemaTemplateAttributeType.Id);
+		var tableNameAttribute = tableItem?.GetAttribute(SchemaTemplateAttributeType.Name);
 		var extraFieldCount = 0;
 		var buffer = new string?[template.MaxDepth + 2];
 		var iterationCount = 0;
 		var metaCount = 0;
+		int id;
+		string name;
 
-		if (fieldTypeAttribute is null || fieldCaseSensitiveAttribute is null)
+		if (fieldTypeAttribute is null || fieldCaseSensitiveAttribute is null || tableIdAttribute is null || tableNameAttribute is null)
 		{
 			// throw exception !!!
 			return new DocumentStats(SchemaCount, TableCount, FieldCount, UndefinedFieldTypeCount, RelationCount, IndexCount, WrongParentCount, TableSpaceCount, LineCount, metaCount);
@@ -78,7 +85,12 @@ internal sealed class NativeDocumentValidator : BaseDocumentValidator, IDocument
 						switch (item.EntityType)
 						{
 							case EntityType.Schema: ++SchemaCount; break;
-							case EntityType.Table: ++TableCount; break;
+							case EntityType.Table: 
+								++TableCount;
+								id = xmlReader.GetId(tableIdAttribute.Name);
+								name = xmlReader.GetAttributeValue(tableNameAttribute.Name).ToUpperInvariant();
+								if (!_tableDictionary.ContainsKey(name)) _tableDictionary.Add(name, id);
+								break;
 							case EntityType.Field:
 								++FieldCount;
 								var (fieldType, searchableType) = xmlReader.GetFieldInfo(fieldTypeAttribute, fieldCaseSensitiveAttribute);

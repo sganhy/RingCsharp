@@ -4,7 +4,6 @@ namespace Ring.Util.Extensions;
 
 internal static class XmlReaderExtensions
 {
-
 	internal static void LoadAttributes(this XmlReader reader, Dictionary<string,string> values, bool nameSpaceIncluded = true)
 	{
 		// Code size: 64 (0x40)
@@ -19,26 +18,6 @@ internal static class XmlReaderExtensions
 		}
 		while (reader.MoveToNextAttribute());
 	}
-
-	/// <summary>
-	/// 	Get Attribute value by key name  (case insensitive) 
-	/// </summary>
-	internal static string? GetAttributeValue(this XmlReader reader, string name)
-	{
-		// Code size: 57 (0x39)
-		if (reader.HasAttributes)
-		{
-			reader.MoveToFirstAttribute();
-			do
-			{
-				var attributeName = RemoveNameSpaceInfo(reader.Name).ToUpperInvariant();
-				if (string.Equals(attributeName, name, StringComparison.OrdinalIgnoreCase)) return reader.Value;
-			}
-			while (reader.MoveToNextAttribute());
-		}	
-		return null;
-	}
-
 
 	#region private methods 
 

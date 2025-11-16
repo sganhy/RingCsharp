@@ -6,6 +6,8 @@ using System.Globalization;
 using System.IO.Compression;
 using System.Reflection;
 using System.Xml;
+using XmlReaderExtensions = Ring.Schema.Extensions.XmlReaderExtensions;
+
 
 namespace Ring.Schema.Helpers;
 
@@ -88,8 +90,8 @@ internal sealed class ResourceHelper
 				else if (string.Equals(tagVal, reader.Name, StringComparison.OrdinalIgnoreCase))
 				{
 					// manage attribute value (domaine list) 
-					var id = reader.GetAttributeValue(tagId);
-					var value = reader.GetAttributeValue(tagValue)?.ToUpperInvariant();
+					var id = XmlReaderExtensions.GetAttributeValue(reader, tagId);
+					var value = XmlReaderExtensions.GetAttributeValue(reader, tagValue)?.ToUpperInvariant();
 					if (id != null && value != null) attributeValuesLst.Add(new SchemaTemplateAttributeValue(int.Parse(id, CultureInfo.InvariantCulture), value));
 				}
 				else

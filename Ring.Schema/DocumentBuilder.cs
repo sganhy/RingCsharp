@@ -1,5 +1,4 @@
-﻿using Ring.Schema.Builders;
-using Ring.Schema.Enums;
+﻿using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Util.Builders;
 using Ring.Util.Enums;
@@ -45,7 +44,7 @@ public sealed class DocumentBuilder
 				if (stats.MetaCount > 0)
 				{
 					Console.WriteLine("Count= " + stats.MetaCount);
-					var metaArray = await metaBuilder.GetMetaAsync(FilePath, stats.MetaCount, cancellationToken).ConfigureAwait(false);
+					var metaArray = await metaBuilder.GetMetaAsync(FilePath, stats.MetaCount, validator.ReferenceTables, cancellationToken).ConfigureAwait(false);
 				}
 			}
 			else 
