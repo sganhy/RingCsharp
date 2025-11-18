@@ -19,21 +19,79 @@ internal abstract class BaseMetaBuilder
 	protected const byte TableSpaceId = (byte)EntityType.Tablespace;
 	protected readonly static string AllParent= @"*";
 
-	// template 1
+	// templates
 	protected readonly static SchemaTemplateAttribute DefaultTemplateAttribute = new(string.Empty, SchemaTemplateAttributeType.Undefined, []);
 	protected readonly static SchemaTemplate DefaultTemplate = new(string.Empty, DocumentType.Undefined, [], 0);
 	protected readonly static Meta DefaultMetaField = new(0,FieldId,0,0,0L,string.Empty,null,null,true);
 	protected readonly Dictionary<string, SchemaTemplateItem> TagDictionary;
 	protected readonly SchemaTemplate Template;
 	protected readonly DocumentType DocumentType;
+	protected int LoadTemplateErrorCount;
+
+	// attributes
+    private readonly SchemaTemplateAttribute _tableIdAttribute; // TABLE
+	private readonly SchemaTemplateAttribute _tableNameAttribute;
+	private readonly SchemaTemplateAttribute _tableReadOnlyAttribute;
+	private readonly SchemaTemplateAttribute _tableBaselineAttribute;
+	private readonly SchemaTemplateAttribute _tableCachedAttribute;
+	private readonly SchemaTemplateAttribute _fieldTypeAttribute; // FIELD
+	private readonly SchemaTemplateAttribute _fieldNameAttribute;
+	private readonly SchemaTemplateAttribute _fieldCaseSensitiveAttribute;
+	private readonly SchemaTemplateAttribute _fieldSizeAttribute;
+	private readonly SchemaTemplateAttribute _fieldDefaultValueAttribute;
+	private readonly SchemaTemplateAttribute _fieldBaselineAttribute;
+	private readonly SchemaTemplateAttribute _fieldNotNullAttribute;
+	private readonly SchemaTemplateAttribute _fieldMultiLangualeAttribute;
+	private readonly SchemaTemplateAttribute _relationNameAttribute; // RELATION
+	private readonly SchemaTemplateAttribute _relationTypeAttribute;
+	private readonly SchemaTemplateAttribute _relationToTableAttribute;
+	private readonly SchemaTemplateAttribute _relationInverseAttribute;
+	private readonly SchemaTemplateAttribute _relationBaselineAttribute;
+	private readonly SchemaTemplateAttribute _relationNotNullAttribute;
+	private readonly SchemaTemplateAttribute _relationConstraintAttribute;
+	private readonly SchemaTemplateAttribute _indexNameAttribute; // INDEX
+	private readonly SchemaTemplateAttribute _indexBaselineAttribute;
+	private readonly SchemaTemplateAttribute _indexUniqueAttribute;
+	private readonly SchemaTemplateAttribute _indexColumnAttribute; // INDEX COLUMN
 
 	internal BaseMetaBuilder(SchemaTemplate template, Dictionary<string, SchemaTemplateItem> tagDico, DocumentType documentType)
 	{
 		Template = template;
 		TagDictionary = tagDico;
 		DocumentType = documentType;
+
+		// load templates items
+		LoadTemplateErrorCount = 0;
+
+		// load attributes 
+		_tableIdAttribute = GetAttribute(template, EntityType.Table, SchemaTemplateAttributeType.Id);
+		_tableNameAttribute = GetAttribute(template, EntityType.Table, SchemaTemplateAttributeType.Name);
+		_tableReadOnlyAttribute = GetAttribute(template, EntityType.Table, SchemaTemplateAttributeType.ReadOnly);
+		_tableBaselineAttribute = GetAttribute(template, EntityType.Table, SchemaTemplateAttributeType.BaseLine);
+		_tableCachedAttribute = GetAttribute(template, EntityType.Table, SchemaTemplateAttributeType.Cached);
+		_fieldTypeAttribute = GetAttribute(template, EntityType.Field, SchemaTemplateAttributeType.Type);
+		_fieldNameAttribute = GetAttribute(template, EntityType.Field, SchemaTemplateAttributeType.Name);
+		_fieldCaseSensitiveAttribute = GetAttribute(template, EntityType.Field, SchemaTemplateAttributeType.CaseSensitive);
+		_fieldSizeAttribute = GetAttribute(template, EntityType.Field, SchemaTemplateAttributeType.Size);
+		_fieldDefaultValueAttribute = GetAttribute(template, EntityType.Field, SchemaTemplateAttributeType.DefaultValue);
+		_fieldBaselineAttribute = GetAttribute(template, EntityType.Field, SchemaTemplateAttributeType.BaseLine);
+		_fieldNotNullAttribute = GetAttribute(template, EntityType.Field, SchemaTemplateAttributeType.NotNull);
+		_fieldMultiLangualeAttribute = GetAttribute(template, EntityType.Field, SchemaTemplateAttributeType.Multilingual);
+		_relationNameAttribute = GetAttribute(template, EntityType.Relation, SchemaTemplateAttributeType.Multilingual); ;
+		_relationTypeAttribute = GetAttribute(template, EntityType.Relation, SchemaTemplateAttributeType.Type);
+		_relationToTableAttribute = GetAttribute(template, EntityType.Relation, SchemaTemplateAttributeType.To);
+		_relationInverseAttribute = GetAttribute(template, EntityType.Relation, SchemaTemplateAttributeType.InverseRelation);
+		_relationBaselineAttribute = GetAttribute(template, EntityType.Relation, SchemaTemplateAttributeType.BaseLine);
+		_relationNotNullAttribute = GetAttribute(template, EntityType.Relation, SchemaTemplateAttributeType.NotNull);
+		_relationConstraintAttribute = GetAttribute(template, EntityType.Relation, SchemaTemplateAttributeType.Constraint);
+		_indexNameAttribute = GetAttribute(template, EntityType.Index, SchemaTemplateAttributeType.Name);
+		_indexBaselineAttribute = GetAttribute(template, EntityType.Index, SchemaTemplateAttributeType.BaseLine);
+		_indexUniqueAttribute = GetAttribute(template, EntityType.Index, SchemaTemplateAttributeType.Unique);
+		_indexColumnAttribute = GetAttribute(template, EntityType.IndexColumn, SchemaTemplateAttributeType.Name);
 	}
-		
+
+	#region mapper to Meta struct
+
 	protected static Meta ToTable(int id, string name, string? description, string? subject, int schemaId, TableType tableType, bool baseline, bool softDeletion, bool readonlyTable, bool cached)
 	{
 		// Code size: 67 (0x43)
@@ -114,14 +172,7 @@ internal abstract class BaseMetaBuilder
 		return new(id, IndexId, referenceId, 0, flags, name, null, columnList, true);
 	}
 
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	protected static int GetId(XmlReader reader, string idAttribute)
-	{
-		// Code size: 20 (0x14)
-		var id = GetAttributeValue(reader, idAttribute);
-		if (!int.TryParse(id, out int currentTableId)) currentTableId = -1;
-		return currentTableId;
-	}
+	#endregion 
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	protected static string GetAttributeValue(XmlReader reader, string attribute)
@@ -138,18 +189,18 @@ internal abstract class BaseMetaBuilder
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	protected static (RelationType, string?, string?, bool, bool, bool) GetRelationInfo(XmlReader reader, SchemaTemplateAttribute relationTypeAttribute, SchemaTemplateAttribute relationToTableAttribute,
-		SchemaTemplateAttribute relationInverseAttribute, SchemaTemplateAttribute relationBaselineAttribute, SchemaTemplateAttribute relationNotNullAttribute, SchemaTemplateAttribute relationConstraintAttribute)
+	protected (string, RelationType, string?, string?, bool, bool, bool) GetRelationInfo(XmlReader reader)
 	{
 		// RelationType type, int toTableId, string? inverseRelation, bool baseline, bool notNull, bool constraint
-		// Code size: 262 (0x106)
+		// Code size: 375 (0x177)
 		const StringComparison comparison = StringComparison.OrdinalIgnoreCase;
-		var attributeNameType = relationTypeAttribute.Name;
-		var attributeNameTo = relationToTableAttribute.Name;
-		var attributeNameInverse = relationInverseAttribute.Name;
-		var attributeNameBaseLine = relationBaselineAttribute.Name;
-		var attributeNameNotNull = relationNotNullAttribute.Name;
-		var attributeNameConstraint = relationConstraintAttribute.Name;
+		var attributeNameName = _relationNameAttribute.Name;
+		var attributeNameType = _relationTypeAttribute.Name;
+		var attributeNameTo = _relationToTableAttribute.Name;
+		var attributeNameInverse = _relationInverseAttribute.Name;
+		var attributeNameBaseLine = _relationBaselineAttribute.Name;
+		var attributeNameNotNull = _relationNotNullAttribute.Name;
+		var attributeNameConstraint = _relationConstraintAttribute.Name;
 
 		var type = RelationType.Undefined;
 		string? toTable = null;
@@ -157,76 +208,82 @@ internal abstract class BaseMetaBuilder
 		var baseline = false;
 		var notNull = false;
 		var constraint = false;
+		var name = string.Empty;
 		if (reader.MoveToFirstAttribute())
 		{
 			do
 			{
 				var attributeName = reader.Name;
-				if (string.Equals(attributeNameType, attributeName, comparison)) type = relationTypeAttribute.GetRelationType(reader.Value);
-				if (string.Equals(attributeNameTo, attributeName, comparison)) toTable = reader.Value;
-				if (string.Equals(attributeNameInverse, attributeName, comparison)) inverseRelation = reader.Value;
-				if (string.Equals(attributeNameBaseLine, attributeName, comparison) && relationBaselineAttribute.GetFlagValue(reader.Value) == true) baseline = true;
-				if (string.Equals(attributeNameNotNull, attributeName, comparison) && relationNotNullAttribute.GetFlagValue(reader.Value) == true) notNull = true;
-				if (string.Equals(attributeNameConstraint, attributeName, comparison) && relationConstraintAttribute.GetFlagValue(reader.Value) == true) constraint = true;
+				var attributeValue = reader.Value ?? string.Empty;
+				if (string.Equals(attributeNameType, attributeName, comparison)) type = _relationTypeAttribute.GetRelationType(attributeValue);
+				if (string.Equals(attributeNameTo, attributeName, comparison)) toTable = attributeValue;
+				if (string.Equals(attributeNameInverse, attributeName, comparison)) inverseRelation = attributeValue;
+				if (string.Equals(attributeNameBaseLine, attributeName, comparison) && _relationBaselineAttribute.GetFlagValue(attributeValue) == true) baseline = true;
+				if (string.Equals(attributeNameNotNull, attributeName, comparison) && _relationNotNullAttribute.GetFlagValue(attributeValue) == true) notNull = true;
+				if (string.Equals(attributeNameConstraint, attributeName, comparison) && _relationConstraintAttribute.GetFlagValue(attributeValue) == true) constraint = true;
+				if (string.Equals(attributeNameName, attributeName, comparison)) name = attributeValue;
 			}
 			while (reader.MoveToNextAttribute());
 			reader.MoveToElement();
 		}
-		return (type, toTable, inverseRelation, baseline, notNull, constraint);
+		return (name, type, toTable, inverseRelation, baseline, notNull, constraint);
 	}
 
 	
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	internal static (FieldType, SearchableType, int, string?, bool, bool, bool) GetFieldInfo(XmlReader reader, SchemaTemplateAttribute sizeAttribute, SchemaTemplateAttribute defaultValueAttribute,
-		SchemaTemplateAttribute fieldBaseLineAttribute, SchemaTemplateAttribute fieldNotNullAttribute, SchemaTemplateAttribute fieldMultiLangualeAttribute, SchemaTemplateAttribute fieldTypeAttribute, 
-		SchemaTemplateAttribute fieldCaseSensitiveAttribute)
+	protected (string, FieldType, SearchableType, int, string?, bool, bool, bool) GetFieldInfo(XmlReader reader)
 	{
-		// Code size: 262 (0x106)
+		// Code size: 438 (0x1b6)
 		const StringComparison comparison = StringComparison.OrdinalIgnoreCase;
 		var size = 0;
 		string? defaultValue = null;
-		var attributeNameSize = sizeAttribute.Name;
-		var attributeNameDefaultValue = defaultValueAttribute.Name;
-		var attributeNameBaseLine = fieldBaseLineAttribute.Name;
-		var attributeNameNotNull = fieldNotNullAttribute.Name;
-		var attributeNameMultiLanguale = fieldMultiLangualeAttribute.Name;
-		var attributeNameType = fieldTypeAttribute.Name;
-		var attributeNameCaseSensitive = fieldCaseSensitiveAttribute.Name;
+		var attributeNameSize = _fieldSizeAttribute.Name;
+		var attributeNameDefaultValue = _fieldDefaultValueAttribute.Name;
+		var attributeNameBaseLine = _fieldBaselineAttribute.Name;
+		var attributeNameNotNull = _fieldNotNullAttribute.Name;
+		var attributeNameMultiLanguale = _fieldMultiLangualeAttribute.Name;
+		var attributeNameType = _fieldTypeAttribute.Name;
+		var attributeNameCaseSensitive = _fieldCaseSensitiveAttribute.Name;
+		var attributeNameName = _fieldNameAttribute.Name;
 		var fieldType = FieldType.Undefined;
 		var searchableType = SearchableType.None;
 		var baseline = false;
 		var notNull = false;
 		var multiLangual = false;
+		var name = string.Empty;
 		if (reader.MoveToFirstAttribute())
 		{
 			do
 			{
 				var attributeName = reader.Name;
-				if (string.Equals(attributeNameSize, attributeName, comparison)) size = sizeAttribute.GetFieldSize(reader.Value);
-				if (string.Equals(attributeNameDefaultValue, attributeName, comparison)) defaultValue = reader.Value;
-				if (string.Equals(attributeNameBaseLine, attributeName, comparison) && fieldBaseLineAttribute.GetFlagValue(reader.Value) == true) baseline = true;
-				if (string.Equals(attributeNameNotNull, attributeName, comparison) && fieldNotNullAttribute.GetFlagValue(reader.Value) == true) notNull = true;
-				if (string.Equals(attributeNameMultiLanguale, attributeName, comparison) && fieldMultiLangualeAttribute.GetFlagValue(reader.Value) == true) multiLangual = true;
-				if (string.Equals(attributeNameType, attributeName, comparison)) fieldType = fieldTypeAttribute.GetFieldType(reader.Value);
-				if (string.Equals(attributeNameCaseSensitive, attributeName, comparison)) searchableType = fieldCaseSensitiveAttribute.GetSearchableType(reader.Value);
+				var attributeValue = reader.Value ?? string.Empty; 
+				if (string.Equals(attributeNameSize, attributeName, comparison)) size = _fieldSizeAttribute.GetFieldSize(attributeValue);
+				if (string.Equals(attributeNameDefaultValue, attributeName, comparison)) defaultValue = attributeValue;
+				if (string.Equals(attributeNameBaseLine, attributeName, comparison) && _fieldBaselineAttribute.GetFlagValue(attributeValue) == true) baseline = true;
+				if (string.Equals(attributeNameNotNull, attributeName, comparison) && _fieldNotNullAttribute.GetFlagValue(attributeValue) == true) notNull = true;
+				if (string.Equals(attributeNameMultiLanguale, attributeName, comparison) && _fieldMultiLangualeAttribute.GetFlagValue(attributeValue) == true) multiLangual = true;
+				if (string.Equals(attributeNameType, attributeName, comparison)) fieldType = _fieldTypeAttribute.GetFieldType(attributeValue);
+				if (string.Equals(attributeNameCaseSensitive, attributeName, comparison)) searchableType = _fieldCaseSensitiveAttribute.GetSearchableType(attributeValue);
+				if (string.Equals(attributeNameName, attributeName, comparison)) name = attributeValue;
 			}
 			while (reader.MoveToNextAttribute());
 			reader.MoveToElement();
 		}
-		return (fieldType, searchableType, size, defaultValue, baseline, notNull, multiLangual);
+		return (name, fieldType, searchableType, size, defaultValue, baseline, notNull, multiLangual);
 	}
 
 
-	protected async static ValueTask<(string, bool, bool, bool)> GetIndexInfoAsync(XmlReader reader, SchemaTemplateAttribute indexBaselineAttribute, SchemaTemplateAttribute indexUniqueAttribute, SchemaTemplateItem columnIndex,
-		Dictionary<string, SchemaTemplateItem> tagDico)
+	protected async ValueTask<(string, string, bool, bool, bool)> GetIndexInfoAsync(XmlReader reader, Dictionary<string, SchemaTemplateItem> tagDico)
 	{
 		const StringComparison comparison = StringComparison.OrdinalIgnoreCase;
-		var attributeNameBaseLine = indexBaselineAttribute.Name;
-		var attributeNameUnique = indexUniqueAttribute.Name;
-		var colNameAttribute = columnIndex?.GetAttribute(SchemaTemplateAttributeType.Name)?.Name;
+		var attributeNameBaseLine = _indexBaselineAttribute.Name;
+		var attributeNameUnique = _indexUniqueAttribute.Name;
+		var attributeNameName = _indexNameAttribute.Name;
+		var colNameAttribute = _indexColumnAttribute.Name;
 		var columnList = new StringBuilder();
 		var indexColumnDelimiter = Meta.GetIndexColumnDelimiter();
+		var indexName = string.Empty;
 		var unique = false;
 		var bitmap = false;
 		var baseline = false;
@@ -235,8 +292,10 @@ internal abstract class BaseMetaBuilder
 			do
 			{
 				var attributeName = reader.Name;
-				if (string.Equals(attributeNameBaseLine, attributeName, comparison) && indexBaselineAttribute.GetFlagValue(reader.Value) == true) baseline = true;
-				if (string.Equals(attributeNameUnique, attributeName, comparison) && indexUniqueAttribute.GetFlagValue(reader.Value) == true) unique = true;
+				var attributeValue = reader.Value ?? string.Empty;
+				if (string.Equals(attributeNameBaseLine, attributeName, comparison) && _indexBaselineAttribute.GetFlagValue(attributeValue) == true) baseline = true;
+				if (string.Equals(attributeNameUnique, attributeName, comparison) && _indexUniqueAttribute.GetFlagValue(attributeValue) == true) unique = true;
+				if (string.Equals(attributeNameName, attributeName, comparison)) indexName = attributeValue;
 			}
 			while (reader.MoveToNextAttribute());
 			reader.MoveToElement();
@@ -254,16 +313,20 @@ internal abstract class BaseMetaBuilder
 			}
 			if (columnList.Length > 0) --columnList.Length;
 		}
-		return (columnList.ToString(), unique, bitmap, baseline);
+		return (indexName, columnList.ToString(), unique, bitmap, baseline);
 	}
 
-	protected static (bool, bool, bool) GetTableInfo(XmlReader reader, SchemaTemplateAttribute tableReadonlyAttribute, SchemaTemplateAttribute tableBaselineAttribute, SchemaTemplateAttribute tableCachedAttribute)
+	protected (int, string, bool, bool, bool) GetTableInfo(XmlReader reader)
 	{
-		// Code size: 184 (0xb8)
+		// Code size: 306 (0x132)
 		const StringComparison comparison = StringComparison.OrdinalIgnoreCase;
-		var attributeNameBaseline = tableBaselineAttribute.Name;
-		var attributeNameReadonly = tableReadonlyAttribute.Name;
-		var attributeNameCached = tableCachedAttribute.Name;
+		var attributeNameReadonly = _tableReadOnlyAttribute.Name;
+		var attributeNameCached = _tableCachedAttribute.Name;
+		var attributeNameBaseline = _tableBaselineAttribute.Name;
+		var attributeNameName = _tableNameAttribute.Name;
+		var attributeIdName = _tableIdAttribute.Name;
+		var id = 0;
+		var name = string.Empty;
 		var cachedTable = false;
 		var readonlyTable = false;
 		var baseline = false;
@@ -272,18 +335,17 @@ internal abstract class BaseMetaBuilder
 			do
 			{
 				var attributeName = reader.Name;
-				if (string.Equals(attributeNameBaseline, attributeName, comparison) && tableBaselineAttribute.GetFlagValue(reader.Value) == true)
-					baseline = true;
-				if (string.Equals(attributeNameReadonly, attributeName, comparison) && tableReadonlyAttribute.GetFlagValue(reader.Value) == true)
-					readonlyTable = true;
-				if (string.Equals(attributeNameCached, attributeName, comparison) && tableCachedAttribute.GetFlagValue(reader.Value) == true)
-					cachedTable = true;
-
+				var attributeValue = reader.Value ?? string.Empty;
+				if (string.Equals(attributeNameBaseline, attributeName, comparison) && _tableBaselineAttribute.GetFlagValue(attributeValue) == true) baseline = true;
+				if (string.Equals(attributeNameReadonly, attributeName, comparison) && _tableReadOnlyAttribute.GetFlagValue(attributeValue) == true) readonlyTable = true;
+				if (string.Equals(attributeNameCached, attributeName, comparison) && _tableCachedAttribute.GetFlagValue(attributeValue) == true) cachedTable = true;
+				if (string.Equals(attributeNameName, attributeName, comparison)) name = attributeValue;
+				if (string.Equals(attributeIdName, attributeName, comparison)) id = _tableIdAttribute.GetInteger(attributeValue);
 			}
 			while (reader.MoveToNextAttribute());
 			reader.MoveToElement();
 		}
-		return (readonlyTable, baseline, cachedTable);
+		return (id, name, readonlyTable, baseline, cachedTable);
 	}
 
 	protected static Meta SetDescription(ref Meta meta, string description) // Code size: 55 (0x37) 
@@ -291,5 +353,22 @@ internal abstract class BaseMetaBuilder
 
 	protected static SchemaTemplate GetTemplate(DocumentType documentType)
 		=> documentType.GetSchemaTemplate() ?? DefaultTemplate;
+
+	#region private methods
+
+	private SchemaTemplateAttribute GetAttribute(SchemaTemplate template, EntityType entityType, SchemaTemplateAttributeType attributeType)
+	{
+		var item = template.GetTemplateItem(entityType);
+		if (item != null)
+		{
+			var attribute = item.GetAttribute(attributeType);
+			if (attribute != null) return attribute;
+		}
+		// log here !!! failed to load schema attribute
+		++LoadTemplateErrorCount;
+		return DefaultTemplateAttribute;
+	}
+
+	#endregion 
 
 }

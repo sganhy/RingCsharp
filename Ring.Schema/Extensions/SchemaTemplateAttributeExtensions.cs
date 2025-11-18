@@ -2,6 +2,7 @@
 using Ring.Schema.Models;
 using Ring.Util.Extensions;
 using System.Globalization;
+using System.Reflection.PortableExecutable;
 using System.Runtime.CompilerServices;
 
 namespace Ring.Schema.Extensions;
@@ -67,6 +68,13 @@ internal static class SchemaTemplateAttributeExtensions
 			string.Equals(NoString, comparedvalue, StringComparison.OrdinalIgnoreCase))
 			return false;
 		return null;
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal static int GetInteger(this SchemaTemplateAttribute _, string value)
+	{
+		if (!int.TryParse(value, out int result)) result = -1;
+		return result;
 	}
 
 	#region private methods 

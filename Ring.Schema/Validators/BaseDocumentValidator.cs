@@ -24,7 +24,6 @@ internal abstract class BaseDocumentValidator
 	protected readonly Dictionary<string, SchemaTemplateItem> TagDictionary;
 	protected readonly SchemaTemplate Template;
 	protected readonly DocumentType DocumentType;
-	
 
 	internal BaseDocumentValidator(SchemaTemplate template, Dictionary<string, SchemaTemplateItem> tagDico, DocumentType documentType)
 	{
