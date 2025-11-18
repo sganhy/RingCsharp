@@ -22,6 +22,7 @@ internal enum EntityType : byte
 	// specific column definition [71, 79]
 	SearchableColumn = 71,
 	TimeZoneColumn = 72,
+	IndexColumn = 73,
 	// not stored in @meta table
 	Constraint = 101,
 	Comment = 111,

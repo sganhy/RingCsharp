@@ -1,7 +1,6 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
-using System.Data;
 using System.Xml;
 
 namespace Ring.Schema.Builders;
@@ -21,8 +20,8 @@ internal sealed class NativeMetaBuilder : BaseMetaBuilder, IMetaBuilder
 		return GetMetaAsync(filePath, TagDictionary, referenceTable, Template, count, cancellationToken);
 	}
 
-	private async static ValueTask<Meta[]> GetMetaAsync(string filePath, Dictionary<string, SchemaTemplateItem> tagDico, Dictionary<string, int> referenceTables, SchemaTemplate template, 
-		int count, CancellationToken cancellationToken = default)
+	private async static ValueTask<Meta[]> GetMetaAsync(string filePath, Dictionary<string, SchemaTemplateItem> tagDico, Dictionary<string, int> referenceTables, SchemaTemplate template, int count, 
+		CancellationToken cancellationToken = default)
 	{
 		var readerSettings = new XmlReaderSettings
 		{
@@ -33,7 +32,7 @@ internal sealed class NativeMetaBuilder : BaseMetaBuilder, IMetaBuilder
 			Async = true,
 			CloseInput = false // We manage disposal ourselves
 		};
-		
+
 		// schema variables
 		var schemaId = 0;
 		var templateItem = template.GetTemplateItem(EntityType.Schema);
@@ -69,6 +68,10 @@ internal sealed class NativeMetaBuilder : BaseMetaBuilder, IMetaBuilder
 		// index variables
 		templateItem = template.GetTemplateItem(EntityType.Index);
 		var indexNameAttribute = templateItem?.GetAttribute(SchemaTemplateAttributeType.Name)?.Name;
+		var indexBaselineAttribute = templateItem?.GetAttribute(SchemaTemplateAttributeType.BaseLine);
+		var indexUniqueAttribute = templateItem?.GetAttribute(SchemaTemplateAttributeType.Unique);
+		// column index variables
+		var templateItemIndexCol = template.GetTemplateItem(EntityType.IndexColumn);
 
 		var buffer = new string?[template.MaxDepth + 2];
 		var iterationCount = 0;
@@ -80,7 +83,8 @@ internal sealed class NativeMetaBuilder : BaseMetaBuilder, IMetaBuilder
 		if (schemaNameAttribute is null || tableNameAttribute is null || fieldNameAttribute is null || relationNameAttribute is null || tableIdAttribute is null || fieldTypeAttribute is null ||
 			fieldCaseSensitiveAttribute is null || tableBaselineAttribute is null || fieldSizeAttribute is null || fieldBaselineAttribute is null || fieldMultiLangualeAttribute is null || 
 			fieldNotNullAttribute is null || relationTypeAttribute is null || relationToTableAttribute is null || relationInverseAttribute is null || relationBaselineAttribute is null ||
-			relationNotNullAttribute is null || relationConstraintAttribute is null || indexNameAttribute is null)
+			relationNotNullAttribute is null || relationConstraintAttribute is null || indexNameAttribute is null || indexBaselineAttribute is null || indexUniqueAttribute is null ||
+			templateItemIndexCol is null)
 		{
 			// throw exception !!!
 			return [];
@@ -100,8 +104,8 @@ internal sealed class NativeMetaBuilder : BaseMetaBuilder, IMetaBuilder
 				// Check cancellation periodically, not every iteration for perf - Check every 256 iterations
 				if ((++iterationCount & CancellationCheckMask) == 0) cancellationToken.ThrowIfCancellationRequested();
 				if (xmlReader.NodeType != XmlNodeType.Element) continue;
-				if (metaIndex >= count) break; 
-
+				//if (metaIndex >= count) break; 
+				
 				var currentDepth = xmlReader.Depth;
 				var elementName = xmlReader.Name;
 				if (currentDepth > template.MaxDepth) continue; // don't read below max depth (skipped)
@@ -115,13 +119,13 @@ internal sealed class NativeMetaBuilder : BaseMetaBuilder, IMetaBuilder
 				switch (item.EntityType)
 				{
 					case EntityType.Schema: 
-						result[metaIndex] =	new(0, SchemaId, 0, 0, 0L, xmlReader.GetAttributeValue(schemaNameAttribute), string.Empty, null, true);
+						result[metaIndex] =	new(0, SchemaId, 0, 0, 0L, GetAttributeValue(xmlReader, schemaNameAttribute), string.Empty, null, true);
 						break;
 					case EntityType.Table:
 						{
-							currentTableId = xmlReader.GetId(tableIdAttribute);
-							var (readonlyTable, baseline, cachedTable) = xmlReader.GetTableInfo(tableReadonlyAttribute, tableBaselineAttribute, tableCachedAttribute);
-							result[metaIndex] = ToTable(currentTableId, xmlReader.GetAttributeValue(tableNameAttribute), null, null, schemaId, TableType.Business, baseline, false, 
+							currentTableId = GetId(xmlReader, tableIdAttribute);
+							var (readonlyTable, baseline, cachedTable) = GetTableInfo(xmlReader, tableReadonlyAttribute, tableBaselineAttribute, tableCachedAttribute);
+							result[metaIndex] = ToTable(currentTableId, GetAttributeValue(xmlReader, tableNameAttribute), null, null, schemaId, TableType.Business, baseline, false, 
 								readonlyTable, cachedTable);
 							columnIndex=1;
 							indexIndex=1;
@@ -129,10 +133,11 @@ internal sealed class NativeMetaBuilder : BaseMetaBuilder, IMetaBuilder
 						break;
 					case EntityType.Field:
 						{
-							var (fieldType, searchableType) = xmlReader.GetFieldInfo(fieldTypeAttribute, fieldCaseSensitiveAttribute);
-							var (size, defaultValue, baseline, notNull, multiLangual) = 
-								xmlReader.GetFieldInfo(fieldSizeAttribute, fieldDefaultValueAttribute, fieldBaselineAttribute, fieldNotNullAttribute, fieldMultiLangualeAttribute);
-							var fieldName = xmlReader.GetAttributeValue(fieldNameAttribute);
+							//var (fieldType, searchableType) = GetFieldInfo(xmlReader, fieldTypeAttribute, fieldCaseSensitiveAttribute);
+							var (fieldType, searchableType,  size, defaultValue, baseline, notNull, multiLangual) = 
+								GetFieldInfo(xmlReader, fieldSizeAttribute, fieldDefaultValueAttribute, fieldBaselineAttribute, fieldNotNullAttribute, fieldMultiLangualeAttribute, fieldTypeAttribute,
+								fieldCaseSensitiveAttribute);
+							var fieldName = GetAttributeValue(xmlReader, fieldNameAttribute);
 							var fieldId = primaryKeyFieldName.Equals(fieldName, StringComparison.OrdinalIgnoreCase) ? 0 : columnIndex++;
 							result[metaIndex] = ToField(fieldId, fieldName, null, fieldType, size, defaultValue, searchableType, currentTableId, baseline, notNull, multiLangual, true);
 							if (searchableType != SearchableType.None)
@@ -146,10 +151,9 @@ internal sealed class NativeMetaBuilder : BaseMetaBuilder, IMetaBuilder
 						break;
 					case EntityType.Relation:
 						{
-							var relationName = xmlReader.GetAttributeValue(relationNameAttribute);
-							var (type, toTable, inverseRelation, baseline, notNull, constraint) = 
-								xmlReader.GetRelationInfo(relationTypeAttribute, relationToTableAttribute, relationInverseAttribute, relationBaselineAttribute, 
-								relationNotNullAttribute, relationConstraintAttribute);
+							var relationName = GetAttributeValue(xmlReader, relationNameAttribute);
+							var (type, toTable, inverseRelation, baseline, notNull, constraint) = GetRelationInfo(xmlReader, relationTypeAttribute, relationToTableAttribute, relationInverseAttribute, 
+								relationBaselineAttribute, relationNotNullAttribute, relationConstraintAttribute);
 							var toTableCriteria = toTable?.ToUpperInvariant().Trim() ?? string.Empty;
 							if (!referenceTables.TryGetValue(toTableCriteria, out var toTableId)) toTableId= -1;
 							result[metaIndex] = ToRelation(columnIndex, relationName, type, toTableId, currentTableId, inverseRelation, baseline, notNull, constraint);
@@ -158,8 +162,9 @@ internal sealed class NativeMetaBuilder : BaseMetaBuilder, IMetaBuilder
 						break;
 					case EntityType.Index:
 						{
-							var indexName = xmlReader.GetAttributeValue(indexNameAttribute);
-							var (columnList, unique, bitmap, baseline) = xmlReader.GetIndexInfo();
+							var indexName = GetAttributeValue(xmlReader, indexNameAttribute);
+							var (columnList, unique, bitmap, baseline) = await GetIndexInfoAsync(xmlReader, indexBaselineAttribute, indexUniqueAttribute, templateItemIndexCol, tagDico)
+								.ConfigureAwait(false);
 							result[metaIndex] = ToIndex(indexIndex, indexName, columnList, currentTableId, unique, bitmap, baseline);
 							++indexIndex;
 						}
@@ -177,7 +182,7 @@ internal sealed class NativeMetaBuilder : BaseMetaBuilder, IMetaBuilder
 						}
 ;						break;
 				}
-				if (item.EntityType != EntityType.Undefined && item.EntityType != EntityType.Comment) ++metaIndex;
+				if (item.EntityType != EntityType.Undefined && item.EntityType != EntityType.Comment && item.EntityType != EntityType.IndexColumn) ++metaIndex;
 			}
 		}
 		return result;

@@ -1,5 +1,8 @@
-﻿using Ring.Schema.Extensions;
+﻿using Ring.Schema.Enums;
+using Ring.Schema.Extensions;
 using Ring.Schema.Models;
+using System.Runtime.CompilerServices;
+using System.Xml;
 
 namespace Ring.Schema.Validators;
 
@@ -41,6 +44,29 @@ internal abstract class BaseDocumentValidator
 		WrongParentCount = 0;
 		TableSpaceCount = 0;
 		LineCount = 0;
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	protected static (FieldType, SearchableType) GetFieldInfo(XmlReader reader, SchemaTemplateAttribute attributeType, SchemaTemplateAttribute attributeSearchable)
+	{
+		// Code size: 106 (0x6a)
+		const StringComparison comparison = StringComparison.OrdinalIgnoreCase;
+		var fieldType = FieldType.Undefined;
+		var searchableType = SearchableType.None;
+		var attributeTypeName = attributeType.Name;
+		var attributeSearchableName = attributeSearchable.Name;
+		if (reader.MoveToFirstAttribute())
+		{
+			do
+			{
+				var attributeName = reader.Name;
+				if (string.Equals(attributeTypeName, attributeName, comparison)) fieldType = attributeType.GetFieldType(reader.Value);
+				if (string.Equals(attributeSearchableName, attributeName, comparison)) searchableType = attributeSearchable.GetSearchableType(reader.Value);
+			}
+			while (reader.MoveToNextAttribute());
+			reader.MoveToElement();
+		}
+		return (fieldType, searchableType);
 	}
 
 	protected static SchemaTemplate GetTemplate(DocumentType documentType) => documentType.GetSchemaTemplate() ?? DefaultTemplate;

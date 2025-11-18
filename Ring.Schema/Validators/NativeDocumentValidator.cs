@@ -2,6 +2,7 @@
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using System.Xml;
+using Ring.Util.Extensions;
 
 namespace Ring.Schema.Validators;
 
@@ -93,7 +94,7 @@ internal sealed class NativeDocumentValidator : BaseDocumentValidator, IDocument
 								break;
 							case EntityType.Field:
 								++FieldCount;
-								var (fieldType, searchableType) = xmlReader.GetFieldInfo(fieldTypeAttribute, fieldCaseSensitiveAttribute);
+								var (fieldType, searchableType) = GetFieldInfo(xmlReader, fieldTypeAttribute, fieldCaseSensitiveAttribute);
 								if (searchableType != SearchableType.None) ++extraFieldCount; // extra column for searchable
 								if (fieldType == FieldType.Undefined) ++UndefinedFieldTypeCount;
 								if (fieldType == FieldType.DateTimeOffset && hasTimeZoneOffsetColumn) ++extraFieldCount; // extra field of date offset

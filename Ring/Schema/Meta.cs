@@ -236,8 +236,8 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	internal static Meta Create(int id,in Meta meta) => new(id, meta.ObjectType, meta.ReferenceId, meta.DataType, meta.Flags, meta.Name, meta.Description, meta.Value, meta.Active);
 	internal static Meta Create(string name) => new(default, default, default, default, default, name, null, null, true);
-
-	internal EntityType GetEntityType() => ((int)ObjectType).ToEntityType();
+	internal static char GetIndexColumnDelimiter() => IndexColumnDelimiter; // Code size: 3 (0x3)
+	internal EntityType GetEntityType() => ((int)ObjectType).ToEntityType(); // Code size: 12 (0xc)
 
 	#region convertors 
 

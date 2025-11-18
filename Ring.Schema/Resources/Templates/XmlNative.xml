@@ -48,11 +48,14 @@
 	<index id="3" parent="index_list" depth="3">
 		<attribute id="1" value="name"/>
 		<attribute id="2" value="baseline" type="flag"/>
+		<attribute id="13" value="unique" type="flag"/>
 	</index>
-	<description id="111" parent="*" depth="4">
-	</description>
 	<schema id="7" depth="0">
 		<attribute id="1" value="name"/>
 	</schema>
-
+	<index_field id="73" parent="index" depth="4">
+		<attribute id="1" value="name"/>
+	</index_field>
+	<description id="111" parent="*" depth="4">
+	</description>
 </template>

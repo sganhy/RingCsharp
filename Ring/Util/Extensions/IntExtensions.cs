@@ -23,6 +23,7 @@ internal static class IntExtensions
 	private const int CommentId = (int)EntityType.Comment;
 	private const int SearchableColumnId = (int)EntityType.SearchableColumn;
 	private const int TimeZoneColumnId = (int)EntityType.TimeZoneColumn;
+	private const int IndexColumnId = (int)EntityType.IndexColumn;
 
 	// field searchable constants
 	private const int FieldStIgnoreCaseId = (int)SearchableType.IgnoreCase;
@@ -202,7 +203,7 @@ internal static class IntExtensions
 
 	internal static EntityType ToEntityType(this int entityType) 
 	{
-		// Code size: 143 (0x8f)
+		//  Code size: 165 (0xa5)
 		// avoid boxing operation
 		switch (entityType)
 		{
@@ -217,10 +218,11 @@ internal static class IntExtensions
 			case TablespaceId: return EntityType.Tablespace;
 			case ParameterId: return EntityType.Parameter;
 			case AliasId: return EntityType.Alias;
-			case ConstraintId: return EntityType.Constraint;
 			case SearchableColumnId: return EntityType.SearchableColumn;
-			case CommentId: return EntityType.Comment;
 			case TimeZoneColumnId: return EntityType.TimeZoneColumn;
+			case IndexColumnId: return EntityType.IndexColumn;
+			case ConstraintId: return EntityType.Constraint;
+			case CommentId: return EntityType.Comment;
 		}
 		return EntityType.Undefined;
 	}
