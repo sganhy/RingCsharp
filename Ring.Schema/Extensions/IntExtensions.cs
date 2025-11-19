@@ -28,15 +28,17 @@ internal static class IntExtensions
 	private const int XmlAttributeDepthId = (int)SchemaTemplateAttributeType.Depth;
 	private const int XmlAttributeAttributeId = (int)SchemaTemplateAttributeType.Attribute;
 	private const int XmlAttributeTemplateId = (int)SchemaTemplateAttributeType.Template;
-	private const int XmlAttributeDefaultValue = (int)SchemaTemplateAttributeType.DefaultValue;
-
+	private const int XmlAttributeDefaultValueId = (int)SchemaTemplateAttributeType.DefaultValue;
+	private const int XmlAttributeTableId = (int)SchemaTemplateAttributeType.Table;
+	private const int XmlAttributeIndexId = (int)SchemaTemplateAttributeType.Index;
+	private const int XmlAttributeFileId = (int)SchemaTemplateAttributeType.File;
 
 	#endregion
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static SchemaTemplateAttributeType ToXmlSchemaAttributeType(this int xmlAttributeId)
 	{
-		// Code size: 156 (0x9c)
+		// Code size: 226 (0xe2)
 		switch (xmlAttributeId)
 		{
 			case XmlAttributeId: return SchemaTemplateAttributeType.Id;
@@ -59,7 +61,10 @@ internal static class IntExtensions
 			case XmlAttributeDepthId: return SchemaTemplateAttributeType.Depth;
 			case XmlAttributeAttributeId: return SchemaTemplateAttributeType.Attribute;
 			case XmlAttributeTemplateId: return SchemaTemplateAttributeType.Template;
-			case XmlAttributeDefaultValue: return SchemaTemplateAttributeType.DefaultValue;
+			case XmlAttributeDefaultValueId: return SchemaTemplateAttributeType.DefaultValue;
+			case XmlAttributeTableId: return SchemaTemplateAttributeType.Table;
+			case XmlAttributeIndexId: return SchemaTemplateAttributeType.Index;
+			case XmlAttributeFileId: return SchemaTemplateAttributeType.File;
 		}
 		return SchemaTemplateAttributeType.Undefined;
 	}

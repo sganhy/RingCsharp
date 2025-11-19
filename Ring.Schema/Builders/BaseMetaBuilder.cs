@@ -1,6 +1,7 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
+using Ring.Util.Extensions;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Xml;
@@ -53,6 +54,11 @@ internal abstract class BaseMetaBuilder
 	private readonly SchemaTemplateAttribute _indexBaselineAttribute;
 	private readonly SchemaTemplateAttribute _indexUniqueAttribute;
 	private readonly SchemaTemplateAttribute _indexColumnAttribute; // INDEX COLUMN
+	private readonly SchemaTemplateAttribute _schemaNamedAttribute; // SCHEMA
+	private readonly SchemaTemplateAttribute _tablespaceNameAttribute; // TABLESPACE
+	private readonly SchemaTemplateAttribute _tablespaceFileAttribute;
+	private readonly SchemaTemplateAttribute _tablespaceTableAttribute;
+	private readonly SchemaTemplateAttribute _tablespaceIndexAttribute;
 
 	internal BaseMetaBuilder(SchemaTemplate template, Dictionary<string, SchemaTemplateItem> tagDico, DocumentType documentType)
 	{
@@ -69,7 +75,7 @@ internal abstract class BaseMetaBuilder
 		_tableReadOnlyAttribute = GetAttribute(template, EntityType.Table, SchemaTemplateAttributeType.ReadOnly);
 		_tableBaselineAttribute = GetAttribute(template, EntityType.Table, SchemaTemplateAttributeType.BaseLine);
 		_tableCachedAttribute = GetAttribute(template, EntityType.Table, SchemaTemplateAttributeType.Cached);
-		_fieldTypeAttribute = GetAttribute(template, EntityType.Field, SchemaTemplateAttributeType.Type);
+		_fieldTypeAttribute = GetAttribute(template, EntityType.Field, SchemaTemplateAttributeType.Type); // field 
 		_fieldNameAttribute = GetAttribute(template, EntityType.Field, SchemaTemplateAttributeType.Name);
 		_fieldCaseSensitiveAttribute = GetAttribute(template, EntityType.Field, SchemaTemplateAttributeType.CaseSensitive);
 		_fieldSizeAttribute = GetAttribute(template, EntityType.Field, SchemaTemplateAttributeType.Size);
@@ -77,20 +83,39 @@ internal abstract class BaseMetaBuilder
 		_fieldBaselineAttribute = GetAttribute(template, EntityType.Field, SchemaTemplateAttributeType.BaseLine);
 		_fieldNotNullAttribute = GetAttribute(template, EntityType.Field, SchemaTemplateAttributeType.NotNull);
 		_fieldMultiLangualeAttribute = GetAttribute(template, EntityType.Field, SchemaTemplateAttributeType.Multilingual);
-		_relationNameAttribute = GetAttribute(template, EntityType.Relation, SchemaTemplateAttributeType.Multilingual); ;
+		_relationNameAttribute = GetAttribute(template, EntityType.Relation, SchemaTemplateAttributeType.Name); // relation
 		_relationTypeAttribute = GetAttribute(template, EntityType.Relation, SchemaTemplateAttributeType.Type);
 		_relationToTableAttribute = GetAttribute(template, EntityType.Relation, SchemaTemplateAttributeType.To);
 		_relationInverseAttribute = GetAttribute(template, EntityType.Relation, SchemaTemplateAttributeType.InverseRelation);
 		_relationBaselineAttribute = GetAttribute(template, EntityType.Relation, SchemaTemplateAttributeType.BaseLine);
 		_relationNotNullAttribute = GetAttribute(template, EntityType.Relation, SchemaTemplateAttributeType.NotNull);
 		_relationConstraintAttribute = GetAttribute(template, EntityType.Relation, SchemaTemplateAttributeType.Constraint);
-		_indexNameAttribute = GetAttribute(template, EntityType.Index, SchemaTemplateAttributeType.Name);
+		_indexNameAttribute = GetAttribute(template, EntityType.Index, SchemaTemplateAttributeType.Name); // index
 		_indexBaselineAttribute = GetAttribute(template, EntityType.Index, SchemaTemplateAttributeType.BaseLine);
 		_indexUniqueAttribute = GetAttribute(template, EntityType.Index, SchemaTemplateAttributeType.Unique);
 		_indexColumnAttribute = GetAttribute(template, EntityType.IndexColumn, SchemaTemplateAttributeType.Name);
+		_schemaNamedAttribute = GetAttribute(template, EntityType.Schema, SchemaTemplateAttributeType.Name);
+		_tablespaceNameAttribute = GetAttribute(template, EntityType.Tablespace, SchemaTemplateAttributeType.Name);
+		_tablespaceFileAttribute = GetAttribute(template, EntityType.Tablespace, SchemaTemplateAttributeType.File);
+		_tablespaceTableAttribute = GetAttribute(template, EntityType.Tablespace, SchemaTemplateAttributeType.Table);
+		_tablespaceIndexAttribute = GetAttribute(template, EntityType.Tablespace, SchemaTemplateAttributeType.Index);
 	}
 
 	#region mapper to Meta struct
+
+	protected static Meta ToTablespace(string name, string file, bool table, bool index)
+	{
+		var flags = 0L;
+		Meta.SetTablespaceTable(flags, table);
+		Meta.SetTablespaceIndex(flags, index);
+		return new(0, TableSpaceId, 0, 0, flags, name, string.Empty, string.Empty, true);
+	}
+
+	protected static Meta ToSchema(string name)
+	{
+		
+		return new(0, SchemaId, 0, 0, 0L, name, string.Empty, null, true);
+	}
 
 	protected static Meta ToTable(int id, string name, string? description, string? subject, int schemaId, TableType tableType, bool baseline, bool softDeletion, bool readonlyTable, bool cached)
 	{
@@ -174,18 +199,54 @@ internal abstract class BaseMetaBuilder
 
 	#endregion 
 
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	protected static string GetAttributeValue(XmlReader reader, string attribute)
+	protected string GetSchemaInfo(XmlReader reader)
 	{
-		// Code size: 51 (0x33)
+		const StringComparison comparison = StringComparison.OrdinalIgnoreCase;
+		var attributeNameName = _schemaNamedAttribute.Name;
+		var name = string.Empty;
 		if (reader.MoveToFirstAttribute())
 		{
 			do
-				if (string.Equals(attribute, reader.Name, StringComparison.OrdinalIgnoreCase)) return reader.Value;
+			{
+				var attributeName = reader.Name;
+				var attributeValue = reader.Value ?? string.Empty;
+				if (string.Equals(attributeNameName, attributeName, comparison)) name = attributeValue;
+			}
 			while (reader.MoveToNextAttribute());
 			reader.MoveToElement();
 		}
-		return string.Empty;
+		return name;
+	}
+
+	protected (string, string, bool , bool) GetTableSpaceInfo(XmlReader reader)
+	{
+		// Code size: 375 (0x177)
+		const StringComparison comparison = StringComparison.OrdinalIgnoreCase;
+		var attributeNameName = _tablespaceNameAttribute.Name;
+		var attributeFileName = _tablespaceFileAttribute.Name;
+		var attributeTableName = _tablespaceTableAttribute.Name;
+		var attributeIndexName = _tablespaceIndexAttribute.Name;
+
+		var table = false;
+		var index = false;
+		var name = string.Empty;
+		var file = string.Empty;
+	
+		if (reader.MoveToFirstAttribute())
+		{
+			do
+			{
+				var attributeName = reader.Name;
+				var attributeValue = reader.Value ?? string.Empty;
+				if (string.Equals(attributeNameName, attributeName, comparison)) name = attributeValue;
+				if (string.Equals(attributeFileName, attributeName, comparison)) file = attributeValue;
+				if (string.Equals(attributeTableName, attributeName, comparison) && _tablespaceTableAttribute.GetFlagValue(attributeValue) == true) table = true;
+				if (string.Equals(attributeIndexName, attributeName, comparison) && _tablespaceIndexAttribute.GetFlagValue(attributeValue) == true) index = true;
+			}
+			while (reader.MoveToNextAttribute());
+			reader.MoveToElement();
+		}
+		return (name, file, table, index);
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -305,7 +366,7 @@ internal abstract class BaseMetaBuilder
 				if (!tagDico.TryGetValue(elementName, out var item)) continue;
 				if (item.EntityType == EntityType.IndexColumn && reader.NodeType == XmlNodeType.Element)
 				{
-					var name = GetAttributeValue(reader, colNameAttribute);
+					var name = reader.GetAttributeValue(colNameAttribute);
 					columnList.Append(name);
 					columnList.Append(indexColumnDelimiter);
 				}

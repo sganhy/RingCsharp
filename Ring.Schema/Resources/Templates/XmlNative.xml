@@ -53,6 +53,12 @@
 	<schema id="7" depth="0">
 		<attribute id="1" value="name"/>
 	</schema>
+	<tablespace id="18" parent="tablespace_list" depth="2">
+		<attribute id="1" value="name"/>
+		<attribute id="101" value="table" type="flag"/>
+		<attribute id="102" value="index" type="flag"/>
+		<attribute id="103" value="file" type="flag"/>
+	</tablespace >
 	<index_field id="73" parent="index" depth="4">
 		<attribute id="1" value="name"/>
 	</index_field>

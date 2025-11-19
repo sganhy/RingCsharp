@@ -23,5 +23,8 @@ internal enum SchemaTemplateAttributeType : short
 	DefaultValue = 26,
 	Template = 29,
 	Depth = 31,
+	Table = 101,
+	Index = 102,
+	File = 103,
 	Undefined = short.MaxValue
 }

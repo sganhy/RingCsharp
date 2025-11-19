@@ -35,8 +35,6 @@ internal sealed class NativeMetaBuilder : BaseMetaBuilder, IMetaBuilder
 
 		// schema variables
 		var schemaId = 0;
-		var templateItem = template.GetTemplateItem(EntityType.Schema);
-		var schemaNameAttribute = templateItem?.GetAttribute(SchemaTemplateAttributeType.Name)?.Name;
 		var field = Meta.GetDefaultField(DefaultMetaField, FieldType.Boolean);
 		var primaryKeyFieldName = field.GetPrimaryKeyName();
 		var buffer = new string?[template.MaxDepth + 2];
@@ -46,7 +44,7 @@ internal sealed class NativeMetaBuilder : BaseMetaBuilder, IMetaBuilder
 		var indexIndex = 0;
 		var currentTableId = -1;
 
-		if (schemaNameAttribute is null)
+		if (LoadTemplateErrorCount > 0)
 		{
 			// throw exception !!!
 			return [];
@@ -60,7 +58,6 @@ internal sealed class NativeMetaBuilder : BaseMetaBuilder, IMetaBuilder
 		await using (fs.ConfigureAwait(false))
 		{
 			using var xmlReader = XmlReader.Create(fs, readerSettings);
-
 			while (await xmlReader.ReadAsync().ConfigureAwait(false))
 			{
 				// Check cancellation periodically, not every iteration for perf - Check every 256 iterations
@@ -80,13 +77,16 @@ internal sealed class NativeMetaBuilder : BaseMetaBuilder, IMetaBuilder
 				// Process element
 				switch (item.EntityType)
 				{
-					case EntityType.Schema: 
-						result[metaIndex] =	new(0, SchemaId, 0, 0, 0L, GetAttributeValue(xmlReader, schemaNameAttribute), string.Empty, null, true);
+					case EntityType.Schema:
+						{
+							var name = GetSchemaInfo(xmlReader);
+							result[metaIndex] = ToSchema(name);
+						}
 						break;
 					case EntityType.Table:
 						{
 							(currentTableId, var name, var readonlyTable, var baseline, var cachedTable) = GetTableInfo(xmlReader);
-							result[metaIndex] = ToTable(currentTableId, GetAttributeValue(xmlReader, name), null, null, schemaId, TableType.Business, baseline, false, readonlyTable, cachedTable);
+							result[metaIndex] = ToTable(currentTableId, name, null, null, schemaId, TableType.Business, baseline, false, readonlyTable, cachedTable);
 							columnIndex = indexIndex = 1;
 						}
 						break;
@@ -120,7 +120,12 @@ internal sealed class NativeMetaBuilder : BaseMetaBuilder, IMetaBuilder
 							++indexIndex;
 						}
 						break;
-					case EntityType.Tablespace: break;
+					case EntityType.Tablespace:
+						{
+							var (name, file, table, index) = GetTableSpaceInfo(xmlReader);
+							result[metaIndex] = ToTablespace(name, file, table, index);
+						}
+						break;
 					case EntityType.Comment:
 						{
 							var comment = xmlReader.ReadString();
