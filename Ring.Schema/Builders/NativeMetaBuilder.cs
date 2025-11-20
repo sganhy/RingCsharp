@@ -20,8 +20,7 @@ internal sealed class NativeMetaBuilder : BaseMetaBuilder, IMetaBuilder
 		return GetMetaAsync(filePath, TagDictionary, referenceTable, Template, count, cancellationToken);
 	}
 
-	private async ValueTask<Meta[]> GetMetaAsync(string filePath, Dictionary<string, SchemaTemplateItem> tagDico, Dictionary<string, int> referenceTables, SchemaTemplate template, int count, 
-		CancellationToken cancellationToken = default)
+	private async ValueTask<Meta[]> GetMetaAsync(string filePath, Dictionary<string, SchemaTemplateItem> tagDico, Dictionary<string, int> referenceTables, SchemaTemplate template, int count, CancellationToken cancellationToken = default)
 	{
 		var readerSettings = new XmlReaderSettings
 		{
@@ -46,7 +45,7 @@ internal sealed class NativeMetaBuilder : BaseMetaBuilder, IMetaBuilder
 
 		if (LoadTemplateErrorCount > 0)
 		{
-			// throw exception !!!
+			// log here !!!
 			return [];
 		}
 		buffer[0] = string.Empty;
@@ -63,8 +62,12 @@ internal sealed class NativeMetaBuilder : BaseMetaBuilder, IMetaBuilder
 				// Check cancellation periodically, not every iteration for perf - Check every 256 iterations
 				if ((++iterationCount & CancellationCheckMask) == 0) cancellationToken.ThrowIfCancellationRequested();
 				if (xmlReader.NodeType != XmlNodeType.Element) continue;
-				//if (metaIndex >= count) break; 
-				
+				if (metaIndex >= count)
+				{
+					// log here !!! - wrong template defition
+					return [];
+				}
+
 				var currentDepth = xmlReader.Depth;
 				var elementName = xmlReader.Name;
 				if (currentDepth > template.MaxDepth) continue; // don't read below max depth (skipped)
@@ -81,6 +84,7 @@ internal sealed class NativeMetaBuilder : BaseMetaBuilder, IMetaBuilder
 						{
 							var name = GetSchemaInfo(xmlReader);
 							result[metaIndex] = ToSchema(name);
+							++metaIndex;
 						}
 						break;
 					case EntityType.Table:
@@ -88,6 +92,7 @@ internal sealed class NativeMetaBuilder : BaseMetaBuilder, IMetaBuilder
 							(currentTableId, var name, var readonlyTable, var baseline, var cachedTable) = GetTableInfo(xmlReader);
 							result[metaIndex] = ToTable(currentTableId, name, null, null, schemaId, TableType.Business, baseline, false, readonlyTable, cachedTable);
 							columnIndex = indexIndex = 1;
+							++metaIndex;
 						}
 						break;
 					case EntityType.Field:
@@ -95,11 +100,12 @@ internal sealed class NativeMetaBuilder : BaseMetaBuilder, IMetaBuilder
 							var (name, fieldType, searchableType,  size, defaultValue, baseline, notNull, multiLangual) = GetFieldInfo(xmlReader);
 							var fieldId = primaryKeyFieldName.Equals(name, StringComparison.OrdinalIgnoreCase) ? 0 : columnIndex++;
 							result[metaIndex] = ToField(fieldId, name, null, fieldType, size, defaultValue, searchableType, currentTableId, baseline, notNull, multiLangual, true);
+							++metaIndex;
 							if (searchableType != SearchableType.None)
 							{
-								++metaIndex;
 								result[metaIndex] = ToSearchableColumn(columnIndex, name, fieldType, size, defaultValue, searchableType, currentTableId, baseline, notNull);
 								++columnIndex;
+								++metaIndex;
 							}
 							// add time zone column if needed
 						}
@@ -111,6 +117,7 @@ internal sealed class NativeMetaBuilder : BaseMetaBuilder, IMetaBuilder
 							if (!referenceTables.TryGetValue(toTableCriteria, out var toTableId)) toTableId= -1;
 							result[metaIndex] = ToRelation(columnIndex, name, type, toTableId, currentTableId, inverseRelation, baseline, notNull, constraint);
 							++columnIndex;
+							++metaIndex;
 						}
 						break;
 					case EntityType.Index:
@@ -118,12 +125,14 @@ internal sealed class NativeMetaBuilder : BaseMetaBuilder, IMetaBuilder
 							var (name, columnList, unique, bitmap, baseline) = await GetIndexInfoAsync(xmlReader, tagDico).ConfigureAwait(false);
 							result[metaIndex] = ToIndex(indexIndex, name, columnList, currentTableId, unique, bitmap, baseline);
 							++indexIndex;
+							++metaIndex;
 						}
 						break;
 					case EntityType.Tablespace:
 						{
 							var (name, file, table, index) = GetTableSpaceInfo(xmlReader);
 							result[metaIndex] = ToTablespace(name, file, table, index);
+							++metaIndex;
 						}
 						break;
 					case EntityType.Comment:
@@ -138,7 +147,6 @@ internal sealed class NativeMetaBuilder : BaseMetaBuilder, IMetaBuilder
 						}
 ;						break;
 				}
-				if (item.EntityType != EntityType.Undefined && item.EntityType != EntityType.Comment && item.EntityType != EntityType.IndexColumn) ++metaIndex;
 			}
 		}
 		return result;

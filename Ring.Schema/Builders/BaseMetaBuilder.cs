@@ -21,7 +21,6 @@ internal abstract class BaseMetaBuilder
 	protected readonly static string AllParent= @"*";
 
 	// templates
-	protected readonly static SchemaTemplateAttribute DefaultTemplateAttribute = new(string.Empty, SchemaTemplateAttributeType.Undefined, []);
 	protected readonly static SchemaTemplate DefaultTemplate = new(string.Empty, DocumentType.Undefined, [], 0);
 	protected readonly static Meta DefaultMetaField = new(0,FieldId,0,0,0L,string.Empty,null,null,true);
 	protected readonly Dictionary<string, SchemaTemplateItem> TagDictionary;
@@ -70,35 +69,35 @@ internal abstract class BaseMetaBuilder
 		LoadTemplateErrorCount = 0;
 
 		// load attributes 
-		_tableIdAttribute = GetAttribute(template, EntityType.Table, SchemaTemplateAttributeType.Id);
-		_tableNameAttribute = GetAttribute(template, EntityType.Table, SchemaTemplateAttributeType.Name);
-		_tableReadOnlyAttribute = GetAttribute(template, EntityType.Table, SchemaTemplateAttributeType.ReadOnly);
-		_tableBaselineAttribute = GetAttribute(template, EntityType.Table, SchemaTemplateAttributeType.BaseLine);
-		_tableCachedAttribute = GetAttribute(template, EntityType.Table, SchemaTemplateAttributeType.Cached);
-		_fieldTypeAttribute = GetAttribute(template, EntityType.Field, SchemaTemplateAttributeType.Type); // field 
-		_fieldNameAttribute = GetAttribute(template, EntityType.Field, SchemaTemplateAttributeType.Name);
-		_fieldCaseSensitiveAttribute = GetAttribute(template, EntityType.Field, SchemaTemplateAttributeType.CaseSensitive);
-		_fieldSizeAttribute = GetAttribute(template, EntityType.Field, SchemaTemplateAttributeType.Size);
-		_fieldDefaultValueAttribute = GetAttribute(template, EntityType.Field, SchemaTemplateAttributeType.DefaultValue);
-		_fieldBaselineAttribute = GetAttribute(template, EntityType.Field, SchemaTemplateAttributeType.BaseLine);
-		_fieldNotNullAttribute = GetAttribute(template, EntityType.Field, SchemaTemplateAttributeType.NotNull);
-		_fieldMultiLangualeAttribute = GetAttribute(template, EntityType.Field, SchemaTemplateAttributeType.Multilingual);
-		_relationNameAttribute = GetAttribute(template, EntityType.Relation, SchemaTemplateAttributeType.Name); // relation
-		_relationTypeAttribute = GetAttribute(template, EntityType.Relation, SchemaTemplateAttributeType.Type);
-		_relationToTableAttribute = GetAttribute(template, EntityType.Relation, SchemaTemplateAttributeType.To);
-		_relationInverseAttribute = GetAttribute(template, EntityType.Relation, SchemaTemplateAttributeType.InverseRelation);
-		_relationBaselineAttribute = GetAttribute(template, EntityType.Relation, SchemaTemplateAttributeType.BaseLine);
-		_relationNotNullAttribute = GetAttribute(template, EntityType.Relation, SchemaTemplateAttributeType.NotNull);
-		_relationConstraintAttribute = GetAttribute(template, EntityType.Relation, SchemaTemplateAttributeType.Constraint);
-		_indexNameAttribute = GetAttribute(template, EntityType.Index, SchemaTemplateAttributeType.Name); // index
-		_indexBaselineAttribute = GetAttribute(template, EntityType.Index, SchemaTemplateAttributeType.BaseLine);
-		_indexUniqueAttribute = GetAttribute(template, EntityType.Index, SchemaTemplateAttributeType.Unique);
-		_indexColumnAttribute = GetAttribute(template, EntityType.IndexColumn, SchemaTemplateAttributeType.Name);
-		_schemaNamedAttribute = GetAttribute(template, EntityType.Schema, SchemaTemplateAttributeType.Name);
-		_tablespaceNameAttribute = GetAttribute(template, EntityType.Tablespace, SchemaTemplateAttributeType.Name);
-		_tablespaceFileAttribute = GetAttribute(template, EntityType.Tablespace, SchemaTemplateAttributeType.File);
-		_tablespaceTableAttribute = GetAttribute(template, EntityType.Tablespace, SchemaTemplateAttributeType.Table);
-		_tablespaceIndexAttribute = GetAttribute(template, EntityType.Tablespace, SchemaTemplateAttributeType.Index);
+		_tableIdAttribute = template.GetAttribute(EntityType.Table, SchemaTemplateAttributeType.Id, ref LoadTemplateErrorCount);
+		_tableNameAttribute = template.GetAttribute(EntityType.Table, SchemaTemplateAttributeType.Name, ref LoadTemplateErrorCount);
+		_tableReadOnlyAttribute = template.GetAttribute(EntityType.Table, SchemaTemplateAttributeType.ReadOnly, ref LoadTemplateErrorCount);
+		_tableBaselineAttribute = template.GetAttribute(EntityType.Table, SchemaTemplateAttributeType.BaseLine, ref LoadTemplateErrorCount);
+		_tableCachedAttribute = template.GetAttribute(EntityType.Table, SchemaTemplateAttributeType.Cached, ref LoadTemplateErrorCount);
+		_fieldTypeAttribute = template.GetAttribute(EntityType.Field, SchemaTemplateAttributeType.Type, ref LoadTemplateErrorCount); // field 
+		_fieldNameAttribute = template.GetAttribute(EntityType.Field, SchemaTemplateAttributeType.Name, ref LoadTemplateErrorCount);
+		_fieldCaseSensitiveAttribute = template.GetAttribute(EntityType.Field, SchemaTemplateAttributeType.CaseSensitive, ref LoadTemplateErrorCount);
+		_fieldSizeAttribute = template.GetAttribute(EntityType.Field, SchemaTemplateAttributeType.Size, ref LoadTemplateErrorCount);
+		_fieldDefaultValueAttribute = template.GetAttribute(EntityType.Field, SchemaTemplateAttributeType.DefaultValue, ref LoadTemplateErrorCount);
+		_fieldBaselineAttribute = template.GetAttribute(EntityType.Field, SchemaTemplateAttributeType.BaseLine, ref LoadTemplateErrorCount);
+		_fieldNotNullAttribute = template.GetAttribute(EntityType.Field, SchemaTemplateAttributeType.NotNull, ref LoadTemplateErrorCount);
+		_fieldMultiLangualeAttribute = template.GetAttribute(EntityType.Field, SchemaTemplateAttributeType.Multilingual, ref LoadTemplateErrorCount);
+		_relationNameAttribute = template.GetAttribute(EntityType.Relation, SchemaTemplateAttributeType.Name, ref LoadTemplateErrorCount); // relation
+		_relationTypeAttribute = template.GetAttribute(EntityType.Relation, SchemaTemplateAttributeType.Type, ref LoadTemplateErrorCount);
+		_relationToTableAttribute = template.GetAttribute(EntityType.Relation, SchemaTemplateAttributeType.To, ref LoadTemplateErrorCount);
+		_relationInverseAttribute = template.GetAttribute(EntityType.Relation, SchemaTemplateAttributeType.InverseRelation, ref LoadTemplateErrorCount);
+		_relationBaselineAttribute = template.GetAttribute(EntityType.Relation, SchemaTemplateAttributeType.BaseLine, ref LoadTemplateErrorCount);
+		_relationNotNullAttribute = template.GetAttribute(EntityType.Relation, SchemaTemplateAttributeType.NotNull, ref LoadTemplateErrorCount);
+		_relationConstraintAttribute = template.GetAttribute(EntityType.Relation, SchemaTemplateAttributeType.Constraint, ref LoadTemplateErrorCount);
+		_indexNameAttribute = template.GetAttribute(EntityType.Index, SchemaTemplateAttributeType.Name, ref LoadTemplateErrorCount); // index
+		_indexBaselineAttribute = template.GetAttribute(EntityType.Index, SchemaTemplateAttributeType.BaseLine, ref LoadTemplateErrorCount);
+		_indexUniqueAttribute = template.GetAttribute(EntityType.Index, SchemaTemplateAttributeType.Unique, ref LoadTemplateErrorCount);
+		_indexColumnAttribute = template.GetAttribute(EntityType.IndexColumn, SchemaTemplateAttributeType.Name, ref LoadTemplateErrorCount);
+		_schemaNamedAttribute = template.GetAttribute(EntityType.Schema, SchemaTemplateAttributeType.Name, ref LoadTemplateErrorCount);
+		_tablespaceNameAttribute = template.GetAttribute(EntityType.Tablespace, SchemaTemplateAttributeType.Name, ref LoadTemplateErrorCount);
+		_tablespaceFileAttribute = template.GetAttribute(EntityType.Tablespace, SchemaTemplateAttributeType.File, ref LoadTemplateErrorCount);
+		_tablespaceTableAttribute = template.GetAttribute(EntityType.Tablespace, SchemaTemplateAttributeType.Table, ref LoadTemplateErrorCount);
+		_tablespaceIndexAttribute = template.GetAttribute(EntityType.Tablespace, SchemaTemplateAttributeType.Index, ref LoadTemplateErrorCount);
 	}
 
 	#region mapper to Meta struct
@@ -113,7 +112,6 @@ internal abstract class BaseMetaBuilder
 
 	protected static Meta ToSchema(string name)
 	{
-		
 		return new(0, SchemaId, 0, 0, 0L, name, string.Empty, null, true);
 	}
 
@@ -415,21 +413,5 @@ internal abstract class BaseMetaBuilder
 	protected static SchemaTemplate GetTemplate(DocumentType documentType)
 		=> documentType.GetSchemaTemplate() ?? DefaultTemplate;
 
-	#region private methods
-
-	private SchemaTemplateAttribute GetAttribute(SchemaTemplate template, EntityType entityType, SchemaTemplateAttributeType attributeType)
-	{
-		var item = template.GetTemplateItem(entityType);
-		if (item != null)
-		{
-			var attribute = item.GetAttribute(attributeType);
-			if (attribute != null) return attribute;
-		}
-		// log here !!! failed to load schema attribute
-		++LoadTemplateErrorCount;
-		return DefaultTemplateAttribute;
-	}
-
-	#endregion 
 
 }

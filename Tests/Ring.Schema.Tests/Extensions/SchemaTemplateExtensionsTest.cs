@@ -1,13 +1,17 @@
-﻿using Ring.Schema.Enums;
+﻿using Bogus;
+using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
-using Ring.Schema.Helpers;
+using Ring.Schema.Models;
 using System.Linq.Expressions;
+using ResourceHelper = Ring.Schema.Helpers.ResourceHelper;
 using Xunit;
 
 namespace Ring.Schema.Tests.Extensions;
 
 public sealed class SchemaTemplateExtensionsTest
 {
+	private readonly Faker _faker = new();
+
 	public SchemaTemplateExtensionsTest() => Expression.Empty();
 
 	[Fact]
@@ -35,6 +39,25 @@ public sealed class SchemaTemplateExtensionsTest
 		Assert.Equal(EntityType.Relation, templateItemRelation.EntityType);
 		Assert.Equal(EntityType.Index, templateItemIndex.EntityType);
 		Assert.Equal(EntityType.Schema, templateItemSchema.EntityType);
+	}
+
+	[Fact]
+	public void GetAttribute_RandomValues_AttributeNotFound2()
+	{
+		// arrange
+		var emptyTemplate = new SchemaTemplate(string.Empty, DocumentType.Undefined, Array.Empty<SchemaTemplateItem>(), 11);
+		var notFoundCount = 0;
+
+		// act 
+		var attribute1 = SchemaTemplateExtensions.GetAttribute(emptyTemplate, _faker.PickRandom<EntityType>(), _faker.PickRandom<SchemaTemplateAttributeType>(), ref notFoundCount);
+		var attribute2 = SchemaTemplateExtensions.GetAttribute(emptyTemplate, _faker.PickRandom<EntityType>(), _faker.PickRandom<SchemaTemplateAttributeType>(), ref notFoundCount);
+		var attribute3 = SchemaTemplateExtensions.GetAttribute(emptyTemplate, _faker.PickRandom<EntityType>(), _faker.PickRandom<SchemaTemplateAttributeType>(), ref notFoundCount);
+
+		// assert
+		Assert.NotNull(attribute1);
+		Assert.NotNull(attribute2);
+		Assert.NotNull(attribute3);
+		Assert.Equal(3, notFoundCount);
 	}
 
 }

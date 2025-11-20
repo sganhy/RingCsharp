@@ -18,15 +18,6 @@ internal static class XmlReaderExtensions
 		return string.Empty;
 	}
 
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	internal static int GetId(this XmlReader reader, string idAttribute)
-	{
-		// Code size: 20 (0x14)
-		var id = GetAttributeValue(reader, idAttribute);
-		if (!int.TryParse(id, out int currentTableId)) currentTableId = -1;
-		return currentTableId;
-	}
-
 	internal static void LoadAttributes(this XmlReader reader, Dictionary<string,string> values, bool nameSpaceIncluded = true)
 	{
 		// Code size: 64 (0x40)

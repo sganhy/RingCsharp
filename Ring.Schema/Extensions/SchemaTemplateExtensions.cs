@@ -5,6 +5,8 @@ namespace Ring.Schema.Extensions;
 
 internal static class SchemaTemplateExtensions
 {
+	private readonly static SchemaTemplateAttribute DefaultTemplateAttribute = new(string.Empty, SchemaTemplateAttributeType.Undefined, []);
+
 	internal static Dictionary<string, SchemaTemplateItem> ToTagDictionary(this SchemaTemplate? template, StringComparer stringComparer)
 	{
 		// Code size: 108 (0x6c)
@@ -32,5 +34,19 @@ internal static class SchemaTemplateExtensions
 		}
 		return null;
 	}
+
+	internal static SchemaTemplateAttribute GetAttribute(this SchemaTemplate template, EntityType entityType, SchemaTemplateAttributeType attributeType, ref int attributeNotFound)
+	{
+		// Code size: 36 (0x24)
+		var item = template.GetTemplateItem(entityType);
+		if (item != null)
+		{
+			var attribute = item.GetAttribute(attributeType);
+			if (attribute != null) return attribute;
+		}
+		// log here !!! failed to load schema attribute
+		++attributeNotFound;
+		return DefaultTemplateAttribute;
+	}		 
 
 }

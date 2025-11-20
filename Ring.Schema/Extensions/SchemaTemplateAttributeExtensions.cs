@@ -2,7 +2,6 @@
 using Ring.Schema.Models;
 using Ring.Util.Extensions;
 using System.Globalization;
-using System.Reflection.PortableExecutable;
 using System.Runtime.CompilerServices;
 
 namespace Ring.Schema.Extensions;

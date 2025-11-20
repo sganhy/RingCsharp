@@ -2,7 +2,6 @@
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using System.Xml;
-using Ring.Util.Extensions;
 
 namespace Ring.Schema.Validators;
 
@@ -40,23 +39,15 @@ internal sealed class NativeDocumentValidator : BaseDocumentValidator, IDocument
 		// initialize
 		ResetStats();
 		_tableDictionary = [];
-		var fieldItem = template.GetTemplateItem(EntityType.Field);
-		var fieldTypeAttribute = fieldItem?.GetAttribute(SchemaTemplateAttributeType.Type);
-		var fieldCaseSensitiveAttribute = fieldItem?.GetAttribute(SchemaTemplateAttributeType.CaseSensitive);
-		var tableItem = template.GetTemplateItem(EntityType.Table);
-		var tableIdAttribute = tableItem?.GetAttribute(SchemaTemplateAttributeType.Id);
-		var tableNameAttribute = tableItem?.GetAttribute(SchemaTemplateAttributeType.Name);
 		var extraFieldCount = 0;
 		var buffer = new string?[template.MaxDepth + 2];
 		var iterationCount = 0;
 		var metaCount = 0;
-		int id;
-		string name;
 
-		if (fieldTypeAttribute is null || fieldCaseSensitiveAttribute is null || tableIdAttribute is null || tableNameAttribute is null)
+		if (LoadTemplateErrorCount>0)
 		{
-			// throw exception !!!
-			return new DocumentStats(SchemaCount, TableCount, FieldCount, UndefinedFieldTypeCount, RelationCount, IndexCount, WrongParentCount, TableSpaceCount, LineCount, metaCount);
+			// log here!
+			return new DocumentStats(SchemaCount, TableCount, FieldCount, UndefinedFieldTypeCount, RelationCount, IndexCount, WrongParentCount, TableSpaceCount, LineCount, metaCount-1);
 		}
 
 		buffer[0] = string.Empty;
@@ -88,13 +79,12 @@ internal sealed class NativeDocumentValidator : BaseDocumentValidator, IDocument
 							case EntityType.Schema: ++SchemaCount; break;
 							case EntityType.Table: 
 								++TableCount;
-								id = xmlReader.GetId(tableIdAttribute.Name);
-								name = xmlReader.GetAttributeValue(tableNameAttribute.Name).ToUpperInvariant();
+								var (id, name) = GetTableInfo(xmlReader);
 								if (!_tableDictionary.ContainsKey(name)) _tableDictionary.Add(name, id);
 								break;
 							case EntityType.Field:
 								++FieldCount;
-								var (fieldType, searchableType) = GetFieldInfo(xmlReader, fieldTypeAttribute, fieldCaseSensitiveAttribute);
+								var (fieldType, searchableType) = GetFieldInfo(xmlReader);
 								if (searchableType != SearchableType.None) ++extraFieldCount; // extra column for searchable
 								if (fieldType == FieldType.Undefined) ++UndefinedFieldTypeCount;
 								if (fieldType == FieldType.DateTimeOffset && hasTimeZoneOffsetColumn) ++extraFieldCount; // extra field of date offset
