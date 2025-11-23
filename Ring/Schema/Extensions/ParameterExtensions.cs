@@ -25,14 +25,13 @@ internal static class ParameterExtensions
 	/// </summary>
 	internal static Parameter? GetParameter(this Parameter[] parameters, ParameterType parameterType)
 	{
-		// Code size: 64(0x40)
+		// Code size: 62 (0x3e)
 		int indexerLeft = 0, indexerRight = parameters.Length - 1, indexerMiddle, indexerCompare;
 		var parameterTypeId = (int)parameterType;
 
 		while (indexerLeft <= indexerRight)
 		{
-			indexerMiddle = indexerLeft + indexerRight;
-			indexerMiddle >>= 1;	// indexerMiddle <-- indexerMiddle /2 
+			indexerMiddle = (indexerLeft + indexerRight) >> 1;
 			indexerCompare = parameterTypeId.CompareTo(parameters[indexerMiddle].Id);
 			if (indexerCompare == 0) return parameters[indexerMiddle];
 			if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;

@@ -19,14 +19,13 @@ internal static class SchemaTemplateExtensions
 
 	internal static SchemaTemplateItem? GetTemplateItem(this SchemaTemplate template, EntityType entityType)
 	{
-		// Code size: 102 (0x66)
+		// Code size: 98 (0x62)
 		var entityTypeId = (int)entityType;
 		var span = new ReadOnlySpan<SchemaTemplateItem>(template.Items);
 		int indexerLeft = 0, indexerRight = span.Length - 1;
 		while (indexerLeft <= indexerRight)
 		{
-			var indexerMiddle = indexerLeft + indexerRight;
-			indexerMiddle >>= 1; // indexerMiddle <-- indexerMiddle /2 
+			var indexerMiddle = (indexerLeft + indexerRight) >> 1;
 			var indexerCompare = entityTypeId.CompareTo(span[indexerMiddle].EntityTypeId);
 			if (indexerCompare == 0) return span[indexerMiddle];
 			if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;

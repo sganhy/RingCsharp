@@ -8,13 +8,12 @@ static internal class SpanExtensions
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int GetIndex(this Span<int> span, int value)
     {
-        // Code size: 70 (0x46)
-        int indexerLeft = 0, indexerRight = span.Length - 1, indexerMiddle, indexerCompare;
+		// Code size: 57 (0x39)
+		int indexerLeft = 0, indexerRight = span.Length - 1;
         while (indexerLeft <= indexerRight)
         {
-            indexerMiddle = indexerLeft + indexerRight;
-            indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
-            indexerCompare = value - span[indexerMiddle];
+            var indexerMiddle = (indexerLeft + indexerRight) >> 1;
+            var indexerCompare = value - span[indexerMiddle];
             if (indexerCompare == 0) return indexerMiddle;
             if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
             else indexerRight = indexerMiddle - 1;

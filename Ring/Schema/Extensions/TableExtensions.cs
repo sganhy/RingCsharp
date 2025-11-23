@@ -20,13 +20,12 @@ internal static class TableExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static Field? GetField(this Table table, string name)
 	{
-		// Code size: 92 (0x5c) - no virtual call
+		// Code size: 90 (0x5a) - no virtual call
 		var span = new ReadOnlySpan<Field>(table.Fields);
 		int indexerLeft = 0, indexerRight = span.Length - 1;
 		while (indexerLeft <= indexerRight)
 		{
-			var indexerMiddle = indexerLeft + indexerRight;
-			indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
+			var indexerMiddle = (indexerLeft + indexerRight) >> 1;
 			var indexerCompare = string.CompareOrdinal(name, span[indexerMiddle].Name);
 			if (indexerCompare == 0) return span[indexerMiddle];
 			if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
@@ -69,13 +68,12 @@ internal static class TableExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static int GetFieldIndex(this Table table, string name)
 	{
-		// Code size: 84 (0x54) - no virtual call
+		// Code size: 82 (0x52) - no virtual call
 		var span = new ReadOnlySpan<Field>(table.Fields);
 		int indexerLeft = 0, indexerRight = span.Length - 1;
 		while (indexerLeft <= indexerRight)
 		{
-			var indexerMiddle = indexerLeft + indexerRight;
-			indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
+			var indexerMiddle = (indexerLeft + indexerRight) >> 1;
 			var indexerCompare = string.CompareOrdinal(name, span[indexerMiddle].Name);
 			if (indexerCompare == 0) return indexerMiddle;
 			if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
@@ -93,13 +91,12 @@ internal static class TableExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static Relation? GetRelation(this Table table, string name)
 	{
-		// Code size: 92 (0x5c)
+		// Code size: 90 (0x5a) - no virtual call
 		var span = new ReadOnlySpan<Relation>(table.Relations);
 		int indexerLeft = 0, indexerRight = span.Length - 1;
 		while (indexerLeft <= indexerRight)
 		{
-			var indexerMiddle = indexerLeft + indexerRight;
-			indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
+			var indexerMiddle = (indexerLeft + indexerRight) >> 1;
 			var indexerCompare = string.CompareOrdinal(name, span[indexerMiddle].Name);
 			if (indexerCompare == 0) return span[indexerMiddle];
 			if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
@@ -146,14 +143,13 @@ internal static class TableExtensions
 	/// <returns>Field index or -1 if not found</returns>
 	internal static int GetRelationIndex(this Table table, string name)
 	{
-		// Code size: 84 (0x54)
+		// Code size: 82 (0x52)
 		var span = new ReadOnlySpan<Relation>(table.Relations);
 
 		int indexerLeft = 0, indexerRight = span.Length - 1;
 		while (indexerLeft <= indexerRight)
 		{
-			var indexerMiddle = indexerLeft + indexerRight;
-			indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
+			var indexerMiddle = (indexerLeft + indexerRight) >> 1;
 			var indexerCompare = string.CompareOrdinal(name, span[indexerMiddle].Name);
 			if (indexerCompare == 0) return indexerMiddle;
 			if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
@@ -197,15 +193,14 @@ internal static class TableExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static Column? GetColumn(this Table table, int id, EntityType type)
 	{
-		// Code size: 149 (0x95)
+		// Code size: 145 (0x91) - no virtual call
 		var colWeight = Meta.ColumnTypeWeight(type);
 		var span = new ReadOnlySpan<Column>(table.Columns); // sorted by Id
 		int indexerLeft = 0, indexerRight = span.Length - 1;
 
 		while (indexerLeft <= indexerRight)
 		{
-			var indexerMiddle = indexerLeft + indexerRight;
-			indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
+			var indexerMiddle = (indexerLeft + indexerRight) >> 1;
 			var indexerCompare = id - span[indexerMiddle].Id;
 			if (indexerCompare == 0)
 			{
@@ -223,15 +218,14 @@ internal static class TableExtensions
 
 	internal static int GetColumnIndex(this Table table, int id, EntityType type)
 	{
-		// Code size: 141 (0x8d)
+		// Code size: 137 (0x89)
 		var colWeight = Meta.ColumnTypeWeight(type);
 		var span = new ReadOnlySpan<Column>(table.Columns); // sorted by Id
 		int indexerLeft = 0, indexerRight = span.Length - 1;
 
 		while (indexerLeft <= indexerRight)
 		{
-			var indexerMiddle = indexerLeft + indexerRight;
-			indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
+			var indexerMiddle = (indexerLeft + indexerRight) >> 1;
 			var indexerCompare = id - span[indexerMiddle].Id;
 			if (indexerCompare == 0)
 			{
@@ -253,13 +247,12 @@ internal static class TableExtensions
 	/// <returns>Index object</returns>
 	internal static Index? GetIndex(this Table table, string name)
 	{
-		// Code size: 92 (0x5c)
+		// Code size: 90 (0x5a)
 		var span = new ReadOnlySpan<Index>(table.Indexes);
 		int indexerLeft = 0, indexerRight = span.Length - 1;
 		while (indexerLeft <= indexerRight)
 		{
-			var indexerMiddle = indexerLeft + indexerRight;
-			indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
+			var indexerMiddle = (indexerLeft + indexerRight) >> 1;
 			var indexerCompare = string.CompareOrdinal(name, span[indexerMiddle].Name);
 			if (indexerCompare == 0) return span[indexerMiddle];
 			if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;

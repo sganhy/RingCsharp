@@ -99,13 +99,12 @@ internal static class Global
 	}
 	internal static DbSchema? GetSchema(string name)
 	{
-		// Code size: 99 (0x63)
+		// Code size: 97 (0x61)
 		var span = new ReadOnlySpan<(string, int)>(_schemaMappers);
 		int indexerLeft = 0, indexerRight = span.Length - 1;
 		while (indexerLeft <= indexerRight)
 		{
-			var indexerMiddle = indexerLeft + indexerRight;
-			indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
+			var indexerMiddle = (indexerLeft + indexerRight) >> 1;
 			var indexerCompare = string.CompareOrdinal(name, span[indexerMiddle].Item1);
 			if (indexerCompare == 0) return GetSchema(span[indexerMiddle].Item2);
 			if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;

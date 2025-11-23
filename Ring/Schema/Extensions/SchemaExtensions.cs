@@ -12,12 +12,12 @@ internal static class SchemaExtensions
 	/// </summary>
 	internal static Sequence? GetSequence(this DbSchema schema, string name)
 	{
+		// Code size: 90 (0x5a)
 		var span = new ReadOnlySpan<Sequence>(schema.Sequences);
 		int indexerLeft = 0, indexerRight = span.Length - 1;
 		while (indexerLeft <= indexerRight)
 		{
-			var indexerMiddle = indexerLeft + indexerRight;
-			indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
+			var indexerMiddle = (indexerLeft + indexerRight) >> 1;
 			var indexerCompare = string.CompareOrdinal(name, span[indexerMiddle].Name);
 			if (indexerCompare == 0) return span[indexerMiddle];
 			if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
@@ -32,14 +32,13 @@ internal static class SchemaExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static Table? GetTable(this DbSchema schema, int id)
 	{
-		// Code size: 91 (0x5b)
+		// Code size: 89 (0x59) - no virtual call
 		var span = new ReadOnlySpan<Table>(schema.TablesById);
-		int indexerLeft = 0, indexerRight = span.Length - 1, indexerMiddle, indexerCompare;
+		int indexerLeft = 0, indexerRight = span.Length - 1;
 		while (indexerLeft <= indexerRight)
 		{
-			indexerMiddle = indexerLeft + indexerRight;
-			indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
-			indexerCompare = id - span[indexerMiddle].Id;
+			var indexerMiddle = (indexerLeft + indexerRight) >> 1;
+			var indexerCompare = id - span[indexerMiddle].Id;
 			if (indexerCompare == 0L) return span[indexerMiddle];
 			if (indexerCompare > 0L) indexerLeft = indexerMiddle + 1;
 			else indexerRight = indexerMiddle - 1;
@@ -53,14 +52,13 @@ internal static class SchemaExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static Table? GetTable(this DbSchema schema, string name)
 	{
-		// Code size: 92 (0x5c)
+		// Code size: 90 (0x5a) - no virtual call
 		var span = new ReadOnlySpan<Table>(schema.TablesByName);
-		int indexerLeft = 0, indexerRight = span.Length - 1, indexerMiddle, indexerCompare;
+		int indexerLeft = 0, indexerRight = span.Length - 1;
 		while (indexerLeft <= indexerRight)
 		{
-			indexerMiddle = indexerLeft + indexerRight;
-			indexerMiddle >>= 1;   // indexerMiddle <-- indexerMiddle /2 
-			indexerCompare = string.CompareOrdinal(name, span[indexerMiddle].Name); 
+			var indexerMiddle = (indexerLeft + indexerRight) >> 1;
+			var indexerCompare = string.CompareOrdinal(name, span[indexerMiddle].Name); 
 			if (indexerCompare == 0) return span[indexerMiddle];
 			if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
 			else indexerRight = indexerMiddle - 1;
