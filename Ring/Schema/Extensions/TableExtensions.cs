@@ -20,7 +20,7 @@ internal static class TableExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static Field? GetField(this Table table, string name)
 	{
-		// Code size: 90 (0x5a) - no virtual call
+		// Code size: 90 (0x5a) - no virtual calls
 		var span = new ReadOnlySpan<Field>(table.Fields);
 		int indexerLeft = 0, indexerRight = span.Length - 1;
 		while (indexerLeft <= indexerRight)
@@ -43,7 +43,7 @@ internal static class TableExtensions
 	/// <returns>Field object</returns>
 	internal static Field? GetField(this Table table, string name, StringComparison comparisonType)
 	{
-		// Code size: 59 (0x3b) - no virtual call
+		// Code size: 59 (0x3b) - no virtual calls
 		var span = new ReadOnlySpan<Field>(table.Fields);
 		foreach (var field in span) if (string.Equals(name, field.Name, comparisonType)) return field;
 		return null;
@@ -68,7 +68,7 @@ internal static class TableExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static int GetFieldIndex(this Table table, string name)
 	{
-		// Code size: 82 (0x52) - no virtual call
+		// Code size: 82 (0x52) - no virtual calls
 		var span = new ReadOnlySpan<Field>(table.Fields);
 		int indexerLeft = 0, indexerRight = span.Length - 1;
 		while (indexerLeft <= indexerRight)
@@ -91,7 +91,7 @@ internal static class TableExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static Relation? GetRelation(this Table table, string name)
 	{
-		// Code size: 90 (0x5a) - no virtual call
+		// Code size: 90 (0x5a) - no virtual calls
 		var span = new ReadOnlySpan<Relation>(table.Relations);
 		int indexerLeft = 0, indexerRight = span.Length - 1;
 		while (indexerLeft <= indexerRight)
@@ -193,7 +193,7 @@ internal static class TableExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static Column? GetColumn(this Table table, int id, EntityType type)
 	{
-		// Code size: 145 (0x91) - no virtual call
+		// Code size: 145 (0x91) - no virtual calls
 		var colWeight = Meta.ColumnTypeWeight(type);
 		var span = new ReadOnlySpan<Column>(table.Columns); // sorted by Id
 		int indexerLeft = 0, indexerRight = span.Length - 1;

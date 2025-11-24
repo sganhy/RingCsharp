@@ -81,7 +81,7 @@ internal static class SchemaTemplateAttributeExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static SchemaTemplateAttributeValue? GetAttributeValue(SchemaTemplateAttribute schemaTemplateAttribute, string value)
 	{
-		// Code size: 90 (0x5a)
+		// Code size: 90 (0x5a) - no virtual calls
 		var span = new ReadOnlySpan<SchemaTemplateAttributeValue>(schemaTemplateAttribute.AttributeValues);
 		int indexerLeft = 0, indexerRight = span.Length - 1;
 		while (indexerLeft <= indexerRight)

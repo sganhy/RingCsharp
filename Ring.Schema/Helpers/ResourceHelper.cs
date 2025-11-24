@@ -13,11 +13,22 @@ internal sealed class ResourceHelper
 {
 	private static readonly object SyncRoot = new();
 	private static bool _schemaTemplateLoaded;
+	private static bool _logItemsLoaded;
+	private const char ResourceEndOfLine = '\n';
+	private const char LogItemSeparator = '#';
 	private static readonly string CompressedResourceSuffix = @".gz";
 	private static readonly string ResourceNameSpace = @"Ring.Schema.Resources.";
 	private static readonly string TemplateResourceNameSpace = ResourceNameSpace + @"Templates.";
-	private static Dictionary<int, SchemaTemplate> _schemaTemplates = new();
+	private static Dictionary<int, SchemaTemplate> _schemaTemplates = [];
+	private static Dictionary<int, LogItem> _logItems = [];
 
+	internal static LogItem? GetLogItem(LogType logType)
+	{
+		// Code size: 33 (0x21)
+		if (!_logItemsLoaded) LoadLogItems();
+		var key = (int)logType;
+		return _logItems.TryGetValue(key, out var logItem) ? logItem : null;
+	}
 
 	internal static SchemaTemplate? GetSchemaTemplate(DocumentType resourceType)
 	{
@@ -29,6 +40,26 @@ internal sealed class ResourceHelper
 
 	#region private methods
 
+	private static void LoadLogItems()
+	{
+		// Code size: 169 (0xa9)
+		lock (SyncRoot)
+		{
+			if (!_logItemsLoaded)
+			{
+				var resourceFile = ResourceType.LogItem + CompressedResourceSuffix;
+				var logItemsSpan = GetCompressedResource(ResourceNameSpace, resourceFile, false).Split(ResourceEndOfLine).AsSpan();
+				_logItems = new Dictionary<int, LogItem>(logItemsSpan.Length * 2); // reserve bucket
+				foreach (var logItem in logItemsSpan)
+				{
+					var lgItm = ToLogItem(logItem);
+					if (lgItm is not null && !_logItems.ContainsKey(lgItm.Id)) _logItems.Add(lgItm.Id, lgItm);
+				};
+			}
+			_logItemsLoaded = true;
+		}
+	}
+
 	private static void LoadSchemaTemplates()
 	{
 		// Code size: 169 (0xa9)
@@ -36,8 +67,8 @@ internal sealed class ResourceHelper
 		{
 			if (!_schemaTemplateLoaded)
 			{
-				var resourceNativeFile = DocumentType.XmlNative + CompressedResourceSuffix;
-				var resourceClfyFile = DocumentType.XmlClfy + CompressedResourceSuffix;
+				var resourceNativeFile = ResourceType.XmlNative + CompressedResourceSuffix;
+				var resourceClfyFile = ResourceType.XmlClfy + CompressedResourceSuffix;
 				var xmlNativeStr = GetCompressedResource(TemplateResourceNameSpace, resourceNativeFile, false);
 				var xmlClfyStr = GetCompressedResource(TemplateResourceNameSpace, resourceClfyFile, false);
 
@@ -128,8 +159,7 @@ internal sealed class ResourceHelper
 		return new SchemaTemplate(resourceFile, documentType, templateItems, GetMaxDepth(templateItems));
 	}
 
-	private static EntityType ToEntityType(string attributeValue) => 
-		int.TryParse(attributeValue, out int id) ? id.ToEntityType() : EntityType.Undefined; // Code size: 20 (0x14)
+	private static EntityType ToEntityType(string attributeValue) => int.TryParse(attributeValue, out int id) ? id.ToEntityType() : EntityType.Undefined; // Code size: 20 (0x14)
 	private static SchemaTemplateAttributeType ToXmlSchemaAttributeType(string attributeValue) => 
 		int.TryParse(attributeValue, out int id) ? id.ToXmlSchemaAttributeType() : SchemaTemplateAttributeType.Undefined; // Code size: 23 (0x17)
 
@@ -153,6 +183,15 @@ internal sealed class ResourceHelper
 		using var reader = new StreamReader(decompressionStream);
 		var content = reader.ReadToEnd();
 		return toUpper ? content.ToUpperInvariant() : content;
+	}
+
+	private static LogItem? ToLogItem(string logItemString)
+	{
+		if (string.IsNullOrWhiteSpace(logItemString)) return null;
+		//101#File not found#File '{0}' not found.#3
+		var parts= logItemString.Split(LogItemSeparator);
+		var levelId = int.Parse(parts[3], CultureInfo.InvariantCulture);
+		return new LogItem(int.Parse(parts[0], CultureInfo.InvariantCulture), 0, parts[1], parts[2], levelId.ToLogLevel());
 	}
 
 	#endregion

@@ -32,7 +32,7 @@ internal static class SchemaExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static Table? GetTable(this DbSchema schema, int id)
 	{
-		// Code size: 89 (0x59) - no virtual call
+		// Code size: 89 (0x59) - no virtual calls
 		var span = new ReadOnlySpan<Table>(schema.TablesById);
 		int indexerLeft = 0, indexerRight = span.Length - 1;
 		while (indexerLeft <= indexerRight)
@@ -52,7 +52,7 @@ internal static class SchemaExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static Table? GetTable(this DbSchema schema, string name)
 	{
-		// Code size: 90 (0x5a) - no virtual call
+		// Code size: 90 (0x5a) - no virtual calls
 		var span = new ReadOnlySpan<Table>(schema.TablesByName);
 		int indexerLeft = 0, indexerRight = span.Length - 1;
 		while (indexerLeft <= indexerRight)

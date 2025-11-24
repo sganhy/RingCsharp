@@ -14,17 +14,13 @@ internal sealed class NativeDocumentValidator : BaseDocumentValidator, IDocument
 	internal NativeDocumentValidator() : this(GetTemplate(DocumentType.XmlNative)) {}
 	internal NativeDocumentValidator(DocumentType documentType) : this(GetTemplate(documentType)) { }
 	private NativeDocumentValidator(SchemaTemplate template) : base(template, template.ToTagDictionary(StringComparer.Ordinal), template.Type)	{}
-
 	public Dictionary<string, int> ReferenceTables => _tableDictionary;
-
-	public ValueTask<DocumentStats> GetMetaCountAsync(string filePath, CancellationToken cancellationToken = default) 
-		=> GetMetaCountAsync(filePath, TagDictionary, true, Template, cancellationToken);
+	public ValueTask<DocumentStats> GetMetaCountAsync(string filePath, CancellationToken cancellationToken = default) => GetMetaCountAsync(filePath, TagDictionary, true, Template, cancellationToken);
 
 	/// <summary>
 	///	 Compute the number of meta, before allocation + light validation of xml structure
 	/// </summary>
-	private async ValueTask<DocumentStats> GetMetaCountAsync(string filePath, Dictionary<string, SchemaTemplateItem> tagDico, bool hasTimeZoneOffsetColumn, SchemaTemplate template, 
-		CancellationToken cancellationToken = default)
+	private async ValueTask<DocumentStats> GetMetaCountAsync(string filePath, Dictionary<string, SchemaTemplateItem> tagDico, bool hasTimeZoneOffsetColumn, SchemaTemplate template, CancellationToken cancellationToken = default)
     {
 		
 		var readerSettings = new XmlReaderSettings

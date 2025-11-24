@@ -19,7 +19,7 @@ internal static class SchemaTemplateExtensions
 
 	internal static SchemaTemplateItem? GetTemplateItem(this SchemaTemplate template, EntityType entityType)
 	{
-		// Code size: 98 (0x62)
+		// Code size: 98 (0x62) - no virtual calls
 		var entityTypeId = (int)entityType;
 		var span = new ReadOnlySpan<SchemaTemplateItem>(template.Items);
 		int indexerLeft = 0, indexerRight = span.Length - 1;

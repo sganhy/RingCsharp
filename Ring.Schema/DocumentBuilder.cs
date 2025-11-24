@@ -1,61 +1,78 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
-using Ring.Util.Builders;
-using Ring.Util.Enums;
-using Ring.Util.Models;
+using System.Globalization;
+using System.Xml;
 
 namespace Ring.Schema;
 
 public sealed class DocumentBuilder
 {
 	public string FilePath { get; private set; }
+	private readonly static long MaxFileSize = 104857600L;
 	private int _schemaId = -1;
 	private string? _creator;
 	private DateTime? _creationTime;
 	private DateTime? _updateTime;
-	private Meta[] _result = Array.Empty<Meta>();
 	private DocumentType _type = DocumentType.Undefined;
 	private long _jobId = -1L;
 	private DatabaseProvider _provider = DatabaseProvider.Undefined;
 	private string _schemaName = string.Empty;
-	private readonly List<Log> _logs = new();
-	private readonly LogBuilder _logBuilder = new();
 
 	/// <summary>
 	/// Ctor
 	/// </summary>
 	public DocumentBuilder(string filePath) => FilePath = filePath ?? string.Empty;
 
-
 	public async ValueTask<Document> GetDocumentAsync(DocumentType documentType, CancellationToken cancellationToken = default)
 	{
 		Reset(); // reset values
-		if (File.Exists(FilePath))
+		var validationResult = new ValidationResult();
+		var metaArray = Array.Empty<Meta>();
+		try
 		{
-			// load template
-			var validator = documentType.GetValidator();
-			var template = documentType.GetSchemaTemplate();
-			var metaBuilder = documentType.GetMetaBuilder();
-
-			if (template is not null)
+			if (File.Exists(FilePath))
 			{
-				var stats = await validator.GetMetaCountAsync(FilePath, cancellationToken).ConfigureAwait(false);
-				// validate stats here
-				if (stats.MetaCount > 0)
+				// check file size (max 100mb)
+				var length = new FileInfo(FilePath).Length;
+				if (length> MaxFileSize)
 				{
-					Console.WriteLine("Count= " + stats.MetaCount);
-					var metaArray = await metaBuilder.GetMetaAsync(FilePath, stats.MetaCount, validator.ReferenceTables, cancellationToken).ConfigureAwait(false);
+					validationResult.AddItem(LogType.FileToolLarge, MaxFileSize.ToString(CultureInfo.InvariantCulture));
+					return new Document(_schemaId, FilePath, _creator, _creationTime, _updateTime, metaArray, _type, _jobId, _provider, _schemaName);
+				}
+
+				// load template
+				var validator = documentType.GetValidator();
+				var template = documentType.GetSchemaTemplate();
+				var metaBuilder = documentType.GetMetaBuilder();
+
+				if (template is not null)
+				{
+					var stats = await validator.GetMetaCountAsync(FilePath, cancellationToken).ConfigureAwait(false);
+					// validate stats here
+					if (stats.MetaCount > 0)
+					{
+						Console.WriteLine("Count= " + stats.MetaCount);
+						metaArray = await metaBuilder.GetMetaAsync(FilePath, stats.MetaCount, validator.ReferenceTables, cancellationToken).ConfigureAwait(false);
+						return new Document(_schemaId, FilePath, _creator, _creationTime, _updateTime, metaArray, _type, _jobId, _provider, _schemaName);
+					}
+				}
+				else
+				{
+					// unsupported document type
 				}
 			}
-			else 
+			else
 			{
-				// unsupported document type
+
 			}
 		}
-		else _logs.Add(_logBuilder.GetError(LogType.FileNotFound, FilePath));
-		Document result=new(_schemaId, FilePath, _creator, _creationTime, _updateTime, _result, _type, _jobId, _provider, _schemaName);
-		result.Logs.AddRange(_logs);
-		return result;
+		catch (XmlException ex)
+		{
+			int oi = 0;
+			++oi;
+
+		}
+		return new Document(_schemaId, FilePath, _creator, _creationTime, _updateTime, metaArray, _type, _jobId, _provider, _schemaName);
 	}
 
 	#region private methods 
@@ -66,15 +83,11 @@ public sealed class DocumentBuilder
 		_creator = null;
 		_creationTime = null;
 		_updateTime = null;
-		_result = [];
 		_type = DocumentType.Undefined;
 		_jobId = 0L;
 		_provider = DatabaseProvider.Undefined;
 		_schemaName = string.Empty;
-		_logs.Clear();
 	}
-
-	
 
 	#endregion 
 

@@ -32,7 +32,7 @@ internal static class Global
 	}
 	internal static void SetDefaultSchema(DbSchema schema)
 	{
-        // Code size: 43 (0x2b) - removed box statements - no virtual call
+        // Code size: 43 (0x2b) - removed box statements - no virtual calls
         lock (SyncRoot)
 		{
 			if (!ReferenceEquals(schema, _defaultSchema)) _defaultSchema = schema; // assign schema if necessary

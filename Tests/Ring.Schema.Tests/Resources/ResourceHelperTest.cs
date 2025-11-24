@@ -1,5 +1,7 @@
-﻿using ResourceHelper = Ring.Schema.Helpers.ResourceHelper;
+﻿using Microsoft.Extensions.Logging;
+using Ring.Schema.Enums;
 using Xunit;
+using ResourceHelper = Ring.Schema.Helpers.ResourceHelper;
 
 namespace Ring.Schema.Tests.Resources;
 
@@ -59,4 +61,20 @@ public sealed class ResourceHelperTest
         Assert.Equal("", template.Items[4].ParentTag);
     }
 
-  }
+
+	[Theory]
+	[InlineData(LogType.FileNotFound, "File '{0}' not found.",  LogLevel.Critical)]
+	[InlineData(LogType.FileToolLarge, "File size exceeds the maximum allowed size of {0} bytes.", LogLevel.Critical)]
+	internal void GetLogItem_LogType_LogItemObject(LogType logType, string description, LogLevel logLevel)
+	{
+		// arrange
+		// act 
+		var logItem = ResourceHelper.GetLogItem(logType);
+
+        // assert
+        Assert.NotNull(logItem);
+		Assert.Equal(description, logItem.Description);
+		Assert.Equal(logLevel, logItem.Level);
+	}
+
+}

@@ -1,7 +1,5 @@
-﻿using Ring.Data.Enums;
-using Ring.Data.Models;
+﻿using Ring.Data.Models;
 using Ring.Schema.Models;
-using Ring.Util.Builders;
 using System.Runtime.CompilerServices;
 using Index = Ring.Schema.Models.Index;
 
@@ -12,6 +10,15 @@ internal static class HashCodeExtensions
 	internal static void AddField(this ref HashCode hashCode, Field field)
 	{
 		// Code size: 85 (0x55) 
+		/*
+		internal readonly string? DefaultValue;
+		internal readonly int Size;
+		internal readonly FieldType Type;
+		internal readonly SearchableType SearchableType;
+		internal readonly bool Multilingual;
+		internal readonly bool NotNull;
+		internal readonly bool AllowTruncation; 
+		*/
 		AddBaseEntity(ref hashCode, field);
 		// Field-specific properties
 		hashCode.Add((int)field.Type);
@@ -132,7 +139,7 @@ internal static class HashCodeExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static void AddBaseEntity(ref HashCode hashCode, BaseEntity baseEntity)
 	{
-		// Code size: 79 (0x4f) - no virtual call
+		// Code size: 79 (0x4f) - no virtual calls
 		hashCode.Add(baseEntity.Id);
 		hashCode.Add(baseEntity.Name, StringComparer.Ordinal);
 		if (baseEntity.Description is not null) hashCode.Add(baseEntity.Description, StringComparer.Ordinal);

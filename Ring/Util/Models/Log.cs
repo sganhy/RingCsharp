@@ -1,4 +1,4 @@
-﻿using Ring.Util.Enums;
+﻿using Microsoft.Extensions.Logging;
 
 namespace Ring.Util.Models;
 

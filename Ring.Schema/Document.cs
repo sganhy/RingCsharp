@@ -15,6 +15,7 @@ public sealed class Document
 	public DateTime? UpdateTime { get; private set; }
 	public long JobId { get; private set; }
 	public string SchemaName { get; private set; }
+	internal readonly ValidationResult ValidationResult;
 	internal readonly Meta[] Result;
 	internal readonly DocumentType Type;
 	internal readonly DatabaseProvider Provider;
@@ -34,5 +35,6 @@ public sealed class Document
 		Provider = provider;
 		SchemaName = schemaName;
 		Logs = [];
+		ValidationResult = new();
 	}
 }

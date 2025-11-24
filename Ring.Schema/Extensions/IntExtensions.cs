@@ -1,4 +1,5 @@
 ﻿using Ring.Schema.Enums;
+using Microsoft.Extensions.Logging;
 using System.Runtime.CompilerServices;
 
 namespace Ring.Schema.Extensions;
@@ -67,6 +68,19 @@ internal static class IntExtensions
 			case XmlAttributeFileId: return SchemaTemplateAttributeType.File;
 		}
 		return SchemaTemplateAttributeType.Undefined;
+	}
+
+
+	internal static LogLevel ToLogLevel(this int logLevelId)
+	{
+		// Code size: 226 (0xe2)
+		switch (logLevelId)
+		{
+			case 1: return LogLevel.Warning;
+			case 2: return LogLevel.Error;
+			case 3: return LogLevel.Critical;
+		}
+		return LogLevel.None;
 	}
 
 }

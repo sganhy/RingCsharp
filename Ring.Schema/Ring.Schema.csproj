@@ -43,16 +43,19 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <None Remove="Resources\LogItem.gz" />
 	  <None Remove="Resources\Templates\XmlClfy.gz" />
 	</ItemGroup>
 
 	<ItemGroup>
+	  <EmbeddedResource Include="Resources\LogItem.gz" />
 	  <EmbeddedResource Include="Resources\Templates\XmlClfy.gz" />
 	  <EmbeddedResource Include="Resources\Templates\XmlNative.gz" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.DotNet.ILCompiler" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
 		<PackageReference Include="Microsoft.NET.ILLink.Tasks" />
 	</ItemGroup>
 
@@ -62,9 +65,6 @@
 
 	<ItemGroup>
 		<InternalsVisibleTo Include="Ring.Schema.Tests" PublicKey="0024000004800000940000000602000000240000525341310004000001000100512907c5997ca7347c4196b7011a4c30999bf8eb48d0894a88bec6e093a13ac28b0dea47b96946d84c7002ac0fb80caf972bbde14850246fdec64e5351907c7536344acfca522c7317c04aa0fb0e8de20cd09298cbdd0f745d1b07070704c5cffcf62cc3a41d7b315c78fda60f86b13e8fcdddb5ca61b0e5c92cff553c4d26e4" />
-	</ItemGroup>
-	<ItemGroup>
-	  <Folder Include="Enums\" />
 	</ItemGroup>
 
 

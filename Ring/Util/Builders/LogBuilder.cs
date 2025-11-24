@@ -1,4 +1,5 @@
-﻿using Ring.Data.Enums;
+﻿using Microsoft.Extensions.Logging;
+using Ring.Data.Enums;
 using Ring.Data.Models;
 using Ring.Util.Enums;
 using Ring.Util.Extensions;
@@ -29,10 +30,10 @@ internal sealed class LogBuilder
     internal Log GetWarning(LogType logType, params object?[] args) => GetInstance(logType, LogLevel.Warning, args);
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    internal Log GetInfo(LogType logType, params object?[] args) => GetInstance(logType, LogLevel.Info, args);
+    internal Log GetInfo(LogType logType, params object?[] args) => GetInstance(logType, LogLevel.Information, args);
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    internal Log GetFatal(LogType logType, params object?[] args) => GetInstance(logType, LogLevel.Fatal, args);
+    internal Log GetFatal(LogType logType, params object?[] args) => GetInstance(logType, LogLevel.Critical, args);
     
     [MethodImpl(MethodImplOptions.NoInlining)]
     internal Log GetDebug(LogType logType, params object?[] args) => GetInstance(logType, LogLevel.Debug, args);
