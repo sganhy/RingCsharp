@@ -12,8 +12,8 @@ namespace Ring.Schema.Helpers;
 internal sealed class ResourceHelper
 {
 	private static readonly object SyncRoot = new();
-	private static bool _schemaTemplateLoaded;
-	private static bool _logItemsLoaded;
+	private static volatile bool _schemaTemplateLoaded; // volatile to prevent compiler/CPU reordering
+	private static volatile bool _logItemsLoaded;
 	private const char ResourceEndOfLine = '\n';
 	private const char LogItemSeparator = '#';
 	private static readonly string CompressedResourceSuffix = @".gz";
@@ -42,43 +42,49 @@ internal sealed class ResourceHelper
 
 	private static void LoadLogItems()
 	{
-		// Code size: 169 (0xa9)
-		lock (SyncRoot)
+		// Code size: 217 (0xd9)
+		if (!_logItemsLoaded)
 		{
-			if (!_logItemsLoaded)
+			lock (SyncRoot)
 			{
-				var resourceFile = ResourceType.LogItem + CompressedResourceSuffix;
-				var logItemsSpan = GetCompressedResource(ResourceNameSpace, resourceFile, false).Split(ResourceEndOfLine).AsSpan();
-				_logItems = new Dictionary<int, LogItem>(logItemsSpan.Length * 2); // reserve bucket
-				foreach (var logItem in logItemsSpan)
+				if (!_logItemsLoaded)
 				{
-					var lgItm = ToLogItem(logItem);
-					if (lgItm is not null && !_logItems.ContainsKey(lgItm.Id)) _logItems.Add(lgItm.Id, lgItm);
-				};
+					var resourceFile = ResourceType.LogItem + CompressedResourceSuffix;
+					var logItemsSpan = GetCompressedResource(ResourceNameSpace, resourceFile, false).Split(ResourceEndOfLine).AsSpan();
+					_logItems = new Dictionary<int, LogItem>(logItemsSpan.Length * 2); // reserve bucket
+					foreach (var logItem in logItemsSpan)
+					{
+						var lgItm = ToLogItem(logItem);
+						if (lgItm is not null && !_logItems.ContainsKey(lgItm.Id)) _logItems.Add(lgItm.Id, lgItm);
+					}
+				}
+				_logItemsLoaded = true;
 			}
-			_logItemsLoaded = true;
 		}
 	}
 
 	private static void LoadSchemaTemplates()
 	{
-		// Code size: 169 (0xa9)
-		lock (SyncRoot)
+		// Code size: 179 (0xb3)
+		if (!_schemaTemplateLoaded)
 		{
-			if (!_schemaTemplateLoaded)
+			lock (SyncRoot)
 			{
-				var resourceNativeFile = ResourceType.XmlNative + CompressedResourceSuffix;
-				var resourceClfyFile = ResourceType.XmlClfy + CompressedResourceSuffix;
-				var xmlNativeStr = GetCompressedResource(TemplateResourceNameSpace, resourceNativeFile, false);
-				var xmlClfyStr = GetCompressedResource(TemplateResourceNameSpace, resourceClfyFile, false);
-
-				_schemaTemplates = new Dictionary<int, SchemaTemplate>
+				if (!_schemaTemplateLoaded)
 				{
-					{ (int)DocumentType.XmlNative, GetSchemaTemplate(DocumentType.XmlNative, resourceNativeFile,  xmlNativeStr) },
-					{ (int)DocumentType.XmlClfy, GetSchemaTemplate(DocumentType.XmlClfy, resourceClfyFile,  xmlClfyStr) }
-				};
+					var resourceNativeFile = ResourceType.XmlNative + CompressedResourceSuffix;
+					var resourceClfyFile = ResourceType.XmlClfy + CompressedResourceSuffix;
+					var xmlNativeStr = GetCompressedResource(TemplateResourceNameSpace, resourceNativeFile, false);
+					var xmlClfyStr = GetCompressedResource(TemplateResourceNameSpace, resourceClfyFile, false);
+
+					_schemaTemplates = new Dictionary<int, SchemaTemplate>
+					{
+						{ (int)DocumentType.XmlNative, GetSchemaTemplate(DocumentType.XmlNative, resourceNativeFile,  xmlNativeStr) },
+						{ (int)DocumentType.XmlClfy, GetSchemaTemplate(DocumentType.XmlClfy, resourceClfyFile,  xmlClfyStr) }
+					};
+				}
+				_schemaTemplateLoaded = true;
 			}
-			_schemaTemplateLoaded = true;
 		}
 	}
 
@@ -187,6 +193,7 @@ internal sealed class ResourceHelper
 
 	private static LogItem? ToLogItem(string logItemString)
 	{
+		// Code size: 66 (0x42)
 		if (string.IsNullOrWhiteSpace(logItemString)) return null;
 		//101#File not found#File '{0}' not found.#3
 		var parts= logItemString.Split(LogItemSeparator);

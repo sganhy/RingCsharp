@@ -1,2 +1,2 @@
-101#File not found#File '{0}' not found.#3
-102#File too large#File size exceeds the maximum allowed size of {0} bytes.#3
+101#File not found#File '{0}' not found.#2
+102#File too large#File size exceeds the maximum allowed size of {0} bytes.#2

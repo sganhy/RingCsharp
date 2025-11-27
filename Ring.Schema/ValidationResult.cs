@@ -1,19 +1,19 @@
 ﻿using Microsoft.Extensions.Logging;
 using Ring.Schema.Enums;
 using Ring.Schema.Helpers;
-using Ring.Schema.Models;
+using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 
 namespace Ring.Schema;
 
-internal sealed class ValidationResult
+public sealed class ValidationResult
 {
 	private const int MaxValidation = 150; // number max of validation displayed
 	private readonly List<ValidationItem> _items;
-	private long _errorCount;
-	private long _criticalCount;
-	private long _warningCount;
+	private int _errorCount;
+	private int _criticalCount;
+	private int _warningCount;
 
 	/// <summary>
 	/// Ctor
@@ -21,22 +21,24 @@ internal sealed class ValidationResult
 	public ValidationResult()
 	{
         _items = [];
-		_errorCount = 0L;
-		_criticalCount = 0L;
-		_warningCount = 0L;
+		_errorCount = 0;
+		_criticalCount = 0;
+		_warningCount = 0;
 	}
 
-	internal long ErrorCount => _errorCount;
-	internal long CriticalCount => _criticalCount;
-	internal long WarningCount => _warningCount;
-
-	/// <summary>
-	/// Validation results 
-	/// </summary>
-	internal List<ValidationItem> Validations => _items;
+	public int ErrorCount => _errorCount;
+	public int CriticalCount => _criticalCount;
+	public int WarningCount => _warningCount;
+	public ReadOnlyCollection<ValidationItem> Validations => _items.AsReadOnly();
+	internal void AddItem(LogLevel level, int id, string name, string description, [CallerLineNumber] int lineNumber = 0) => _items.Add(new ValidationItem(id, lineNumber, name, description, level));
+	internal void AddError(LogType logType, string name, string description, [CallerLineNumber] int lineNumber = 0) => _items.Add(new ValidationItem((int)logType, lineNumber, name, description, LogLevel.Error));
+	internal void AddWarn(LogType logType, string name, string description, [CallerLineNumber] int lineNumber = 0) => _items.Add(new ValidationItem((int)logType, lineNumber, name, description, LogLevel.Warning));
 	internal void AddItem(LogType logType, string var1, [CallerLineNumber] int lineNumber = 0) => AddItem(logType, lineNumber, var1);
 	internal void AddItem(LogType logType, string var1, string var2, [CallerLineNumber] int lineNumber = 0) => AddItem(logType, lineNumber, var1, var2);
 	internal void AddItem(LogType logType, string var1, string var2, string var3, [CallerLineNumber] int lineNumber = 0) => AddItem(logType, lineNumber, var1, var2, var3);
+	internal bool IsBlockingDefect => _errorCount + _criticalCount > 0;
+
+	#region private methods
 	private void AddItem(LogType logType, int lineNumber = 0, params object[] args)
 	{
 		// Code size: 194 (0xc2)
@@ -51,9 +53,6 @@ internal sealed class ValidationResult
 		if (level == LogLevel.Warning) ++_warningCount;
 		if (level == LogLevel.Critical) ++_criticalCount;
 	}
+	#endregion 
 
-	/// <summary>
-	/// 
-	/// </summary>
-	internal bool IsBlockingDefect => _errorCount + _criticalCount > 0;
 }

@@ -28,16 +28,17 @@ public sealed class DocumentBuilder
 		Reset(); // reset values
 		var validationResult = new ValidationResult();
 		var metaArray = Array.Empty<Meta>();
+
 		try
 		{
 			if (File.Exists(FilePath))
 			{
 				// check file size (max 100mb)
 				var length = new FileInfo(FilePath).Length;
-				if (length> MaxFileSize)
+				if (length > MaxFileSize)
 				{
 					validationResult.AddItem(LogType.FileToolLarge, MaxFileSize.ToString(CultureInfo.InvariantCulture));
-					return new Document(_schemaId, FilePath, _creator, _creationTime, _updateTime, metaArray, _type, _jobId, _provider, _schemaName);
+					return CreateDocument(metaArray, validationResult);
 				}
 
 				// load template
@@ -49,11 +50,9 @@ public sealed class DocumentBuilder
 				{
 					var stats = await validator.GetMetaCountAsync(FilePath, cancellationToken).ConfigureAwait(false);
 					// validate stats here
-					if (stats.MetaCount > 0)
+					if (stats.MetaCount > 0 && stats.ErrorCount == 0)
 					{
-						Console.WriteLine("Count= " + stats.MetaCount);
 						metaArray = await metaBuilder.GetMetaAsync(FilePath, stats.MetaCount, validator.ReferenceTables, cancellationToken).ConfigureAwait(false);
-						return new Document(_schemaId, FilePath, _creator, _creationTime, _updateTime, metaArray, _type, _jobId, _provider, _schemaName);
 					}
 				}
 				else
@@ -61,18 +60,12 @@ public sealed class DocumentBuilder
 					// unsupported document type
 				}
 			}
-			else
-			{
-
-			}
+			else validationResult.AddItem(LogType.FileNotFound, FilePath);
 		}
-		catch (XmlException ex)
-		{
-			int oi = 0;
-			++oi;
+		catch (XmlException ex)	{ validationResult.AddError(LogType.XmlException, ex.GetType().Name, ex.Message); }
+		catch (OperationCanceledException ex) { validationResult.AddError(LogType.OperationCanceledException, ex.GetType().Name, ex.Message); }
 
-		}
-		return new Document(_schemaId, FilePath, _creator, _creationTime, _updateTime, metaArray, _type, _jobId, _provider, _schemaName);
+		return CreateDocument(metaArray, validationResult);
 	}
 
 	#region private methods 
@@ -89,6 +82,9 @@ public sealed class DocumentBuilder
 		_schemaName = string.Empty;
 	}
 
-	#endregion 
+	private Document CreateDocument(Meta[] metaArray, ValidationResult validationResult) => 
+		new(_schemaId, FilePath, _creator, _creationTime, _updateTime, metaArray, _type, _jobId, _provider, _schemaName, validationResult);
+
+	#endregion
 
 }

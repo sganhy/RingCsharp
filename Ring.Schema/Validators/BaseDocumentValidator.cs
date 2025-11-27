@@ -12,10 +12,9 @@ internal abstract class BaseDocumentValidator
 	protected int SchemaCount;
 	protected int TableCount;
 	protected int FieldCount;
-	protected int UndefinedFieldTypeCount;
 	protected int RelationCount;
 	protected int IndexCount;
-	protected int WrongParentCount;
+	protected int ErrorCount;
 	protected int TableSpaceCount;
 	protected int LineCount;
 
@@ -51,10 +50,9 @@ internal abstract class BaseDocumentValidator
 		SchemaCount = 0;
 		TableCount = 0;
 		FieldCount = 0;
-		UndefinedFieldTypeCount = 0;
 		RelationCount = 0;
 		IndexCount = 0;
-		WrongParentCount = 0;
+		ErrorCount = 0;
 		TableSpaceCount = 0;
 		LineCount = 0;
 	}

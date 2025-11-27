@@ -12,7 +12,7 @@ internal sealed class NativeDocumentValidator : BaseDocumentValidator, IDocument
 	private Dictionary<string, int> _tableDictionary = [];
 
 	internal NativeDocumentValidator() : this(GetTemplate(DocumentType.XmlNative)) {}
-	internal NativeDocumentValidator(DocumentType documentType) : this(GetTemplate(documentType)) { }
+	internal NativeDocumentValidator(DocumentType documentType) : this(GetTemplate(documentType)) {}
 	private NativeDocumentValidator(SchemaTemplate template) : base(template, template.ToTagDictionary(StringComparer.Ordinal), template.Type)	{}
 	public Dictionary<string, int> ReferenceTables => _tableDictionary;
 	public ValueTask<DocumentStats> GetMetaCountAsync(string filePath, CancellationToken cancellationToken = default) => GetMetaCountAsync(filePath, TagDictionary, true, Template, cancellationToken);
@@ -40,11 +40,7 @@ internal sealed class NativeDocumentValidator : BaseDocumentValidator, IDocument
 		var iterationCount = 0;
 		var metaCount = 0;
 
-		if (LoadTemplateErrorCount>0)
-		{
-			// log here!
-			return new DocumentStats(SchemaCount, TableCount, FieldCount, UndefinedFieldTypeCount, RelationCount, IndexCount, WrongParentCount, TableSpaceCount, LineCount, metaCount-1);
-		}
+		if (LoadTemplateErrorCount>0) return new DocumentStats(SchemaCount, TableCount, FieldCount, RelationCount, IndexCount, ErrorCount, TableSpaceCount, LineCount, metaCount);
 
 		buffer[0] = string.Empty;
 
@@ -82,7 +78,7 @@ internal sealed class NativeDocumentValidator : BaseDocumentValidator, IDocument
 								++FieldCount;
 								var (fieldType, searchableType) = GetFieldInfo(xmlReader);
 								if (searchableType != SearchableType.None) ++extraFieldCount; // extra column for searchable
-								if (fieldType == FieldType.Undefined) ++UndefinedFieldTypeCount;
+								if (fieldType == FieldType.Undefined) ++ErrorCount;
 								if (fieldType == FieldType.DateTimeOffset && hasTimeZoneOffsetColumn) ++extraFieldCount; // extra field of date offset
 								break;
 							case EntityType.Relation: ++RelationCount; break;
@@ -90,14 +86,14 @@ internal sealed class NativeDocumentValidator : BaseDocumentValidator, IDocument
 							case EntityType.Tablespace: ++TableSpaceCount; break;
 						}
 					}
-					else ++WrongParentCount;
+					else ++ErrorCount;
 				}
 			}
 			LineCount = (xmlReader as IXmlLineInfo)?.LineNumber ?? 0;
 			metaCount = extraFieldCount + TableCount + FieldCount + RelationCount + IndexCount + TableSpaceCount + SchemaCount;
 		}
 
-		return new DocumentStats(SchemaCount, TableCount, FieldCount, UndefinedFieldTypeCount, RelationCount, IndexCount, WrongParentCount, TableSpaceCount, LineCount, metaCount);
+		return new DocumentStats(SchemaCount, TableCount, FieldCount, RelationCount, IndexCount, ErrorCount, TableSpaceCount, LineCount, metaCount);
 	}
 
 }

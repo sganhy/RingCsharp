@@ -20,9 +20,9 @@ public sealed class ValidationResultTest
 		var lastItem = validationResult.Validations.Last();
 
 		// assert 
-		Assert.Equal(1, validationResult.CriticalCount);
+		Assert.Equal(1, validationResult.ErrorCount);
 		Assert.Equal("File too large", lastItem.Name);
-		Assert.Equal(LogLevel.Critical, lastItem.Level);
+		Assert.Equal(LogLevel.Error, lastItem.Level);
 		Assert.Equal("File size exceeds the maximum allowed size of 500 bytes.", lastItem.Description);
 	}
 }
