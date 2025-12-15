@@ -22,7 +22,7 @@ public sealed class Connection : IConnection
     private readonly static string ActionMessage = "{Message}";
     private readonly static NpgsqlParameter [] DefaultParameterArray = Array.Empty<NpgsqlParameter>();
     private readonly static CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
-    private readonly static LogBuilder _logBuilder = new();
+    private readonly static LogEventBuilder _logBuilder = new();
     private readonly static string?[] EmptyResult = Array.Empty<string?>();
     private readonly static string _ddlOperationType = nameof(AlterQueryType);
     private readonly static int BindVariableNameCacheSize = 1024;
@@ -32,7 +32,6 @@ public sealed class Connection : IConnection
     private const string BindVariablePrefix = "p";
     private readonly static string BooleanTrue = true.ToString(DefaultCulture);
     private readonly IConfiguration _configuration;
-    private readonly ILogger<Connection> _logger;
     private readonly int _id;
     private readonly DateTime _creationTime;
     private readonly bool _informationEnabled; // logging level information enabled ?
@@ -43,19 +42,18 @@ public sealed class Connection : IConnection
 
     // ============ L O G S =======
     // ddl: 
+    /*
     private static readonly Action<ILogger, string, Exception?> _logDdlException =
                 LoggerMessage.Define<string>(LogLevel.Error, new EventId((int)EventType.DdlException, 
                     nameof(LogDdlException)), ActionMessage);
     private static readonly Action<ILogger, string, Exception?> _logOperationPerformed =
                 LoggerMessage.Define<string>(LogLevel.Information, new EventId((int)EventType.QueryPerformed, 
                     nameof(LogOperationPerformed)), ActionMessage);
-
+    */
     public Connection(int id, IConfiguration configuration)
     {
         _configuration = configuration;
         _currentTransaction = null;
-        _logger = _configuration.LoggerFactory.CreateLogger<Connection>();
-        _informationEnabled = _logger.IsEnabled(LogLevel.Information);
         _connection = new NpgsqlConnection(_configuration.ConnectionString);
         _id = id;
         _creationTime = DateTime.Now;
@@ -173,14 +171,14 @@ public sealed class Connection : IConnection
         }
         catch (Exception ex)
         {
-            LogDdlException(ex, query);
+            //LogDdlException(ex, query);
             returnValue = 0;
         }
 #pragma warning restore CA1031, CA2100
         cmd.Connection = null;
         cmd.Dispose();
 
-        if (returnValue>0 && _informationEnabled) LogOperationPerformed(query,DateTime.Now-_lastExecutionTime);
+        //if (returnValue>0 && _informationEnabled) LogOperationPerformed(query,DateTime.Now-_lastExecutionTime);
 
         return returnValue;
     }
@@ -214,14 +212,14 @@ public sealed class Connection : IConnection
         }
         catch (Exception ex)
         {
-            LogDdlException(ex, query);
+            //LogDdlException(ex, query);
             returnValue = 0;
         }
 #pragma warning restore CA1031, CA2100
         cmd.Connection = null;
         cmd.Dispose();
 
-        if (returnValue > 0 && _informationEnabled) LogOperationPerformed(query, DateTime.Now - _lastExecutionTime);
+        //if (returnValue > 0 && _informationEnabled) //LogOperationPerformed(query, DateTime.Now - _lastExecutionTime);
         return new(Task.FromResult(returnValue));
     }
 
@@ -253,7 +251,7 @@ public sealed class Connection : IConnection
             Console.WriteLine("Error: ");
             Console.WriteLine(ex.Message);
             Console.WriteLine(ex.StackTrace);
-            LogDmlException(ex, query);
+            //LogDmlException(ex, query);
             returnValue = -1L;
         }
 #pragma warning restore CA1031, CA2100
@@ -433,18 +431,12 @@ public sealed class Connection : IConnection
         return result;
     }
 
-    private void LogDdlException(Exception ex, AlterQuery query) => 
-        _logDdlException(_logger, _logBuilder.GetMessage(query, EventType.DdlException), ex);
-
-    private void LogDmlException(Exception ex, SaveQuery query) 
-    { 
-    }
 
     private void LogUnSupportedOperation(AlterQuery query) {
         var message = _logBuilder.GetMessage(EventType.UnsupportedOperation,
             (int)query.Type, _ddlOperationType, query.Type.ToString());
         var ex = new ArgumentException(message);
-        LogDdlException(ex, query);
+        //LogDdlException(ex, query);
     }
     private void LogUnSupportedOperation(SaveQuery query)
     {
@@ -453,10 +445,6 @@ public sealed class Connection : IConnection
         var ex = new ArgumentException(message);
         //LogDdlException(ex, query);
     }
-
-    private void LogOperationPerformed(AlterQuery query, TimeSpan ts) => _logOperationPerformed(_logger, string.Empty, null);
-
-    private void LogOperationPerformed(SaveQuery query, TimeSpan ts) => _logOperationPerformed(_logger, string.Empty, null);
 
 
     #endregion

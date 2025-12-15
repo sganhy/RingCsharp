@@ -1,5 +1,5 @@
-﻿using Ring.Schema.Enums;
-using Microsoft.Extensions.Logging;
+﻿using Ring.Logging;
+using Ring.Schema.Enums;
 using System.Runtime.CompilerServices;
 
 namespace Ring.Schema.Extensions;
@@ -69,7 +69,6 @@ internal static class IntExtensions
 		}
 		return SchemaTemplateAttributeType.Undefined;
 	}
-
 
 	internal static LogLevel ToLogLevel(this int logLevelId)
 	{

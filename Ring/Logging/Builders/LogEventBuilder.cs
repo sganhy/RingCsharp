@@ -1,17 +1,15 @@
-﻿using Microsoft.Extensions.Logging;
-using Ring.Data.Enums;
+﻿using Ring.Data.Enums;
 using Ring.Data.Models;
+using Ring.Logging;
 using Ring.Util.Enums;
-using Ring.Util.Extensions;
 using Ring.Util.Helpers;
-using Ring.Util.Models;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 
 namespace Ring.Util.Builders;
 
-internal sealed class LogBuilder
+internal sealed class LogEventBuilder
 {
     private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
     private static readonly Dictionary<AlterQueryType, ResourceType[]> AlterOperationMapping = new()
@@ -24,19 +22,19 @@ internal sealed class LogBuilder
     internal int SchemaId { set; get; }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    internal Log GetError(LogType logType, params object?[] args) => GetInstance(logType, LogLevel.Error, args);
+    internal LogEvent GetError(LogType logType, params object?[] args) => GetInstance(logType, LogLevel.Error, args);
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    internal Log GetWarning(LogType logType, params object?[] args) => GetInstance(logType, LogLevel.Warning, args);
+    internal LogEvent GetWarning(LogType logType, params object?[] args) => GetInstance(logType, LogLevel.Warning, args);
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    internal Log GetInfo(LogType logType, params object?[] args) => GetInstance(logType, LogLevel.Information, args);
+    internal LogEvent GetInfo(LogType logType, params object?[] args) => GetInstance(logType, LogLevel.Information, args);
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    internal Log GetFatal(LogType logType, params object?[] args) => GetInstance(logType, LogLevel.Critical, args);
+    internal LogEvent GetFatal(LogType logType, params object?[] args) => GetInstance(logType, LogLevel.Critical, args);
     
     [MethodImpl(MethodImplOptions.NoInlining)]
-    internal Log GetDebug(LogType logType, params object?[] args) => GetInstance(logType, LogLevel.Debug, args);
+    internal LogEvent GetDebug(LogType logType, params object?[] args) => GetInstance(logType, LogLevel.Debug, args);
 
     internal string GetMessage(EventType eventType, int operationId, string operationType, string operationDescription)
     {
@@ -75,7 +73,7 @@ internal sealed class LogBuilder
             : string.Empty;
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private Log GetInstance(LogType logType, LogLevel level, params object?[] args)
+    private LogEvent GetInstance(LogType logType, LogLevel level, params object?[] args)
     {
         var stackTrace = new StackTrace(true);
         var threadId = Environment.CurrentManagedThreadId;
@@ -88,8 +86,7 @@ internal sealed class LogBuilder
         var lineNumber = callingFrame?.GetFileLineNumber();
         var message = GetMessage(logType);
         var description = GetDescription(logType,args);
-        return new((int)logType, DateTime.UtcNow, level, SchemaId, threadId, callSite.Truncate(255), 
-                        JobId, method.Truncate(80), lineNumber, message.Truncate(255), description);
+        return new LogEvent();
     }
     private string? GetMessage(LogType logType) => _resourceHelper.GetMessage(logType);
     private string? GetDescription(LogType logType, params object?[] args)

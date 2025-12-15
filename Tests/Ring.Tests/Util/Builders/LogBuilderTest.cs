@@ -12,7 +12,7 @@ public class LogBuilderTest
     internal void GetError_FileNotFound_LogObject()
     {
         // arrange 
-        var sut = new LogBuilder
+        var sut = new LogEventBuilder
         {
             SchemaId = _faker.Random.Number(int.MinValue,int.MaxValue)
         };
@@ -30,7 +30,7 @@ public class LogBuilderTest
     internal void GetWarning_FileNotFound_LogObject()
     {
         // arrange 
-        var sut = new LogBuilder();
+        var sut = new LogEventBuilder();
         sut.SchemaId = _faker.Random.Number(int.MinValue,int.MaxValue);
         sut.JobId = _faker.Random.Long();
         // act
@@ -46,7 +46,7 @@ public class LogBuilderTest
     internal void GetInfo_FileNotFound_LogObject()
     {
         // arrange 
-        var sut = new LogBuilder
+        var sut = new LogEventBuilder
         {
             SchemaId = _faker.Random.Number(int.MinValue,int.MaxValue),
             JobId = _faker.Random.Bool() ? null: _faker.Random.Long()

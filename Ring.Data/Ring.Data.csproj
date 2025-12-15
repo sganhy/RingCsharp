@@ -44,7 +44,6 @@
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.DotNet.ILCompiler" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
 		<PackageReference Include="Microsoft.NET.ILLink.Tasks" />
 	</ItemGroup>
 

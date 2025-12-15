@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Ring.Logging;
 using Ring.Schema.Enums;
 using Ring.Schema.Helpers;
 using System.Collections.ObjectModel;

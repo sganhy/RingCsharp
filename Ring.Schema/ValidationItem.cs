@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Ring.Logging;
 
 namespace Ring.Schema;
 

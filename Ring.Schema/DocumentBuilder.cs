@@ -23,6 +23,8 @@ public sealed class DocumentBuilder
 	/// </summary>
 	public DocumentBuilder(string filePath) => FilePath = filePath ?? string.Empty;
 
+
+
 	public async ValueTask<Document> GetDocumentAsync(DocumentType documentType, CancellationToken cancellationToken = default)
 	{
 		Reset(); // reset values
@@ -62,7 +64,7 @@ public sealed class DocumentBuilder
 			}
 			else validationResult.AddItem(LogType.FileNotFound, FilePath);
 		}
-		catch (XmlException ex)	{ validationResult.AddError(LogType.XmlException, ex.GetType().Name, ex.Message); }
+		catch (XmlException ex) { validationResult.AddError(LogType.XmlException, ex.GetType().Name, ex.Message); }
 		catch (OperationCanceledException ex) { validationResult.AddError(LogType.OperationCanceledException, ex.GetType().Name, ex.Message); }
 
 		return CreateDocument(metaArray, validationResult);

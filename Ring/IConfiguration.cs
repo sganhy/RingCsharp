@@ -1,13 +1,9 @@
-﻿using Microsoft.Extensions.Logging;
-
-namespace Ring;
+﻿namespace Ring;
 
 public interface IConfiguration
 {
     string? ConnectionString { get; }
-    ILoggerFactory LoggerFactory { get; }
-    ILogger? SqlLogger { get; }
-
+    
     /// <summary>
     /// Minimum number of Connections a pool will maintain at any given time. 
     /// </summary>
