@@ -1,4 +1,5 @@
-﻿using Ring.Schema;
+﻿using Ring.Logging;
+using Ring.Schema;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
@@ -19,6 +20,12 @@ internal static class Global
 	private static DbSchema?[] _schemas = Array.Empty<DbSchema>();
 	private static (string,int)[] _schemaMappers = Array.Empty<(string, int)>(); // (schemaName, schemaId)
 	private static int _schemaCount; // current number of schemas
+	private static readonly LoggerFactory _loggerFactory = new();
+
+	static Global()
+	{
+		Console.WriteLine("static Global()");
+	}
 
 	internal static void Init(IConfiguration configuration)
 	{
@@ -30,6 +37,7 @@ internal static class Global
 		_schemas = new DbSchema[_currentMaxNumberOfSchema+1]; // @meta schema (Id=0)
 		_initialized = true;
 	}
+
 	internal static void SetDefaultSchema(DbSchema schema)
 	{
         // Code size: 43 (0x2b) - removed box statements - no virtual calls
@@ -38,6 +46,9 @@ internal static class Global
 			if (!ReferenceEquals(schema, _defaultSchema)) _defaultSchema = schema; // assign schema if necessary
 		}
 	}
+
+	internal static ILoggerFactory LoggerFactory => _loggerFactory;
+
 	internal static void LoadSchema(DbSchema schema)
 	{
 		// Code size: 257 (0x101)

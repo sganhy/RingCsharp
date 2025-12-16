@@ -3,7 +3,6 @@
 public sealed class LogEvent
 {
 	public int Id { get; }
-    public DateTime EntryTime { get; }
 	public LogLevel Level { get; }
 	public int? SchemaId { get; }
 	public int? ThreadId { get; }
@@ -22,7 +21,6 @@ public sealed class LogEvent
 	internal LogEvent(int id, DateTime entryTime, LogLevel level, int? schemaId, int? threadId, string? callSite, long? jobId, string? method, int? lineNumber, string? message, string? description, Exception? exception)
 	{
 		Id = id;
-		EntryTime = entryTime;
 		Level = level;
 		SchemaId = schemaId;
 		ThreadId = threadId;

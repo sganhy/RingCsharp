@@ -1,4 +1,5 @@
-﻿using Ring.Schema.Enums;
+﻿using Ring.Logging;
+using Ring.Schema.Enums;
 using Ring.Schema.Models;
 using Ring.Util.Enums;
 using Ring.Util.Extensions;
@@ -25,6 +26,7 @@ internal sealed class ResourceHelper
 	private static string?[] _logMessages = Array.Empty<string?>();
 	private static string?[] _logDescriptions = Array.Empty<string?>();	
 	private static Dictionary<int, Parameter> _parameters = new();
+	private static readonly ILogger<ResourceHelper> _logger = Global.LoggerFactory.CreateLogger<ResourceHelper>();
 
 	internal ResourceHelper()
 	{

@@ -18,6 +18,8 @@
 		<NoWarn>CA1307;CA1802;S3267;IDE0066</NoWarn>
 		<PublishTrimmed>True</PublishTrimmed>
 		<PublishAot>True</PublishAot>
+		<IsAotCompatible>true</IsAotCompatible>
+		<VerifyReferenceAotCompatibility>true</VerifyReferenceAotCompatibility>
 		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 		<SignAssembly>True</SignAssembly>
 		<AssemblyOriginatorKeyFile>Ring.snk</AssemblyOriginatorKeyFile>
