@@ -3,14 +3,13 @@
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
 		<PublishReadyToRun>true</PublishReadyToRun>
-		<PublishSingleFile>true</PublishSingleFile>
 		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
-		<PublishSingleFile>true</PublishSingleFile>
+		<!--<PublishSingleFile>true</PublishSingleFile> NOT WORKING -->
 		<TargetFramework>net8.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<LangVersion>10.0</LangVersion>
-		<AnalysisLevel>6.0-all</AnalysisLevel>
+		<AnalysisLevel>8.0-all</AnalysisLevel>
 		<AssemblyVersion>1.0.0.225</AssemblyVersion>
 		<FileVersion>1.0.0.225</FileVersion>
 		<RepositoryType>https://github.com/sganhy/RingCsharp.git</RepositoryType>

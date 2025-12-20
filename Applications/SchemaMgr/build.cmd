@@ -1,1 +1,0 @@
-dotnet publish -c "Release" --self-contained --runtime win-x64 /bl
