@@ -90,7 +90,7 @@ internal static class StringExtensions
 			return result;
 		}
 		throw new FormatException(string.Format(CultureInfo.InvariantCulture,
-			ResourceHelper.GetErrorMessage(ResourceType.NotSupportedInputDateTime), value));
+			ResourceHelper.GetMessage(ResourceType.NotSupportedInputDateTime), value));
 	}
 
 	/// <summary>

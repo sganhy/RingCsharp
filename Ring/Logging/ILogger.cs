@@ -1,5 +1,5 @@
 ﻿namespace Ring.Logging;
 
-internal interface ILogger<T>
+internal interface ILogger
 {
 }

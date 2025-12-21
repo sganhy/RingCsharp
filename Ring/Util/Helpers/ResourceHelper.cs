@@ -6,6 +6,8 @@ using Ring.Util.Extensions;
 using System.Globalization;
 using System.IO.Compression;
 using System.Reflection;
+using System.Runtime.CompilerServices;
+using Ring.Logging.Extensions;
 
 namespace Ring.Util.Helpers;
 
@@ -26,33 +28,25 @@ internal sealed class ResourceHelper
 	private static string?[] _logMessages = Array.Empty<string?>();
 	private static string?[] _logDescriptions = Array.Empty<string?>();	
 	private static Dictionary<int, Parameter> _parameters = new();
-	private static readonly ILogger<ResourceHelper> _logger = Global.LoggerFactory.CreateLogger<ResourceHelper>();
+	private static readonly Logger _logger = Global.LoggerFactory.CreateLogger<ResourceHelper>();
 
-	internal ResourceHelper()
+	static ResourceHelper()
 	{
-		// Code size: 19 (0x13)
-		if (!_resourcesLoaded) LoadResources();
+		RuntimeHelpers.RunClassConstructor(typeof(Global).TypeHandle);
+		LoadResources();
 	}
 
-	internal static string GetErrorMessage(ResourceType resourceType) 
+	internal static string GetMessage(ResourceType resourceType)
 	{
-		// Code size: 53 (0x35)
-		if (!_resourcesLoaded) LoadResources();
-		var index = (int)resourceType - 1;
-		if (index < 0 || index >= _logMessages.Length) return string.Empty;
-		return _logMessages[index] ?? string.Empty;
+		// Code size: 108 (0x6c)
+		var resourceTypeId = (int)resourceType;
+		--resourceTypeId;
+		var result = resourceTypeId >= 0 && resourceTypeId < _logMessages.Length ? _logMessages[resourceTypeId] : null;
+		if (result is null) _logger.LogWarning(_logMessages[((int)ResourceType.UnknownResourceType)-1] ?? string.Empty, resourceType.ToString(), resourceTypeId+1); // box IL statement here!!
+		return result ?? string.Empty;
 	}
-		
-#pragma warning disable CA1822, S2325 // Mark members as static
-
-	internal string GetMessage(ResourceType resourceType) // Code size: 22 (0x16)
-		=> ((int)resourceType <= _logMessages.Length) ? _logMessages[(int)resourceType - 1] : null;
-	internal string? GetMessage(LogType logType) // Code size: 22 (0x16)
-		=> ((int)logType <= _logMessages.Length) ? _logMessages[(int)logType - 1] : null;
-	internal string? GetDescription(LogType logType) // Code size: 22 (0x16)
-		=> ((int)logType <= _logDescriptions.Length) ? _logDescriptions[(int)logType - 1] : null;
-
-#pragma warning restore S2325, CA1822 // Mark members as static
+	internal static string? GetMessage(LogType logType) => ((int)logType <= _logMessages.Length) ? _logMessages[(int)logType - 1] : null; // Code size: 22 (0x16)
+	internal static string? GetDescription(LogType logType) => ((int)logType <= _logDescriptions.Length) ? _logDescriptions[(int)logType - 1] : null; // Code size: 22 (0x16)
 
 	internal static Parameter GetParameter(ParameterType parameterType)
 	{
@@ -60,7 +54,7 @@ internal sealed class ResourceHelper
 		var parameterTypeId = (int)parameterType;
 		if (!_parameterLoaded) LoadParameters();
 		if (_parameters.TryGetValue(parameterTypeId, out var parameter)) return parameter;
-		throw new ArgumentException(string.Format(DefaultCulture, GetErrorMessage(ResourceType.WrongParameterType), parameterType.ToString()));
+		throw new ArgumentException(string.Format(DefaultCulture, GetMessage(ResourceType.WrongParameterType), parameterType.ToString()));
 	}
 
 	internal static HashSet<string> GetReservedWords(DatabaseProvider databaseProvider)

@@ -41,7 +41,7 @@ internal sealed class LogEventBuilder
         switch (eventType)
         {
             case EventType.UnsupportedOperation: 
-                    return string.Format(DefaultCulture, _resourceHelper.GetMessage(ResourceType.UnsuportedOperation),
+                    return string.Format(DefaultCulture, ResourceHelper.GetMessage(ResourceType.UnsuportedOperation),
                             operationType, operationDescription, operationId);
         }
         return string.Empty;
@@ -55,13 +55,12 @@ internal sealed class LogEventBuilder
                 {
                     var displayMillisecond = executionTime.HasValue ? 
                         Math.Max(executionTime.Value.TotalMilliseconds, 1).ToString(DefaultCulture) : DefaultExecutionTime;
-                    return string.Format(DefaultCulture, _resourceHelper.GetMessage(ResourceType.DdlException),
+                    return string.Format(DefaultCulture, ResourceHelper.GetMessage(ResourceType.DdlException),
                         string.Format(DefaultCulture, GetOperationDescription(query,1), query.Table.PhysicalName), 
                         displayMillisecond);
                 }
             case EventType.DdlException:
-                return string.Format(DefaultCulture, _resourceHelper.GetMessage(ResourceType.DdlException), 
-                    GetOperationDescription(query,0), query.Table.PhysicalName);
+                return string.Format(DefaultCulture, ResourceHelper.GetMessage(ResourceType.DdlException), GetOperationDescription(query,0), query.Table.PhysicalName);
         }
         return string.Empty;
     }
@@ -69,7 +68,7 @@ internal sealed class LogEventBuilder
     #region private methods
 
     private string GetOperationDescription(AlterQuery query, int statusId) 
-        => AlterOperationMapping.ContainsKey(query.Type) ? _resourceHelper.GetMessage(AlterOperationMapping[query.Type][statusId]) 
+        => AlterOperationMapping.ContainsKey(query.Type) ? ResourceHelper.GetMessage(AlterOperationMapping[query.Type][statusId]) 
             : string.Empty;
 
     [MethodImpl(MethodImplOptions.NoInlining)]
@@ -88,11 +87,11 @@ internal sealed class LogEventBuilder
         var description = GetDescription(logType,args);
         return new LogEvent();
     }
-    private string? GetMessage(LogType logType) => _resourceHelper.GetMessage(logType);
+    private string? GetMessage(LogType logType) => ResourceHelper.GetMessage(logType);
     private string? GetDescription(LogType logType, params object?[] args)
         => args.Length > 0 ? string.Format(CultureInfo.InvariantCulture, 
-                _resourceHelper.GetDescription(logType) ?? string.Empty, args) :
-                _resourceHelper.GetDescription(logType);
+                ResourceHelper.GetDescription(logType) ?? string.Empty, args) :
+                ResourceHelper.GetDescription(logType);
 
     #endregion 
 

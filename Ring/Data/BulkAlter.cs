@@ -146,19 +146,16 @@ internal struct BulkAlter : IEquatable<BulkAlter>
 
 	[DoesNotReturn]
 	private static void ThrowInvalidObjectType(string objectType) =>
-		throw new ArgumentException(string.Format(DefaultCulture,
-				  ResourceHelper.GetErrorMessage(ResourceType.BulkAlterInvalidTableName), objectType));
+		throw new ArgumentException(string.Format(DefaultCulture, ResourceHelper.GetMessage(ResourceType.BulkAlterInvalidTableName), objectType));
 
 	//TODO - create a specific message for invalid index name
 	[DoesNotReturn]
 	private static void ThrowInvalidIndexName(string objectType, string indexName) =>
-		throw new ArgumentException(string.Format(DefaultCulture,
-				ResourceHelper.GetErrorMessage(ResourceType.BulkAlterInvalidTableName), objectType));
+		throw new ArgumentException(string.Format(DefaultCulture, ResourceHelper.GetMessage(ResourceType.BulkAlterInvalidTableName), objectType));
 
 	[DoesNotReturn]
 	private static void ThrowInvalidFieldName(string objectType, string fieldName) =>
-		throw new ArgumentException(string.Format(DefaultCulture,
-				ResourceHelper.GetErrorMessage(ResourceType.BulkAlterInvalidFieldName), fieldName, objectType));
+		throw new ArgumentException(string.Format(DefaultCulture, ResourceHelper.GetMessage(ResourceType.BulkAlterInvalidFieldName), fieldName, objectType));
 
 	private readonly TableSpace? GetTableSpace(Table table, EntityType entityType)
 	{

@@ -190,8 +190,7 @@ public readonly struct BulkSave : IBulkSave
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
-	private static void ThrowRecordUnknownRecordType() =>
-		throw new ArgumentException(ResourceHelper.GetErrorMessage(ResourceType.RecordUnkownRecordType));
+	private static void ThrowRecordUnknownRecordType() => throw new ArgumentException(ResourceHelper.GetMessage(ResourceType.RecordUnkownRecordType));
 
 	private void GenerateId(IConnection connection)
 	{ 

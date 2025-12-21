@@ -1,8 +1,7 @@
 ﻿namespace Ring.Logging;
 
-internal sealed class LoggerFactory : ILoggerFactory
+internal sealed class LoggerFactory 
 {
-
 	private readonly LogSubscriptionService _subscriptionService;
 	private readonly LogLevel _minLevel;
 
@@ -19,11 +18,10 @@ internal sealed class LoggerFactory : ILoggerFactory
 		return this;
 	}
 
-	public ILogger<T> CreateLogger<T>()
+	internal Logger CreateLogger<T>()
 	{
 		var categoryName = typeof(T).FullName ?? typeof(T).Name;
-		//var logger = CreateLogger(categoryName);
-		return new Logger<T>();
+		return CreateLogger(categoryName, _minLevel, _subscriptionService);
 	}
 
 	private LogLevel GetLevelForCategory(string categoryName)
@@ -41,10 +39,9 @@ internal sealed class LoggerFactory : ILoggerFactory
 		return _minLevel;
 	}
 
-	public static LoggerFactory Create(Action<LoggerFactory>? configure = null)
+	private static Logger CreateLogger(string categoryName, LogLevel minLevel, LogSubscriptionService subscriptionService)
 	{
-		var factory = new LoggerFactory();
-		configure?.Invoke(factory);
-		return factory;
+		return new Logger(categoryName, minLevel, subscriptionService);
 	}
+
 }

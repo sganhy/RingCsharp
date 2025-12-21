@@ -589,52 +589,55 @@ public struct Record : IEquatable<Record>
 	// exceptions 
 	[DoesNotReturn]
 	private static void ThrowRecordUnknownFieldName(Table table, string fieldName) => 
-		throw new ArgumentException(string.Format(DefaultCulture, ResourceHelper.GetErrorMessage(ResourceType.RecordUnkownFieldName), fieldName, table.Name));
+		throw new ArgumentException(string.Format(DefaultCulture, ResourceHelper.GetMessage(ResourceType.RecordUnkownFieldName), fieldName, table.Name));
 
 	[DoesNotReturn]
 	private readonly void ThrowRecordWrongRelationType(string relationName) =>
-		throw new ArgumentException(string.Format(DefaultCulture, ResourceHelper.GetErrorMessage(ResourceType.RecordWrongRelationType), relationName, _type.Name));
+		throw new ArgumentException(string.Format(DefaultCulture, ResourceHelper.GetMessage(ResourceType.RecordWrongRelationType), relationName, _type.Name));
 
 	[DoesNotReturn]
 	private readonly void ThrowRecordUnknownRelationName(string relationName) =>
-		throw new ArgumentException(string.Format(DefaultCulture, ResourceHelper.GetErrorMessage(ResourceType.RecordUnkownRelationName), relationName, _type.Name));
+		throw new ArgumentException(string.Format(DefaultCulture, ResourceHelper.GetMessage(ResourceType.RecordUnkownRelationName), relationName, _type.Name));
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
 	private static void ThrowMandatoryFieldCannotBeNull(Table table, string fieldName) =>
-		throw new ArgumentException(string.Format(DefaultCulture, ResourceHelper.GetErrorMessage(ResourceType.FieldIsMandatory), table.Name, fieldName));
+		throw new ArgumentException(string.Format(DefaultCulture, ResourceHelper.GetMessage(ResourceType.FieldIsMandatory), table.Name, fieldName));
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
-	private static void ThrowRecordUnknownRecordType() => throw new ArgumentException(ResourceHelper.GetErrorMessage(ResourceType.RecordUnkownRecordType));
+	private static void ThrowRecordUnknownRecordType() => throw new ArgumentException(ResourceHelper.GetMessage(ResourceType.RecordUnkownRecordType));
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
-	private static void ThrowWrongStringFormat() =>	throw new FormatException(ResourceHelper.GetErrorMessage(ResourceType.RecordWrongStringFormat));
+	private static void ThrowWrongStringFormat() =>	throw new FormatException(ResourceHelper.GetMessage(ResourceType.RecordWrongStringFormat));
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
-	private static void ThrowValueTooLarge(FieldType fieldType) => throw new OverflowException(string.Format(DefaultCulture, ResourceHelper.GetErrorMessage(ResourceType.RecordValueTooLarge), fieldType.RecordTypeDisplay()));
+	private static void ThrowValueTooLarge(FieldType fieldType) => throw new OverflowException(string.Format(DefaultCulture, ResourceHelper.GetMessage(ResourceType.RecordValueTooLarge), fieldType.RecordTypeDisplay()));
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
-	private static void ThrowWrongBooleanValue(string? value) => throw new FormatException(string.Format(DefaultCulture, ResourceHelper.GetErrorMessage(ResourceType.RecordWrongBooleanValue), value ?? NullString));
+	private static void ThrowWrongBooleanValue(string? value) => throw new FormatException(string.Format(DefaultCulture, ResourceHelper.GetMessage(ResourceType.RecordWrongBooleanValue), value ?? NullString));
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
 	private static void ThrowImpossibleConversion(FieldType fieldTypeSource, FieldType fieldTypeDestination) =>
 		throw new ArgumentException(string.Format(DefaultCulture,
-			ResourceHelper.GetErrorMessage(ResourceType.RecordCannotConvert),
+			ResourceHelper.GetMessage(ResourceType.RecordCannotConvert),
 			fieldTypeSource.RecordTypeDisplay(),
 			fieldTypeDestination.RecordTypeDisplay()));
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
-	private static void ThrowInvalidBase64String() => throw new FormatException(ResourceHelper.GetErrorMessage(ResourceType.InvalidBase64String));
+	private static void ThrowInvalidBase64String() => throw new FormatException(ResourceHelper.GetMessage(ResourceType.InvalidBase64String));
 
-	private static IDdlBuilder GetDefaultDdlBuilder() => new Util.Builders.PostgreSQL.DdlBuilder(); // Code size: 6 (0x6)
 
-	private static Table GetDefaultType()
+#pragma warning disable CA1859 // Use concrete types when possible for improved performance
+    private static IDdlBuilder GetDefaultDdlBuilder() => new Util.Builders.PostgreSQL.DdlBuilder(); // Code size: 6 (0x6)
+#pragma warning restore CA1859
+
+    private static Table GetDefaultType()
 	{
 		// Code size: 82 (0x52)
 		var metaTable = new Meta(-1, (byte)EntityType.Table, 0, (int)TableType.Undefined, 0L, string.Empty, null, null, true);

@@ -38,6 +38,7 @@ internal enum ResourceType : short
 	InvalidBase64String = 203,
 	FieldIsMandatory = 204,
 	WrongParameterType = 205,
+	UnknownResourceType = 206,
 
 	/// <summary>
 	/// Sql operations description
@@ -50,5 +51,10 @@ internal enum ResourceType : short
 	/// </summary>
 	UnsuportedOperation = 294,
 	DdlException = 295,
-	DdlTableCreated = 296
+	DdlTableCreated = 296,
+
+	/// <summary>
+	/// Reserved for unit tests
+	/// </summary>
+	UnitTest = 350
 }

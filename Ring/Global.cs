@@ -22,11 +22,6 @@ internal static class Global
 	private static int _schemaCount; // current number of schemas
 	private static readonly LoggerFactory _loggerFactory = new();
 
-	static Global()
-	{
-		Console.WriteLine("static Global()");
-	}
-
 	internal static void Init(IConfiguration configuration)
 	{
 		if (_initialized) return;
@@ -47,7 +42,7 @@ internal static class Global
 		}
 	}
 
-	internal static ILoggerFactory LoggerFactory => _loggerFactory;
+	internal static LoggerFactory LoggerFactory => _loggerFactory;
 
 	internal static void LoadSchema(DbSchema schema)
 	{

@@ -12,7 +12,7 @@ public static class Initialize
 
 	public static void Start(string connectionString)
     {
-		RuntimeHelpers.RunClassConstructor(typeof(Global).TypeHandle);
-		RuntimeHelpers.RunClassConstructor(typeof(Global).TypeHandle);
+		//RuntimeHelpers.RunClassConstructor(typeof(Global).TypeHandle);
+		//RuntimeHelpers.RunClassConstructor(typeof(Global).TypeHandle);
 	}
 }
