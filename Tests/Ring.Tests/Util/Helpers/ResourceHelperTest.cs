@@ -19,7 +19,6 @@ public sealed class ResourceHelperTest : BaseTest
 	[InlineData(ResourceType.RecordUnkownRecordType, "This Record object has an unknown RecordType.  The RecordType \nproperty must be set before performing this operation.")]
 	[InlineData(ResourceType.CreateTableNotOk, "create table")]
 	[InlineData(ResourceType.UnsuportedOperation, "Operation {0}.{1} #{2} is not supported.")]
-
 	internal void GetMessage_ResourceType_Message(ResourceType resourceType, string expectedMessage)
 	{
 		// arrange 
@@ -57,22 +56,34 @@ public sealed class ResourceHelperTest : BaseTest
         // assert
         Assert.Equal("Unsupported parameter type : Undefined.", ex.Message);
     }
-	
 
 	[Fact]
-    public void GetDescription_FileNotFound_Description()
-    {
-        // arrange 
-        var expectedValue = "File '{0}' not found.";
+	public void GetParameter_Ring0Version_ParameterObject()
+	{
+		// arrange 
+		// act 
+		var result = ResourceHelper.GetParameter(ParameterType.Ring0Version);
 
-        // act 
-        var result = ResourceHelper.GetDescription(LogType.FileNotFound);
+		// assert
+		Assert.Equal((int)ParameterType.Ring0Version, result.Id);
+		Assert.Equal(ParameterType.Ring0Version, result.Type);
+		Assert.Equal("@Ring0Version", result.Name);
+		Assert.Equal("Ring 0 version", result.Description);
+		Assert.Equal("1", result.DefaultValue);
+		Assert.True(result.Baseline);
+	}
 
-        // assert
-        Assert.Equal(expectedValue, result);
-    }
 
-
+	[Theory]
+	[InlineData(ResourceType.UnknownMessageResourceType, "GetMessage")]
+	internal void GetMethod_ResourceType_MethodInfo(ResourceType resourceType, string expectedMessage)
+	{
+		// arrange 
+		// act 
+		var result = ResourceHelper.GetMethodInfo(resourceType);
+		// assert
+		Assert.Equal(expectedMessage, result);
+	}
 
 
 }

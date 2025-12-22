@@ -1,4 +1,5 @@
 ﻿using Ring.Logging;
+using Ring.Logging.Extensions;
 using Ring.Schema.Enums;
 using Ring.Schema.Models;
 using Ring.Util.Enums;
@@ -7,7 +8,6 @@ using System.Globalization;
 using System.IO.Compression;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using Ring.Logging.Extensions;
 
 namespace Ring.Util.Helpers;
 
@@ -25,38 +25,49 @@ internal sealed class ResourceHelper
 	private const char ResourceEndOfLine = '\n';
 	private static bool _resourcesLoaded;
 	private static bool _parameterLoaded;
+	private static bool _methodInfoLoaded;
 	private static string?[] _logMessages = Array.Empty<string?>();
-	private static string?[] _logDescriptions = Array.Empty<string?>();	
+	private static string?[] _logDescriptions = Array.Empty<string?>();
+	private static Dictionary<int, string> _methodInfos = new();
 	private static Dictionary<int, Parameter> _parameters = new();
 	private static readonly Logger _logger = Global.LoggerFactory.CreateLogger<ResourceHelper>();
 
 	static ResourceHelper()
 	{
 		RuntimeHelpers.RunClassConstructor(typeof(Global).TypeHandle);
-		LoadResources();
+		LoadResources(); // load _logMessages & _logDescriptions
+		LoadParameters(); // _parameters
+		LoadMethodInfos(); // _methodInfos
 	}
 
-	internal static string GetMessage(ResourceType resourceType)
+	internal static string GetMessage(ResourceType resourceType, bool noLogs=false)
 	{
-		// Code size: 108 (0x6c)
-		var resourceTypeId = (int)resourceType;
-		--resourceTypeId;
+		// Code size: 90 (0x5a) - removed box statements
+		var resourceTypeId = ((int)resourceType)-1;
 		var result = resourceTypeId >= 0 && resourceTypeId < _logMessages.Length ? _logMessages[resourceTypeId] : null;
-		if (result is null) _logger.LogWarning(_logMessages[((int)ResourceType.UnknownResourceType)-1] ?? string.Empty, resourceType.ToString(), resourceTypeId+1); // box IL statement here!!
+		if (result is null && !noLogs) _logger.LogError(ResourceType.UnknownMessageResourceType, resourceType.ToString(), (resourceTypeId+1).ToString(DefaultCulture));
 		return result ?? string.Empty;
 	}
-	internal static string? GetMessage(LogType logType) => ((int)logType <= _logMessages.Length) ? _logMessages[(int)logType - 1] : null; // Code size: 22 (0x16)
-	internal static string? GetDescription(LogType logType) => ((int)logType <= _logDescriptions.Length) ? _logDescriptions[(int)logType - 1] : null; // Code size: 22 (0x16)
-
+	internal static string? GetDescription(ResourceType resourceType, bool noLogs=false)
+	{
+		// Code size: 81 (0x51)
+		var resourceTypeId = ((int)resourceType) - 1;
+		return resourceTypeId >= 0 && resourceTypeId < _logDescriptions.Length ? _logDescriptions[resourceTypeId] : null;
+	}
+	internal static string? GetMethodInfo(ResourceType resourceType)
+	{
+		// Code size: 21 (0x15)
+		var resourceTypeId = (int)resourceType;
+		if (_methodInfos.TryGetValue(resourceTypeId, out var methodInfo)) return methodInfo;
+		return null;
+	}
 	internal static Parameter GetParameter(ParameterType parameterType)
 	{
-		// Code size: 70 (0x46)
+		// Code size: 59 (0x3b)
 		var parameterTypeId = (int)parameterType;
-		if (!_parameterLoaded) LoadParameters();
 		if (_parameters.TryGetValue(parameterTypeId, out var parameter)) return parameter;
 		throw new ArgumentException(string.Format(DefaultCulture, GetMessage(ResourceType.WrongParameterType), parameterType.ToString()));
 	}
-
 	internal static HashSet<string> GetReservedWords(DatabaseProvider databaseProvider)
 	{
 		// Code size: 266 (0x10a)
@@ -113,6 +124,29 @@ internal sealed class ResourceHelper
 		}
 	}
 
+	private static void LoadMethodInfos()
+	{
+		lock (SyncRoot)
+		{
+			if (!_methodInfoLoaded)
+			{
+				var resourceFile = ResourceType.MethodInfo.ToString() + CompressedResourceSuffix;
+				var methodInfos = GetCompressedResource(ResourceNameSpace, resourceFile, false);
+				_methodInfos = new Dictionary<int, string>(methodInfos.Length * 2);
+				var methodInfosSpan = methodInfos.AsSpan();
+				foreach (var param in methodInfosSpan)
+				{
+					if (string.IsNullOrEmpty(param)) continue;
+					var parts = param.Split(',');
+					if (parts.Length < 2) continue;  // Skip malformed entries
+					if (!int.TryParse(parts[0], NumberStyles.None, CultureInfo.InvariantCulture, out var id)) continue;
+					_methodInfos.Add(id, parts[1]);
+				}
+			}
+			_methodInfoLoaded = true;
+		}
+	}
+
 	private static (string?[], string?[]) GetLogResource(string resourceNamespace, string fileName)
 	{
 		// Code size: 223 (0xdf)
@@ -151,6 +185,7 @@ internal sealed class ResourceHelper
 		if (toUpper) content = content.ToUpperInvariant();
 		return content.Split(ResourceEndOfLine);
 	}
+
 
 	#endregion
 

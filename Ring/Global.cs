@@ -3,6 +3,7 @@ using Ring.Schema;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
+using Ring.Util.Helpers;
 using System.Runtime.CompilerServices;
 using DbSchema = Ring.Schema.Models.Schema;
 
@@ -14,6 +15,7 @@ internal static class Global
 	private const int MinSchemaBucketSize = 16;
 	private static readonly object SyncRoot = new();
 	private static int _currentMaxNumberOfSchema;
+	private static float _version; // assembly version
 	private static DbSchema? _defaultSchema;
 	private static int _maxSchemaId;
 	private static bool _initialized;
@@ -29,7 +31,9 @@ internal static class Global
 		_currentMaxNumberOfSchema = configuration.MaxNumberOfSchema * 4;
 		if (_currentMaxNumberOfSchema > MaxSchemaBucketSize) _currentMaxNumberOfSchema = MaxSchemaBucketSize;
 		if (_currentMaxNumberOfSchema < MinSchemaBucketSize) _currentMaxNumberOfSchema = MinSchemaBucketSize;
+		var versionParameter = ResourceHelper.GetParameter(ParameterType.Ring0Version);
 		_schemas = new DbSchema[_currentMaxNumberOfSchema+1]; // @meta schema (Id=0)
+		_version = versionParameter.GetVersion();
 		_initialized = true;
 	}
 
@@ -42,6 +46,7 @@ internal static class Global
 		}
 	}
 
+	internal static float RingVersion => _version;
 	internal static LoggerFactory LoggerFactory => _loggerFactory;
 
 	internal static void LoadSchema(DbSchema schema)

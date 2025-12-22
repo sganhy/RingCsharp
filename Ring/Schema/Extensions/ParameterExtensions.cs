@@ -41,6 +41,8 @@ internal static class ParameterExtensions
 		return null;
 	}
 
+	internal static float GetVersion(this Parameter parameter)=> float.TryParse(parameter.Value, CultureInfo.InvariantCulture, out var version) ? version : 0f; // Code size: 28 (0x1c)
+
 	internal static int GetMaxPoolSize(this Parameter[] parameters)
 	{
 		// Code size: 63 (0x3f)

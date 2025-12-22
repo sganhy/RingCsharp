@@ -7,6 +7,7 @@ internal enum ParameterType
 	SchemaCreationTime = 2,
 	LastUpgrade = 3,
 	DefaultLanguage = 4,
+	Ring0Version = 5,
 	MinPoolSize = 15,
 	MaxPoolSize = 16,
 	DbConnectionString = 21,

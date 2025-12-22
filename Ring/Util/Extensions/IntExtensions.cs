@@ -85,6 +85,7 @@ internal static class IntExtensions
 	private const int MaxPoolSizeId = (int)ParameterType.MaxPoolSize;
 	private const int DbConnectionStringId = (int)ParameterType.DbConnectionString;
 	private const int DbConnectionTypeId = (int)ParameterType.DbConnectionType;
+	private const int Ring0VersionId = (int)ParameterType.Ring0Version;
 
 	#endregion
 
@@ -186,7 +187,7 @@ internal static class IntExtensions
 
 	internal static ParameterType ToParameterType(this int id)
 	{
-		// Code size: 79 (0x4f)
+		// Code size: 85 (0x55)
 		switch (id)
 		{
 			case SchemaVersionId:  return ParameterType.SchemaVersion;
@@ -196,6 +197,7 @@ internal static class IntExtensions
 			case MinPoolSizeId: return ParameterType.MinPoolSize;
 			case MaxPoolSizeId: return ParameterType.MaxPoolSize;
 			case DbConnectionStringId: return ParameterType.DbConnectionString;
+			case Ring0VersionId: return ParameterType.Ring0Version;
 			case DbConnectionTypeId: return ParameterType.DbConnectionType;
 		}
 		return ParameterType.Undefined;

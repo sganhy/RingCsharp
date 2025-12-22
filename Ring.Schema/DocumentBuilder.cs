@@ -1,5 +1,6 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
+using Ring.Schema.Helpers;
 using System.Globalization;
 using System.Xml;
 
@@ -30,7 +31,7 @@ public sealed class DocumentBuilder
 		Reset(); // reset values
 		var validationResult = new ValidationResult();
 		var metaArray = Array.Empty<Meta>();
-
+		var test = Ring.Util.Helpers.ResourceHelper.GetMessage(Ring.Util.Enums.ResourceType.UnitTest);
 		try
 		{
 			if (File.Exists(FilePath))

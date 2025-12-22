@@ -22,7 +22,6 @@ public sealed class Connection : IConnection
     private readonly static string ActionMessage = "{Message}";
     private readonly static NpgsqlParameter [] DefaultParameterArray = Array.Empty<NpgsqlParameter>();
     private readonly static CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
-    private readonly static LogEventBuilder _logBuilder = new();
     private readonly static string?[] EmptyResult = Array.Empty<string?>();
     private readonly static string _ddlOperationType = nameof(AlterQueryType);
     private readonly static int BindVariableNameCacheSize = 1024;
@@ -433,16 +432,16 @@ public sealed class Connection : IConnection
 
 
     private void LogUnSupportedOperation(AlterQuery query) {
-        var message = _logBuilder.GetMessage(EventType.UnsupportedOperation,
-            (int)query.Type, _ddlOperationType, query.Type.ToString());
-        var ex = new ArgumentException(message);
+        //var message = _logBuilder.GetMessage(EventType.UnsupportedOperation,
+            //(int)query.Type, _ddlOperationType, query.Type.ToString());
+        //var ex = new ArgumentException(message);
         //LogDdlException(ex, query);
     }
     private void LogUnSupportedOperation(SaveQuery query)
     {
-        var message = _logBuilder.GetMessage(EventType.UnsupportedOperation,
-            (int)query.Type, _ddlOperationType, query.Type.ToString());
-        var ex = new ArgumentException(message);
+        //var message = _logBuilder.GetMessage(EventType.UnsupportedOperation,
+         //   (int)query.Type, _ddlOperationType, query.Type.ToString());
+        //var ex = new ArgumentException(message);
         //LogDdlException(ex, query);
     }
 

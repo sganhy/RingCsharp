@@ -1,0 +1,2 @@
+1,LoadResources
+206,GetMessage

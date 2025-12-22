@@ -15,8 +15,6 @@ public static class Program
 		//var builder = new DocumentBuilder("C:/Temp/schema/schema.xml");
         DateTime dt = DateTime.Now;
 	    var document = await builder.GetDocumentAsync(DocumentType.XmlNative).ConfigureAwait(false);
-        Console.WriteLine(dt - DateTime.Now);
-
-
+		Console.WriteLine(dt - DateTime.Now);
 	}
 }

@@ -2,9 +2,13 @@
 
 internal enum ResourceType : short
 {
+	/// <summary>
+	/// Resource file --> 
+	/// </summary>
 	LogMessage = 1,
 	SqlCommand = 2,
 	XmlSchemaTemplate = 3,
+	MethodInfo = 4,
 	Description = 6,
 	OracleReservedKeyWord = 17,
 	PostgreSQLReservedKeyWord = 19,
@@ -38,7 +42,7 @@ internal enum ResourceType : short
 	InvalidBase64String = 203,
 	FieldIsMandatory = 204,
 	WrongParameterType = 205,
-	UnknownResourceType = 206,
+	UnknownMessageResourceType = 206,
 
 	/// <summary>
 	/// Sql operations description

@@ -1,4 +1,6 @@
-﻿namespace Ring.Logging;
+﻿using System.Runtime.CompilerServices;
+
+namespace Ring.Logging;
 
 internal sealed class Logger : ILogger
 {
@@ -14,8 +16,13 @@ internal sealed class Logger : ILogger
 	}
 
 
-	public void Log(LogLevel logLevel, string message)
-		=> Log(logLevel, null, message);
+	internal void Log(LogLevel logLevel, string methodName, string message, string? description, int lineNumber)
+	{
+		Console.WriteLine(logLevel.ToString());
+		Console.WriteLine(message);
+		Console.WriteLine(lineNumber);
+		Console.WriteLine(description);
+	}
 
 	public void Log(LogLevel logLevel, Exception? exception, string message)
 	{
