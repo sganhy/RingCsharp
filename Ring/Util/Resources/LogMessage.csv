@@ -1,0 +1,22 @@
+19,File not found,File '{0}' not found.
+70,Column name '{0}' does not exist for object type '{1}'.
+71,Object type '{0}' does not exist.
+99,Relation name '{0}' has a wrong RelationType.
+100,Relation name '{0}' does not exist for object type '{1}'.
+101,Field name '{0}' does not exist for object type '{1}'.
+102,This Record object has an unknown RecordType.  The RecordType |||property must be set before performing this operation.
+103,Input string was not in a correct format.
+104,Value was either too high or too low for an {0}.
+105,'{0}' was not recognized as a valid Boolean.
+106,Cannot implicitly convert type '{0}' to '{1}'.
+201,"Year, Month, and Day parameters describe an un-representable DateTime."
+202,The DateTime represented by the string '{0}' is not supported in calendar 'System.Globalization.GregorianCalendar'.
+203,The input is not a valid Base-64 string.
+204,Object type '{1}': '{0}' Field cannot be null!
+205,Unsupported parameter type : {0}.
+206,Unknown resource type : {0} ({1}).
+245,create table
+246,Table '{0}' created
+294,Operation {0}.{1} #{2} is not supported.
+295,Failed to {0} '{1}'.
+296,{0} | time={1}ms.

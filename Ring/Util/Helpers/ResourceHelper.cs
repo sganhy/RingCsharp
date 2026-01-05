@@ -1,12 +1,9 @@
 ﻿using Ring.Logging;
-using Ring.Logging.Extensions;
 using Ring.Schema.Enums;
 using Ring.Schema.Models;
 using Ring.Util.Enums;
 using Ring.Util.Extensions;
 using System.Globalization;
-using System.IO.Compression;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 
 namespace Ring.Util.Helpers;
@@ -18,16 +15,15 @@ internal sealed class ResourceHelper
 {
 	private static readonly object SyncRoot = new();
 	private static readonly string CompressedResourceSuffix = @".gz";
-	private static readonly string ResourceEof = @"|||";
 	private static readonly string ResourceNameSpace = @"Ring.Util.Resources.";
-	private static readonly string MessageDescSplitChar = "#$";
 	private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
+	private static readonly string ResourceEof = @"|||";
 	private const char ResourceEndOfLine = '\n';
 	private static bool _resourcesLoaded;
 	private static bool _parameterLoaded;
 	private static bool _methodInfoLoaded;
-	private static string?[] _logMessages = Array.Empty<string?>();
-	private static string?[] _logDescriptions = Array.Empty<string?>();
+	private static Dictionary<int, string> _logMessages = new();
+	private static Dictionary<int, string> _logDescriptions = new();
 	private static Dictionary<int, string> _methodInfos = new();
 	private static Dictionary<int, Parameter> _parameters = new();
 	private static readonly Logger _logger = Global.LoggerFactory.CreateLogger<ResourceHelper>();
@@ -42,17 +38,15 @@ internal sealed class ResourceHelper
 
 	internal static string GetMessage(ResourceType resourceType, bool noLogs=false)
 	{
-		// Code size: 90 (0x5a) - removed box statements
-		var resourceTypeId = ((int)resourceType)-1;
-		var result = resourceTypeId >= 0 && resourceTypeId < _logMessages.Length ? _logMessages[resourceTypeId] : null;
-		if (result is null && !noLogs) _logger.LogError(ResourceType.UnknownMessageResourceType, resourceType.ToString(), (resourceTypeId+1).ToString(DefaultCulture));
-		return result ?? string.Empty;
+		var resourceTypeId = (int)resourceType;
+		if (_logMessages.TryGetValue(resourceTypeId, out var message)) return message;
+		return string.Empty;
 	}
-	internal static string? GetDescription(ResourceType resourceType, bool noLogs=false)
+	internal static string? GetDescription(ResourceType resourceType)
 	{
-		// Code size: 81 (0x51)
-		var resourceTypeId = ((int)resourceType) - 1;
-		return resourceTypeId >= 0 && resourceTypeId < _logDescriptions.Length ? _logDescriptions[resourceTypeId] : null;
+		var resourceTypeId = (int)resourceType;
+		if (_logDescriptions.TryGetValue(resourceTypeId, out var description)) return description;
+		return null;
 	}
 	internal static string? GetMethodInfo(ResourceType resourceType)
 	{
@@ -70,29 +64,51 @@ internal sealed class ResourceHelper
 	}
 	internal static HashSet<string> GetReservedWords(DatabaseProvider databaseProvider)
 	{
-		// Code size: 266 (0x10a)
+		// Code size: 332 (0x14c)
+		var resourceFile = string.Empty;
 		switch (databaseProvider)
 		{
-			case DatabaseProvider.Oracle: return GetCompressedResource(ResourceNameSpace, ResourceType.OracleReservedKeyWord + CompressedResourceSuffix, true).ToHashSet();
-			case DatabaseProvider.PostgreSql: return GetCompressedResource(ResourceNameSpace, ResourceType.PostgreSQLReservedKeyWord + CompressedResourceSuffix, true).ToHashSet();
-			case DatabaseProvider.MySql: return GetCompressedResource(ResourceNameSpace, ResourceType.MySQLReservedKeyWord + CompressedResourceSuffix, true).ToHashSet();
-			case DatabaseProvider.SqlServer: return GetCompressedResource(ResourceNameSpace, ResourceType.SQLServerReservedKeyWord + CompressedResourceSuffix, true).ToHashSet();
-			case DatabaseProvider.SqlLite: return GetCompressedResource(ResourceNameSpace, ResourceType.SQLiteReservedKeyWord + CompressedResourceSuffix, true).ToHashSet();
+			case DatabaseProvider.Oracle: resourceFile =  ResourceType.OracleReservedKeyWord.ToString(); break; 
+			case DatabaseProvider.PostgreSql: resourceFile = ResourceType.PostgreSQLReservedKeyWord.ToString(); break;
+			case DatabaseProvider.MySql: resourceFile = ResourceType.MySQLReservedKeyWord.ToString(); break;
+			case DatabaseProvider.SqlServer: resourceFile = ResourceType.SQLServerReservedKeyWord.ToString(); break;
+			case DatabaseProvider.SqlLite: resourceFile = ResourceType.SQLiteReservedKeyWord.ToString(); break;
 		};
-		return new HashSet<string>();
+		using var csv = new CsvHelper(ResourceNameSpace, resourceFile + CompressedResourceSuffix, 1);
+		var reservedWords = new List<string?>();
+		foreach (var reservedWord in csv) reservedWords.Add(reservedWord[0]);
+		var result = new HashSet<string>(reservedWords.Count * 2, StringComparer.OrdinalIgnoreCase);
+		foreach (var reservedWord in reservedWords) if (reservedWord is not null && !result.Contains(reservedWord)) result.Add(reservedWord);
+		return result;
 	}
 
 	#region private methods
 
 	private static void LoadResources()
 	{
-		// Code size: 100 (0x64)
+		// Code size: 474 (0x1da)
 		lock (SyncRoot)
 		{
 			if (!_resourcesLoaded)
 			{
-				var resourceFile = ResourceType.LogMessage + CompressedResourceSuffix;
-				(_logMessages, _logDescriptions) = GetLogResource(ResourceNameSpace, resourceFile);
+				using var csv = new CsvHelper(ResourceNameSpace, ResourceType.LogMessage + CompressedResourceSuffix, 3);
+				var strResourceEof = ResourceEndOfLine.ToString();
+				var messages = new List<(int, string)>();
+				var descriptions = new List<(int,string)>();
+				foreach (var resource in csv)
+				{
+					if (!int.TryParse(resource[0]?.Trim()??string.Empty, NumberStyles.None, CultureInfo.InvariantCulture, out var id)) continue;
+					if (resource[1] is not null) messages.Add((id, resource[1]?? string.Empty));
+					if (resource[2] is not null) descriptions.Add((id, resource[2] ?? string.Empty));
+				}
+				var msgResult = new Dictionary<int, string>(messages.Count*2);
+				var descResult = new Dictionary<int, string>(descriptions.Count*2);
+				
+				foreach (var message in messages) msgResult.TryAdd(message.Item1, message.Item2.Replace(ResourceEof, strResourceEof, StringComparison.Ordinal));
+				foreach (var description in descriptions) msgResult.TryAdd(description.Item1, description.Item2.Replace(ResourceEof, strResourceEof, StringComparison.Ordinal));
+
+				_logMessages = msgResult;
+				_logDescriptions = descResult;
 				_resourcesLoaded = true;
 			}
 		}
@@ -100,14 +116,13 @@ internal sealed class ResourceHelper
 
 	private static void LoadParameters()
 	{
-		// Code size: 338 (0x152)
+		// Code size: 332 (0x14c)
 		lock (SyncRoot)
 		{
 			if (!_parameterLoaded)
 			{
-				var resourceFile = EntityType.Parameter.ToString() + CompressedResourceSuffix;
 				var parameters = new List<Parameter>();
-				using var csv = new CsvHelper(ResourceNameSpace, resourceFile, 7);
+				using var csv = new CsvHelper(ResourceNameSpace, EntityType.Parameter.ToString() + CompressedResourceSuffix, 7);
 				foreach (var param in csv)
 				{
 					if (!int.TryParse(param[0], NumberStyles.None, CultureInfo.InvariantCulture, out var id)) continue;
@@ -124,66 +139,24 @@ internal sealed class ResourceHelper
 
 	private static void LoadMethodInfos()
 	{
+		// Code size: 274 (0x112)
 		lock (SyncRoot)
 		{
 			if (!_methodInfoLoaded)
 			{
-				var resourceFile = ResourceType.MethodInfo.ToString() + CompressedResourceSuffix;
-				var methodInfos = GetCompressedResource(ResourceNameSpace, resourceFile, false);
-				_methodInfos = new Dictionary<int, string>(methodInfos.Length * 2);
-				var methodInfosSpan = methodInfos.AsSpan();
-				foreach (var param in methodInfosSpan)
+				var methodInfos = new List<(int,string?)>();
+				using var csv = new CsvHelper(ResourceNameSpace, ResourceType.MethodInfo.ToString() + CompressedResourceSuffix, 2);
+				foreach (var methodInfo in csv)
 				{
-					if (string.IsNullOrEmpty(param)) continue;
-					var parts = param.Split(',');
-					if (parts.Length < 2) continue;  // Skip malformed entries
-					if (!int.TryParse(parts[0], NumberStyles.None, CultureInfo.InvariantCulture, out var id)) continue;
-					_methodInfos.Add(id, parts[1]);
+					if (!int.TryParse(methodInfo[0], NumberStyles.None, CultureInfo.InvariantCulture, out var id)) continue;
+					methodInfos.Add((id, methodInfo[1]));
 				}
+				_methodInfos = new Dictionary<int, string>(methodInfos.Count * 2);
+				foreach (var method in methodInfos) _methodInfos.TryAdd(method.Item1, method.Item2 ?? string.Empty);
 			}
 			_methodInfoLoaded = true;
 		}
 	}
-
-	private static (string?[], string?[]) GetLogResource(string resourceNamespace, string fileName)
-	{
-		// Code size: 223 (0xdf)
-		var resultMessage = GetCompressedResource(resourceNamespace, fileName, false);
-		if (resultMessage.Length == 0) return (resultMessage, Array.Empty<string?>());
-		var resultDesc = new string?[resultMessage.Length];
-		var strResourceEof = ResourceEndOfLine.ToString();
-		for (var i = 0; i < resultMessage.Length; ++i)
-		{
-			var message = resultMessage[i];
-			if (string.IsNullOrEmpty(message)) continue;
-			var index = message.IndexOf(MessageDescSplitChar, StringComparison.Ordinal);
-			if (index >= 0)
-			{
-				var mainText = message[..index];
-				var descText = message[(index + MessageDescSplitChar.Length)..];
-				resultMessage[i] = mainText.Replace(ResourceEof, strResourceEof, StringComparison.Ordinal);
-				resultDesc[i] = descText.Replace(ResourceEof, strResourceEof, StringComparison.Ordinal);
-			}
-			else resultMessage[i] = message.Replace(ResourceEof, strResourceEof, StringComparison.Ordinal);
-		}
-		return (resultMessage, resultDesc);
-	}
-
-	private static string?[] GetCompressedResource(string resourceNamespace, string fileName, bool toUpper)
-	{
-		// Code size: 114 (0x72)
-		var resource = resourceNamespace + fileName;
-		var assembly = Assembly.GetExecutingAssembly();
-		using var stream = assembly.GetManifestResourceStream(resource);
-		if (stream is null) return Array.Empty<string?>();
-
-		using var decompressionStream = new GZipStream(stream, CompressionMode.Decompress);
-		using var reader = new StreamReader(decompressionStream);
-		var content = reader.ReadToEnd();
-		if (toUpper) content = content.ToUpperInvariant();
-		return content.Split(ResourceEndOfLine);
-	}
-
 
 	#endregion
 

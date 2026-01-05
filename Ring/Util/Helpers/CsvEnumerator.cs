@@ -10,7 +10,7 @@ internal sealed class CsvEnumerator : IEnumerator<string?[]>
 	private readonly GZipStream? _decompressionStream;
 	private readonly StreamReader _reader;
 	private string? _currentLine;
-	private int _columnCount;
+	private readonly int _columnCount;
 	private readonly string?[] _row;
 	private bool _disposed;
 
@@ -18,10 +18,9 @@ internal sealed class CsvEnumerator : IEnumerator<string?[]>
 
     object IEnumerator.Current => Current;
 
-    public CsvEnumerator(string resourceNameSpace, string resourceFile, int columnCount, bool compressed)
+    public CsvEnumerator(Assembly assembly, string resourceNameSpace, string resourceFile, int columnCount, bool compressed)
 	{
 		var resource = resourceNameSpace + resourceFile;
-		var assembly = Assembly.GetExecutingAssembly(); // Ring0.* Assembly ?
 		ArgumentNullException.ThrowIfNull(assembly);
 		var stream = assembly?.GetManifestResourceStream(resource);
 		ArgumentNullException.ThrowIfNull(stream);
