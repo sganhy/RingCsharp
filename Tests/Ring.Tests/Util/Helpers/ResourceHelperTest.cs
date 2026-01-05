@@ -44,7 +44,8 @@ public sealed class ResourceHelperTest : BaseTest
         Assert.Equal(EntityType.Schema, result.ReferenceType);
     }
 
-    [Fact]
+
+	[Fact]
     public void GetParameter_Undefined_ThrowArgumentException()
     {
         // arrange 
@@ -58,7 +59,7 @@ public sealed class ResourceHelperTest : BaseTest
     }
 
 	[Fact]
-	public void GetParameter_Ring0Version_ParameterObject()
+	public void GetParameter_RingVersion_ParameterObject()
 	{
 		// arrange 
 		// act 
@@ -67,9 +68,10 @@ public sealed class ResourceHelperTest : BaseTest
 		// assert
 		Assert.Equal((int)ParameterType.Ring0Version, result.Id);
 		Assert.Equal(ParameterType.Ring0Version, result.Type);
-		Assert.Equal("@Ring0Version", result.Name);
+		Assert.Equal("@RingVersion", result.Name);
 		Assert.Equal("Ring 0 version", result.Description);
-		Assert.Equal("1", result.DefaultValue);
+		Assert.Null(result.DefaultValue);
+		Assert.Equal("1", result.Value);
 		Assert.True(result.Baseline);
 	}
 

@@ -1,6 +1,5 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Models;
-using Ring.Schema.Extensions;
 using ResourceHelper = Ring.Util.Helpers.ResourceHelper;
 using Bogus;
 

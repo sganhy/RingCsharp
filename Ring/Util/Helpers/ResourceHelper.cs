@@ -100,25 +100,23 @@ internal sealed class ResourceHelper
 
 	private static void LoadParameters()
 	{
-		// Code size: 279 (0x117)
+		// Code size: 338 (0x152)
 		lock (SyncRoot)
 		{
 			if (!_parameterLoaded)
 			{
 				var resourceFile = EntityType.Parameter.ToString() + CompressedResourceSuffix;
-				var parameters = GetCompressedResource(ResourceNameSpace, resourceFile, false);
-				_parameters = new Dictionary<int, Parameter>(parameters.Length*2);
-				var parametersSpan = parameters.AsSpan();
-				foreach (var param in parametersSpan)
+				var parameters = new List<Parameter>();
+				using var csv = new CsvHelper(ResourceNameSpace, resourceFile, 7);
+				foreach (var param in csv)
 				{
-					if (string.IsNullOrEmpty(param)) continue;
-					var parts = param.Split(',');
-					if (parts.Length < 6) continue;  // Skip malformed entries
-					if (!int.TryParse(parts[0], NumberStyles.None, CultureInfo.InvariantCulture, out var id)) continue;
+					if (!int.TryParse(param[0], NumberStyles.None, CultureInfo.InvariantCulture, out var id)) continue;
 					var paramType = id.ToParameterType();
 					if (paramType == ParameterType.Undefined)  continue;
-					_parameters.Add(id, new Parameter( id, parts[1] ?? string.Empty, parts[2], paramType, parts[3].ToFieldType(), string.Empty, parts[5], 0, parts[4].ToEntityType(), true, true));
+					parameters.Add(new Parameter(id, param[1] ?? string.Empty, param[2], paramType, param[3].ToFieldType(), param[6] ?? string.Empty, param[5], 0, param[4].ToEntityType(), true, true));
 				}
+				_parameters = new Dictionary<int, Parameter>(parameters.Count * 2);
+				foreach (var param in parameters) _parameters.TryAdd((int)param.Type, param);
 			}
 			_parameterLoaded = true;
 		}

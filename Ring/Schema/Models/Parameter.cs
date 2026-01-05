@@ -11,8 +11,7 @@ internal sealed class Parameter : BaseEntity
 	internal readonly int ReferenceId;
 	internal readonly EntityType ReferenceType;
 
-	internal Parameter(int id, string name, string? description, ParameterType type, FieldType valueType,
-		string value, string? defaultValue, int referenceId, EntityType referenceType, bool baseline, bool active)
+	internal Parameter(int id, string name, string? description, ParameterType type, FieldType valueType, string value, string? defaultValue, int referenceId, EntityType referenceType, bool baseline, bool active)
 		: base(id, name, description, baseline, active)
 	{
 		ReferenceId = referenceId;
@@ -24,7 +23,7 @@ internal sealed class Parameter : BaseEntity
 	}
 
 #if DEBUG
-	public sealed override string ToString() => $"{Id} - {Name} ({Value})";
+	public sealed override string ToString() => $"{Id} - {Name} - {Value} ({DefaultValue})";
 #endif
 
 }

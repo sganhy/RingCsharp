@@ -1,8 +1,9 @@
+id,@name,Description,FieldType,EntityType,DefaultValue,Value
 1,@version,Schema version,16,7,
 2,@creation_time,Schema creation time,18,7,
 3,@last_upgrade,Last Schema upgrade,18,7,
 4,@language,Default language,16,7,
-5,@Ring0Version,Ring 0 version,14,7,1
+5,@RingVersion,Ring 0 version,14,7,,1
 15,@minConnPoolSize,Mininimum database connection pool,1,7,1
 16,@maxConnPoolSize,Maximum database connection pool,1,7,1
 21,@DbConnectionString,DataBase connectioon string,16,7,
