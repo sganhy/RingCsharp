@@ -10,7 +10,6 @@ using Ring.Schema;
 using Ring.Data.Enums;
 using Ring.Util.Builders.MySQL;
 using Ring.Data.Models;
-using Xunit.Abstractions;
 using Ring.Data;
 
 namespace Ring.Tests.Data;

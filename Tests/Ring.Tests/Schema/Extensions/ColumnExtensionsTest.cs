@@ -2,7 +2,6 @@
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using System.Linq.Expressions;
-using Xunit.Abstractions;
 
 namespace Ring.Tests.Schema.Extensions;
 

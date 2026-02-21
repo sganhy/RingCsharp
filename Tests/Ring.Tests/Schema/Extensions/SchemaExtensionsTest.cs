@@ -1,8 +1,6 @@
 ﻿using Ring.Schema;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
-using Ring.Schema.Models;
-using Xunit.Abstractions;
 using DbSchema = Ring.Schema.Models.Schema;
 
 namespace Ring.Tests.Schema.Extensions;

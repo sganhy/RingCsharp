@@ -38,12 +38,14 @@ internal sealed class ResourceHelper
 
 	internal static string GetMessage(ResourceType resourceType, bool noLogs=false)
 	{
+		// Code size: 25 (0x19)
 		var resourceTypeId = (int)resourceType;
 		if (_logMessages.TryGetValue(resourceTypeId, out var message)) return message;
 		return string.Empty;
 	}
 	internal static string? GetDescription(ResourceType resourceType)
 	{
+		// Code size: 21 (0x15)
 		var resourceTypeId = (int)resourceType;
 		if (_logDescriptions.TryGetValue(resourceTypeId, out var description)) return description;
 		return null;
@@ -105,7 +107,7 @@ internal sealed class ResourceHelper
 				var descResult = new Dictionary<int, string>(descriptions.Count*2);
 				
 				foreach (var message in messages) msgResult.TryAdd(message.Item1, message.Item2.Replace(ResourceEof, strResourceEof, StringComparison.Ordinal));
-				foreach (var description in descriptions) msgResult.TryAdd(description.Item1, description.Item2.Replace(ResourceEof, strResourceEof, StringComparison.Ordinal));
+				foreach (var description in descriptions) descResult.TryAdd(description.Item1, description.Item2.Replace(ResourceEof, strResourceEof, StringComparison.Ordinal));
 
 				_logMessages = msgResult;
 				_logDescriptions = descResult;

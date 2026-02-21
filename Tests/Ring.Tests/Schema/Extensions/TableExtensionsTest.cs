@@ -6,7 +6,6 @@ using Ring.Schema.Extensions;
 using Ring.Util.Builders;
 using System.Globalization;
 using System.Linq.Expressions;
-using Xunit.Abstractions;
 using PostGDdlBuilder = Ring.Util.Builders.PostgreSQL.DdlBuilder;
 
 namespace Ring.Tests.Schema.Extensions;

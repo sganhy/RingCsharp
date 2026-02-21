@@ -2,7 +2,6 @@
 using Ring.Schema.Extensions;
 using System.Reflection;
 using Ring.Schema;
-using Xunit.Abstractions;
 using System.Linq.Expressions;
 using PostGDdlBuilder = Ring.Util.Builders.PostgreSQL.DdlBuilder;
 using Ring.Util.Builders;

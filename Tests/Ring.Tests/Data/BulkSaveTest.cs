@@ -2,7 +2,6 @@
 using Ring.Schema;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
-using Xunit.Abstractions;
 using DbSchema = Ring.Schema.Models.Schema;
 using Record = Ring.Data.Record;
 

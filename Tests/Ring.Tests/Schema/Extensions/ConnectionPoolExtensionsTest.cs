@@ -4,7 +4,6 @@ using Ring.Schema.Models;
 using Ring.Tests.MockUps;
 using System.Data;
 using System.Linq.Expressions;
-using Xunit.Abstractions;
 
 namespace Ring.Tests.Schema.Extensions;
 

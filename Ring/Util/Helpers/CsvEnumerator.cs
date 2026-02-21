@@ -59,6 +59,8 @@ internal sealed class CsvEnumerator : IEnumerator<string?[]>
 		}
 	}
 
+	#region private methods 
+
 	private string?[] ParseLine(string line)
 	{
 		// Code size: 211(0xd3)
@@ -101,4 +103,7 @@ internal sealed class CsvEnumerator : IEnumerator<string?[]>
 
 		return _row;
 	}
+
+	#endregion
+
 }

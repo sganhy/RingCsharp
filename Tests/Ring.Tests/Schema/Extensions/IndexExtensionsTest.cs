@@ -4,7 +4,6 @@ using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using System.Linq.Expressions;
-using Xunit.Abstractions;
 
 using Index = Ring.Schema.Models.Index;
 

@@ -1,7 +1,6 @@
 using Ring.Schema.Enums;
 using Ring.Util.Extensions;
 using System.Linq.Expressions;
-using Xunit.Abstractions;
 
 namespace Ring.Tests.Util.Extensions;
 

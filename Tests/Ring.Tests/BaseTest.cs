@@ -5,7 +5,6 @@ using System.Reflection;
 using Index = Ring.Schema.Models.Index;
 using Ring.Schema;
 using Bogus;
-using Xunit.Abstractions;
 using Ring.Util.Builders;
 
 namespace Ring.Tests;

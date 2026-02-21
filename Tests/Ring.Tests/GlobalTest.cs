@@ -1,6 +1,5 @@
 ﻿using DbSchema = Ring.Schema.Models.Schema;
 using Ring.Schema;
-using Xunit.Abstractions;
 using Ring.Schema.Enums;
 using Ring.Data;
 
