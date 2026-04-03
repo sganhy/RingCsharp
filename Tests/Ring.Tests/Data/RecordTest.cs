@@ -1634,7 +1634,7 @@ public sealed class RecordTest : BaseTest
         Global.SetDefaultSchema(_schema);
         Global.LoadSchema(_schema);
         Assert.NotNull(tableArmor);
-        var rcd = new Record();
+		var rcd = new Record();
 
         // act 
         rcd.RecordType = "RpgSheet.armor";

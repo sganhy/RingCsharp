@@ -36,9 +36,12 @@ internal readonly struct Meta : IEquatable<Meta>
 	private const char IndexColumnDelimiter = ';';
 
 	// flags bit positions
-	private const byte BitPositionFieldSearchableType = 5; // first position [bit 5,bit 10]
-	private const byte BitPositionFirstPositionSize = 18;
-	private const byte BitPositionFirstPositionRelType = 18;
+	private const byte BitPositionFieldSearchableType = 5; // bits 4-9  (6 bits, positions 4..9)
+	private const byte BitPositionFirstPositionSize = 18; // bits 17.. (used as shift - 1 = 17)
+	private const byte BitCountFieldSize = 31; // max size = 2147483647 ( (2^31) - 1)
+	private const byte BitShiftFieldSize = BitPositionFirstPositionSize - 1; // = 17
+	private const long MaskFieldSize = ((1L << BitCountFieldSize) - 1L) << BitShiftFieldSize;
+	private const byte BitPositionFirstPositionRelType = 20;
 	private static readonly FieldType DefaultColumnFieldType = FieldType.Long;
 	private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
 	private static readonly CacheId DefaultCacheId = new(-1L,long.MinValue,0);
@@ -68,7 +71,7 @@ internal readonly struct Meta : IEquatable<Meta>
 		Active = active;
 	}
 
-	internal readonly bool IsTable => ObjectType == TableId;
+	internal readonly bool IsTable => ObjectType == TableId; // Code size: 10 (0xa)
 	internal readonly bool IsSchema => ObjectType == SchemaId;
 	internal readonly bool IsField => ObjectType == FieldId;
 	internal readonly bool IsIndex => ObjectType == IndexId;
@@ -96,7 +99,7 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal bool IsFieldAllowTruncation() => (Flags & (long)MetaFlag.FieldAllowTruncation) != 0; // Code size: 18 (0x12)
-	internal int GetFieldSize() => (int)((Flags >> (BitPositionFirstPositionSize-1)) & int.MaxValue); // Code size: 18 (0x12)
+	internal int GetFieldSize() => (int)((Flags >> BitShiftFieldSize) & ((1L << BitCountFieldSize) - 1L)); // Code size: 18 (0x12)
 	internal SearchableType GetSearchableType() => ((int)((Flags >> (BitPositionFieldSearchableType-1)) & 0x3F)).ToSearchableType(); // Code size: 19 (0x13)
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -121,20 +124,20 @@ internal readonly struct Meta : IEquatable<Meta>
 	internal static long SetFieldMultilingual(long flags, bool value) => WriteFlag(flags, MetaFlag.FieldMultilingual, value); // Code size: 10 (0xa)
 	internal static long SetFieldSize(long flags, int size)
 	{
-		// Code size: 15 (0xf)
-		var temp = (long)size;
-		// apply a mask here !!
-		temp <<= BitPositionFirstPositionSize-1;
-		flags |= temp;
+		// Code size: 33 (0x21)
+		var clampedSize = size & ((1L << BitCountFieldSize) - 1L); // guard against overflow into adjacent bits
+		flags &= ~MaskFieldSize;          // clear existing size bits
+		flags |= clampedSize << BitShiftFieldSize; // write new value
 		return flags;
 	}
 	internal static long SetSearchableType(long flags, SearchableType searchableType) {
-		// Code size: 28 (0x1c)
+		// Code size: 36 (0x24)
 		// Clear existing searchable type bits (6 bits at position 5-10)
-		flags &= ~(0x3FL << (BitPositionFieldSearchableType - 1));
+		var shift = BitPositionFieldSearchableType - 1;
+		flags &= ~(0x3FL << shift);
 		// Set new value
 		var temp = ((long)searchableType) & 0x3F;
-		temp <<= BitPositionFieldSearchableType - 1;
+		temp <<= shift;
 		flags |= temp;
 		return flags;
 	}
@@ -152,14 +155,14 @@ internal readonly struct Meta : IEquatable<Meta>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal RelationType GetRelationType() => ((int)((Flags>>BitPositionFirstPositionRelType) & 127)).ToRelationType(); // Code size: 20 (0x14)
 
-	internal static long SetRelationdNotNull(long flags, bool value) => WriteFlag(flags, MetaFlag.RelationNotNull, value); // Code size: 10 (0xa)
+	internal static long SetRelationNotNull(long flags, bool value) => WriteFlag(flags, MetaFlag.RelationNotNull, value); // Code size: 10 (0xa)
 	internal static long SetRelationConstraint(long flags, bool value) => WriteFlag(flags, MetaFlag.RelationConstraint, value); // Code size: 11 (0xb) 
 	internal static long SetRelationType(long flags, RelationType type)
 	{
 		// Code size: 32 (0x20)
 		var temp = (long)type & 127L;
 		// maxInt32 & size << ()
-		flags &= 0x7FFFFFFFFC03FFFF;
+		flags &= 0x7FFFFFFFF00FFFFF;
 		temp <<= BitPositionFirstPositionRelType;
 		flags |= temp;
 		return flags;
@@ -175,7 +178,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	internal bool IsIndexUnique() => (Flags & (long)MetaFlag.IndexUnique) != 0; // Code size: 18 (0x12)
 
 	// index values
-	internal Column[] GetIndexedColumns() => Value is not null ? new Column[Value.CharCount(IndexColumnDelimiter)+1] : Array.Empty<Column>();
+	internal Column[] GetIndexedColumns() => Value is not null ? new Column[Value.CharCount(IndexColumnDelimiter)+1] : Array.Empty<Column>(); // fill array later - Code size: 35 (0x23)
 	internal static string GetColumnList(string[] columns) => string.Join(IndexColumnDelimiter, columns);
 	
 	// index flags 
@@ -276,7 +279,7 @@ internal readonly struct Meta : IEquatable<Meta>
 			var parameters = GetParameters(schema);
 			var lexicons = new List<Lexicon>();
 			var sequences = new List<Sequence>();
-			var tableByName = GetTables(schema, ddlBuilder, metaValue, provider, mtmCount);
+			var tableByName = GetTables(schema, ddlBuilder, metaValue, provider, mtmCount, tableCount);
 			var tableById = new Table[tableByName.Length];
 			tableByName.CopyTo(tableById,0);
 			var tableSpaces = GetTableSpaces(schema, ddlBuilder);
@@ -386,7 +389,7 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	public override int GetHashCode()
 	{
-		// Code size: 133 (0x85)
+		// Code size: 133 (0x85) - no virtual calls
 		var hashCode = new HashCode();
 		hashCode.Add(Id); //1
 		hashCode.Add(ObjectType);
@@ -539,13 +542,12 @@ internal readonly struct Meta : IEquatable<Meta>
 		return null;
 	}
 
-	private static Table[] GetTables(Meta[] schema, IDdlBuilder ddlBuilder, Meta metaSchema, DatabaseProvider provider,	int mtmCount)
+	private static Table[] GetTables(Meta[] schema, IDdlBuilder ddlBuilder, Meta metaSchema, DatabaseProvider provider,	int mtmCount, int tableCount)
 	{
-		// Code size: 402 (0x192)
+		// Code size: 385 (0x181)
 		var i = 0;
-		var metaCount = schema.Length;
-		var tableCount = metaCount > 400 ? metaCount / 4 : 100;
-		var dico = new Dictionary<int, (int, int)>(tableCount); // table_id, start index , count
+		var dicoSize = tableCount * 2;
+		var dico = new Dictionary<int, (int, int)>(dicoSize); // table_id, start index , count;  increase bucket to reduce collisions
 		var emptySchema = GetDefaultSchema(metaSchema, provider);
 		var schemaSpan = new ReadOnlySpan<Meta>(schema);
 
@@ -794,7 +796,7 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	private static void LoadMtm(DbSchema schema, int mtmCount)
 	{
-		// Code size: 364 (0x16c) - removed boxing
+		// Code size: 351 (0x15f) - removed boxing
 		var ddlBuilder = schema.Provider.GetDdlBuilder();
 		var tableBuilder = new TableBuilder();
 		var span = new Span<Table>(schema.TablesById);
@@ -814,11 +816,10 @@ internal readonly struct Meta : IEquatable<Meta>
 
 					if (!mtm.TryGetValue(physicalName, out var mtmTable))
 					{
+						var compareLessThan0 = string.CompareOrdinal(relation.Name, inverseRelation.Name) < 0;
 						mtmTable = tableBuilder.GetMtm(emptyTable, ddlBuilder, physicalName, mtm.Count,
-							string.CompareOrdinal(relation.Name, inverseRelation.Name) < 0 ? relation.SetTypeAndId(RelationType.Mto,1, true) 
-							: inverseRelation.SetTypeAndId(RelationType.Mto,1, true),
-							string.CompareOrdinal(relation.Name, inverseRelation.Name) < 0 ? inverseRelation.SetTypeAndId(RelationType.Mto,2, true) 
-							: relation.SetTypeAndId(RelationType.Mto, 2, true));
+							compareLessThan0 ? relation.SetTypeAndId(RelationType.Mto,1, true) : inverseRelation.SetTypeAndId(RelationType.Mto,1, true),
+							compareLessThan0 ? inverseRelation.SetTypeAndId(RelationType.Mto,2, true) : relation.SetTypeAndId(RelationType.Mto, 2, true));
 						mtm.Add(physicalName, mtmTable);
 					}
 

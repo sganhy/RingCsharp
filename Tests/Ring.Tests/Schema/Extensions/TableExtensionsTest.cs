@@ -244,8 +244,8 @@ public class TableExtensionsTest : BaseTest
         var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
         var table = schema?.GetTable("armor");
 
-        // act 
-        Assert.NotNull(schema);
+		// act 
+		Assert.NotNull(schema);
         Assert.NotNull(table);
         var column = table.GetColumn(1, EntityType.Relation);
 

@@ -15,7 +15,7 @@ internal static class RelationExtensions
 	{
 		var flags = 0L;
 		flags = Meta.SetEntityBaseline(flags, relation.Baseline);
-		flags = Meta.SetRelationdNotNull(flags, relation.NotNull);
+		flags = Meta.SetRelationNotNull(flags, relation.NotNull);
 		flags = Meta.SetRelationConstraint(flags, relation.HasConstraint);
 		flags = Meta.SetRelationType(flags, newRelationType ?? relation.Type);
 		var meta = new Meta(relation.Id, (byte)EntityType.Relation, fromTableId, relation.ToTable.Type == TableType.Mtm ?

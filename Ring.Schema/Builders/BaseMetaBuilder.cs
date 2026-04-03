@@ -176,7 +176,7 @@ internal abstract class BaseMetaBuilder
 		*/
 		var flags = 0L;
 		flags = Meta.SetEntityBaseline(flags, baseline);
-		flags = Meta.SetRelationdNotNull(flags, notNull);
+		flags = Meta.SetRelationNotNull(flags, notNull);
 		flags = Meta.SetRelationConstraint(flags, constraint);
 		flags = Meta.SetRelationType(flags, type);
 		return new(id, RelationId, referenceId, toTableId, flags, name, null, inverseRelation, true);

@@ -102,7 +102,6 @@ public class DdlBuilderTest : BaseBuilderTest
         var physicalName = _faker.Random.String();
         var segment = new ArraySegment<Meta>(metaItems, 0, metaItems.Length);
         var table3 = metaTable.ToTable(segment, PhysicalType.Table, _sut, physicalName, 0);
-#pragma warning disable CS8602
         Assert.NotNull(table3);
         // load relation
         table3.Relations[0] = GetAnonymousRelation(RelationType.Mto, 8, @"skill2book");
@@ -114,8 +113,6 @@ public class DdlBuilderTest : BaseBuilderTest
 
         // act 
         var ddl = _sut.Create(table3);
-
-#pragma warning restore  CS8602
 
         // assert
         Assert.Equal(expectedSql, ddl);

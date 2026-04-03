@@ -76,7 +76,9 @@ public class BaseBuilderTest
 
     internal Meta[] GetMeta2TableItems(bool addMtmRelationship)
     {
-        var metaList = new List<Meta>
+        var skill2bookFlags = 0L;
+        skill2bookFlags = Meta.SetRelationType(skill2bookFlags, RelationType.Mto);
+		var metaList = new List<Meta>
         {
             { GetMeta(2,"name", EntityType.Field,16, 10493996L, true, 1061) },
             { GetMeta(3,"sub_name", EntityType.Field,16, 3932170L, true, 1061) },
@@ -86,7 +88,7 @@ public class BaseBuilderTest
             { GetMeta(7,"trained_only", EntityType.Field,23, 6L, true, 1061) },
             { GetMeta(9,"try_again", EntityType.Field,23, 6L, true, 1061) },
             { GetMeta(1,"id", EntityType.Field,2, 2L, true, 1061) },
-            { GetMeta(11,"skill2book", EntityType.Relation,1021, 2883600L, true, 1061)}
+            { GetMeta(11,"skill2book", EntityType.Relation,1021, skill2bookFlags, true, 1061)}
         };
         // 2,0,2,1011,1021,786448,ability2book,,book2ability,true
         if (addMtmRelationship)
