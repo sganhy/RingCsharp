@@ -18,6 +18,12 @@ namespace Ring.Schema;
 internal readonly struct Meta : IEquatable<Meta>
 {
 
+	// BUGS (Claude source):
+	//     1) GetTables() pass 1: Wrong segment start index → wrong field slice per table; Severity: High (not a bug)
+	//     2) SetRelationType(): Wrong bitmask → corrupts adjacent flags; Severity: Medium (Done)
+	//     3) GetSearchableType(): bit shift is off by one; Severity: Low (Done)
+	//     4) GetFieldSize(): bit shift is off by one; Severity: Low (not a bug)
+
 	#region constants
 	private static readonly Meta DefaultMetaRelation = new(0, (byte)EntityType.Relation, 0, 0, 0L, string.Empty, null, null, true);
 
@@ -32,7 +38,6 @@ internal readonly struct Meta : IEquatable<Meta>
 	private const byte ParameterId = (byte)EntityType.Parameter;
 	private const byte SearchableColumnId = (byte)EntityType.SearchableColumn;
 	private const byte TimeZoneColumnId = (byte)EntityType.TimeZoneColumn;
-
 	private const char IndexColumnDelimiter = ';';
 
 	// flags bit positions
@@ -41,7 +46,10 @@ internal readonly struct Meta : IEquatable<Meta>
 	private const byte BitCountFieldSize = 31; // max size = 2147483647 ( (2^31) - 1)
 	private const byte BitShiftFieldSize = BitPositionFirstPositionSize - 1; // = 17
 	private const long MaskFieldSize = ((1L << BitCountFieldSize) - 1L) << BitShiftFieldSize;
+	private const byte BitCountFieldSearchableType = 6;     // 6 bits → max value 63
+	private const long MaskSearchableType = ((1L << BitCountFieldSearchableType) - 1L) << BitPositionFieldSearchableType;
 	private const byte BitPositionFirstPositionRelType = 20;
+	private const long MaskRelationType = 127L << BitPositionFirstPositionRelType;
 	private static readonly FieldType DefaultColumnFieldType = FieldType.Long;
 	private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
 	private static readonly CacheId DefaultCacheId = new(-1L,long.MinValue,0);
@@ -100,7 +108,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal bool IsFieldAllowTruncation() => (Flags & (long)MetaFlag.FieldAllowTruncation) != 0; // Code size: 18 (0x12)
 	internal int GetFieldSize() => (int)((Flags >> BitShiftFieldSize) & ((1L << BitCountFieldSize) - 1L)); // Code size: 18 (0x12)
-	internal SearchableType GetSearchableType() => ((int)((Flags >> (BitPositionFieldSearchableType-1)) & 0x3F)).ToSearchableType(); // Code size: 19 (0x13)
+	internal SearchableType GetSearchableType() => ((int)((Flags >> BitPositionFieldSearchableType) & ((1L << BitCountFieldSearchableType) - 1L))).ToSearchableType(); // Code size: 19 (0x13)
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal string? GetFieldDefaultValue()
@@ -131,14 +139,9 @@ internal readonly struct Meta : IEquatable<Meta>
 		return flags;
 	}
 	internal static long SetSearchableType(long flags, SearchableType searchableType) {
-		// Code size: 36 (0x24)
-		// Clear existing searchable type bits (6 bits at position 5-10)
-		var shift = BitPositionFieldSearchableType - 1;
-		flags &= ~(0x3FL << shift);
-		// Set new value
-		var temp = ((long)searchableType) & 0x3F;
-		temp <<= shift;
-		flags |= temp;
+		// Code size: 24 (0x18)
+		flags &= ~MaskSearchableType;                                              // clear existing bits
+		flags |= ((long)searchableType & ((1L << BitCountFieldSearchableType) - 1L)) << BitPositionFieldSearchableType; // write new value
 		return flags;
 	}
 
@@ -159,12 +162,9 @@ internal readonly struct Meta : IEquatable<Meta>
 	internal static long SetRelationConstraint(long flags, bool value) => WriteFlag(flags, MetaFlag.RelationConstraint, value); // Code size: 11 (0xb) 
 	internal static long SetRelationType(long flags, RelationType type)
 	{
-		// Code size: 32 (0x20)
-		var temp = (long)type & 127L;
-		// maxInt32 & size << ()
-		flags &= 0x7FFFFFFFF00FFFFF;
-		temp <<= BitPositionFirstPositionRelType;
-		flags |= temp;
+		// Code size: 25 (0x19)
+		flags &= ~MaskRelationType;                          // clear bits 20-26 exactly
+		flags |= ((long)type & 127L) << BitPositionFirstPositionRelType; // write new value
 		return flags;
 	}
 	#endregion
@@ -266,7 +266,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	/// </summary>
 	internal static DbSchema? ToSchema(Meta[] schema, DatabaseProvider provider, SchemaType type = SchemaType.Static, SchemaLoadType loadType = SchemaLoadType.Full)
 	{
-		// Code size: 381 (0x17d)
+		// Code size: 383 (0x17f)
 		// sort ASC by reference_id, name
 		schema.AsSpan().Sort(static (x, y) => MetaSchemaComparer(x, y));
 		var meta = GetSchema(schema);
@@ -557,7 +557,7 @@ internal readonly struct Meta : IEquatable<Meta>
 			if (meta.IsField || meta.IsRelation || meta.IsIndex || meta.IsSearchableColumn || meta.IsTimeZoneColumn)
 			{
 				if (dico.TryGetValue(meta.ReferenceId, out var existing)) dico[meta.ReferenceId] = (existing.Item1, existing.Item2 + 1);
-				else dico[meta.ReferenceId] = (i, 1);
+				else dico[meta.ReferenceId] = (i, 1); // ← BUG from Sonnet 4.6 (bullshit from Claude)
 			}
 			++i;
 		}

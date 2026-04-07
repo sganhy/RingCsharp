@@ -90,7 +90,7 @@ public class DmlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var table = _schema.GetTable("deity");
-        var expectedResult = "INSERT INTO rpg_sheet.t_deity (id,deity2alignment,name,s_name,deity2gender,nickname,portfolio,symbol) VALUES (:a1,:a2,:a3,:a4,:a5,:a6,:a7,:a8)";
+		var expectedResult = "INSERT INTO rpg_sheet.t_deity (id,deity2alignment,name,s_name,deity2gender,nickname,portfolio,symbol) VALUES (:a1,:a2,:a3,:a4,:a5,:a6,:a7,:a8)";
 
         // act 
         Assert.NotNull(table);

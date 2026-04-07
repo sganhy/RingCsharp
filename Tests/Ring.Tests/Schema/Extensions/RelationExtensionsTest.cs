@@ -29,7 +29,7 @@ public class RelationExtensionsTest : BaseTest
         Assert.Equal(1054, meta.ReferenceId);
         Assert.Equal(1021, meta.DataType);
         Assert.Equal("test=test", meta.Description);
-        Assert.Equal(16777232, meta.Flags);
+        Assert.Equal(133169168, meta.Flags);
         Assert.Equal("rule2book", meta.Name);
         Assert.Equal("book2rule", meta.Value);
         Assert.True(meta.Active);

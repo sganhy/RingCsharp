@@ -3,9 +3,9 @@
 namespace Ring.Schema.Enums;
 
 /// <summary>
-/// 	values above 15 are reserved for testing; value should be defined as [1,16[
+/// 	values above 15 are reserved for testing; value should be defined as [1,127[
 /// </summary>
-[Range(1, 15)]
+[Range(1, 126)]
 internal enum RelationType : byte
 {
 	Otop = 1,
@@ -13,6 +13,6 @@ internal enum RelationType : byte
 	Mtm = 3,
 	Mto = 11,
 	Otof = 12,
-	// 16 reserved for unit tests
-	Undefined = 16
+	// 127 reserved for unit tests
+	Undefined = 127
 }
