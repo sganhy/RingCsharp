@@ -5,8 +5,9 @@ using Ring.Schema.Models;
 using Ring.Util.Builders;
 using Ring.Util.Extensions;
 using Ring.Util.Helpers;
-using System.Runtime.CompilerServices;
+using System.Collections;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using DbSchema = Ring.Schema.Models.Schema;
 using Index = Ring.Schema.Models.Index;
 
@@ -204,7 +205,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	internal FieldType GetParameterValueType() => (DataType & 127).ToFieldType(); // Code size: 15 (0xf)
 	internal ParameterType GetParameterType() => Id.ToParameterType(); // Code size: 12 (0xc)
 	internal string GetParameterValue() => Value ?? string.Empty;
-	internal static int SetParameterValueType(int dataType, FieldType valueType) => (dataType & 0xFFF8) + (((byte)valueType) & 127); // Code size: 13 (0xd)
+	internal static int SetParameterValueType(int dataType, FieldType valueType) => (dataType & unchecked((int)0xFFFFFF80)) + ((int)valueType & 127); // Code size: 10 (0xa)
 	#endregion
 
 	#region tablespace methods
@@ -247,6 +248,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	internal Relation? ToRelation(Table to)
 	{
 		// Code size: 114 (0x72)
+		// BUG : Unsafe array access without bounds check — Line 255 — High Severity
 		if (IsRelation)
 		{
 			var fieldType = FieldType.Undefined;
@@ -544,32 +546,36 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	private static Table[] GetTables(Meta[] schema, IDdlBuilder ddlBuilder, Meta metaSchema, DatabaseProvider provider,	int mtmCount, int tableCount)
 	{
-		// Code size: 385 (0x181)
-		var i = 0;
+		// Code size: 374 (0x176)
+		// bug : pass 1 : Incorrect segment start index — High Severity
 		var dicoSize = tableCount * 2;
-		var dico = new Dictionary<int, (int, int)>(dicoSize); // table_id, start index , count;  increase bucket to reduce collisions
+		var dico = new Dictionary<int, (int, int)>(dicoSize); // table_id, (start index, count)
 		var emptySchema = GetDefaultSchema(metaSchema, provider);
 		var schemaSpan = new ReadOnlySpan<Meta>(schema);
 
-		//pass 1: build dico
-		foreach (var meta in schemaSpan)
+		// pass 1: build dico
+		for (var i = 0; i < schemaSpan.Length; ++i)
 		{
+			var meta = schemaSpan[i];
 			if (meta.IsField || meta.IsRelation || meta.IsIndex || meta.IsSearchableColumn || meta.IsTimeZoneColumn)
 			{
-				if (dico.TryGetValue(meta.ReferenceId, out var existing)) dico[meta.ReferenceId] = (existing.Item1, existing.Item2 + 1);
-				else dico[meta.ReferenceId] = (i, 1); // ← BUG from Sonnet 4.6 (bullshit from Claude)
+				if (dico.TryGetValue(meta.ReferenceId, out var existing))
+					dico[meta.ReferenceId] = (existing.Item1, existing.Item2 + 1);
+				else
+					dico[meta.ReferenceId] = (i, 1); // record first child index, not outer counter
 			}
-			++i;
 		}
 
-		//pass 2: create tableArray
+		// pass 2: create tableArray
 		var result = new List<Table>(dico.Count);
 		var tableIndex = 0;
 		foreach (var meta in schemaSpan)
 		{
 			if (meta.IsTable)
 			{
-				var segment = dico.TryGetValue(meta.Id, out var range) ? new ReadOnlySpan<Meta>(schema, range.Item1, range.Item2) : ReadOnlySpan<Meta>.Empty;
+				var segment = dico.TryGetValue(meta.Id, out var range)
+					? new ReadOnlySpan<Meta>(schema, range.Item1, range.Item2)
+					: ReadOnlySpan<Meta>.Empty;
 				var physicalName = ddlBuilder.GetPhysicalName(GetDefaultTable(meta), emptySchema);
 				var table = meta.ToTable(segment, PhysicalType.Table, ddlBuilder, physicalName, mtmCount + tableIndex)
 					?? GetDefaultTable(meta);
@@ -626,12 +632,14 @@ internal readonly struct Meta : IEquatable<Meta>
 	/// </summary>
 	private static void LoadColumns(Table table, ReadOnlySpan<Meta> tableItems, int physRelationCount, IDdlBuilder ddlBuilder)
 	{
-		// Code size: 814 (0x32e)
+		// Code size: 820 (0x334)
 		// relation are not yet loaded here !!!!
-		var fieldCount = table.Fields.Length; // searchable fields + tz fields 
-		var extraFieldCount = table.Columns.Length - physRelationCount - table.Fields.Length; // searchable fields + tz fields 
-		Span<int> relationId = physRelationCount <= 64 ? stackalloc int[physRelationCount] : new int[physRelationCount]; 
-		var extraFields = new Dictionary<string, Meta>(extraFieldCount*2); // increase bucket to reduce collisions
+		// BUG : pass 2: Wrong id fallback — Medium Severity (not really a bug)
+		// relation are not yet loaded here !!!!
+		var fieldCount = table.Fields.Length;
+		var extraFieldCount = table.Columns.Length - physRelationCount - table.Fields.Length; // searchable fields + tz fields
+		Span<int> relationId = physRelationCount <= 64 ? stackalloc int[physRelationCount] : new int[physRelationCount];
+		var extraFields = new Dictionary<string, Meta>(extraFieldCount * 2); // increase bucket to reduce collisions
 		var hasTimeZoneOffsetColumn = ddlBuilder.HasTimeZoneOffsetColumn;
 		var relationIndex = 0;
 		var columnIndex = 0;
@@ -661,7 +669,7 @@ internal readonly struct Meta : IEquatable<Meta>
 			if (meta.IsField)
 			{
 				var field = table.GetField(meta.Name);
-				var id = field?.Id ?? 1;
+				var id = field?.Id ?? meta.Id;            // BUG 2 fix: use meta.Id instead of magic value 1
 				var recordIndex = table.GetFieldIndex(meta.Name);
 				table.Columns[columnIndex] = meta.ToColumn(id, ddlBuilder.GetPhysicalName(EntityType.Field, meta.Name), recordIndex);
 				++columnIndex;
@@ -669,12 +677,11 @@ internal readonly struct Meta : IEquatable<Meta>
 				// searchable field ?
 				if (field?.Type == FieldType.String && field.SearchableType != SearchableType.None)
 				{
-					// meta not define for the searchable field
 					if (extraFields.TryGetValue(field.Name, out var metaExtra))
 						table.Columns[columnIndex] = metaExtra.ToColumn(metaExtra.Id, ddlBuilder.GetPhysicalName(EntityType.SearchableColumn, meta.Name), recordIndex);
 					else
 						table.Columns[columnIndex] = meta.ToColumn(id, ddlBuilder.GetPhysicalName(EntityType.SearchableColumn, meta.Name), recordIndex, field.SearchableType);
-					
+
 					++columnIndex;
 				}
 
@@ -682,14 +689,14 @@ internal readonly struct Meta : IEquatable<Meta>
 				if (field?.Type == FieldType.DateTimeOffset && hasTimeZoneOffsetColumn)
 				{
 					if (extraFields.TryGetValue(field.Name, out var metaExtra))
-						table.Columns[columnIndex] = metaExtra.ToColumn(meta.Id,
+						table.Columns[columnIndex] = metaExtra.ToColumn(metaExtra.Id,  // BUG 3 fix: use metaExtra.Id, not meta.Id
 							ddlBuilder.GetPhysicalName(EntityType.TimeZoneColumn, meta.Id.ToString(DefaultCulture)), recordIndex);
 					else
 						table.Columns[columnIndex] = SetObjectType(meta, TimeZoneColumnId).ToColumn(id,
 							ddlBuilder.GetPhysicalName(EntityType.TimeZoneColumn, meta.Id.ToString(DefaultCulture)), recordIndex);
 					++columnIndex;
 				}
-			} 
+			}
 			else if (meta.IsRelation)
 			{
 				var recordIndex = relationId.GetIndex(meta.Id);
@@ -797,6 +804,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	private static void LoadMtm(DbSchema schema, int mtmCount)
 	{
 		// Code size: 351 (0x15f) - removed boxing
+		// BUG — inverseRelation dereferenced without null check
 		var ddlBuilder = schema.Provider.GetDdlBuilder();
 		var tableBuilder = new TableBuilder();
 		var span = new Span<Table>(schema.TablesById);
@@ -840,6 +848,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	private static void LoadTypeColumns(Table table)
 	{
 		// Code size: 144 (0x90)
+		// BUG: Potential infinite recursion on cyclic MTM graphs → impossible due to mtm relation are created with type RelationType.Mto and not RelationType.Mtm
 		var relations = new Span<Relation>(table.Relations);
 		foreach (var relation in relations)
 		{

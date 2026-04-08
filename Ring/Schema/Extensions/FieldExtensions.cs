@@ -78,7 +78,7 @@ internal static class FieldExtensions
 
 	internal static Field? GetDefaultPrimaryKey(this Field? _, FieldType fieldType)
 	{
-		// Code size: 67 (0x43)
+		// Code size: 50 (0x32)
 		switch (fieldType)
 		{
 			case FieldType.Byte: return DefaultPrimaryKeyInt08;
