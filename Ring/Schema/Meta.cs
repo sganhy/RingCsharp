@@ -5,7 +5,6 @@ using Ring.Schema.Models;
 using Ring.Util.Builders;
 using Ring.Util.Extensions;
 using Ring.Util.Helpers;
-using System.Collections;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using DbSchema = Ring.Schema.Models.Schema;
@@ -19,7 +18,7 @@ namespace Ring.Schema;
 internal readonly struct Meta : IEquatable<Meta>
 {
 
-	// BUGS (Claude source):
+	// BUGS (Claude source 4.6):
 	//     1) GetTables() pass 1: Wrong segment start index → wrong field slice per table; Severity: High (not a bug)
 	//     2) SetRelationType(): Wrong bitmask → corrupts adjacent flags; Severity: Medium (Done)
 	//     3) GetSearchableType(): bit shift is off by one; Severity: Low (Done)

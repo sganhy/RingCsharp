@@ -18,6 +18,11 @@ namespace Ring.Data;
 /// </summary>
 public struct Record : IEquatable<Record>
 {
+	// BUGS (Claude source 4.6):
+	//     1) SetField(long): Float/Double case silently does nothing ; Severity: Medium (Done)
+	//     2) SetField(double, FieldType): Float fields stored at double precision; Severity: Low (Done)
+	//     3) SetRelation: Potential IndexOutOfRangeException when value is null; Severity: Low (Done)
+
 	private const long MaxIntValue = int.MaxValue;
 	private const long MinIntValue = int.MinValue;
 	private const long MaxShortValue = short.MaxValue;
@@ -370,7 +375,9 @@ public struct Record : IEquatable<Record>
 		ThrowRecordUnknownFieldName(table, name);
 		return false;
 	}
+#pragma warning disable IDE0251 // Make member 'readonly'
 	internal void ResetTracker() => _data[_type.RecordSize - 1 + _offset] = null; // Code size: 29 (0x1d)
+#pragma warning restore IDE0251
 	internal readonly bool IsFieldExist(string name) => _type.GetFieldIndex(name) != -1; // Code size: 19 (0x13)
 
 	internal readonly bool IsRelationChanged(string name)
@@ -410,19 +417,18 @@ public struct Record : IEquatable<Record>
 		return value != null ? long.Parse(value, CultureInfo.InvariantCulture) : null;
 	}
 
-
 #pragma warning disable IDE0251 // Make member 'readonly'
 	internal void SetRelation(string name, long? value)
 	{
-        // Code size: 142 (0x8e) - no virtual calls
-        var table = _type;
+		// Code size: 142 (0x8e) - no virtual calls
+		var table = _type;
 		if (table.Id == -1) ThrowRecordUnknownRecordType();
 		var relation = table.GetRelation(name);
 		if (relation is null) ThrowRecordUnknownRelationName(name);
 		var column = table.GetColumn(relation.Id, EntityType.Relation);
 		if (column is null) ThrowRecordUnknownRelationName(name);
 		var index = column.RecordIndex;
-		if (index >= 0) SetData(_data, table, _offset, column.RecordIndex, value?.ToString(DefaultCulture));
+		if (index >= 0) SetRelationData(_data, table, _offset, index, value?.ToString(DefaultCulture));
 		else ThrowRecordWrongRelationType(name);
 	}
 #pragma warning restore IDE0251 // Make member 'readonly'
@@ -433,22 +439,29 @@ public struct Record : IEquatable<Record>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private void SetField(string name, double value, FieldType fieldType)
 	{
-		// Code size: 108 (0x6c) - no virtual calls
+		// Code size: 175 (0xaf) - no virtual calls
 		var data = _data;
 		var table = _type;
 		if (table.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = _type.GetFieldIndex(name);
 		if (fieldId == -1) ThrowRecordUnknownFieldName(table, name);
 		var type = table.Fields[fieldId].Type;
-		if (type != FieldType.Float && type != FieldType.Double) ThrowImpossibleConversion(fieldType, type);
-		SetData(data, table, _offset, fieldId, value.ToString(DefaultCulture));
+		if (type == FieldType.Double) SetData(data, table, _offset, fieldId, value.ToString(DefaultCulture));
+		else if (type == FieldType.Float)
+		{
+			var flt = (float)value;                                          // truncate to float range
+			if (float.IsInfinity(flt) && !double.IsInfinity(value))         // double in range, float not
+				ThrowValueTooLarge(type);
+			SetData(data, table, _offset, fieldId, flt.ToString(DefaultCulture));
+		}
+		else ThrowImpossibleConversion(fieldType, type);
 	}
 #pragma warning restore IDE0251 // Make member 'readonly'
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static void SetField(Span<string?> data, Table table, int offset, string name, long value, FieldType fieldType)
 	{
-		// Code size: 256 (0x100) - no virtual calls; removed pattern merge!
+		// Code size: 279 (0x117) - no virtual calls; removed pattern merge!
 		if (table.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = table.GetFieldIndex(name);
 		if (fieldId == -1) ThrowRecordUnknownFieldName(table, name);
@@ -472,7 +485,7 @@ public struct Record : IEquatable<Record>
 				break;
 			case FieldType.Float:
 			case FieldType.Double:
-				//SetFloatField(type, fieldId, value.ToString(DefaultCulture));
+				SetFloatField(data, table, offset, type, fieldId, value.ToString(DefaultCulture));
 				break;
 			default:
 				ThrowImpossibleConversion(fieldType, type);
@@ -581,6 +594,20 @@ public struct Record : IEquatable<Record>
 		if (data[trackerIndex] is null) InitializeTracking(data, table, trackerIndex);
 		data[trackerIndex]!.SetBitValue(fieldId); // cannot be null here !!
 		data[fieldIndex] = value;
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static void SetRelationData(Span<string?> data, Table table, int offset, int recordIndex, string? value)
+	{
+		// Code size: 92 (0x5c) - no virtual calls;
+		var relationIndex = recordIndex + offset;
+		var trackerIndex = table.RecordSize - 1 + offset;
+		if (data.Length <= relationIndex) relationIndex = recordIndex; // another thread changed RecordType avoiding crash; here offset is reset to 0
+		if (data[relationIndex] == value) return;                   // detect no change
+																 // relations have no NotNull constraint in Fields[] — skip the mandatory check
+		if (data[trackerIndex] is null) InitializeTracking(data, table, trackerIndex);
+		data[trackerIndex]!.SetBitValue(recordIndex);            // cannot be null here !!
+		data[relationIndex] = value;
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]

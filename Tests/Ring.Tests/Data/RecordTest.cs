@@ -387,7 +387,23 @@ public sealed class RecordTest : BaseTest
         Assert.Equal(expectedValue.ToString(), rcd.GetField("hit_die"));
     }
 
-    [Fact]
+	[Fact]
+	public void SetField_AnonymousByte_ReturnFloatValue()
+	{
+		// arrange 
+		var table = _schema.GetTable("rule");
+		Assert.NotNull(table);
+		var rcd = new Record(table);
+		var expectedValue = _faker.Random.SByte();
+
+		// act 
+		rcd.SetField("version", expectedValue);
+
+		// assert
+		Assert.Equal(expectedValue.ToString(), rcd.GetField("version"));
+	}
+
+	[Fact]
     public void SetField_AnonymousInt_ThrowValueTooLarge()
     {
         // arrange 
