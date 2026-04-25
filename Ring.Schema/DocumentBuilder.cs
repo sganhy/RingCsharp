@@ -23,14 +23,12 @@ public sealed class DocumentBuilder
 	/// </summary>
 	public DocumentBuilder(string filePath) => FilePath = filePath ?? string.Empty;
 
-
-
 	public async ValueTask<Document> GetDocumentAsync(DocumentType documentType, CancellationToken cancellationToken = default)
 	{
 		Reset(); // reset values
 		var validationResult = new ValidationResult();
 		var metaArray = Array.Empty<Meta>();
-		var test = Ring.Util.Helpers.ResourceHelper.GetMessage(Ring.Util.Enums.ResourceType.BulkAlterInvalidFieldName);
+		var test = Util.Helpers.ResourceHelper.GetMessage(Ring.Util.Enums.ResourceType.BulkAlterInvalidFieldName);
 		Console.WriteLine(test);
 		try
 		{

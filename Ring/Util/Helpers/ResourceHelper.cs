@@ -13,6 +13,11 @@ namespace Ring.Util.Helpers;
 /// </summary>
 internal sealed class ResourceHelper
 {
+	// BUGS (Claude source 4.6):
+	//     1) LoadParameters(): _parameterLoaded = true is outside the if block; Severity: High (Done)
+	//     2) GetReservedWords(): DatabaseProvider.Undefined produces empty resourceFile — Silent crash; Severity: Medium (Not a bug)
+	//     3) Create(TableSpace): FileName not quoted or escaped; Severity: Low (Not a bug)
+
 	private static readonly object SyncRoot = new();
 	private static readonly string CompressedResourceSuffix = @".gz";
 	private static readonly string ResourceNameSpace = @"Ring.Util.Resources.";
@@ -93,7 +98,7 @@ internal sealed class ResourceHelper
 		{
 			if (!_resourcesLoaded)
 			{
-				using var csv = new CsvHelper(ResourceNameSpace, ResourceType.LogMessage + CompressedResourceSuffix, 3);
+				using var csv = new CsvHelper(ResourceNameSpace, ResourceType.LogMessage.ToString() + CompressedResourceSuffix, 3);
 				var strResourceEof = ResourceEndOfLine.ToString();
 				var messages = new List<(int, string)>();
 				var descriptions = new List<(int,string)>();
@@ -118,7 +123,7 @@ internal sealed class ResourceHelper
 
 	private static void LoadParameters()
 	{
-		// Code size: 332 (0x14c)
+		// Code size: 354 (0x162)
 		lock (SyncRoot)
 		{
 			if (!_parameterLoaded)
@@ -130,12 +135,14 @@ internal sealed class ResourceHelper
 					if (!int.TryParse(param[0], NumberStyles.None, CultureInfo.InvariantCulture, out var id)) continue;
 					var paramType = id.ToParameterType();
 					if (paramType == ParameterType.Undefined)  continue;
-					parameters.Add(new Parameter(id, param[1] ?? string.Empty, param[2], paramType, param[3].ToFieldType(), param[6] ?? string.Empty, param[5], 0, param[4].ToEntityType(), true, true));
+					// default value = null if empty or whitespace, otherwise the value in the resource file
+					parameters.Add(new Parameter(id, param[1] ?? string.Empty, param[2], paramType, param[3].ToFieldType(), param[6] ?? string.Empty, 
+						string.IsNullOrWhiteSpace(param[5]) ? null: param[5], 0, param[4].ToEntityType(), true, true));
 				}
-				_parameters = new Dictionary<int, Parameter>(parameters.Count * 2);
+				_parameters = new Dictionary<int, Parameter>(parameters.Count*2);
 				foreach (var param in parameters) _parameters.TryAdd((int)param.Type, param);
+				_parameterLoaded = true;
 			}
-			_parameterLoaded = true;
 		}
 	}
 

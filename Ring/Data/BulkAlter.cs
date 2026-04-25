@@ -36,7 +36,7 @@ internal struct BulkAlter : IEquatable<BulkAlter>
 		if (table is null) ThrowInvalidObjectType(tableName);
 		AppendDdlCommand(AlterQueryType.CreateTable, table);
 		// create constraints 
-		foreach(var constraint in _schema.DdlBuiler.GetConstraints(table)) AppendDdlCommand(AlterQueryType.CreateTable, constraint);
+		foreach(var constraint in _schema.DdlBuilder.GetConstraints(table)) AppendDdlCommand(AlterQueryType.CreateTable, constraint);
 		// create indexes
 		foreach (var index in table.Indexes) AppendDdlCommand(AlterQueryType.CreateIndex, table, index);
 	}
@@ -115,7 +115,7 @@ internal struct BulkAlter : IEquatable<BulkAlter>
 		// Code size: 83 (0x53)
 		var table = constraint.ToTable;
 		if (type == AlterQueryType.CreateTable && constraint.Type == ConstraintType.PrimaryKey)
-			_queries.Add(new AlterQuery(table.Id, table, AlterQueryType.CreatePrimaryKey, _schema.DdlBuiler, null, constraint, null, 
+			_queries.Add(new AlterQuery(table.Id, table, AlterQueryType.CreatePrimaryKey, _schema.DdlBuilder, null, constraint, null, 
 				GetTableSpace(table, EntityType.Constraint)));
 	}
 
@@ -125,7 +125,7 @@ internal struct BulkAlter : IEquatable<BulkAlter>
 		{
 			
 			case AlterQueryType.CreateTable:
-				_queries.Add(new AlterQuery(table.Id, table, type, _schema.DdlBuiler, null,
+				_queries.Add(new AlterQuery(table.Id, table, type, _schema.DdlBuilder, null,
 					null, null, GetTableSpace(table, EntityType.Table)));
 				break;
 		}
@@ -137,7 +137,7 @@ internal struct BulkAlter : IEquatable<BulkAlter>
 		{
 			case AlterQueryType.CreateIndex:
 				if (table.Type != TableType.Business && index?.Unique==true && index.IsPrimaryKey(table)) break; 
-				_queries.Add(new AlterQuery(table.Id, table, type, _schema.DdlBuiler, null,null, index, 
+				_queries.Add(new AlterQuery(table.Id, table, type, _schema.DdlBuilder, null,null, index, 
 					GetTableSpace(table, EntityType.Index)));
 				break;
 		}

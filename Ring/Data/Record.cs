@@ -22,6 +22,7 @@ public struct Record : IEquatable<Record>
 	//     1) SetField(long): Float/Double case silently does nothing ; Severity: Medium (Done)
 	//     2) SetField(double, FieldType): Float fields stored at double precision; Severity: Low (Done)
 	//     3) SetRelation: Potential IndexOutOfRangeException when value is null; Severity: Low (Done)
+	//     4) InitializeTracking: Tracking string too small for tables with many relations — Severity: Medium (Not a bug)
 
 	private const long MaxIntValue = int.MaxValue;
 	private const long MinIntValue = int.MinValue;
@@ -420,7 +421,7 @@ public struct Record : IEquatable<Record>
 #pragma warning disable IDE0251 // Make member 'readonly'
 	internal void SetRelation(string name, long? value)
 	{
-		// Code size: 142 (0x8e) - no virtual calls
+		// Code size: 137 (0x89) - no virtual calls
 		var table = _type;
 		if (table.Id == -1) ThrowRecordUnknownRecordType();
 		var relation = table.GetRelation(name);

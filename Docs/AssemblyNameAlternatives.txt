@@ -1,0 +1,11 @@
+Name		Angle
+=============================================================================
+Apex		Top of the stack — from schema to API in one layer
+Forge		Still valid — now forging APIs as well as schemas
+Aether		Invisible infrastructure layer that everything runs on
+Praxis		Greek for "doing" — turns definitions into working systems
+Lattice		The structural grid connecting data model to API surface
+Verve		Lightweight, energetic — a fast runtime that generates live APIs
+Axiom		You define the rules, it generates everything else (* chosen by Claude 4.6)
+Conduit		Data flows from config through ORM out to REST endpoints
+Blueprint	You provide the blueprint, it builds the system

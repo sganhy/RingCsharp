@@ -16,11 +16,11 @@ internal sealed class Schema : BaseEntity
 	internal readonly Table[] TablesByName;       // sorted table by Name (case sensitif)
 	internal readonly TableSpace[] TableSpaces;   // sorted tablespace by Id
 	internal readonly DatabaseProvider Provider;
-	internal readonly IDdlBuilder DdlBuiler;
-	internal readonly IDmlBuilder DmlBuiler;
-	internal readonly IDqlBuilder DqlBuiler;
+	internal readonly IDdlBuilder DdlBuilder;
+	internal readonly IDmlBuilder DmlBuilder;
+	internal readonly IDqlBuilder DqlBuilder;
 	internal readonly int ObjectCount;            // table count + mtm count + view count
-	internal readonly string PhysicalName;        // table count + mtm count + view count
+	internal readonly string PhysicalName;
 
 	/// <summary>
 	/// 	Ctor
@@ -41,8 +41,8 @@ internal sealed class Schema : BaseEntity
 		Provider = provider;
 		ObjectCount = objectCount;
 		PhysicalName = physicalName;
-		DmlBuiler = provider.GetDmlBuilder();
-		DdlBuiler = provider.GetDdlBuilder();
-		DqlBuiler = provider.GetDqlBuilder();
+		DmlBuilder = provider.GetDmlBuilder();
+		DdlBuilder = provider.GetDdlBuilder();
+		DqlBuilder = provider.GetDqlBuilder();
 	}
 }

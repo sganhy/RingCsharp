@@ -77,7 +77,7 @@ public readonly struct BulkSave : IBulkSave
 		// cannot use DeleteRecordById() coz of @meta objects
 		if (record.Table is null) return;
 		if (record.IsNew && record.Table.Type == TableType.Business) return;
-		_info.Queries.Add(new SaveQuery(record.Table, SaveQueryType.DeleteRecord, _info.Schema.DmlBuiler, record.Data, record.Offset));
+		_info.Queries.Add(new SaveQuery(record.Table, SaveQueryType.DeleteRecord, _info.Schema.DmlBuilder, record.Data, record.Offset));
 	}
 
 	public void DeleteRecordById(string recordType, long id)
@@ -119,7 +119,7 @@ public readonly struct BulkSave : IBulkSave
 		if (record.Table is null) ThrowRecordUnknownRecordType();
 		if (record.Table.Readonly) return; // throw exception here ??
 		if (record.Table.Type == TableType.Business) ++_info.IdCount;
-		if (record.IsNew) _info.Queries.Add(new SaveQuery(record.Table, SaveQueryType.InsertRecord, _info.Schema.DmlBuiler, record.Data, record.Offset));
+		if (record.IsNew) _info.Queries.Add(new SaveQuery(record.Table, SaveQueryType.InsertRecord, _info.Schema.DmlBuilder, record.Data, record.Offset));
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -127,7 +127,7 @@ public readonly struct BulkSave : IBulkSave
 	{
 		if (record.Table is null) ThrowRecordUnknownRecordType();
 		if (record.Table.Readonly) return; // throw exception here !!
-		if (!record.IsNew) _info.Queries.Add(new SaveQuery(record.Table, SaveQueryType.UpdateRecord, _info.Schema.DmlBuiler, record.Data, record.Offset));
+		if (!record.IsNew) _info.Queries.Add(new SaveQuery(record.Table, SaveQueryType.UpdateRecord, _info.Schema.DmlBuilder, record.Data, record.Offset));
 	}
 
 	public readonly override int GetHashCode() => GetHashCode(this);

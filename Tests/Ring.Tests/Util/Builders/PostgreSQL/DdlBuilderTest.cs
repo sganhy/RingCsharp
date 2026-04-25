@@ -293,7 +293,7 @@ public class DdlBuilderTest : BaseBuilderTest
         var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
         var table = schema.GetTable("@meta");
         Assert.NotNull(table);
-        var pk = schema.DdlBuiler.GetConstraints(table).First(p => p.Type == ConstraintType.PrimaryKey);
+        var pk = schema.DdlBuilder.GetConstraints(table).First(p => p.Type == ConstraintType.PrimaryKey);
         var expectedSql = "ALTER TABLE \"@test\".\"@meta\" ADD CONSTRAINT \"pk_@meta\" PRIMARY KEY (id,schema_id,object_type,reference_id)";
 
         // act 
@@ -313,7 +313,7 @@ public class DdlBuilderTest : BaseBuilderTest
         var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
         var table = schema.GetTable("@meta_id");
         Assert.NotNull(table);
-        var pk = ((IEnumerable<Constraint>)schema.DdlBuiler.GetConstraints(table)).First(p => p.Type == ConstraintType.PrimaryKey);
+        var pk = ((IEnumerable<Constraint>)schema.DdlBuilder.GetConstraints(table)).First(p => p.Type == ConstraintType.PrimaryKey);
         var expectedSql = "ALTER TABLE \"@test\".\"@meta_id\" ADD CONSTRAINT \"pk_@meta_id\" PRIMARY KEY (id,schema_id,object_type)";
 
         // act 

@@ -1,5 +1,4 @@
 ﻿using Ring.Schema.Enums;
-using Ring.Util.Models;
 
 namespace Ring.Schema;
 

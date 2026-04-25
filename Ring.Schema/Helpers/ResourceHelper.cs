@@ -2,6 +2,7 @@
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using Ring.Util.Extensions;
+using Ring.Util.Helpers;
 using System.Globalization;
 using System.IO.Compression;
 using System.Reflection;
@@ -15,7 +16,6 @@ internal sealed class ResourceHelper
 	private static volatile bool _schemaTemplateLoaded; // volatile to prevent compiler/CPU reordering
 	private static volatile bool _logItemsLoaded;
 	private const char ResourceEndOfLine = '\n';
-	private const char LogItemSeparator = '#';
 	private static readonly string CompressedResourceSuffix = @".gz";
 	private static readonly string ResourceNameSpace = @"Ring.Schema.Resources.";
 	private static readonly string TemplateResourceNameSpace = ResourceNameSpace + @"Templates.";
@@ -49,10 +49,11 @@ internal sealed class ResourceHelper
 			{
 				if (!_logItemsLoaded)
 				{
-					var resourceFile = ResourceType.LogItem + CompressedResourceSuffix;
-					var logItemsSpan = GetCompressedResource(ResourceNameSpace, resourceFile, false).Split(ResourceEndOfLine).AsSpan();
-					_logItems = new Dictionary<int, LogItem>(logItemsSpan.Length * 2); // reserve bucket
-					foreach (var logItem in logItemsSpan)
+					// 	public CsvHelper(Assembly assembly, string resourceNameSpace, string resourceFile, int columnCount, bool compressed = true)
+					using var csv = new CsvHelper(Assembly.GetExecutingAssembly(), ResourceNameSpace, ResourceType.LogItem.ToString() + CompressedResourceSuffix, 4); 
+
+					//_logItems = new Dictionary<int, LogItem>(logItemsSpan.Length * 2); // reserve bucket
+					foreach (var logItem in csv)
 					{
 						var lgItm = ToLogItem(logItem);
 						if (lgItm is not null && !_logItems.ContainsKey(lgItm.Id)) _logItems.Add(lgItm.Id, lgItm);
@@ -72,7 +73,7 @@ internal sealed class ResourceHelper
 			{
 				if (!_schemaTemplateLoaded)
 				{
-					var resourceNativeFile = ResourceType.XmlNative + CompressedResourceSuffix;
+					var resourceNativeFile = ResourceType.XmlNative.ToString() + CompressedResourceSuffix;
 					var resourceClfyFile = ResourceType.XmlClfy + CompressedResourceSuffix;
 					var xmlNativeStr = GetCompressedResource(TemplateResourceNameSpace, resourceNativeFile, false);
 					var xmlClfyStr = GetCompressedResource(TemplateResourceNameSpace, resourceClfyFile, false);
@@ -191,14 +192,12 @@ internal sealed class ResourceHelper
 		return toUpper ? content.ToUpperInvariant() : content;
 	}
 
-	private static LogItem? ToLogItem(string logItemString)
+	private static LogItem? ToLogItem(string?[]? logItems)
 	{
 		// Code size: 66 (0x42)
-		if (string.IsNullOrWhiteSpace(logItemString)) return null;
-		//101#File not found#File '{0}' not found.#3
-		var parts= logItemString.Split(LogItemSeparator);
-		var levelId = int.Parse(parts[3], CultureInfo.InvariantCulture);
-		return new LogItem(int.Parse(parts[0], CultureInfo.InvariantCulture), 0, parts[1], parts[2], levelId.ToLogLevel());
+		if (logItems is null) return null;
+		var levelId = int.Parse(logItems[3] ?? string.Empty, CultureInfo.InvariantCulture);
+		return new LogItem(int.Parse(logItems[0] ?? string.Empty, CultureInfo.InvariantCulture), 0, logItems[1] ?? string.Empty, logItems[2] ?? string.Empty, levelId.ToLogLevel());
 	}
 
 	#endregion
