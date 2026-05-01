@@ -6,6 +6,7 @@ internal sealed class ConnectionPool
 	internal readonly int MinConnection; // min 1
 	internal readonly int MaxConnection; // min 1
 	internal int Cursor;
+	internal int SpinLock; // 0 = unlocked, 1 = locked
 	internal int SwapIndex;
 	internal bool Disposed;
 	internal ushort PutRequestCount;
@@ -28,6 +29,7 @@ internal sealed class ConnectionPool
 		ConnectionCount = 0;
 		CreationCount = 0L;
 		DestroyCount = 0L;
+		SpinLock = 0;
 		ResizeCount = resizeCount;
 		CreationTime = DateTime.Now;
 		SyncRoot = new object();

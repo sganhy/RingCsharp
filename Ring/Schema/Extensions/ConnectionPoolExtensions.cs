@@ -8,13 +8,14 @@ namespace Ring.Schema.Extensions;
 
 internal static class ConnectionPoolExtensions
 {
-	private static int _connectionPoolId = 1;
+	private static int _connectionPoolId;
 
-	internal static int GetId(this ConnectionPool? _) => _connectionPoolId++; // Code size: 14 (0xe)
+	internal static int GetId(this ConnectionPool? _) => Interlocked.Increment(ref _connectionPoolId); // Code size: 11 (0xb) - first ConnectionPool id is equal to 1
 
 	internal static Task InitAsync(this ConnectionPool connectionPool, IConnection initialConnection, CancellationToken cancellationToken=default)
 	{
 		// Code size: 62 (0x3e)
+		// InitAsync() builds a Task[] with potentially null entries
 		Initialize(connectionPool, initialConnection); // sync
 		var minPoolSize = connectionPool.MinConnection;
 		var tasks = new Task [minPoolSize];
@@ -45,17 +46,13 @@ internal static class ConnectionPoolExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static IConnection Get(this ConnectionPool connectionPool)
 	{
-        // Code size: 77 (0x4d) -  no virtual call
-        Monitor.Enter(connectionPool.SyncRoot); // start lock 
-		if (connectionPool.Cursor >= 0)
-		{
-			var result = connectionPool.Connections[connectionPool.Cursor];
-			--connectionPool.Cursor;
-			Monitor.Exit(connectionPool.SyncRoot); // end lock as fast as possible!
-			return result;
-		}
-		Monitor.Exit(connectionPool.SyncRoot); // end lock 
-		return CreateConnection(connectionPool);
+		// Code size: 70 (0x46)
+		IConnection? result = null;
+		SpinEnter(ref connectionPool.SpinLock); // replacing Monitor.Enter(connectionPool.SyncRoot);
+		if (connectionPool.Cursor >= 0)	
+			result = connectionPool.Connections[connectionPool.Cursor--];
+		SpinExit(ref connectionPool.SpinLock);
+		return result ?? CreateConnection(connectionPool);
 	}
 
 	/// <summary>
@@ -64,20 +61,19 @@ internal static class ConnectionPoolExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static void Put(this ConnectionPool connectionPool, IConnection connection)
 	{
-        // Code size: 155 (0x9b) -  no virtual call
-        ++connectionPool.PutRequestCount; // out of lock!!!
-		Monitor.Enter(connectionPool.SyncRoot);	 // start lock to lock before comparison (_cursor < _lastIndex) 
+		// Code size: 155 (0x9b)
+		SpinEnter(ref connectionPool.SpinLock);
 		if (connectionPool.Cursor < connectionPool.LastIndex)
 		{
+			++connectionPool.PutRequestCount;
 			++connectionPool.Cursor;
 			connectionPool.SwapIndex = connectionPool.Cursor != 0 ? connectionPool.PutRequestCount % connectionPool.Cursor : 0;
-			// swap 
 			connectionPool.Connections[connectionPool.Cursor] = connectionPool.Connections[connectionPool.SwapIndex];
 			connectionPool.Connections[connectionPool.SwapIndex] = connection;
-			Monitor.Exit(connectionPool.SyncRoot); // end lock 
+			SpinExit(ref connectionPool.SpinLock);
 			return;
 		}
-		Monitor.Exit(connectionPool.SyncRoot); // end lock 
+		SpinExit(ref connectionPool.SpinLock);
 		DestroyConnectionAsync(connectionPool, connection);
 	}
 
@@ -86,11 +82,11 @@ internal static class ConnectionPoolExtensions
 	public static void Unload(this ConnectionPool connectionPool)
 	{
 		// Code size: 126 (0x7e)
-		Monitor.Enter(connectionPool.SyncRoot);	 // start lock to lock before comparison (_cursor < _lastIndex) 
+		SpinEnter(ref connectionPool.SpinLock);  // was: Monitor.Enter(connectionPool.SyncRoot)
 		var currentCursor = connectionPool.Cursor;
-		connectionPool.Cursor = int.MinValue;		// avoid to stack new connections & finalize last executions
+		connectionPool.Cursor = int.MinValue;
 		connectionPool.LastIndex = int.MinValue;
-		Monitor.Exit(connectionPool.SyncRoot);	  // end lock 
+		SpinExit(ref connectionPool.SpinLock);   // was: Monitor.Exit(connectionPool.SyncRoot)
 
 		var span = new Span<IConnection?>(connectionPool.Connections);
 		for (var i=0; i< span.Length; ++i)
@@ -113,13 +109,13 @@ internal static class ConnectionPoolExtensions
 
 	public static ConnectionPool Resize(this ConnectionPool connectionPool, int minPoolSize, int maxPoolSize)
 	{
-		// Code size: 301 (0x12d)
+		// Code size: 295 (0x127)
 		if (minPoolSize == connectionPool.MinConnection && maxPoolSize == connectionPool.MaxConnection) return connectionPool;
-		Monitor.Enter(connectionPool.SyncRoot); // start lock to lock before comparison (_cursor < _lastIndex) 
+		SpinEnter(ref connectionPool.SpinLock);  // was: Monitor.Enter(connectionPool.SyncRoot)
 		var currentCursor = connectionPool.Cursor;
-		connectionPool.Cursor = int.MinValue; // avoid to stack new connections & finalize last executions
+		connectionPool.Cursor = int.MinValue;
 		connectionPool.LastIndex = int.MinValue;
-		Monitor.Exit(connectionPool.SyncRoot); // end lock 
+		SpinExit(ref connectionPool.SpinLock);   // was: Monitor.Exit(connectionPool.SyncRoot)
 		var newPool = new ConnectionPool(GetId(connectionPool), minPoolSize, maxPoolSize, connectionPool.ResizeCount + 1, connectionPool.ConnectionString)
 		{
 			ConnectionCount = connectionPool.ConnectionCount,
@@ -155,27 +151,22 @@ internal static class ConnectionPoolExtensions
 
 	private static void DestroyConnectionAsync(this ConnectionPool connectionPool, IConnection connection)
 	{
-		// Code size: 50 (0x32)
-		if (connection.State != ConnectionState.Closed)
-		{
-			ThreadPool.QueueUserWorkItem((state) => connection.Close()); // crash ??
-			//connection.Close();
-		}
-		--connectionPool.ConnectionCount;
-		++connectionPool.DestroyCount;
-		connection.Dispose();
+		// Code size: 82 (0x52)
+		if (connection.State != ConnectionState.Closed)	ThreadPool.QueueUserWorkItem(_ => { connection.Close(); connection.Dispose(); });
+		else connection.Dispose();
+		Interlocked.Decrement(ref connectionPool.ConnectionCount);
+		Interlocked.Increment(ref connectionPool.DestroyCount);
 	}
 
 	private static IConnection CreateConnection(this ConnectionPool connectionPool)
 	{
-		// Code size: 70 (0x46)
-		var id = connectionPool.ConnectionCount + 1;
+		// Code size: 56 (0x38)
+		var id = Interlocked.Increment(ref connectionPool.ConnectionCount);
+		Interlocked.Increment(ref connectionPool.CreationCount);
 		var connection = connectionPool.Connections[0];
 		if (connection is not null)
 		{
 			var newConnection = connection.CreateInstance(id);
-			++connectionPool.ConnectionCount;
-			++connectionPool.CreationCount;
 			newConnection.Open();
 			return newConnection;
 		}
@@ -213,6 +204,16 @@ internal static class ConnectionPoolExtensions
 		var span = new Span<IConnection?>(connectionPool.Connections);
 		for (var i = 0; i < span.Length; ++i) span[i] = null;
 	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static void SpinEnter(ref int spinLock)
+	{
+		while (Interlocked.CompareExchange(ref spinLock, 1, 0) != 0)
+			Thread.SpinWait(1);
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static void SpinExit(ref int spinLock) => Volatile.Write(ref spinLock, 0);
 
 	#endregion
 

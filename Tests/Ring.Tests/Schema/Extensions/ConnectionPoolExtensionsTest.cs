@@ -9,7 +9,9 @@ namespace Ring.Tests.Schema.Extensions;
 
 public sealed class ConnectionPoolExtensionsTest : BaseTest
 {
-    [Fact]
+	public ConnectionPoolExtensionsTest(ITestOutputHelper output) : base(output) => Expression.Empty();
+
+	[Fact]
     internal void Put_Connection_CloseConnections()
     {
         // arrange 
@@ -102,7 +104,7 @@ public sealed class ConnectionPoolExtensionsTest : BaseTest
         Assert.Equal(63, pool.LastIndex);
     }
 
-    [Fact]
+	[Fact]
     internal void Init_InitialConnectionObject_DifferentConnectionId()
     {
         // arrange 
@@ -134,7 +136,7 @@ public sealed class ConnectionPoolExtensionsTest : BaseTest
         var maxConnectionCount = 128;
         var connectionString = _faker.Random.String();
         var pool = new ConnectionPool(_faker.Random.Number(), 64, maxConnectionCount, 0, connectionString);
-        await pool.InitAsync(new ConnectionMock(1, DatabaseProvider.SqlLite, connectionString));
+        await pool.InitAsync(new ConnectionMock(1, DatabaseProvider.SqlLite, connectionString), cancellationToken: TestContext.Current.CancellationToken);
         var hashSet = new HashSet<int>(maxConnectionCount * 2);
 
         for (var i = 0; i < 15; ++i)
@@ -277,8 +279,5 @@ public sealed class ConnectionPoolExtensionsTest : BaseTest
         Assert.True(ReferenceEquals(lstConns[4], newConnPool.Connections[4]));
         Assert.Equal(4, newConnPool.Cursor);
     }
-
-
-    public ConnectionPoolExtensionsTest(ITestOutputHelper output) : base(output) => Expression.Empty();
 
 }
