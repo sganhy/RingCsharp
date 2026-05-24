@@ -1,4 +1,5 @@
-﻿using Ring.Logging;
+﻿using Ring.Data;
+using Ring.Logging;
 using Ring.Schema;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
@@ -24,8 +25,12 @@ internal static class Global
 	private static int _schemaCount; // current number of schemas
 	private static readonly LoggerFactory _loggerFactory = new();
 
+	/// <summary>
+	///		Not thread safe, must be called at startup before any other call to Global
+	/// </summary>
 	internal static void Init(IConfiguration configuration)
 	{
+		// Code size: 105 (0x69)
 		if (_initialized) return;
 		_schemaCount = 0; 
 		_currentMaxNumberOfSchema = configuration.MaxNumberOfSchema * 4;
@@ -90,9 +95,14 @@ internal static class Global
 	}
 	internal static void Clear()
 	{
-		_schemaMappers = Array.Empty<(string, int)>();
-		_schemaCount = 0;
-		_schemas = new DbSchema[_currentMaxNumberOfSchema+1];
+		lock (SyncRoot)
+		{
+			_schemaMappers = Array.Empty<(string, int)>();
+			_schemaCount = 0;
+			_maxSchemaId = 0;
+			_defaultSchema = null;
+			_schemas = new DbSchema[_currentMaxNumberOfSchema + 1];
+		}
 	}
 
 	internal static DbSchema DefaultSchema => _defaultSchema ?? Meta.GetDefaultSchema(Meta.Create(string.Empty),DatabaseProvider.SqlLite); // Code size: 27 (0x1b) - DatabaseProvider cannot be undefined !!!!
@@ -101,6 +111,9 @@ internal static class Global
 	internal static bool IsSchemaDefault(DbSchema schema) => ReferenceEquals(schema,_defaultSchema); // Code size: 9 (0x9)
 	internal static int MaxSchemaId() => MaxSchemaBucketSize; // Code size: 6 (0x6)
 
+	/// <summary>
+	///		Returns the schema with the specified ID. Has no bounds check!
+	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static DbSchema? GetSchema(int id)
 	{

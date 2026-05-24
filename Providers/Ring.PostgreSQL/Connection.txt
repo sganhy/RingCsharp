@@ -1,0 +1,450 @@
+using Npgsql;
+using Microsoft.Extensions.Logging;
+using Ring.Data.Extensions;
+using Ring.Data.Models;
+using Ring.Util.Builders;
+using System.Data;
+using System.Globalization;
+using Ring.Util.Enums;
+using LogLevel = Microsoft.Extensions.Logging.LogLevel;
+using Ring.Data.Enums;
+using Ring.Schema.Models;
+using Ring.PostgreSQL.Extensions;
+using Ring.Schema.Enums;
+using NpgsqlTypes;
+using System.Runtime.CompilerServices;
+using Ring.Schema.Extensions;
+
+namespace Ring.PostgreSQL;
+
+public sealed classCopy Connection : IConnection
+{
+    private readonly static string ActionMessage = "{Message}";
+    private readonly static NpgsqlParameter [] DefaultParameterArray = Array.Empty<NpgsqlParameter>();
+    private readonly static CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
+    private readonly static string?[] EmptyResult = Array.Empty<string?>();
+    private readonly static string _ddlOperationType = nameof(AlterQueryType);
+    private readonly static int BindVariableNameCacheSize = 1024;
+    private readonly static object VariableValueTrue = true;
+    private readonly static object VariableValueFalse = false;
+    private readonly static string[] BindVariableName = GetBindVariable();
+    private const string BindVariablePrefix = "p";
+    private readonly static string BooleanTrue = true.ToString(DefaultCulture);
+    private readonly IConfiguration _configuration;
+    private readonly int _id;
+    private readonly DateTime _creationTime;
+    private readonly bool _informationEnabled; // logging level information enabled ?
+    private NpgsqlTransaction? _currentTransaction;
+    private NpgsqlConnection _connection;
+    private DateTime _lastConnectionTime = DateTime.MinValue;
+    private DateTime _lastExecutionTime = DateTime.MinValue;
+
+    // ============ L O G S =======
+    // ddl: 
+    /*
+    private static readonly Action<ILogger, string, Exception?> _logDdlException =
+                LoggerMessage.Define<string>(LogLevel.Error, new EventId((int)EventType.DdlException, 
+                    nameof(LogDdlException)), ActionMessage);
+    private static readonly Action<ILogger, string, Exception?> _logOperationPerformed =
+                LoggerMessage.Define<string>(LogLevel.Information, new EventId((int)EventType.QueryPerformed, 
+                    nameof(LogOperationPerformed)), ActionMessage);
+    */
+    public Connection(int id, IConfiguration configuration)
+    {
+        _configuration = configuration;
+        _currentTransaction = null;
+        _connection = new NpgsqlConnection(_configuration.ConnectionString);
+        _id = id;
+        _creationTime = DateTime.Now;
+    }
+
+    public string ConnectionString => _configuration.ConnectionString;
+
+    public DateTime CreationTime => _creationTime;
+
+    public DateTime? LastConnectionTime => _lastConnectionTime;
+
+    public ConnectionState State {
+        get
+        {
+            // check connection at this time !!
+            return _connection.State;
+        }
+    }
+
+    public int Id => _id;
+
+    public void Open()
+    {
+        _connection.Open();
+        _lastConnectionTime = DateTime.Now;
+    }
+
+    public Task OpenAsync(CancellationToken cancellationToken)
+    {
+        var task = _connection.OpenAsync(cancellationToken);
+        _lastConnectionTime = DateTime.Now;
+        return task;
+    }
+
+    public void Close()
+    {
+        _connection.Close();
+    }
+
+    public async Task CloseAsync(CancellationToken cancellationToken)
+    {
+        await _connection.CloseAsync().ConfigureAwait(false);
+    }
+
+    public IConnection CreateInstance(int id) => new Connection(id, _configuration);
+
+    public void Dispose()
+    {
+        _currentTransaction?.Dispose();
+        _connection?.Dispose();
+    }
+
+    public Span<string?> ExecuteSelect(string sql, int columnCount, Span<(string, byte)> parameters)
+    {
+        var result = new List<string?>();
+        NpgsqlCommand? cmd=null;
+        NpgsqlDataReader? reader = null;
+        try
+        {
+#pragma warning disable CA2100 // Review SQL queries for security vulnerabilities
+            cmd = new(sql, _connection);
+#pragma warning restore CA2100
+            reader = cmd.ExecuteReader();
+            if (!reader.HasRows) return Array.Empty<string?>();
+            int i = 0;
+            while (reader.Read())
+            {
+                for (i = 0; i < columnCount; ++i)
+                {
+                    var v = reader.GetValue(i);
+                    if (v is DBNull) result.Add(null);
+                    else if (v is string) result.Add(v as string);
+                    else result.Add(v.ToString());
+                }
+            }
+        }
+        finally
+        {
+            reader?.Close();
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+            cmd.Connection = null;
+#pragma warning restore CS8602
+            cmd.Dispose();
+            reader?.Dispose();
+        }
+        return result.ToArray();
+    }
+
+    public string?[] Execute(in RetrieveQuery query)
+    {
+        query.Page.Count = 521;
+        return EmptyResult;
+    }
+
+
+    public long Execute(in AlterQuery query)
+    {
+        if (_informationEnabled) _lastExecutionTime = DateTime.Now;
+        int returnValue;
+        var sql = query.ToSql();
+        if (sql==null)
+        {
+            LogUnSupportedOperation(query);
+            return 0;
+        }
+
+        // Review SQL queries for security vulnerabilities
+        // Do not catch general exception types
+#pragma warning disable CA2100, CA1031
+        var cmd = new NpgsqlCommand(sql, _connection);
+        try
+        {
+            cmd.ExecuteNonQuery();
+            returnValue = 1;
+        }
+        catch (Exception ex)
+        {
+            //LogDdlException(ex, query);
+            returnValue = 0;
+        }
+#pragma warning restore CA1031, CA2100
+        cmd.Connection = null;
+        cmd.Dispose();
+
+        //if (returnValue>0 && _informationEnabled) LogOperationPerformed(query,DateTime.Now-_lastExecutionTime);
+
+        return returnValue;
+    }
+
+    public ValueTask<int> ExecuteAsync(in AlterQuery query, CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.IsCancellationRequested) return new(Task.FromCanceled<int>(cancellationToken));
+        
+        if (_informationEnabled) _lastExecutionTime = DateTime.Now;
+        int returnValue;
+        var sql = query.ToSql();
+        if (sql == null)
+        {
+            LogUnSupportedOperation(query);
+            return new(Task.FromResult(0));
+        }
+#pragma warning disable CA2100, CA1031
+
+        var cmd = new NpgsqlCommand(sql, _connection);
+        try
+        {
+            cmd.ExecuteNonQuery();
+            returnValue = 1;
+        }
+        catch (OperationCanceledException e)
+        {
+            // warn cancelled 
+            cmd.Connection = null;
+            cmd.Dispose();
+            return new(Task.FromCanceled<int>(e.CancellationToken));
+        }
+        catch (Exception ex)
+        {
+            //LogDdlException(ex, query);
+            returnValue = 0;
+        }
+#pragma warning restore CA1031, CA2100
+        cmd.Connection = null;
+        cmd.Dispose();
+
+        //if (returnValue > 0 && _informationEnabled) //LogOperationPerformed(query, DateTime.Now - _lastExecutionTime);
+        return new(Task.FromResult(returnValue));
+    }
+
+    public long Execute(in SaveQuery query)
+    {
+        //if (_informationEnabled) _lastExecutionTime = DateTime.Now;
+        long returnValue;
+        var sql = query.ToSql();
+        if (sql == null)
+        {
+            LogUnSupportedOperation(query);
+            return 0;
+        }
+        // Review SQL queries for security vulnerabilities
+        // Do not catch general exception types
+#pragma warning disable CA2100, CA1031
+        var cmd = new NpgsqlCommand(sql, _connection);
+        try
+        {
+            cmd.Transaction = _currentTransaction;
+            cmd.Parameters.AddRange(Getparameters(query));
+            cmd.ExecuteNonQuery();
+            returnValue = 1;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("SQL: ");
+            Console.WriteLine(sql);
+            Console.WriteLine("Error: ");
+            Console.WriteLine(ex.Message);
+            Console.WriteLine(ex.StackTrace);
+            //LogDmlException(ex, query);
+            returnValue = -1L;
+        }
+#pragma warning restore CA1031, CA2100
+        cmd.Connection = null;
+        cmd.Dispose(); // always dispose here
+
+        //if (returnValue > 0 && _informationEnabled) LogOperationPerformed(query, DateTime.Now - _lastExecutionTime);
+        return returnValue;
+    }
+
+    public void BeginTransaction()
+    {
+        // Code size: 18 (0x12)
+        // phantom rows are not detected on generated queries by PostgreSQL.BaseDmlBuilder.
+        _currentTransaction = _connection.BeginTransaction(IsolationLevel.ReadUncommitted);
+    }
+
+    public void Commit()
+    {
+        // Code size: 30 (0x1e)
+        var trans = _currentTransaction;
+        _currentTransaction = null; // always asign null to _currentTransaction, even if trans.Commit() crash!
+        if (trans != null)
+        {
+            trans.Commit();
+            trans.Dispose();
+        }
+    }
+
+    public void Rollback()
+    {
+        // Code size: 30 (0x1e)
+        var trans = _currentTransaction;
+        _currentTransaction = null;
+        if (trans != null)
+        {
+            trans.Rollback();
+            trans.Dispose();
+        }
+    }
+
+    public int ProviderId() => (int)DatabaseProvider.PostgreSql;
+
+    #region private methods 
+
+    private static string[] GetBindVariable()
+    {
+        var result = new string[BindVariableNameCacheSize];
+        var count = BindVariableNameCacheSize;
+        for (var i = 0; i < count; ++i) result[i] = BindVariablePrefix + (i + 1).ToString(DefaultCulture);
+        return result;
+    }
+
+    private static NpgsqlParameter[] Getparameters(in SaveQuery saveQuery)
+    {
+        // Code size: 325 (0x145)
+        NpgsqlParameter[] result = DefaultParameterArray;
+        var bindVariableNameCacheSize = BindVariableNameCacheSize;
+#pragma warning disable RCS1118 // Mark local variable as const
+        var bindVariablePrefix = BindVariablePrefix;
+#pragma warning restore RCS1118
+
+        if (saveQuery.Type == SaveQueryType.InsertRecord)
+        {
+            // use an array pool
+            var span = new ReadOnlySpan<Column>(saveQuery.Table.Columns);
+            var spanCount = span.Length;
+            var recordIndexes = new int[0]; //saveQuery.Table.RecordIndexes;
+            var data = saveQuery.Data;
+
+            result = new NpgsqlParameter[9];
+            var i = 0;
+            var colIndex = 0;
+            while (i<spanCount)
+            {
+                var column = span[i];
+                var value = data[recordIndexes[i] + saveQuery.Offset];
+                var variableName = colIndex < bindVariableNameCacheSize ? BindVariableName[colIndex] :
+                    bindVariablePrefix + (colIndex + 1).ToString(DefaultCulture);
+                var fieldType = column.FieldType;
+                var dbType = fieldType.ToNpgsqlDbType();
+                result[colIndex] = GetParameter(variableName, dbType, fieldType, value);
+                ++colIndex;
+                // searchable fields
+                var searchableType = column.SearchableType;
+                if (searchableType != SearchableType.None) {
+                    result[colIndex] = GetParameter(variableName, dbType, fieldType, FieldExtensions.GetSearchableValue(null, searchableType,value));
+                    ++colIndex;
+                }
+                // LongDateTime
+                if (fieldType == FieldType.DateTimeOffset)
+                {
+                    result[colIndex] = GetParameter(variableName, NpgsqlDbType.Smallint, FieldType.Short, "60");
+                    ++colIndex;
+                }
+                ++i;
+            }
+        }
+        else if (saveQuery.Type == SaveQueryType.UpdateRecord)
+        {
+
+        }
+        else if (saveQuery.Type == SaveQueryType.UpdateReturningRecord)
+        { 
+
+        }
+        return result;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static NpgsqlParameter GetParameter(string variableName, NpgsqlDbType dbType, FieldType fieldType, string? value)
+    {
+        // Code size: 268 (0x10c)
+        if (value == null)
+        {
+            return new (variableName, dbType)  { Value = DBNull.Value };
+        }
+        NpgsqlParameter result;
+#pragma warning disable IDE0066 // Convert switch statement to expression
+        switch (fieldType)
+        {
+            case FieldType.Long:
+            case FieldType.Int:
+            case FieldType.Short:
+            case FieldType.Byte:
+                result = new NpgsqlParameter<long>(variableName, dbType)
+                {
+                    TypedValue = long.Parse(value, DefaultCulture)
+                };
+                break;
+            case FieldType.Float:
+            case FieldType.Double:
+                result = new NpgsqlParameter<double>(variableName, dbType)
+                {
+                    TypedValue = double.Parse(value, DefaultCulture)
+                };
+                break;
+            case FieldType.DateTime:
+            case FieldType.DateTimeOffset:
+                result = new NpgsqlParameter(variableName, dbType)
+                {
+                    Value = value.DateTimeValue(),
+                };
+                break;
+            case FieldType.String:
+                result = new NpgsqlParameter(variableName, dbType)
+                {
+                    Value = value,
+                };
+
+                break;
+            case FieldType.LongString:
+            case FieldType.Date:
+                result = new NpgsqlParameter(variableName, dbType)
+                {
+                    Value = value,
+                };
+                break;
+            case FieldType.Boolean:
+                result = new NpgsqlParameter(variableName, dbType)
+                {
+                    Value = string.Equals(BooleanTrue, value, StringComparison.Ordinal) ? VariableValueTrue : VariableValueFalse
+                };
+                break;
+            case FieldType.ByteArray:
+                result = new NpgsqlParameter(variableName, dbType)
+                {
+                    // TODO: provide better options than base64
+                    Value = Convert.FromBase64String(value)
+                };
+                break;            
+            default:
+                result = null;
+                break;
+        }
+#pragma warning restore IDE0066 // Convert switch statement to expression
+        return result;
+    }
+
+
+    private void LogUnSupportedOperation(AlterQuery query) {
+        //var message = _logBuilder.GetMessage(EventType.UnsupportedOperation,
+            //(int)query.Type, _ddlOperationType, query.Type.ToString());
+        //var ex = new ArgumentException(message);
+        //LogDdlException(ex, query);
+    }
+    private void LogUnSupportedOperation(SaveQuery query)
+    {
+        //var message = _logBuilder.GetMessage(EventType.UnsupportedOperation,
+         //   (int)query.Type, _ddlOperationType, query.Type.ToString());
+        //var ex = new ArgumentException(message);
+        //LogDdlException(ex, query);
+    }
+
+
+    #endregion
+}

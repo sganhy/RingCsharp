@@ -1,4 +1,4 @@
-﻿namespace Ring;
+﻿namespace Ring.Data;
 
 public interface IConfiguration
 {

@@ -1,7 +1,7 @@
+using Ring.Data;
 using Ring.Schema.Enums;
 using Ring.Schema.Models;
 using Ring.Util.Extensions;
-using System.Data;
 using System.Runtime.CompilerServices;
 
 namespace Ring.Schema.Extensions;
@@ -49,8 +49,7 @@ internal static class ConnectionPoolExtensions
 		// Code size: 70 (0x46)
 		IConnection? result = null;
 		SpinEnter(ref connectionPool.SpinLock); // replacing Monitor.Enter(connectionPool.SyncRoot);
-		if (connectionPool.Cursor >= 0)	
-			result = connectionPool.Connections[connectionPool.Cursor--];
+		if (connectionPool.Cursor >= 0)	result = connectionPool.Connections[connectionPool.Cursor--];
 		SpinExit(ref connectionPool.SpinLock);
 		return result ?? CreateConnection(connectionPool);
 	}
@@ -59,7 +58,7 @@ internal static class ConnectionPoolExtensions
 	/// 	Places an item in the pool. semi async destroy is computed async
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static void Put(this ConnectionPool connectionPool, IConnection connection)
+	internal static void Put(this ConnectionPool connectionPool, IConnection connection)
 	{
 		// Code size: 155 (0x9b)
 		SpinEnter(ref connectionPool.SpinLock);
@@ -77,9 +76,34 @@ internal static class ConnectionPoolExtensions
 		DestroyConnectionAsync(connectionPool, connection);
 	}
 
-	public static bool Unloaded(this ConnectionPool connectionPool) => connectionPool.Cursor == int.MinValue || connectionPool.LastIndex == int.MinValue; // Code size: 29 (0x1d)
+	/// <summary>
+	///     Places an item in the pool. If the pool is full, the connection is
+	///     destroyed asynchronously. Returns a completed ValueTask on the hot path
+	///     (pool has space) — no allocation in that case.
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static ValueTask PutAsync(this ConnectionPool connectionPool, IConnection connection, CancellationToken cancellationToken = default)
+	{
+		// Code size: 161 (0xa1)
+		SpinEnter(ref connectionPool.SpinLock);
+		if (connectionPool.Cursor < connectionPool.LastIndex)
+		{
+			++connectionPool.PutRequestCount;
+			++connectionPool.Cursor;
+			connectionPool.SwapIndex = connectionPool.Cursor != 0 ? connectionPool.PutRequestCount % connectionPool.Cursor : 0;
+			connectionPool.Connections[connectionPool.Cursor] = connectionPool.Connections[connectionPool.SwapIndex];
+			connectionPool.Connections[connectionPool.SwapIndex] = connection;
+			SpinExit(ref connectionPool.SpinLock);
+			return ValueTask.CompletedTask; // ← zero allocation, synchronous return
+		}
+		SpinExit(ref connectionPool.SpinLock);
+		return DestroyConnectionAsync(connectionPool, connection, cancellationToken); // ← cold path only
+	}
 
-	public static void Unload(this ConnectionPool connectionPool)
+
+	internal static bool Unloaded(this ConnectionPool connectionPool) => connectionPool.Cursor == int.MinValue || connectionPool.LastIndex == int.MinValue; // Code size: 29 (0x1d)
+
+	internal static void Unload(this ConnectionPool connectionPool)
 	{
 		// Code size: 126 (0x7e)
 		SpinEnter(ref connectionPool.SpinLock);  // was: Monitor.Enter(connectionPool.SyncRoot)
@@ -101,13 +125,13 @@ internal static class ConnectionPoolExtensions
 		connectionPool.ClearConnections();
 	}
 
-	public static void CheckHealth(this ConnectionPool connectionPool)
+	internal static void CheckHealth(this ConnectionPool connectionPool)
 	{
 		// verify connection & creation time
 
 	}
 
-	public static ConnectionPool Resize(this ConnectionPool connectionPool, int minPoolSize, int maxPoolSize)
+	internal static ConnectionPool Resize(this ConnectionPool connectionPool, int minPoolSize, int maxPoolSize)
 	{
 		// Code size: 295 (0x127)
 		if (minPoolSize == connectionPool.MinConnection && maxPoolSize == connectionPool.MaxConnection) return connectionPool;
@@ -208,12 +232,21 @@ internal static class ConnectionPoolExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static void SpinEnter(ref int spinLock)
 	{
-		while (Interlocked.CompareExchange(ref spinLock, 1, 0) != 0)
-			Thread.SpinWait(1);
+		// Code size: 19 (0x13)
+		while (Interlocked.CompareExchange(ref spinLock, 1, 0) != 0) Thread.SpinWait(1);
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private static void SpinExit(ref int spinLock) => Volatile.Write(ref spinLock, 0);
+	private static void SpinExit(ref int spinLock) => Volatile.Write(ref spinLock, 0); // Code size: 8 (0x8)
+
+	private static async ValueTask DestroyConnectionAsync(this ConnectionPool connectionPool, IConnection connection, CancellationToken cancellationToken)
+	{
+		// Code size: 71 (0x47)
+		if (connection.State != ConnectionState.Closed)	await connection.CloseAsync(cancellationToken).ConfigureAwait(false);
+		connection.Dispose(); // no DisposeAsync; may be should be implemented 
+		Interlocked.Decrement(ref connectionPool.ConnectionCount); // stat value is decremented synchronously, even if the actual close/dispose is done asynchronously, to avoid over-provisioning of connections in the pool
+		Interlocked.Increment(ref connectionPool.DestroyCount);
+	}
 
 	#endregion
 

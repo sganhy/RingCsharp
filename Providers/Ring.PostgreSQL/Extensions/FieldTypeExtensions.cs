@@ -1,11 +1,8 @@
-﻿using NpgsqlTypes;
-using Ring.Schema.Enums;
-using System.Runtime.CompilerServices;
-
-namespace Ring.PostgreSQL.Extensions;
+﻿namespace Ring.PostgreSQL.Extensions;
 
 internal static class FieldTypeExtensions
 {
+/*
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static NpgsqlDbType ToNpgsqlDbType(this FieldType fieldType)
     {
@@ -28,4 +25,5 @@ internal static class FieldTypeExtensions
         }
         throw new ArgumentException($"Field type '{fieldType}' is not supported.");
     }
+    */
 }

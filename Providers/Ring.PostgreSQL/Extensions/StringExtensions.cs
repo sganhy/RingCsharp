@@ -1,6 +1,4 @@
-﻿using NpgsqlTypes;
-
-namespace Ring.PostgreSQL.Extensions;
+﻿namespace Ring.PostgreSQL.Extensions;
 
 internal static class StringExtensions
 {

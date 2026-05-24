@@ -1,11 +1,29 @@
-Name		Angle
+Name			Angle
 =============================================================================
-Apex		Top of the stack — from schema to API in one layer
-Forge		Still valid — now forging APIs as well as schemas
-Aether		Invisible infrastructure layer that everything runs on
-Praxis		Greek for "doing" — turns definitions into working systems
-Lattice		The structural grid connecting data model to API surface
-Verve		Lightweight, energetic — a fast runtime that generates live APIs
-Axiom		You define the rules, it generates everything else (* chosen by Claude 4.6)
-Conduit		Data flows from config through ORM out to REST endpoints
-Blueprint	You provide the blueprint, it builds the system
+Apex			Top of the stack — from schema to API in one layer
+Forge			Still valid — now forging APIs as well as schemas
+Aether			Invisible infrastructure layer that everything runs on
+Praxis			Greek for "doing" — turns definitions into working systems
+Lattice			The structural grid connecting data model to API surface
+Verve			Lightweight, energetic — a fast runtime that generates live APIs
+Axiom			You define the rules, it generates everything else (* chosen by Claude 4.6)
+Conduit			Data flows from config through ORM out to REST endpoints
+Blueprint		You provide the blueprint, it builds the system
+
+Telos * 		(Greek: purpose/end) schema with intent
+Logaxis			Logical axis — the logical axis around which endpoints rotate
+Dynaxis			Dynamic axis — the live pivot between DB and API
+Physema			Physical schema compressed into a name
+
+Cambium			The living generative layer in a tree between bark and wood — it continuously produces new structure without killing the tree. Maps perfectly to zero-downtime schema evolution
+Velum * 		A thin membranous covering layer — precise, anatomical, unusual
+
+Voussoir * 		The wedge stones that form an arch — each piece is load-bearing, together they span a gap (physical → logical)
+Spandrel * 		The intermediary space between an arch and its frame — exactly what this assembly occupies
+Impost * 		The block that transfers arch load to a column — a pure transfer/translation layer
+
+
+Ostinato * 		A persistently repeated pattern beneath changing melody — the stable schema engine beneath evolving endpoints
+Athanor * 		A self-feeding furnace that maintains constant heat indefinitely — a direct metaphor for zero-downtime continuous operation
+Continuo * 		Basso continuo — the continuous harmonic foundation underlying baroque composition, always present, never stopping
+Velum * 		A thin membranous covering layer — precise, anatomical, unusual

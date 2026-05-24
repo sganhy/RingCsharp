@@ -2,7 +2,7 @@ using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using Ring.Tests.MockUps;
-using System.Data;
+using Ring.Data;
 using System.Linq.Expressions;
 
 namespace Ring.Tests.Schema.Extensions;
@@ -103,6 +103,34 @@ public sealed class ConnectionPoolExtensionsTest : BaseTest
         Assert.Equal(14, pool.Cursor);
         Assert.Equal(63, pool.LastIndex);
     }
+
+	[Fact]
+	internal void Get_MaxConnectionEqualTo1()
+	{
+		// arrange 
+		var maxConnectionCount = 1;
+		var connectionString = _faker.Random.String();
+		var pool = new ConnectionPool(_faker.Random.Number(), 1, maxConnectionCount, 0, connectionString);
+		pool.Init(new ConnectionMock(_faker.Random.Int(), DatabaseProvider.Oracle, connectionString));
+
+		// act 
+		var conn1 = pool.Get();
+		var conn2 = pool.Get();
+		pool.Put(conn2);
+		pool.Put(conn1);
+        var conn3 = pool.Get();
+		pool.Put(conn3);
+
+		// assert
+		Assert.Equal(0, pool.Cursor);
+		Assert.Equal(0, pool.LastIndex);
+		Assert.Equal(1, conn1.Id);
+		Assert.Equal(2, conn2.Id);
+		Assert.Equal(2, conn3.Id);
+        // wait end of destroy async
+        Thread.Sleep(500);
+		Assert.Equal(ConnectionState.Closed, conn1.State); // conn1 should be destroyed!
+	}
 
 	[Fact]
     internal void Init_InitialConnectionObject_DifferentConnectionId()

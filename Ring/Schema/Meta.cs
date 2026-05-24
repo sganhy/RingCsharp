@@ -815,11 +815,11 @@ internal readonly struct Meta : IEquatable<Meta>
 				if (table.Relations[j].Type == RelationType.Mtm)
 				{
 					// step 1 - generate physical name
-					var relation = table.Relations[j];
+					Relation relation = table.Relations[j];
 					var metaTable = new Meta(0, (byte)EntityType.Relation, 0, (int)TableType.Mtm, 0L, relation.GetMtmName(), null, null, true);
 					var emptyTable = GetDefaultTable(metaTable);
 					var physicalName = ddlBuilder.GetPhysicalName(emptyTable, schema);
-					var inverseRelation = relation.InverseRelation;
+					Relation inverseRelation = relation.InverseRelation;
 
 					if (!mtm.TryGetValue(physicalName, out var mtmTable))
 					{

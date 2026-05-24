@@ -44,13 +44,22 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Npgsql" />
+	  <None Include="Connection.cs" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageReference Include="Microsoft.DotNet.ILCompiler" />
 		<PackageReference Include="Microsoft.NET.ILLink.Tasks" />
 	</ItemGroup>
 
 	<ItemGroup>
 	  <ProjectReference Include="..\..\Ring\Ring.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Compile Update="Connection.cs">
+	    <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+	  </Compile>
 	</ItemGroup>
 
 </Project>

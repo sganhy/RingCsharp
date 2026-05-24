@@ -1,4 +1,6 @@
-﻿namespace Ring.Schema.Models;
+﻿using Ring.Data;
+
+namespace Ring.Schema.Models;
 
 internal sealed class ConnectionPool
 {

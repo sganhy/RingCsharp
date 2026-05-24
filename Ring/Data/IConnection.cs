@@ -1,7 +1,6 @@
 ﻿using Ring.Data.Models;
-using System.Data;
 
-namespace Ring;
+namespace Ring.Data;
 
 public interface IConnection : IDisposable
 {
