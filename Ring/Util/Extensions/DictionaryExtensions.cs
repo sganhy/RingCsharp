@@ -13,4 +13,27 @@ internal static class DictionaryExtensions
 		// Use struct enumerator for zero-allocation iteration
 		foreach (var kvp in dictionary) dictionary[kvp.Key] = defaultValue;
 	}
+
+	public static int? GetInt32Value<TKey>(this Dictionary<TKey, string> dictionary, TKey key, int? defaultValue=null) where TKey : notnull
+	{
+		// Code size: 47 (0x2f)
+		if (dictionary?.ContainsKey(key) == true)
+		{
+			int? result = int.TryParse(dictionary[key], out var parsedValue) ? parsedValue : null;
+			return result;
+		}
+		return defaultValue;
+	}
+
+	public static string? GetStringValue<TKey>(this Dictionary<TKey, string> dictionary, TKey key, string? defaultValue = null) where TKey : notnull
+	{
+		// Code size: 27 (0x1b)
+		if (dictionary?.ContainsKey(key) == true)
+		{
+			return dictionary[key] ?? defaultValue;
+		}
+		return defaultValue;
+	}
+
+
 }

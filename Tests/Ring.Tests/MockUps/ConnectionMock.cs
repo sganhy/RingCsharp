@@ -7,7 +7,7 @@ namespace Ring.Tests.MockUps;
 
 internal class ConnectionMock : IConnection
 {
-    private readonly int _id;
+    private readonly long _id;
     private ConnectionState _connectionState;
     private DateTime? _lastConnectionTime;
     private DatabaseProvider _databaseProvider;
@@ -21,7 +21,7 @@ internal class ConnectionMock : IConnection
         _connectionString = connectionString;
     }
 
-    public int Id => _id;
+    public long Id => _id;
     public string ConnectionString => _connectionString;
     public DateTime CreationTime => DateTime.Now;
     public DateTime? LastConnectionTime => _lastConnectionTime;

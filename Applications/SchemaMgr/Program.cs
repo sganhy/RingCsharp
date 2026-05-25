@@ -1,5 +1,4 @@
-﻿using Ring;
-using Ring.Schema;
+﻿using Ring.Schema;
 
 namespace SchemaMgr;
 

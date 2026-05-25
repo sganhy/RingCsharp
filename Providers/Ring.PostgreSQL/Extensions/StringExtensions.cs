@@ -1,4 +1,7 @@
-﻿namespace Ring.PostgreSQL.Extensions;
+﻿using Ring.Data.Models;
+using Ring.Schema.Enums;
+
+namespace Ring.PostgreSQL.Extensions;
 
 internal static class StringExtensions
 {
@@ -15,4 +18,20 @@ internal static class StringExtensions
             result[i] = span[i] == 'T' ? ' ' : span[i];
         return new string(result);
     }
+
+	internal static ConnectionParameters ToConnectionParameters(this string value)
+	{
+        var host = string.Empty; 
+		var port = 5432; // default port!
+		var userName = string.Empty;
+		var password = string.Empty;
+		var timeOut = 30000; // 30 seconds
+        var result = new ConnectionParameters(DatabaseProvider.PostgreSql, host, port, userName, password, timeOut);
+		return result;
+	}
+
+	#region private methods
+
+    #endregion 
+
 }

@@ -210,4 +210,28 @@ public class StringExtensionsTest : BaseTest
         Assert.Equal(expectedResult, result);
     }
 
+	[Fact]
+	public void GetConnectionParameters_ConnectionString_DicoParameters()
+	{
+        // arrange 
+        var expectedHost = _faker.Random.String();
+		var connectionString = $"User ID=root;Password=myPassword;Host= {expectedHost};Port=5432;Database =myDataBase;Pooling=true;Min Pool Size=0;Max Pool Size=100;Min Pool Size=3;Connection Lifetime=0;";
+
+		// act 
+		var parameters = StringExtensions.GetConnectionParameters(connectionString, true);
+        var userId = parameters["USER ID"];
+		var password = parameters["PASSWORD"];
+		var minPoolSize = parameters["MIN POOL SIZE"];
+		var host = parameters["HOST"];
+		var connectionLifetime = parameters["CONNECTION LIFETIME"];
+
+		// assert
+		Assert.Equal(9, parameters.Count);
+		Assert.Equal("root", userId);
+		Assert.Equal("myPassword", password);
+		Assert.Equal("3", minPoolSize); // paramter defined twice, last value should be taken!
+		Assert.Equal(expectedHost, host);
+		Assert.Equal("0", connectionLifetime);
+	}
+
 }

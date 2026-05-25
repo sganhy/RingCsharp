@@ -8,7 +8,7 @@ public interface IConnection : IDisposable
 	void BeginTransaction();
 	void Commit();
 	void Rollback();
-	int Id { get; }
+	long Id { get; }
 	string ConnectionString { get; }
 	DateTime CreationTime { get; }
 	DateTime? LastConnectionTime { get; }

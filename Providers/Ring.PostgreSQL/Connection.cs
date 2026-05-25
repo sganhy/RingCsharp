@@ -1,22 +1,50 @@
 ﻿using Ring.Data;
+using Ring.Data.Extensions;
 using Ring.Data.Models;
+using Ring.PostgreSQL.Extensions;
+using System.Net.Sockets;
 
 namespace Ring.PostgreSQL;
 
 public sealed class Connection : IConnection
 {
-	private int _id;
-	public int Id => throw new NotImplementedException();
-	public string ConnectionString => throw new NotImplementedException();
-	public DateTime CreationTime => throw new NotImplementedException();
-	public DateTime? LastConnectionTime => throw new NotImplementedException();
-	public ConnectionState State => throw new NotImplementedException();
+	// interface 
+	private readonly long _id;
+	private readonly string _connectionString;
+	private readonly DateTime _creationTime;
+	private readonly DateTime? _lastConnectionTime;
+	private readonly string _host;
+	private readonly int _port;
+	private readonly ConnectionParameters _initialParameters;
+
+	private ConnectionState _state;
+
+	// tcp connection
+	private readonly int _timeout; // milliseconds
+	private NetworkStream? _stream;
+	
 
 
-	public Connection()
-	{ 
-		
+	public long Id => _id;
+	public string ConnectionString => _connectionString;
+	public DateTime CreationTime => _creationTime;
+	public DateTime? LastConnectionTime => _lastConnectionTime;
+	public ConnectionState State => _state;
+
+	public Connection(string connectionString) : this (connectionString, connectionString.ToConnectionParameters()) {} 
+	internal Connection(string connectionString, ConnectionParameters parameters)
+	{
+		_connectionString = connectionString;
+		_initialParameters = parameters;
+		_id = this.GetId(connectionString);
+		_creationTime = DateTime.Now;
+		_state = ConnectionState.Undefined;
+		_lastConnectionTime = null;
+		_timeout = parameters.TimeOut;
+		_host = parameters.Host;
+		_port = parameters.Port;
 	}
+
 
 	public void BeginTransaction()
 	{
@@ -70,7 +98,32 @@ public sealed class Connection : IConnection
 
 	public void Open()
 	{
-		throw new NotImplementedException();
+		_state = ConnectionState.Connecting;
+		var tcp = new TcpClient();
+		/*
+		if (!tcp.ConnectAsync(Host, Port).Wait(_timeout))
+		{
+			throw new PgOperationalError(
+				$"Connection to {Host}:{Port} timed out after {_timeout} ms.",
+				"08001", "FATAL", "", "");
+		}
+
+		tcp.ReceiveTimeout = _timeout;
+		tcp.SendTimeout = _timeout;
+		_stream = tcp.GetStream();
+
+		try
+		{
+			SendStartup();
+			HandleAuth();
+		}
+		catch
+		{
+			_stream.Close();
+			_stream = null;
+			throw;
+		}
+		*/
 	}
 
 	public Task OpenAsync(CancellationToken cancellationToken)

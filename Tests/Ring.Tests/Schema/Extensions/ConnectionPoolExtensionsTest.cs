@@ -49,7 +49,7 @@ public sealed class ConnectionPoolExtensionsTest : BaseTest
         var pool = new ConnectionPool(_faker.Random.Number(), 10, maxConnectionCount, 0, connectionString);
         pool.Init(new ConnectionMock(1, DatabaseProvider.SqlLite, connectionString));
         var connList = new List<IConnection>();
-        var hashSet = new HashSet<int>(maxConnectionCount*2);
+        var hashSet = new HashSet<long>(maxConnectionCount*2);
 
         for (var i = 0; i < 255; ++i)
         {
@@ -87,7 +87,7 @@ public sealed class ConnectionPoolExtensionsTest : BaseTest
         var connectionString = _faker.Random.String();
         var pool = new ConnectionPool(_faker.Random.Number(), 15, maxConnectionCount, 0, connectionString);
         pool.Init(new ConnectionMock(1, DatabaseProvider.SqlLite, connectionString));
-        var hashSet = new HashSet<int>(maxConnectionCount * 2);
+        var hashSet = new HashSet<long>(maxConnectionCount * 2);
 
         for (var i = 0; i < 15; ++i)
         {
@@ -140,7 +140,7 @@ public sealed class ConnectionPoolExtensionsTest : BaseTest
         var connectionString = _faker.Random.String();
         var pool = new ConnectionPool(_faker.Random.Number(), 15, maxConnectionCount, 0, connectionString);
         pool.Init(new ConnectionMock(1, DatabaseProvider.SqlLite, connectionString));
-        var hashSet = new HashSet<int>(maxConnectionCount * 2);
+        var hashSet = new HashSet<long>(maxConnectionCount * 2);
 
         for (var i = 0; i < 15; ++i)
         {
@@ -165,7 +165,7 @@ public sealed class ConnectionPoolExtensionsTest : BaseTest
         var connectionString = _faker.Random.String();
         var pool = new ConnectionPool(_faker.Random.Number(), 64, maxConnectionCount, 0, connectionString);
         await pool.InitAsync(new ConnectionMock(1, DatabaseProvider.SqlLite, connectionString), cancellationToken: TestContext.Current.CancellationToken);
-        var hashSet = new HashSet<int>(maxConnectionCount * 2);
+        var hashSet = new HashSet<long>(maxConnectionCount * 2);
 
         for (var i = 0; i < 15; ++i)
         {

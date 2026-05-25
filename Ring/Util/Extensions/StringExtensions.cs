@@ -160,6 +160,24 @@ internal static class StringExtensions
 		return true;
 	}
 
+	internal static Dictionary<string, string> GetConnectionParameters(this string value, bool toUpperKey)
+	{
+		// Code size: 140 (0x8c)
+		if (string.IsNullOrWhiteSpace(value)) return new Dictionary<string, string>();
+		var parameters = new ReadOnlySpan<string>(value.Split(';'));
+		var result = new Dictionary<string, string>(parameters.Length*2);
+		foreach (var parameter in parameters)
+		{
+			var parts = parameter.Split('=');
+			if (parts.Length >= 2)
+			{
+				var key = toUpperKey ?  parts[0].Trim().ToUpperInvariant(): parts[0].Trim();
+				result[key] = parts[1].Trim();
+			}
+		}
+		return result;
+	}
+
 	#region private methods 
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
