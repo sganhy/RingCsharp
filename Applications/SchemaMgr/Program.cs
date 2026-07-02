@@ -8,6 +8,13 @@ public static class Program
     {
         // See https://aka.ms/new-console-template for more information
         Console.WriteLine("Hello, World!");
+
+
+		var POSTGRE_CONN_STRING1 = "User ID=postgres; Password=sa;Host=localhost;Port=5432;Database=postgres; Pooling=false;";
+		var connection = new Ring.PostgreSQL.Connection(POSTGRE_CONN_STRING1);
+
+		connection.Open();
+
 		/*
 		Runtime.Start(string.Empty);
 

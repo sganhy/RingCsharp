@@ -27,3 +27,6 @@ Ostinato * 		A persistently repeated pattern beneath changing melody — the sta
 Athanor * 		A self-feeding furnace that maintains constant heat indefinitely — a direct metaphor for zero-downtime continuous operation
 Continuo * 		Basso continuo — the continuous harmonic foundation underlying baroque composition, always present, never stopping
 Velum * 		A thin membranous covering layer — precise, anatomical, unusual
+
+
+* doesn't exist
