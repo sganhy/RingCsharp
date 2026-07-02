@@ -15,6 +15,8 @@ public static class Program
 
 		connection.Open();
 
+		connection.Close();
+
 		/*
 		Runtime.Start(string.Empty);
 

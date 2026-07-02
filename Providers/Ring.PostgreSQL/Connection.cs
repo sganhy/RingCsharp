@@ -27,7 +27,7 @@ public sealed class Connection : IConnection
 	private readonly int _timeout; // milliseconds
 	private NetworkStream _stream;
 	private int _backendPid;
-	private int _backendSecret;
+	private int _backendSecret; 
 
 
 	public long Id => _id;
@@ -110,77 +110,88 @@ public sealed class Connection : IConnection
 		}
 	}
 
-	public Task CloseAsync(CancellationToken cancellationToken)
+	public Task CloseAsync(CancellationToken cancellationToken = default)
 	{
 		return CloseAsyncImpl(cancellationToken);
 	}
-	private Task CloseAsyncImpl(CancellationToken cancellationToken)
-	{
-		return Task.Run(async () =>
-		{
-			// If not open, nothing to do
-			if (_state != ConnectionState.Open && _state != ConnectionState.Connecting)
-			{
-				_state = ConnectionState.Closed;
-				_stream?.Dispose();
-				_stream = null;
-				_backendPid = 0;
-				_backendSecret = 0;
-				return;
-			}
 
+	/// <summary>
+	///     Unlike the previous implementation, this does not wrap itself in
+	///     Task.Run: the underlying I/O (WriteAsync/DisposeAsync) is already
+	///     natively asynchronous, so an extra thread-pool hop just adds
+	///     overhead. Wrapping also had a correctness bug - Task.Run(Func&lt;Task&gt;,
+	///     CancellationToken) can observe the token as already-canceled and
+	///     complete the returned task WITHOUT ever invoking the delegate, so
+	///     a caller who passed an already-canceled token (or one that fired
+	///     right before the call) would leak the stream/socket entirely.
+	///     Here, cancellation can only affect the "send Terminate" write;
+	///     the stream is always disposed and the connection is always left
+	///     in a well-defined state afterwards.
+	/// </summary>
+	private async Task CloseAsyncImpl(CancellationToken cancellationToken)
+	{
+		// If not open, nothing to do beyond releasing any lingering resources
+		if (_state != ConnectionState.Open && _state != ConnectionState.Connecting)
+		{
+			_state = ConnectionState.Closed;
+			await DisposeStreamAsync().ConfigureAwait(false);
+			_backendPid = 0;
+			_backendSecret = 0;
+			return;
+		}
+
+		var canceled = false;
+
+		if (_stream != null && _stream.CanWrite)
+		{
+			var buffer = new byte[1 + 4];
+			buffer[0] = (byte)'X';
+			BinaryPrimitives.WriteInt32BigEndian(buffer.AsSpan(1), 4);
 			try
 			{
-				if (_stream != null && _stream.CanWrite)
-				{
-					var buffer = new byte[1 + 4];
-					buffer[0] = (byte)'X';
-					BinaryPrimitives.WriteInt32BigEndian(buffer.AsSpan(1), 4);
-					try
-					{
-						await _stream.WriteAsync(buffer, 0, buffer.Length, cancellationToken).ConfigureAwait(false);
-					}
-					catch (OperationCanceledException)
-					{
-						throw;
-					}
-					catch
-					{
-						// ignore write failures during close
-					}
-				}
-
-				// Prefer async dispose if available
-				try
-				{
-					if (_stream is IAsyncDisposable asyncDisp)
-					{
-						await asyncDisp.DisposeAsync().ConfigureAwait(false);
-					}
-					else
-					{
-						_stream?.Dispose();
-					}
-				}
-				catch
-				{
-					_stream = null;
-					_state = ConnectionState.Broken;
-					_backendPid = 0;
-					_backendSecret = 0;
-					throw;
-				}
-
-				_stream = null;
-				_backendPid = 0;
-				_backendSecret = 0;
-				_state = ConnectionState.Closed;
+				await _stream.WriteAsync(buffer, cancellationToken).ConfigureAwait(false);
 			}
 			catch (OperationCanceledException)
 			{
-				throw;
+				// Don't bail out here: we still want to release the socket below.
+				// Re-thrown once cleanup has completed.
+				canceled = true;
 			}
-		}, cancellationToken);
+			catch
+			{
+				// Ignore write failures during close (server may already be gone); proceed to dispose.
+			}
+		}
+
+		try
+		{
+			await DisposeStreamAsync().ConfigureAwait(false);
+		}
+		catch
+		{
+			// If disposing failed, mark connection as broken
+			_stream = null;
+			_state = ConnectionState.Broken;
+			_backendPid = 0;
+			_backendSecret = 0;
+			throw;
+		}
+
+		_backendPid = 0;
+		_backendSecret = 0;
+		_state = ConnectionState.Closed;
+
+		if (canceled)
+			throw new OperationCanceledException(cancellationToken);
+	}
+
+	private async ValueTask DisposeStreamAsync()
+	{
+		if (_stream is { } stream)
+		{
+			_stream = null;
+			await stream.DisposeAsync().ConfigureAwait(false);
+		}
 	}
 
 	public void Commit()
@@ -257,8 +268,8 @@ public sealed class Connection : IConnection
 				// Startup and authentication may perform network I/O; run on threadpool to avoid blocking
 				SendStartup();
 				var (pid, secret) = await Task.Run(() => AuthenticationHelper.HandleAuthenticationAsync(_stream, _initialParameters.UserName, _initialParameters.Password), cancellationToken).ConfigureAwait(false);
-				_backendPid = pid??0;
-				_backendSecret = secret??0;
+				_backendPid = pid ?? 0;
+				_backendSecret = secret ?? 0;
 
 				_state = ConnectionState.Open;
 			}
