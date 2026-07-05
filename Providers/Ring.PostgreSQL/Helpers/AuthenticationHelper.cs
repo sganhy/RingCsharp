@@ -156,7 +156,7 @@ internal static class AuthenticationHelper
 			throw ParseErrorResponse(body);
 	}
 
-	private static PgOperationalError ParseErrorResponse(byte[] body)
+	internal static PgOperationalError ParseErrorResponse(byte[] body)
 	{
 		string? severity = null, sqlState = null, message = null, detail = null, hint = null;
 		var offset = 0;

@@ -59,7 +59,9 @@ internal class ConnectionMock : IConnection
         throw new NotImplementedException();
     }
 
-    public void Open()
+    public bool IsConnectionAlive() => true;
+
+	public void Open()
     {
         _lastConnectionTime = DateTime.Now;
         _connectionState = ConnectionState.Open;

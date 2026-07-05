@@ -14,7 +14,16 @@ public static class Program
 		var connection = new Ring.PostgreSQL.Connection(POSTGRE_CONN_STRING1);
 
 		connection.Open();
+		//connection.Execute();
+		if (connection.IsConnectionAlive()==false)
+		{
+			Console.WriteLine("connection déconne");
+		}
 
+		connection.Close();
+
+		connection.Open(); // reopen test 
+		//connection.Execute(new Ring.PostgreSQL.RetrieveQuery("SELECT * FROM pg_catalog.pg_tables;"));
 		connection.Close();
 
 		/*

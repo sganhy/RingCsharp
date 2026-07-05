@@ -10,6 +10,7 @@ public interface IConnection : IDisposable
 	void Rollback();
 	long Id { get; }
 	string ConnectionString { get; }
+	bool IsConnectionAlive();
 	DateTime CreationTime { get; }
 	DateTime? LastConnectionTime { get; }
 	ConnectionState State { get; }
