@@ -1,4 +1,6 @@
-﻿using Ring.PostgreSQL.Enums;
+﻿using Ring.Data.Enums;
+using Ring.Data.Models;
+using Ring.PostgreSQL.Enums;
 using System.Buffers.Binary;
 using System.Net.Sockets;
 using System.Text;
@@ -42,7 +44,7 @@ internal static class NetworkStreamExtensions
 		return (code, body);
 	}
 
-	internal static async Task<(int? BackendPid, int? BackendSecret)> WaitUntilReadyAsync(this NetworkStream stream, CancellationToken cancellationToken = default)
+	internal static async ValueTask<(int? BackendPid, int? BackendSecret)> WaitUntilReadyAsync(this NetworkStream stream, CancellationToken cancellationToken = default)
 	{
 		int? pid = null;
 		int? secret = null;
@@ -72,7 +74,7 @@ internal static class NetworkStreamExtensions
 		}
 	}
 
-	internal static async Task SendSASLResponseAsync(this NetworkStream stream, byte[] data, CancellationToken cancellationToken = default)
+	internal static async ValueTask SendSASLResponseAsync(this NetworkStream stream, byte[] data, CancellationToken cancellationToken = default)
 	{
 		var length = 4 + data.Length; // 4 bytes for the length field + data
 		var buffer = new byte[1 + length];
@@ -84,7 +86,7 @@ internal static class NetworkStreamExtensions
 		await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
 	}
 
-	internal static async Task SendPasswordMessageAsync(this NetworkStream stream, string password, CancellationToken cancellationToken = default)
+	internal static async ValueTask SendPasswordMessageAsync(this NetworkStream stream, string password, CancellationToken cancellationToken = default)
 	{
 		var length = 4 + Encoding.UTF8.GetByteCount(password) + 1;
 		var buffer = new byte[1 + length];
@@ -97,7 +99,7 @@ internal static class NetworkStreamExtensions
 		await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
 	}
 
-	internal static async Task SendSASLInitialResponseAsync(this NetworkStream stream, string mechanism, byte[] data, CancellationToken cancellationToken = default)
+	internal static async ValueTask SendSASLInitialResponseAsync(this NetworkStream stream, string mechanism, byte[] data, CancellationToken cancellationToken = default)
 	{
 		// Code size: 79 (0x4f) - no virtual calls
 		var mechanismLength = Encoding.UTF8.GetByteCount(mechanism);
@@ -115,5 +117,51 @@ internal static class NetworkStreamExtensions
 		await stream.WriteAsync(buffer, cancellationToken).ConfigureAwait(false);
 		await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
 	}
+
+	/// <summary>
+	///     Send the StartupMessage: Int32 protocol version followed by
+	///     null-terminated name/value pairs, terminated by a zero byte.
+	///     Unlike every other frontend message, this one has no leading
+	///     type byte.
+	/// </summary>
+	internal static async ValueTask SendStartupAsync(this NetworkStream stream, ConnectionParameters connParameters, CancellationToken cancellationToken = default)
+	{
+		//TODO manage multiple protocol versions, for now we only support 3.0
+		//TODO manage SSL negotiation, for now we only support non-SSL connections
+		//TODO manage multiple encodings, for now we only support UTF-8
+		const int ProtocolVersion3 = 0x00030000;
+
+		var parameters = new List<(string Name, string Value)>(3)
+		{
+			(connParameters.GetParameterName(ConnectionParametersType.UserName), connParameters.UserName),
+			(connParameters.GetParameterName(ConnectionParametersType.ClientEncoding), connParameters.ClientEncoding),
+		};
+		if (!string.IsNullOrEmpty(connParameters.DatabaseName))
+			parameters.Add((connParameters.GetParameterName(ConnectionParametersType.DataBase), connParameters.DatabaseName));
+		if (!string.IsNullOrEmpty(connParameters.ApplicationName))
+			parameters.Add((connParameters.GetParameterName(ConnectionParametersType.ApplicationName), connParameters.ApplicationName));
+
+		var length = 4 + 4 + 1; // length field + protocol version + trailing terminator
+		foreach (var (name, value) in parameters) length += Encoding.UTF8.GetByteCount(name) + 1 + Encoding.UTF8.GetByteCount(value) + 1;
+
+		var buffer = new byte[length];
+
+		BinaryPrimitives.WriteInt32BigEndian(buffer.AsSpan(), length);
+		BinaryPrimitives.WriteInt32BigEndian(buffer.AsSpan()[4..], ProtocolVersion3);
+
+		var offset = 8;
+		foreach (var (name, value) in parameters)
+		{
+			offset += Encoding.UTF8.GetBytes(name, buffer.AsSpan()[offset..]);
+			buffer[offset++] = 0;
+			offset += Encoding.UTF8.GetBytes(value, buffer.AsSpan()[offset..]);
+			buffer[offset++] = 0;
+		}
+		buffer[offset] = 0; // trailing terminator
+
+		await stream.WriteAsync(buffer, cancellationToken).ConfigureAwait(false);
+		await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
+	}
+
 
 }

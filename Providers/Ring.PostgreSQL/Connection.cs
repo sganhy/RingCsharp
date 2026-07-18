@@ -4,15 +4,21 @@ using Ring.Data.Models;
 using Ring.PostgreSQL.Exceptions;
 using Ring.PostgreSQL.Extensions;
 using Ring.PostgreSQL.Helpers;
+using Ring.Util.Helpers;
 using System.Buffers.Binary;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.Net;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace Ring.PostgreSQL;
 
 public sealed class Connection : IConnection
 {
+	private static readonly NetworkStream ClosedStream = CreateClosedStream();
+
 	// Simple Query protocol message type bytes. Not all of these exist on
 	// BackendMessageCode (that enum currently only covers the authentication subset), so these are declared locally rather than guessed onto the enum.
 	private const byte MsgRowDescription = (byte)'T';
@@ -68,15 +74,12 @@ public sealed class Connection : IConnection
 	private int _backendPid;
 	private int _backendSecret;
 
-	private static readonly NetworkStream ClosedStream = CreateClosedStream();
-
-
 	public long Id => _id;
 	public string ConnectionString => _connectionString;
 	public DateTime CreationTime => _creationTime;
 	public DateTime? LastConnectionTime => _lastConnectionTime;
 	public ConnectionState State => _state;
-	public Connection(string connectionString) : this(connectionString, connectionString.ToConnectionParameters()) { }
+	public Connection(string connectionString, string clientEncoding) : this(connectionString, connectionString.ToConnectionParameters(clientEncoding)) { }
 	internal Connection(string connectionString, ConnectionParameters parameters)
 	{
 		_connectionString = connectionString;
@@ -671,23 +674,21 @@ public sealed class Connection : IConnection
 			if (_state == ConnectionState.Open) throw new InvalidOperationException("The connection is already open.");
 
 			_state = ConnectionState.Connecting;
-
 			try
 			{
 				// Run the synchronous connect on the threadpool to avoid blocking the caller
 				var socket = await Task.Run(() => SocketHelper.ConnectSocket(_host, _port, _timeout), cancellationToken).ConfigureAwait(false);
-
 				socket.NoDelay = true;
 
 				_stream = new NetworkStream(socket, ownsSocket: true);
 				_socket = socket;
 
 				// Startup and authentication may perform network I/O; run on threadpool to avoid blocking
-				SendStartup();
+				await _stream.SendStartupAsync(_initialParameters, cancellationToken).ConfigureAwait(false);
+
 				var (pid, secret) = await Task.Run(() => AuthenticationHelper.HandleAuthenticationAsync(_stream, _initialParameters.UserName, _initialParameters.Password), cancellationToken).ConfigureAwait(false);
 				_backendPid = pid ?? 0;
 				_backendSecret = secret ?? 0;
-
 				_state = ConnectionState.Open;
 			}
 			catch (OperationCanceledException)
@@ -798,10 +799,21 @@ public sealed class Connection : IConnection
 	///     Synchronously reads one length-prefixed backend message:
 	///     1-byte type code + Int32 length (self-inclusive) + body.
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static (byte Code, byte[] Body) ReadMessage(Stream stream)
 	{
-		Span<byte> header = stackalloc byte[5];
-		ReadFully(stream, header);
+		// Code size: 160 (0xa0)
+		const int headerSize = 5;
+		Span<byte> header = stackalloc byte[headerSize];
+		var read = 0;
+
+		// ReadFully(stream, header);
+		while (read < headerSize)
+		{
+			var n = stream.Read(header[read..]);
+			if (n == 0) ThrowConnectionWasClosedByServer();
+			read += n;
+		}
 
 		var code = header[0];
 		var length = BinaryPrimitives.ReadInt32BigEndian(header[1..]);
@@ -811,75 +823,51 @@ public sealed class Connection : IConnection
 			return (code, Array.Empty<byte>());
 
 		var body = new byte[bodyLength];
-		ReadFully(stream, body);
+		var bodySpan = body.AsSpan();
+
+		// ReadFully(stream, body);
+		read = 0;
+		while (read < bodyLength)
+		{
+			var n = stream.Read(bodySpan[read..]);
+			if (n == 0) ThrowConnectionWasClosedByServer();
+			read += n;
+		}
 		return (code, body);
 	}
 
-	private static void ReadFully(Stream stream, Span<byte> buffer)
-	{
-		var read = 0;
-		while (read < buffer.Length)
-		{
-			var n = stream.Read(buffer[read..]);
-			if (n == 0)
-				throw new EndOfStreamException("The connection was closed by the server while reading a message.");
-			read += n;
-		}
-	}
-
-
-	/// <summary>
-	///     Send the StartupMessage: Int32 protocol version followed by
-	///     null-terminated name/value pairs, terminated by a zero byte.
-	///     Unlike every other frontend message, this one has no leading
-	///     type byte.
-	/// </summary>
-	private void SendStartup()
-	{
-		if (string.IsNullOrEmpty(_initialParameters.UserName))
-			throw new InvalidOperationException("Connection string does not specify a username.");
-
-		const int ProtocolVersion3 = 0x00030000;
-
-		var parameters = new List<(string Name, string Value)>(3)
-		{
-			("user", _initialParameters.UserName),
-			("client_encoding", "UTF8"),
-		};
-		if (!string.IsNullOrEmpty(_initialParameters.DatabaseName))
-			parameters.Add(("database", _initialParameters.DatabaseName));
-
-		var length = 4 + 4 + 1; // length field + protocol version + trailing terminator
-		foreach (var (name, value) in parameters)
-			length += Encoding.UTF8.GetByteCount(name) + 1 + Encoding.UTF8.GetByteCount(value) + 1;
-
-		var buffer = new byte[length];
-		var span = buffer.AsSpan();
-
-		BinaryPrimitives.WriteInt32BigEndian(span, length);
-		BinaryPrimitives.WriteInt32BigEndian(span[4..], ProtocolVersion3);
-
-		var offset = 8;
-		foreach (var (name, value) in parameters)
-		{
-			offset += Encoding.UTF8.GetBytes(name, span[offset..]);
-			buffer[offset++] = 0;
-			offset += Encoding.UTF8.GetBytes(value, span[offset..]);
-			buffer[offset++] = 0;
-		}
-		buffer[offset] = 0; // trailing terminator
-
-		_stream.Write(buffer);
-		_stream.Flush();
-	}
-
+	// NetworkStream's constructor requires a genuinely connected Stream-type
+	// socket (it throws IOException "not connected on non-connected sockets"
+	// otherwise), so a sentinel can't be built from a bare, never-connected
+	// Socket. Instead this spins up a throwaway TCP loopback pair, wraps one
+	// end in a NetworkStream, then disposes everything immediately. What's
+	// left is a real, fully-disposed NetworkStream: never connected to
+	// anything meaningful, and any accidental read/write on it now throws
+	// ObjectDisposedException rather than the misleading "not connected" error.
 	private static NetworkStream CreateClosedStream()
 	{
-		var ipAddr = new AddressFamily();
-		var socket = new Socket(ipAddr, SocketType.Stream, ProtocolType.Tcp);
-		socket.Dispose();
-		return new NetworkStream(socket);
+		// Code size: 124 (0x7c)
+		using var listener = new TcpListener(IPAddress.Loopback, 0);
+		listener.Start();
+		try
+		{
+			using var client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+			client.Connect(IPAddress.Loopback, ((IPEndPoint)listener.LocalEndpoint).Port);
+			using var server = listener.AcceptSocket();
+			using var stream = new NetworkStream(client, ownsSocket: true);
+			return stream;
+		}
+		finally
+		{
+			listener.Stop();
+		}
 	}
+
+	// exceptions 
+	[MethodImpl(MethodImplOptions.NoInlining)]
+	[DoesNotReturn]
+	private static void ThrowConnectionWasClosedByServer() =>
+		throw new EndOfStreamException("The connection was closed by the server while reading a message.");
 
 	#endregion
 

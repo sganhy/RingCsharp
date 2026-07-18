@@ -11,7 +11,7 @@ public static class Program
 
 
 		var POSTGRE_CONN_STRING1 = "User ID=postgres; Password=sa;Host=localhost;Port=5432;Database=postgres; Pooling=false;";
-		var connection = new Ring.PostgreSQL.Connection(POSTGRE_CONN_STRING1);
+		var connection = new Ring.PostgreSQL.Connection(POSTGRE_CONN_STRING1, "UTF8");
 
 		connection.Open();
 		//connection.Execute();
