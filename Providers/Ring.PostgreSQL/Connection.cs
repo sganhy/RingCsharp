@@ -1,10 +1,9 @@
-﻿using Ring.Data;
+using Ring.Data;
 using Ring.Data.Extensions;
 using Ring.Data.Models;
 using Ring.PostgreSQL.Exceptions;
 using Ring.PostgreSQL.Extensions;
 using Ring.PostgreSQL.Helpers;
-using Ring.Util.Helpers;
 using System.Buffers.Binary;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
@@ -39,12 +38,11 @@ public sealed class Connection : IConnection
 
 	// interface 
 	private readonly long _id;
-	private readonly string _connectionString;
 	private readonly DateTime _creationTime;
 	private readonly DateTime? _lastConnectionTime;
 	private readonly string _host;
 	private readonly int _port;
-	private readonly ConnectionParameters _initialParameters;
+	private readonly ConnectionParameters _parameters;
 
 	private ConnectionState _state;
 
@@ -56,6 +54,11 @@ public sealed class Connection : IConnection
 
 	// tcp connection
 	private readonly int _timeout; // milliseconds
+
+
+	private readonly int _sqlSendBufferSize;
+	private readonly byte[] _sqlSendBuffer;
+
 
 	// Never null: defaults to ClosedStream so every code path that forgot to
 	// check _state first hits a well-defined (if slightly odd) stream state
@@ -75,22 +78,30 @@ public sealed class Connection : IConnection
 	private int _backendSecret;
 
 	public long Id => _id;
-	public string ConnectionString => _connectionString;
 	public DateTime CreationTime => _creationTime;
 	public DateTime? LastConnectionTime => _lastConnectionTime;
 	public ConnectionState State => _state;
-	public Connection(string connectionString, string clientEncoding) : this(connectionString, connectionString.ToConnectionParameters(clientEncoding)) { }
-	internal Connection(string connectionString, ConnectionParameters parameters)
+
+	// build ConnectionParameters from connection string
+	public Connection(string connectionString) : this(connectionString.ToConnectionParameters()) { }
+	
+	internal Connection(ConnectionParameters parameters)
 	{
-		_connectionString = connectionString;
-		_initialParameters = parameters;
-		_id = this.GetId(connectionString);
+		_parameters = parameters;
+		_id = this.GetId(parameters.GetHashCode());
 		_creationTime = DateTime.Now;
 		_state = ConnectionState.Undefined;
 		_lastConnectionTime = null;
 		_timeout = parameters.TimeOut;
 		_host = parameters.Host;
 		_port = parameters.Port;
+		_sqlSendBufferSize = parameters.SqlSendBufferSize;
+		if (_sqlSendBufferSize > 0)
+		{
+			_sqlSendBuffer = new byte[_sqlSendBufferSize];
+			_sqlSendBuffer[0] = (byte)'Q';
+		}
+		else _sqlSendBuffer = Array.Empty<byte>();
 	}
 
 
@@ -224,11 +235,8 @@ public sealed class Connection : IConnection
 		}
 	}
 
-	public IConnection CreateInstance(int id)
-	{
-		throw new NotImplementedException();
-	}
-
+	public IConnection CreateInstance(int id, int sqlSendBufferSize) => new Connection(_parameters.Set(id, sqlSendBufferSize));
+	
 	public void Dispose()
 	{
 		throw new NotImplementedException();
@@ -243,8 +251,6 @@ public sealed class Connection : IConnection
 		return Execute(retrieveQuery);
 	}
 #endif
-
-
 
 	public string?[] Execute(in RetrieveQuery query)
 	{
@@ -266,7 +272,7 @@ public sealed class Connection : IConnection
 
 		try
 		{
-			SendQuery("SELECT * FROM pg_catalog.pg_tables;");
+			SendQuery(Encoding.UTF8.GetBytes("SELECT * FROM pg_catalog.pg_tables;"));
 			return ReadRetrieveResults();
 		}
 		catch (PgOperationalError)
@@ -284,39 +290,6 @@ public sealed class Connection : IConnection
 		}
 	}
 
-	/// <summary>
-	///     Executes <paramref name="sql"/> using the Extended Query protocol
-	///     (Parse/Bind/Execute/Sync) with bind variables, instead of the
-	///     Simple Query protocol used by <see cref="Execute(in RetrieveQuery)"/>.
-	///     Placeholders in the SQL text are referenced positionally as
-	///     $1, $2, ... matching the order of <paramref name="parameters"/>.
-	///     Unlike Simple Query, parameter values are never interpolated into
-	///     the SQL text, so this is the safe way to pass user-supplied values.
-	/// </summary>
-	public string?[] Execute(string sql, params object?[] parameters)
-	{
-		if (_state != ConnectionState.Open)
-			throw new InvalidOperationException("The connection is not open.");
-
-		try
-		{
-			SendExtendedQuery(sql, parameters);
-			return ReadRetrieveResults();
-		}
-		catch (PgOperationalError)
-		{
-			// Server-side error (bad SQL, constraint violation, etc.); the
-			// connection itself is still usable for subsequent commands.
-			throw;
-		}
-		catch
-		{
-			// Anything else (I/O failure, protocol desync) leaves the stream
-			// in an unknown state - don't let the connection be reused as-is.
-			_state = ConnectionState.Broken;
-			throw;
-		}
-	}
 
 	public long Execute(in AlterQuery query)
 	{
@@ -347,7 +320,7 @@ public sealed class Connection : IConnection
 		OpenAsyncImpl(CancellationToken.None).GetAwaiter().GetResult();
 	}
 
-	public int ProviderId() => (int)_initialParameters.DatabaseProvider;
+	public int ProviderId() => (int)_parameters.DatabaseProvider;
 
 	public void Rollback()
 	{
@@ -395,7 +368,7 @@ public sealed class Connection : IConnection
 	/// </summary>
 	private void SendSimpleCommand(string sql)
 	{
-		SendQuery(sql);
+		SendQuery(Encoding.UTF8.GetBytes(sql));
 		DrainToReadyForQuery();
 	}
 
@@ -446,17 +419,39 @@ public sealed class Connection : IConnection
 	///     regardless of column type, which is what makes flattening every
 	///     value straight to string safe here.
 	/// </summary>
-	private void SendQuery(string sql)
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private void SendQuery(byte[] sqlBytes)
 	{
-		var sqlBytes = Encoding.UTF8.GetBytes(sql);
-		var length = 4 + sqlBytes.Length + 1; // length field + query text + null terminator
-		var buffer = new byte[1 + length];
-		buffer[0] = (byte)'Q';
-		BinaryPrimitives.WriteInt32BigEndian(buffer.AsSpan(1), length);
-		sqlBytes.CopyTo(buffer.AsSpan(5));
-		// buffer[^1] is already 0 (null terminator) - byte[] is zero-initialized
+		// Code size: 250 (0xfa)
+		// type + length + query + null terminator
+		var messageLength = 1 + 4 + sqlBytes.Length + 1;
 
-		_stream.Write(buffer);
+		if (messageLength < 128)
+		{
+			// case 1: very short query, small enough to fit on the stack.
+			Span<byte> buffer = stackalloc byte[messageLength];
+			buffer[0] = (byte)'Q';
+			BinaryPrimitives.WriteInt32BigEndian(buffer.Slice(1, 4), messageLength - 1);
+			sqlBytes.CopyTo(buffer.Slice(5));
+			_stream.Write(buffer);
+		}
+		else if (messageLength <= _sqlSendBufferSize)
+		{
+			// case 2: query fits in the preallocated send buffer.
+			BinaryPrimitives.WriteInt32BigEndian(_sqlSendBuffer.AsSpan(1,4), messageLength-1);
+			sqlBytes.CopyTo(_sqlSendBuffer.AsSpan(5));
+			_sqlSendBuffer[messageLength-1] = 0; // null terminator
+			_stream.Write(_sqlSendBuffer.AsSpan(0, messageLength));
+		}
+		else
+		{
+			// case 3: query is too large for the preallocated send buffer.	
+			var buffer = new byte[messageLength];
+			buffer[0] = (byte)'Q';
+			BinaryPrimitives.WriteInt32BigEndian(buffer.AsSpan(1, 4), messageLength - 1);
+			sqlBytes.CopyTo(buffer.AsSpan(5));
+			_stream.Write(buffer);
+		}
 		_stream.Flush();
 	}
 
@@ -684,9 +679,9 @@ public sealed class Connection : IConnection
 				_socket = socket;
 
 				// Startup and authentication may perform network I/O; run on threadpool to avoid blocking
-				await _stream.SendStartupAsync(_initialParameters, cancellationToken).ConfigureAwait(false);
+				await _stream.SendStartupAsync(_parameters, cancellationToken).ConfigureAwait(false);
 
-				var (pid, secret) = await Task.Run(() => AuthenticationHelper.HandleAuthenticationAsync(_stream, _initialParameters.UserName, _initialParameters.Password), cancellationToken).ConfigureAwait(false);
+				var (pid, secret) = await Task.Run(() => AuthenticationHelper.HandleAuthenticationAsync(_stream, _parameters.UserName, _parameters.Password), cancellationToken).ConfigureAwait(false);
 				_backendPid = pid ?? 0;
 				_backendSecret = secret ?? 0;
 				_state = ConnectionState.Open;
@@ -763,8 +758,7 @@ public sealed class Connection : IConnection
 		_backendSecret = 0;
 		_state = ConnectionState.Closed;
 
-		if (canceled)
-			throw new OperationCanceledException(cancellationToken);
+		if (canceled) throw new OperationCanceledException(cancellationToken);
 	}
 
 
@@ -822,8 +816,8 @@ public sealed class Connection : IConnection
 		if (bodyLength <= 0)
 			return (code, Array.Empty<byte>());
 
-		var body = new byte[bodyLength];
-		var bodySpan = body.AsSpan();
+		var body = new byte[bodyLength]; // heap allocation
+		var bodySpan = new Span<byte>(body);
 
 		// ReadFully(stream, body);
 		read = 0;
@@ -866,8 +860,7 @@ public sealed class Connection : IConnection
 	// exceptions 
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
-	private static void ThrowConnectionWasClosedByServer() =>
-		throw new EndOfStreamException("The connection was closed by the server while reading a message.");
+	private static void ThrowConnectionWasClosedByServer() => throw new EndOfStreamException("The connection was closed by the server while reading a message.");
 
 	#endregion
 

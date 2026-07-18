@@ -9,7 +9,6 @@ public interface IConnection : IDisposable
 	void Commit();
 	void Rollback();
 	long Id { get; }
-	string ConnectionString { get; }
 	bool IsConnectionAlive();
 	DateTime CreationTime { get; }
 	DateTime? LastConnectionTime { get; }
@@ -18,7 +17,7 @@ public interface IConnection : IDisposable
 	Task OpenAsync(CancellationToken cancellationToken);
 	void Close();
 	Task CloseAsync(CancellationToken cancellationToken);
-	IConnection CreateInstance(int id);
+	IConnection CreateInstance(int id, int sqlSendBufferSize);
 	string?[] Execute(in RetrieveQuery query);
 	long Execute(in AlterQuery query);
 	long Execute(in SaveQuery query);

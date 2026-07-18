@@ -1,4 +1,6 @@
-﻿using Ring.Schema;
+﻿using Ring.Data.Models;
+using Ring.PostgreSQL;
+using Ring.Schema;
 
 namespace SchemaMgr;
 
@@ -11,10 +13,13 @@ public static class Program
 
 
 		var POSTGRE_CONN_STRING1 = "User ID=postgres; Password=sa;Host=localhost;Port=5432;Database=postgres; Pooling=false;";
-		var connection = new Ring.PostgreSQL.Connection(POSTGRE_CONN_STRING1, "UTF8");
+		var connection2 = new Ring.PostgreSQL.Connection(POSTGRE_CONN_STRING1);
+
+		var connection = (Connection)connection2.CreateInstance(3, 1024);
+		//var connection = connection2;
 
 		connection.Open();
-		//connection.Execute();
+		connection.Execute();
 		if (connection.IsConnectionAlive()==false)
 		{
 			Console.WriteLine("connection déconne");

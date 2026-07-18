@@ -60,6 +60,15 @@ internal static class HashCodeExtensions
 		}			
 	}
 
+	internal static void AddConnParameter(this ref HashCode hashCode, ConnectionParameters parameters)
+	{
+		hashCode.Add(parameters.Host);
+		hashCode.Add(parameters.Port);
+		hashCode.Add(parameters.DatabaseName);
+		hashCode.Add(parameters.UserName);
+		hashCode.Add(parameters.ApplicationName);
+	}
+
 	internal static void AddColumn(this ref HashCode hashCode, Column column)
 	{
 		hashCode.Add(column.Id);

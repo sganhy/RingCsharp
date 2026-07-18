@@ -1,4 +1,5 @@
-﻿using Ring.Schema.Enums;
+﻿using Ring.Data.Extensions;
+using Ring.Schema.Enums;
 
 namespace Ring.Data.Models;
 
@@ -13,8 +14,9 @@ internal sealed class ConnectionParameters
 	internal readonly string ApplicationName;
 	internal readonly string ClientEncoding;
 	internal readonly int TimeOut;
+	internal readonly int SqlSendBufferSize;
 
-	internal ConnectionParameters(DatabaseProvider databaseProvider, string host, string databaseName, int port, string userName, string password, int timeOut, string applicationName, string clientEncoding)
+	internal ConnectionParameters(DatabaseProvider databaseProvider, string host, string databaseName, int port, string userName, string password, int timeOut, string applicationName, string clientEncoding, int sqlSendBufferSize)
 	{
 		Host = host;
 		Port = port;
@@ -25,5 +27,9 @@ internal sealed class ConnectionParameters
 		ApplicationName = applicationName;
 		ClientEncoding = clientEncoding;
 		TimeOut = timeOut;
+		SqlSendBufferSize = sqlSendBufferSize;
 	}
+
+	public override int GetHashCode() => this.Hash();
+
 }

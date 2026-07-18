@@ -8,6 +8,7 @@ namespace Ring.Schema.Extensions;
 
 internal static class ConnectionPoolExtensions
 {
+	private const int SqlSendBufferSize = 1024;
 	private static int _connectionPoolId;
 
 	internal static int GetId(this ConnectionPool? _) => Interlocked.Increment(ref _connectionPoolId); // Code size: 11 (0xb) - first ConnectionPool id is equal to 1
@@ -156,7 +157,7 @@ internal static class ConnectionPoolExtensions
 		// bigger pool ?
 		for (; i < minPoolSize; ++i)
 		{
-			var conn = initialConnection?.CreateInstance(i+1);
+			var conn = initialConnection?.CreateInstance(i+1, SqlSendBufferSize);
 			conn?.Open();
 			newPool.Connections[i] = conn;
 		}
@@ -190,7 +191,7 @@ internal static class ConnectionPoolExtensions
 		var connection = connectionPool.Connections[0];
 		if (connection is not null)
 		{
-			var newConnection = connection.CreateInstance(id);
+			var newConnection = connection.CreateInstance(id, SqlSendBufferSize);
 			newConnection.Open();
 			return newConnection;
 		}
@@ -212,7 +213,7 @@ internal static class ConnectionPoolExtensions
 			case DatabaseProvider.SqlLite:
 			case DatabaseProvider.Oracle:
 			case DatabaseProvider.PostgreSql:
-				for (var i = 0; i < minPoolSize; ++i) connectionPool.Connections[i] = initialConnection.CreateInstance(i + 1);
+				for (var i = 0; i < minPoolSize; ++i) connectionPool.Connections[i] = initialConnection.CreateInstance(i + 1, SqlSendBufferSize);
 
 				connectionPool.ConnectionCount = minPoolSize;
 				connectionPool.CreationCount = minPoolSize;

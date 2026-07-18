@@ -15,10 +15,10 @@ public sealed class IConnectionExtensionsTest: BaseTest
 	internal void GetId_RandomConnectionString_DifferentIds()
 	{
 		// arrange 
-		var connectionString1 = "1";
-		var connectionString2 = "2";
-		IConnection conn1 = new ConnectionMock(1,DatabaseProvider.Oracle, connectionString1);
-		IConnection conn2 = new ConnectionMock(1,DatabaseProvider.MySql, connectionString2);
+		var connectionString1 = 1;
+		var connectionString2 = 2;
+		IConnection conn1 = new ConnectionMock(1,DatabaseProvider.Oracle, connectionString1.ToString());
+		IConnection conn2 = new ConnectionMock(1,DatabaseProvider.MySql, connectionString2.ToString());
 
 		// act 
 		var result1 = IConnectionExtensions.GetId(conn1, connectionString1); // 1 

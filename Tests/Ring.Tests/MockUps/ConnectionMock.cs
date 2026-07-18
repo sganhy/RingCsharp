@@ -36,7 +36,7 @@ internal class ConnectionMock : IConnection
         });
 
     public void Commit() => Expression.Empty();
-    public IConnection CreateInstance(int id) => new ConnectionMock(id, _databaseProvider, _connectionString);
+    public IConnection CreateInstance(int id, int sqlSendBufferSize) => new ConnectionMock(id, _databaseProvider, _connectionString);
     public void Dispose() => Expression.Empty();
 
     public string?[] Execute(in RetrieveQuery query)
