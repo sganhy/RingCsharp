@@ -629,6 +629,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	/// <summary>
 	/// 	Load Table.RecordIndexes[] & Table.Columns[]
 	/// </summary>
+	[SkipLocalsInit]
 	private static void LoadColumns(Table table, ReadOnlySpan<Meta> tableItems, int physRelationCount, IDdlBuilder ddlBuilder)
 	{
 		// Code size: 820 (0x334)

@@ -55,7 +55,7 @@ public sealed class Connection : IConnection
 	// tcp connection
 	private readonly int _timeout; // milliseconds
 
-
+	private readonly Encoding _encoding;
 	private readonly int _sqlSendBufferSize;
 	private readonly byte[] _sqlSendBuffer;
 
@@ -95,6 +95,7 @@ public sealed class Connection : IConnection
 		_timeout = parameters.TimeOut;
 		_host = parameters.Host;
 		_port = parameters.Port;
+		_encoding = Encoding.GetEncoding(parameters.ClientEncoding);
 		_sqlSendBufferSize = parameters.SqlSendBufferSize;
 		if (_sqlSendBufferSize > 0)
 		{
@@ -272,7 +273,7 @@ public sealed class Connection : IConnection
 
 		try
 		{
-			SendQuery(Encoding.UTF8.GetBytes("SELECT * FROM pg_catalog.pg_tables;"));
+			SendQuery("SELECT * FROM pg_catalog.pg_tables;");
 			return ReadRetrieveResults();
 		}
 		catch (PgOperationalError)
@@ -368,7 +369,7 @@ public sealed class Connection : IConnection
 	/// </summary>
 	private void SendSimpleCommand(string sql)
 	{
-		SendQuery(Encoding.UTF8.GetBytes(sql));
+		SendQuery(sql.AsSpan());
 		DrainToReadyForQuery();
 	}
 
@@ -419,40 +420,47 @@ public sealed class Connection : IConnection
 	///     regardless of column type, which is what makes flattening every
 	///     value straight to string safe here.
 	/// </summary>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private void SendQuery(byte[] sqlBytes)
+	[SkipLocalsInit]
+	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
+	private void SendQuery(ReadOnlySpan<char> sql)
 	{
-		// Code size: 250 (0xfa)
-		// type + length + query + null terminator
-		var messageLength = 1 + 4 + sqlBytes.Length + 1;
+		// Code size: 331 (0x14b)
+		// Exact byte count either way - see GetSqlByteCount.
+		var encoding = _encoding;
+		var stream = _stream;
 
-		if (messageLength < 128)
+		// type + length + query + null terminator
+		var messageLength = 1 + 4 + encoding.GetByteCount(sql) + 1;
+
+		if (messageLength <= 128)
 		{
 			// case 1: very short query, small enough to fit on the stack.
 			Span<byte> buffer = stackalloc byte[messageLength];
 			buffer[0] = (byte)'Q';
 			BinaryPrimitives.WriteInt32BigEndian(buffer.Slice(1, 4), messageLength - 1);
-			sqlBytes.CopyTo(buffer.Slice(5));
-			_stream.Write(buffer);
+			encoding.GetBytes(sql, buffer[5..^1]);
+			buffer[^1] = 0; // null terminator
+			stream.Write(buffer);
 		}
 		else if (messageLength <= _sqlSendBufferSize)
 		{
 			// case 2: query fits in the preallocated send buffer.
-			BinaryPrimitives.WriteInt32BigEndian(_sqlSendBuffer.AsSpan(1,4), messageLength-1);
-			sqlBytes.CopyTo(_sqlSendBuffer.AsSpan(5));
-			_sqlSendBuffer[messageLength-1] = 0; // null terminator
-			_stream.Write(_sqlSendBuffer.AsSpan(0, messageLength));
+			var buffer = _sqlSendBuffer.AsSpan(0, messageLength);
+			BinaryPrimitives.WriteInt32BigEndian(buffer.Slice(1, 4), messageLength - 1);
+			encoding.GetBytes(sql, buffer[5..^1]);
+			buffer[^1] = 0; // null terminator
+			stream.Write(buffer);
 		}
 		else
 		{
-			// case 3: query is too large for the preallocated send buffer.	
+			// case 3: query is too large for the preallocated send buffer.
 			var buffer = new byte[messageLength];
 			buffer[0] = (byte)'Q';
 			BinaryPrimitives.WriteInt32BigEndian(buffer.AsSpan(1, 4), messageLength - 1);
-			sqlBytes.CopyTo(buffer.AsSpan(5));
-			_stream.Write(buffer);
+			encoding.GetBytes(sql, buffer.AsSpan(5..^1));
+			stream.Write(buffer);
 		}
-		_stream.Flush();
+		stream.Flush();
 	}
 
 	/// <summary>
@@ -470,134 +478,197 @@ public sealed class Connection : IConnection
 	///     types (e.g. large bytea payloads) pay a text-encoding cost; that
 	///     can be revisited later by sending format code 1 for specific
 	///     parameters once Ring has typed binary encoders.
+	///     Sized and written the same way as SendQuery: exact byte counts up
+	///     front, then one contiguous buffer (stack/pooled/heap, same three
+	///     tiers) written directly - no per-message helper, no intermediate
+	///     MemoryStream or per-message byte[].
 	/// </summary>
-	private void SendExtendedQuery(string sql, object?[] parameters)
+	[SkipLocalsInit]
+	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
+	private void SendExtendedQuery(string sql, ReadOnlySpan<string?> parameters)
 	{
-		using var ms = new MemoryStream();
-		WriteParseMessage(ms, sql, parameters.Length);
-		WriteBindMessage(ms, parameters);
-		WriteExecuteMessage(ms);
-		WriteSyncMessage(ms);
+		var encoding = _encoding;
+		var stream = _stream;
 
-		var bytes = ms.ToArray();
-		_stream.Write(bytes);
-		_stream.Flush();
-	}
+		var sqlByteCount = encoding.GetByteCount(sql);
 
-	/// <summary>
-	///     Parse (F): statement name (empty = unnamed), query text, then the
-	///     parameter type OIDs. We always send zero OIDs regardless of
-	///     <paramref name="paramCount"/> - Postgres will infer each
-	///     parameter's type from context (e.g. from the column it's compared
-	///     against), which is sufficient since values are sent as text below.
-	/// </summary>
-	private static void WriteParseMessage(Stream target, string sql, int paramCount)
-	{
-		var sqlBytes = Encoding.UTF8.GetBytes(sql);
-		var body = 1 + sqlBytes.Length + 1 + 2; // empty stmt name + query + null term + Int16 param-type count (0)
-		var length = 4 + body;
-
-		var buffer = new byte[1 + length];
-		buffer[0] = (byte)'P';
-		BinaryPrimitives.WriteInt32BigEndian(buffer.AsSpan(1), length);
-
-		var offset = 5;
-		buffer[offset++] = 0; // empty (unnamed) statement name
-		sqlBytes.CopyTo(buffer.AsSpan(offset));
-		offset += sqlBytes.Length;
-		buffer[offset++] = 0; // null terminator for query text
-		BinaryPrimitives.WriteInt16BigEndian(buffer.AsSpan(offset), 0); // no parameter type OIDs supplied
-
-		target.Write(buffer);
-	}
-
-	/// <summary>
-	///     Bind (F): binds parameter values to the unnamed portal/statement.
-	///     Zero parameter-format codes and zero result-format codes both mean
-	///     "text format for all", per the protocol's shorthand.
-	/// </summary>
-	private static void WriteBindMessage(Stream target, object?[] parameters)
-	{
-		var encoded = new byte[parameters.Length][];
+		// Byte length per value, cached so each string is only ever encoded
+		// once below - same reasoning as SendQuery's own buffer sizing.
+		Span<int> paramLengths = parameters.Length <= 32
+			? stackalloc int[parameters.Length]
+			: new int[parameters.Length];
+		var paramBytesTotal = 0;
 		for (var i = 0; i < parameters.Length; i++)
-			encoded[i] = FormatParameterValue(parameters[i]);
-
-		var body = 1 + 1 + 2 + 2; // empty portal + empty stmt name + 0 format codes + param count
-		foreach (var value in encoded)
-			body += 4 + (value?.Length ?? 0); // Int32 length (-1 for NULL) + bytes
-		body += 2; // 0 result-format codes
-
-		var length = 4 + body;
-		var buffer = new byte[1 + length];
-		buffer[0] = (byte)'B';
-		BinaryPrimitives.WriteInt32BigEndian(buffer.AsSpan(1), length);
-
-		var offset = 5;
-		buffer[offset++] = 0; // empty (unnamed) portal name
-		buffer[offset++] = 0; // empty (unnamed) statement name
-		BinaryPrimitives.WriteInt16BigEndian(buffer.AsSpan(offset), 0); // 0 parameter format codes = all text
-		offset += 2;
-		BinaryPrimitives.WriteInt16BigEndian(buffer.AsSpan(offset), (short)encoded.Length);
-		offset += 2;
-		foreach (var value in encoded)
 		{
-			if (value is null)
-			{
-				BinaryPrimitives.WriteInt32BigEndian(buffer.AsSpan(offset), -1); // SQL NULL
-				offset += 4;
-				continue;
-			}
-			BinaryPrimitives.WriteInt32BigEndian(buffer.AsSpan(offset), value.Length);
-			offset += 4;
-			value.CopyTo(buffer.AsSpan(offset));
-			offset += value.Length;
+			var paramLength = parameters[i] is { } value ? encoding.GetByteCount(value) : -1;
+			paramLengths[i] = paramLength;
+			paramBytesTotal += Math.Max(paramLength, 0);
 		}
-		BinaryPrimitives.WriteInt16BigEndian(buffer.AsSpan(offset), 0); // 0 result format codes = all text
 
-		target.Write(buffer);
-	}
+		// Parse ('P'): Int32 length + empty stmt name + sql + null term + Int16 param-type count (0)
+		var parseLength = 4 + 1 + sqlByteCount + 1 + 2;
+		// Bind ('B'): Int32 length + empty portal + empty stmt name + Int16 fmt-code count (0)
+		//             + Int16 param count + per-param (Int32 length + bytes) + Int16 result-fmt count (0)
+		var bindLength = 4 + 1 + 1 + 2 + 2 + parameters.Length * 4 + paramBytesTotal + 2;
+		// Execute ('E'): Int32 length + empty portal + Int32 max-rows (0)
+		const int executeLength = 4 + 1 + 4;
+		// Sync ('S'): Int32 length only
+		const int syncLength = 4;
 
-	/// <summary>Execute (F): run the unnamed portal, with no row-count limit.</summary>
-	private static void WriteExecuteMessage(Stream target)
-	{
-		const int length = 4 + 1 + 4; // length field + empty portal name + Int32 max-rows
-		var buffer = new byte[1 + length];
-		buffer[0] = (byte)'E';
-		BinaryPrimitives.WriteInt32BigEndian(buffer.AsSpan(1), length);
-		buffer[5] = 0; // empty (unnamed) portal name
-		BinaryPrimitives.WriteInt32BigEndian(buffer.AsSpan(6), 0); // 0 = no row limit
-		target.Write(buffer);
-	}
+		var totalLength = 1 + parseLength + 1 + bindLength + 1 + executeLength + 1 + syncLength;
 
-	/// <summary>Sync (F): closes out the Extended Query round, returning ReadyForQuery.</summary>
-	private static void WriteSyncMessage(Stream target)
-	{
-		Span<byte> buffer = stackalloc byte[5];
-		buffer[0] = (byte)'S';
-		BinaryPrimitives.WriteInt32BigEndian(buffer[1..], 4);
-		target.Write(buffer);
-	}
-
-	/// <summary>
-	///     Converts a bind-parameter value to Postgres' text wire format
-	///     (the same textual representation you'd use as a SQL literal, minus
-	///     quoting). Returns null for a SQL NULL, which callers encode as
-	///     length -1.
-	/// </summary>
-	private static byte[]? FormatParameterValue(object? value)
-	{
-		return value switch
+		if (totalLength <= 128)
 		{
-			null => null,
-			string s => Encoding.UTF8.GetBytes(s),
-			bool b => Encoding.UTF8.GetBytes(b ? "t" : "f"),
-			byte[] bytes => Encoding.UTF8.GetBytes("\\x" + Convert.ToHexString(bytes).ToLowerInvariant()),
-			DateTime dt => Encoding.UTF8.GetBytes(dt.ToString("yyyy-MM-dd HH:mm:ss.ffffff", CultureInfo.InvariantCulture)),
-			DateTimeOffset dto => Encoding.UTF8.GetBytes(dto.ToString("yyyy-MM-dd HH:mm:ss.ffffffzzz", CultureInfo.InvariantCulture)),
-			Guid g => Encoding.UTF8.GetBytes(g.ToString()),
-			IFormattable f => Encoding.UTF8.GetBytes(f.ToString(null, CultureInfo.InvariantCulture)),
-			_ => Encoding.UTF8.GetBytes(value.ToString() ?? string.Empty),
-		};
+			// case 1: short statement/params, small enough to fit on the stack.
+			Span<byte> buffer = stackalloc byte[totalLength];
+
+			buffer[0] = (byte)'P';
+			BinaryPrimitives.WriteInt32BigEndian(buffer.Slice(1, 4), parseLength);
+			var offset = 5;
+			buffer[offset++] = 0; // empty (unnamed) statement name
+			encoding.GetBytes(sql, buffer.Slice(offset, sqlByteCount));
+			offset += sqlByteCount;
+			buffer[offset++] = 0; // null terminator for query text
+			BinaryPrimitives.WriteInt16BigEndian(buffer.Slice(offset, 2), 0); // no parameter type OIDs supplied
+			offset += 2;
+
+			buffer[offset] = (byte)'B';
+			BinaryPrimitives.WriteInt32BigEndian(buffer.Slice(offset + 1, 4), bindLength);
+			offset += 5;
+			buffer[offset++] = 0; // empty (unnamed) portal name
+			buffer[offset++] = 0; // empty (unnamed) statement name
+			BinaryPrimitives.WriteInt16BigEndian(buffer.Slice(offset, 2), 0); // 0 parameter format codes = all text
+			offset += 2;
+			BinaryPrimitives.WriteInt16BigEndian(buffer.Slice(offset, 2), (short)parameters.Length);
+			offset += 2;
+			for (var i = 0; i < parameters.Length; i++)
+			{
+				var value = parameters[i];
+				var valueLength = paramLengths[i];
+				BinaryPrimitives.WriteInt32BigEndian(buffer.Slice(offset, 4), valueLength); // -1 for SQL NULL
+				offset += 4;
+				if (value is null)
+					continue;
+				encoding.GetBytes(value, buffer.Slice(offset, valueLength));
+				offset += valueLength;
+			}
+			BinaryPrimitives.WriteInt16BigEndian(buffer.Slice(offset, 2), 0); // 0 result format codes = all text
+			offset += 2;
+
+			buffer[offset] = (byte)'E';
+			BinaryPrimitives.WriteInt32BigEndian(buffer.Slice(offset + 1, 4), executeLength);
+			offset += 5;
+			buffer[offset++] = 0; // empty (unnamed) portal name
+			BinaryPrimitives.WriteInt32BigEndian(buffer.Slice(offset, 4), 0); // 0 = no row limit
+			offset += 4;
+
+			buffer[offset] = (byte)'S';
+			BinaryPrimitives.WriteInt32BigEndian(buffer.Slice(offset + 1, 4), syncLength);
+
+			stream.Write(buffer);
+		}
+		else if (totalLength <= _sqlSendBufferSize)
+		{
+			// case 2: fits in the preallocated send buffer (shared with SendQuery -
+			// only one command is ever in flight per connection at a time).
+			var buffer = _sqlSendBuffer.AsSpan(0, totalLength);
+
+			buffer[0] = (byte)'P';
+			BinaryPrimitives.WriteInt32BigEndian(buffer.Slice(1, 4), parseLength);
+			var offset = 5;
+			buffer[offset++] = 0;
+			encoding.GetBytes(sql, buffer.Slice(offset, sqlByteCount));
+			offset += sqlByteCount;
+			buffer[offset++] = 0;
+			BinaryPrimitives.WriteInt16BigEndian(buffer.Slice(offset, 2), 0);
+			offset += 2;
+
+			buffer[offset] = (byte)'B';
+			BinaryPrimitives.WriteInt32BigEndian(buffer.Slice(offset + 1, 4), bindLength);
+			offset += 5;
+			buffer[offset++] = 0;
+			buffer[offset++] = 0;
+			BinaryPrimitives.WriteInt16BigEndian(buffer.Slice(offset, 2), 0);
+			offset += 2;
+			BinaryPrimitives.WriteInt16BigEndian(buffer.Slice(offset, 2), (short)parameters.Length);
+			offset += 2;
+			for (var i = 0; i < parameters.Length; i++)
+			{
+				var value = parameters[i];
+				var valueLength = paramLengths[i];
+				BinaryPrimitives.WriteInt32BigEndian(buffer.Slice(offset, 4), valueLength);
+				offset += 4;
+				if (value is null)
+					continue;
+				encoding.GetBytes(value, buffer.Slice(offset, valueLength));
+				offset += valueLength;
+			}
+			BinaryPrimitives.WriteInt16BigEndian(buffer.Slice(offset, 2), 0);
+			offset += 2;
+
+			buffer[offset] = (byte)'E';
+			BinaryPrimitives.WriteInt32BigEndian(buffer.Slice(offset + 1, 4), executeLength);
+			offset += 5;
+			buffer[offset++] = 0;
+			BinaryPrimitives.WriteInt32BigEndian(buffer.Slice(offset, 4), 0);
+			offset += 4;
+
+			buffer[offset] = (byte)'S';
+			BinaryPrimitives.WriteInt32BigEndian(buffer.Slice(offset + 1, 4), syncLength);
+
+			stream.Write(buffer);
+		}
+		else
+		{
+			// case 3: statement/params too large for the preallocated send buffer.
+			var buffer = new byte[totalLength];
+
+			buffer[0] = (byte)'P';
+			BinaryPrimitives.WriteInt32BigEndian(buffer.AsSpan(1, 4), parseLength);
+			var offset = 5;
+			buffer[offset++] = 0;
+			encoding.GetBytes(sql, buffer.AsSpan(offset, sqlByteCount));
+			offset += sqlByteCount;
+			buffer[offset++] = 0;
+			BinaryPrimitives.WriteInt16BigEndian(buffer.AsSpan(offset, 2), 0);
+			offset += 2;
+
+			buffer[offset] = (byte)'B';
+			BinaryPrimitives.WriteInt32BigEndian(buffer.AsSpan(offset + 1, 4), bindLength);
+			offset += 5;
+			buffer[offset++] = 0;
+			buffer[offset++] = 0;
+			BinaryPrimitives.WriteInt16BigEndian(buffer.AsSpan(offset, 2), 0);
+			offset += 2;
+			BinaryPrimitives.WriteInt16BigEndian(buffer.AsSpan(offset, 2), (short)parameters.Length);
+			offset += 2;
+			for (var i = 0; i < parameters.Length; i++)
+			{
+				var value = parameters[i];
+				var valueLength = paramLengths[i];
+				BinaryPrimitives.WriteInt32BigEndian(buffer.AsSpan(offset, 4), valueLength);
+				offset += 4;
+				if (value is null)
+					continue;
+				encoding.GetBytes(value, buffer.AsSpan(offset, valueLength));
+				offset += valueLength;
+			}
+			BinaryPrimitives.WriteInt16BigEndian(buffer.AsSpan(offset, 2), 0);
+			offset += 2;
+
+			buffer[offset] = (byte)'E';
+			BinaryPrimitives.WriteInt32BigEndian(buffer.AsSpan(offset + 1, 4), executeLength);
+			offset += 5;
+			buffer[offset++] = 0;
+			BinaryPrimitives.WriteInt32BigEndian(buffer.AsSpan(offset, 4), 0);
+			offset += 4;
+
+			buffer[offset] = (byte)'S';
+			BinaryPrimitives.WriteInt32BigEndian(buffer.AsSpan(offset + 1, 4), syncLength);
+
+			stream.Write(buffer);
+		}
+		stream.Flush();
 	}
 
 	/// <summary>
