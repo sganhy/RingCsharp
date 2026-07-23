@@ -1,4 +1,5 @@
 ﻿using Ring.Data.Enums;
+using Ring.Data.Extensions;
 using Ring.Data.Models;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
@@ -12,12 +13,12 @@ using Index = Ring.Schema.Models.Index;
 
 namespace Ring.Data;
 
-internal struct BulkAlter : IEquatable<BulkAlter>
+internal sealed class BulkAlter : IEquatable<BulkAlter>
 {
 	private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
 	private SpanList<AlterQuery> _queries; // cannot set _queries as readonly!
 	private readonly Database _schema;
-	private readonly Dictionary<EntityType, Dictionary<string, TableSpace>> _tablespaces; // <entityType, <tableName or default>, TableSpaceInfo>
+	private readonly Dictionary<EntityType, Dictionary<string, TableSpace>> _tablespaces; // <entityType, <tableName or default>, TableSpaceInfo>	
 
 	internal BulkAlter(Database schema)
 	{
@@ -27,19 +28,17 @@ internal struct BulkAlter : IEquatable<BulkAlter>
 		_tablespaces = GetTableSpaceDictionary(schema);
 	}
 
-	internal readonly SpanList<AlterQuery> Queries => _queries;
-
-	internal void CreateTable(string tableName)
+	internal void CreateTable(Table table)
 	{
 		// Code size: 118 (0x76)
-		var table = _schema.GetTable(tableName);
-		if (table is null) ThrowInvalidObjectType(tableName);
 		AppendDdlCommand(AlterQueryType.CreateTable, table);
 		// create constraints 
 		foreach(var constraint in _schema.DdlBuilder.GetConstraints(table)) AppendDdlCommand(AlterQueryType.CreateTable, constraint);
 		// create indexes
 		foreach (var index in table.Indexes) AppendDdlCommand(AlterQueryType.CreateIndex, table, index);
 	}
+
+	internal SpanList<AlterQuery> Queries => _queries;
 
 	internal void CreateIndex(string tableName, string indexName)
 	{
@@ -64,12 +63,14 @@ internal struct BulkAlter : IEquatable<BulkAlter>
 		AppendDdlCommand(AlterQueryType.AlterTableAddColumn, table, column);
 	}
 
-	internal readonly void Apply()
+	internal void Apply()
 	{
         // Code size: 59 (0x3b)
         if (_queries.Count == 0) return;
-        var connection = _schema.Connections.Get();
-        try
+#pragma warning disable CA2000 // Dispose objects before losing scope
+		var connection = _schema.Connections.Get();
+#pragma warning restore CA2000
+		try
         {
             Apply(connection);
         }
@@ -80,9 +81,9 @@ internal struct BulkAlter : IEquatable<BulkAlter>
         }
     }
 
-    internal readonly void Apply(IConnection connection)
+    internal void Apply(IConnection connection)
 	{
-		// Code size: 91 (0x5b)
+		// Code size: 157 (0x9d)
 		// sort by Type
 #pragma warning disable RCS1048 // Use lambda expression instead of anonymous method - never!
 		_queries.Sort(static delegate (AlterQuery q1, AlterQuery q2)
@@ -91,22 +92,31 @@ internal struct BulkAlter : IEquatable<BulkAlter>
 			return q1.Type.CompareTo(q2.Type);
 		});
 #pragma warning restore RCS1048
-		foreach (var query in _queries) connection.Execute(query);
+
+		var encoding = connection.ClientEncoding;
+		var builder = _schema.DdlBuilder;
+
+		foreach (var query in _queries) 
+		{
+			var sql = query.ToSql(builder);
+			if (sql is not null)
+			{
+				var byteCount = encoding.GetByteCount(sql);
+				connection.Execute(query, sql, byteCount);
+			}
+			else ThrowUnsuportedAlterQueryType(query.Type);
+			// add sql log if subscription
+		}
 	}
 
-	public readonly override int GetHashCode() => GetHashCode(this);
+	public override int GetHashCode() => this.Hash();	
 	public static bool operator ==(BulkAlter left, BulkAlter right) => left.Equals(right);
 	public static bool operator !=(BulkAlter left, BulkAlter right) => !left.Equals(right);
-	public override readonly bool Equals(object? obj) => obj is BulkAlter bulkAlter && Equals(bulkAlter);
-	public readonly bool Equals(BulkAlter other)
-	{
-		// Code size: 71 (0x47)
-		if (_schema.Id == other._schema.Id && _queries.Count == other._queries.Count)
-		{
-			return GetHashCode(this) == GetHashCode(other);
-		}
-		return false;
-	}
+	public override bool Equals(object? obj) => obj is BulkAlter bulkAlter && Equals(bulkAlter);
+	public bool Equals(BulkAlter? other) => other is not null 
+		&& _schema.Id == other._schema.Id 
+		&& _queries.Count == other._queries.Count 
+		&& this.Hash() == other.Hash(); // Code size: 68 (0x44)
 
 	#region private methods
 
@@ -115,8 +125,7 @@ internal struct BulkAlter : IEquatable<BulkAlter>
 		// Code size: 83 (0x53)
 		var table = constraint.ToTable;
 		if (type == AlterQueryType.CreateTable && constraint.Type == ConstraintType.PrimaryKey)
-			_queries.Add(new AlterQuery(table.Id, table, AlterQueryType.CreatePrimaryKey, _schema.DdlBuilder, null, constraint, null, 
-				GetTableSpace(table, EntityType.Constraint)));
+			_queries.Add(new AlterQuery(table.Id, table, AlterQueryType.CreatePrimaryKey, null, constraint, null, GetTableSpace(table, EntityType.Constraint)));
 	}
 
 	private void AppendDdlCommand(AlterQueryType type, Table table, Column? column = null)
@@ -125,8 +134,7 @@ internal struct BulkAlter : IEquatable<BulkAlter>
 		{
 			
 			case AlterQueryType.CreateTable:
-				_queries.Add(new AlterQuery(table.Id, table, type, _schema.DdlBuilder, null,
-					null, null, GetTableSpace(table, EntityType.Table)));
+				_queries.Add(new AlterQuery(table.Id, table, type, null, null, null, GetTableSpace(table, EntityType.Table)));
 				break;
 		}
 	}
@@ -137,8 +145,7 @@ internal struct BulkAlter : IEquatable<BulkAlter>
 		{
 			case AlterQueryType.CreateIndex:
 				if (table.Type != TableType.Business && index?.Unique==true && index.IsPrimaryKey(table)) break; 
-				_queries.Add(new AlterQuery(table.Id, table, type, _schema.DdlBuilder, null,null, index, 
-					GetTableSpace(table, EntityType.Index)));
+				_queries.Add(new AlterQuery(table.Id, table, type, null,null, index, GetTableSpace(table, EntityType.Index)));
 				break;
 		}
 	}
@@ -146,6 +153,10 @@ internal struct BulkAlter : IEquatable<BulkAlter>
 	[DoesNotReturn]
 	private static void ThrowInvalidObjectType(string objectType) =>
 		throw new ArgumentException(string.Format(DefaultCulture, ResourceHelper.GetMessage(ResourceType.BulkAlterInvalidTableName), objectType));
+
+	[DoesNotReturn]
+	private static void ThrowUnsuportedAlterQueryType(AlterQueryType type) =>
+		throw new ArgumentException(string.Format(DefaultCulture, ResourceHelper.GetMessage(ResourceType.BulkAlterUnsuportedAlterQueryType), type));
 
 	//TODO - create a specific message for invalid index name
 	[DoesNotReturn]
@@ -156,23 +167,22 @@ internal struct BulkAlter : IEquatable<BulkAlter>
 	private static void ThrowInvalidFieldName(string objectType, string fieldName) =>
 		throw new ArgumentException(string.Format(DefaultCulture, ResourceHelper.GetMessage(ResourceType.BulkAlterInvalidFieldName), fieldName, objectType));
 
-	private readonly TableSpace? GetTableSpace(Table table, EntityType entityType)
+	private TableSpace? GetTableSpace(Table table, EntityType entityType)
 	{
-		if (_tablespaces.ContainsKey(entityType))
+		if (_tablespaces.TryGetValue(entityType, out Dictionary<string, TableSpace>? subDico))
 		{
-			var subDico = _tablespaces[entityType];
 			var key = table.Name;
-			if (subDico.ContainsKey(key)) return subDico[key];
+			if (subDico.TryGetValue(key, out TableSpace? value)) return value;
 			// find default tablespace: not connected to a specific table
 			key = string.Empty;
-			if (subDico.ContainsKey(key)) return subDico[key];
+			if (subDico.TryGetValue(key, out TableSpace? value1)) return value1;
 		}
 		return null;
 	}
 
 	private static Dictionary<EntityType, Dictionary<string, TableSpace>> GetTableSpaceDictionary(Database schema)
 	{
-		// Code size: 239 (0xef)
+		// Code size: 230 (0xe6)
 		var result = new Dictionary<EntityType, Dictionary<string, TableSpace>>()
 		{
 			{ EntityType.Index, new Dictionary<string, TableSpace>()},
@@ -197,9 +207,9 @@ internal struct BulkAlter : IEquatable<BulkAlter>
 
 		// no tablespace for constraints use the index one
 		if (!result[EntityType.Constraint].ContainsKey(string.Empty) &&
-			result[EntityType.Index].ContainsKey(string.Empty))
+			result[EntityType.Index].TryGetValue(string.Empty, out TableSpace? value))
 		{
-			result[EntityType.Constraint].Add(string.Empty, result[EntityType.Index][string.Empty]);
+			result[EntityType.Constraint].Add(string.Empty, value);
 		}
 		return result;
 	}
@@ -213,14 +223,6 @@ internal struct BulkAlter : IEquatable<BulkAlter>
 			dico[EntityType.Table].Add(tableName, tablespace);
 		if (tablespace.Constraint && !dico[EntityType.Constraint].ContainsKey(tableName))
 			dico[EntityType.Constraint].Add(tableName, tablespace);
-	}
-
-	private static int GetHashCode(BulkAlter bulkAlter)
-	{
-		var span = bulkAlter._queries.AsReadOnlySpan();
-		var hash = new HashCode();
-		foreach (var query in span) hash.Add(query.GetHashCode());
-		return hash.ToHashCode();
 	}
 
 	#endregion

@@ -22,8 +22,8 @@ public sealed class AlterQueryExtensionsTest : BaseTest
         var tableSpace = new TableSpace(_faker.Random.Number(1000), _faker.Random.String(20), _faker.Random.String(20), _faker.Random.String(30),
             false, true, false, Array.Empty<string>(), _faker.Random.String(20), true, true);
         var type = AlterQueryType.CreateTable;
-        var alterQuery1 = new AlterQuery(_faker.Random.Number(100), metaTable, type, DatabaseProvider.SqlServer.GetDdlBuilder(), metaTable.Columns[2], null, null, tableSpace);
-        var alterQuery2 = new AlterQuery(_faker.Random.Number(100), metaTable, type, DatabaseProvider.SqlServer.GetDdlBuilder(), metaTable.Columns[2], null, null, tableSpace);
+        var alterQuery1 = new AlterQuery(_faker.Random.Number(100), metaTable, type, metaTable.Columns[2], null, null, tableSpace);
+        var alterQuery2 = new AlterQuery(_faker.Random.Number(100), metaTable, type, metaTable.Columns[2], null, null, tableSpace);
 
         // act 
         var hash1 = AlterQueryExtensions.Hash(alterQuery1);
@@ -45,9 +45,9 @@ public sealed class AlterQueryExtensionsTest : BaseTest
         var type1 = AlterQueryType.CreateTable;
         var type2 = type1;
         var type3 = AlterQueryType.CreateIndex;
-        var alterQuery1 = new AlterQuery(_faker.Random.Number(150), metaTable, type1, DatabaseProvider.SqlServer.GetDdlBuilder(), metaTable.Columns[2], null, null, tableSpace);
-        var alterQuery2 = new AlterQuery(_faker.Random.Number(250), metaIdTable, type2, DatabaseProvider.SqlServer.GetDdlBuilder(), metaTable.Columns[2], null, null, tableSpace);
-        var alterQuery3 = new AlterQuery(_faker.Random.Number(250), metaTable, type3, DatabaseProvider.SqlServer.GetDdlBuilder(), metaTable.Columns[2], null, null, tableSpace);
+        var alterQuery1 = new AlterQuery(_faker.Random.Number(150), metaTable, type1,  metaTable.Columns[2], null, null, tableSpace);
+        var alterQuery2 = new AlterQuery(_faker.Random.Number(250), metaIdTable, type2,  metaTable.Columns[2], null, null, tableSpace);
+        var alterQuery3 = new AlterQuery(_faker.Random.Number(250), metaTable, type3,  metaTable.Columns[2], null, null, tableSpace);
 
         // act 
         var hash1 = AlterQueryExtensions.Hash(alterQuery1);

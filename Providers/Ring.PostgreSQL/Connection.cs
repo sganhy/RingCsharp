@@ -4,9 +4,9 @@ using Ring.Data.Models;
 using Ring.PostgreSQL.Exceptions;
 using Ring.PostgreSQL.Extensions;
 using Ring.PostgreSQL.Helpers;
+using Ring.Schema;
 using System.Buffers.Binary;
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
@@ -19,7 +19,7 @@ public sealed class Connection : IConnection
 	private static readonly NetworkStream ClosedStream = CreateClosedStream();
 
 	// Simple Query protocol message type bytes. Not all of these exist on
-	// BackendMessageCode (that enum currently only covers the authentication subset), so these are declared locally rather than guessed onto the enum.
+	private const byte MsgSimpleQuery = (byte)'Q';
 	private const byte MsgRowDescription = (byte)'T';
 	private const byte MsgDataRow = (byte)'D';
 	private const byte MsgCommandComplete = (byte)'C';
@@ -36,29 +36,25 @@ public sealed class Connection : IConnection
 	private const byte MsgNoData = (byte)'n';
 	private const byte MsgParameterDescription = (byte)'t';
 
-	// interface 
-	private readonly long _id;
-	private readonly DateTime _creationTime;
-	private readonly DateTime? _lastConnectionTime;
-	private readonly string _host;
-	private readonly int _port;
-	private readonly ConnectionParameters _parameters;
-
-	private ConnectionState _state;
-
 	// Transaction status as last reported by the server's ReadyForQuery
 	// message: 'I' = idle (no transaction), 'T' = in transaction block,
 	// 'E' = in a failed transaction block. Starts 'I' since a freshly
 	// opened connection has no transaction in progress.
 	private byte _transactionStatus = (byte)'I';
 
+	private readonly long _id;
+	private readonly DateTime _creationTime;
+	private readonly DateTime? _lastConnectionTime;
+	private readonly string _host;
+	private readonly int _port;
+	private readonly ConnectionParameters _parameters;
+	private ConnectionState _state;
+
 	// tcp connection
 	private readonly int _timeout; // milliseconds
-
 	private readonly Encoding _encoding;
 	private readonly int _sqlSendBufferSize;
 	private readonly byte[] _sqlSendBuffer;
-
 
 	// Never null: defaults to ClosedStream so every code path that forgot to
 	// check _state first hits a well-defined (if slightly odd) stream state
@@ -80,10 +76,11 @@ public sealed class Connection : IConnection
 	public long Id => _id;
 	public DateTime CreationTime => _creationTime;
 	public DateTime? LastConnectionTime => _lastConnectionTime;
+	public Encoding ClientEncoding => _encoding;
 	public ConnectionState State => _state;
 
 	// build ConnectionParameters from connection string
-	public Connection(string connectionString) : this(connectionString.ToConnectionParameters()) { }
+	public Connection(string connectionString) : this(connectionString.ToConnectionParameters()) {}
 	
 	internal Connection(ConnectionParameters parameters)
 	{
@@ -100,7 +97,7 @@ public sealed class Connection : IConnection
 		if (_sqlSendBufferSize > 0)
 		{
 			_sqlSendBuffer = new byte[_sqlSendBufferSize];
-			_sqlSendBuffer[0] = (byte)'Q';
+			_sqlSendBuffer[0] = MsgSimpleQuery;
 		}
 		else _sqlSendBuffer = Array.Empty<byte>();
 	}
@@ -243,7 +240,6 @@ public sealed class Connection : IConnection
 		throw new NotImplementedException();
 	}
 
-#if DEBUG
 	public string?[] Execute()
 	{
 		//Table table, RetrieveQueryType type, IDqlBuilder builder, int parentQueryId
@@ -251,7 +247,6 @@ public sealed class Connection : IConnection
 		var retrieveQuery = new RetrieveQuery();
 		return Execute(retrieveQuery);
 	}
-#endif
 
 	public string?[] Execute(in RetrieveQuery query)
 	{
@@ -273,7 +268,7 @@ public sealed class Connection : IConnection
 
 		try
 		{
-			SendQuery("SELECT * FROM pg_catalog.pg_tables;");
+			SendQuery("SELECT * FROM pg_catalog.pg_tables;", _encoding.GetByteCount("SELECT * FROM pg_catalog.pg_tables;"));
 			return ReadRetrieveResults();
 		}
 		catch (PgOperationalError)
@@ -291,8 +286,13 @@ public sealed class Connection : IConnection
 		}
 	}
 
-
-	public long Execute(in AlterQuery query)
+	[MethodImpl(MethodImplOptions.NoInlining)]
+	public void Execute(in AlterQuery query, ReadOnlySpan<char> sql, int sqlByteCount) 
+	{ 
+		SendQuery(sql, sqlByteCount);
+		DrainToReadyForQuery();
+	}
+	public ValueTask ExecuteAsync(in AlterQuery query, ReadOnlySpan<char> sql, int sqlByteCount, CancellationToken cancellationToken = default)
 	{
 		throw new NotImplementedException();
 	}
@@ -302,10 +302,6 @@ public sealed class Connection : IConnection
 		throw new NotImplementedException();
 	}
 
-	public ValueTask<int> ExecuteAsync(in AlterQuery query, CancellationToken cancellationToken = default)
-	{
-		throw new NotImplementedException();
-	}
 
 	public void Open()
 	{
@@ -369,9 +365,62 @@ public sealed class Connection : IConnection
 	/// </summary>
 	private void SendSimpleCommand(string sql)
 	{
-		SendQuery(sql.AsSpan());
+		SendQuery(sql.AsSpan(), _encoding.GetByteCount(sql));
 		DrainToReadyForQuery();
 	}
+
+
+	/// <summary>
+	///     DDL-specific variant of <see cref="DrainToReadyForQuery"/>, used
+	///     only by <see cref="Execute(in AlterQuery, ReadOnlySpan{char}, int)"/>.
+	///     On ErrorResponse, reads only the SQLSTATE ('C' field) as a slice of
+	///     the existing buffer via <see cref="AuthenticationHelper.ReadSqlStateBytes"/>
+	///     - no string allocation - to check it against 42P07 (duplicate_table).
+	///     A CREATE TABLE/INDEX/etc. against something that already exists is
+	///     treated as a harmless no-op rather than thrown, since the desired
+	///     end state already holds; the full field parse (and its allocations)
+	///     only happens for codes other than 42P07, right before throwing.
+	///     BEGIN/COMMIT/ROLLBACK go through <see cref="DrainToReadyForQuery"/>
+	///     instead and always throw on any error - this relaxed handling is
+	///     specific to DDL.
+	/// </summary>
+	private void DrainDdlToReadyForQuery()
+	{
+		while (true)
+		{
+			var (code, body) = ReadMessage(_stream);
+
+			if (code == MsgReadyForQuery)
+			{
+				_transactionStatus = body.Length > 0 ? body[0] : (byte)'I';
+				return;
+			}
+
+			if (code == MsgErrorResponse)
+			{
+				var isDuplicateTable = body.ReadSqlStateBytes();
+				var error = isDuplicateTable.Length>1 ? null : AuthenticationHelper.ParseErrorResponse(body);
+
+				// Drain remaining messages so the connection is left in a
+				// clean, known state (ReadyForQuery) before returning/throwing.
+				byte drainCode;
+				byte[] drainBody;
+				do
+				{
+					(drainCode, drainBody) = ReadMessage(_stream);
+				} while (drainCode != MsgReadyForQuery);
+				_transactionStatus = drainBody.Length > 0 ? drainBody[0] : (byte)'I';
+
+				if (error != null) throw error;
+				return;
+			}
+
+			// CommandComplete, NoticeResponse, ParameterStatus, RowDescription,
+			// DataRow, etc. - nothing to do for a fire-and-forget command.
+		}
+	}
+
+
 
 	/// <summary>
 	///     Reads backend messages until ReadyForQuery, updating
@@ -383,6 +432,7 @@ public sealed class Connection : IConnection
 	/// </summary>
 	private void DrainToReadyForQuery()
 	{
+		//eg. SQL Error[42P07]: ERREUR: la relation « @meta » existe déjà
 		while (true)
 		{
 			var (code, body) = ReadMessage(_stream);
@@ -422,21 +472,21 @@ public sealed class Connection : IConnection
 	/// </summary>
 	[SkipLocalsInit]
 	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
-	private void SendQuery(ReadOnlySpan<char> sql)
+	private void SendQuery(ReadOnlySpan<char> sql, int sqlByteCount)
 	{
-		// Code size: 331 (0x14b)
+		// Code size: 325 (0x145)
 		// Exact byte count either way - see GetSqlByteCount.
 		var encoding = _encoding;
 		var stream = _stream;
 
-		// type + length + query + null terminator
-		var messageLength = 1 + 4 + encoding.GetByteCount(sql) + 1;
+		// type + length + encoding.GetByteCount(sql) + null terminator
+		var messageLength = 1 + 4 + sqlByteCount + 1;
 
 		if (messageLength <= 128)
 		{
 			// case 1: very short query, small enough to fit on the stack.
 			Span<byte> buffer = stackalloc byte[messageLength];
-			buffer[0] = (byte)'Q';
+			buffer[0] = MsgSimpleQuery;
 			BinaryPrimitives.WriteInt32BigEndian(buffer.Slice(1, 4), messageLength - 1);
 			encoding.GetBytes(sql, buffer[5..^1]);
 			buffer[^1] = 0; // null terminator
@@ -455,7 +505,7 @@ public sealed class Connection : IConnection
 		{
 			// case 3: query is too large for the preallocated send buffer.
 			var buffer = new byte[messageLength];
-			buffer[0] = (byte)'Q';
+			buffer[0] = MsgSimpleQuery;
 			BinaryPrimitives.WriteInt32BigEndian(buffer.AsSpan(1, 4), messageLength - 1);
 			encoding.GetBytes(sql, buffer.AsSpan(5..^1));
 			stream.Write(buffer);
@@ -775,6 +825,7 @@ public sealed class Connection : IConnection
 			}
 		}, cancellationToken);
 	}
+
 	private async Task CloseAsyncImpl(CancellationToken cancellationToken)
 	{
 		// If not open, nothing to do beyond releasing any lingering resources
@@ -933,6 +984,7 @@ public sealed class Connection : IConnection
 	[DoesNotReturn]
 	private static void ThrowConnectionWasClosedByServer() => throw new EndOfStreamException("The connection was closed by the server while reading a message.");
 
+		
 	#endregion
 
 }

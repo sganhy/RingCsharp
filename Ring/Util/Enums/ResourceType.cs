@@ -21,6 +21,7 @@ internal enum ResourceType : short
 	/// </summary>
 	BulkAlterInvalidFieldName = 70,
 	BulkAlterInvalidTableName = 71,
+	BulkAlterUnsuportedAlterQueryType = 72,
 
 	/// <summary>
 	/// Record ressources

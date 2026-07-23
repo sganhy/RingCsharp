@@ -2,6 +2,7 @@
 using Ring.Data;
 using Ring.Schema.Builders;
 using Ring.Schema.Enums;
+using Ring.Schema.Extensions;
 
 namespace Ring.Tests.Data;
 public sealed class BulkAlterTest
@@ -15,12 +16,15 @@ public sealed class BulkAlterTest
         var builder = new SchemaBuilder();
         var config = new Configuration() { DefaultSchema = _faker.Random.String(), MaxConnectionPoolSize = 20 };
         var schema = builder.GetMeta(DatabaseProvider.SqlServer, config);
+        var table = schema.GetTable("Test");
 
-        // act 
-        var ex = Assert.Throws<ArgumentException>(() => {
+		// act 
+		Assert.NotNull(table);
+
+		var ex = Assert.Throws<ArgumentException>(() => {
                 var bulk = new BulkAlter(schema);
-                bulk.CreateTable("Test");
-            }
+                bulk.CreateTable(table);
+			}
         );
 
         // assert

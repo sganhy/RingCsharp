@@ -1,14 +1,14 @@
 ﻿using Ring.Data.Enums;
 using Ring.Data.Models;
+using Ring.Util.Builders;
 using Ring.Util.Extensions;
 
 namespace Ring.Data.Extensions;
 
 internal static class AlterQueryExtensions
 {
-	internal static string? ToSql(this AlterQuery query)
+	internal static string? ToSql(this AlterQuery query, IDdlBuilder builder)
 	{
-		var builder = query.Builder;
 		switch (query.Type)
 		{
 			case AlterQueryType.CreateTable: return builder.Create(query.Table, query.TableSpace);

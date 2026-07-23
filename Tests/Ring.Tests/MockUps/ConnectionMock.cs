@@ -2,6 +2,7 @@ using Ring.Data;
 using Ring.Data.Models;
 using Ring.Schema.Enums;
 using System.Linq.Expressions;
+using System.Text;
 
 namespace Ring.Tests.MockUps;
 
@@ -26,7 +27,8 @@ internal class ConnectionMock : IConnection
     public DateTime CreationTime => DateTime.Now;
     public DateTime? LastConnectionTime => _lastConnectionTime;
     public ConnectionState State => _connectionState;
-    public void BeginTransaction() => Expression.Empty();
+    public Encoding ClientEncoding => Encoding.UTF8;
+	public void BeginTransaction() => Expression.Empty();
     public void Close() => _connectionState = ConnectionState.Closed;
     public Task CloseAsync(CancellationToken cancellationToken) => 
         Task.Run(() =>
@@ -44,7 +46,7 @@ internal class ConnectionMock : IConnection
         throw new NotImplementedException();
     }
 
-    public long Execute(in AlterQuery query)
+    public void Execute(in AlterQuery query, ReadOnlySpan<char> sql, int sqlByteCount)
     {
         throw new NotImplementedException();
     }
@@ -54,7 +56,7 @@ internal class ConnectionMock : IConnection
         throw new NotImplementedException();
     }
 
-    public ValueTask<int> ExecuteAsync(in AlterQuery query, CancellationToken cancellationToken = default)
+    public ValueTask ExecuteAsync(in AlterQuery query, ReadOnlySpan<char> sql, int sqlByteCount, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

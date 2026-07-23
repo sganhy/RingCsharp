@@ -1,7 +1,6 @@
 ﻿using Ring.Data.Enums;
 using Ring.Data.Extensions;
 using Ring.Schema.Models;
-using Ring.Util.Builders;
 using Index = Ring.Schema.Models.Index;
 
 namespace Ring.Data.Models;
@@ -12,7 +11,6 @@ public readonly struct AlterQuery : IEquatable<AlterQuery>
 	internal readonly int Id;
 	internal readonly Table Table;
 	internal readonly AlterQueryType Type;
-	internal readonly IDdlBuilder Builder;
 	internal readonly Column? Column;
 	internal readonly Constraint? Constraint;
 	internal readonly Index? Index;
@@ -21,12 +19,11 @@ public readonly struct AlterQuery : IEquatable<AlterQuery>
 	/// <summary>
 	/// 	Ctor
 	/// </summary>
-	internal AlterQuery(int id, Table table, AlterQueryType type, IDdlBuilder builder, Column? column, Constraint? constraint, Index? index, TableSpace? tableSpace)
+	internal AlterQuery(int id, Table table, AlterQueryType type, Column? column, Constraint? constraint, Index? index, TableSpace? tableSpace)
 	{
 		Id = id;
 		Table = table;
 		Type = type;
-		Builder = builder;
 		Column = column;
 		Constraint = constraint;
 		Index = index;

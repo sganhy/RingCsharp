@@ -24,14 +24,12 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 	private string?[] _tableDelete;
 	private string?[] _tableInsert;
 	private string?[] _tableUpdate;
-	private readonly IDdlBuilder _ddlBuilder;
 
 	protected BaseDmlBuilder()
 	{
 		_tableDelete = Array.Empty<string?>();
 		_tableInsert = Array.Empty<string?>();
 		_tableUpdate = Array.Empty<string?>();
-		_ddlBuilder = Provider.GetDdlBuilder();
 	}
 
 	public abstract string VariableNameTemplate { get; }
