@@ -1,13 +1,11 @@
 using Ring.Data;
 using Ring.Data.Extensions;
 using Ring.Data.Models;
+using Ring.PostgreSQL.Enums;
 using Ring.PostgreSQL.Exceptions;
 using Ring.PostgreSQL.Extensions;
 using Ring.PostgreSQL.Helpers;
-using Ring.Schema;
 using System.Buffers.Binary;
-using System.Diagnostics.CodeAnalysis;
-using System.Net;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -16,31 +14,13 @@ namespace Ring.PostgreSQL;
 
 public sealed class Connection : IConnection
 {
-	private static readonly NetworkStream ClosedStream = CreateClosedStream();
-
-	// Simple Query protocol message type bytes. Not all of these exist on
-	private const byte MsgSimpleQuery = (byte)'Q';
-	private const byte MsgRowDescription = (byte)'T';
-	private const byte MsgDataRow = (byte)'D';
-	private const byte MsgCommandComplete = (byte)'C';
-	private const byte MsgEmptyQueryResponse = (byte)'I';
-	private const byte MsgReadyForQuery = (byte)'Z';
-	private const byte MsgErrorResponse = (byte)'E';
-	private const byte MsgNoticeResponse = (byte)'N';
-	private const byte MsgParameterStatus = (byte)'S';
-	private const byte MsgNotificationResponse = (byte)'A';
-
-	// Extended Query protocol (Parse/Bind/Execute/Sync) message type bytes.
-	private const byte MsgParseComplete = (byte)'1';
-	private const byte MsgBindComplete = (byte)'2';
-	private const byte MsgNoData = (byte)'n';
-	private const byte MsgParameterDescription = (byte)'t';
+	private static readonly NetworkStream ClosedStream = NetworkStreamExtensions.CreateClosedStream(null);
 
 	// Transaction status as last reported by the server's ReadyForQuery
 	// message: 'I' = idle (no transaction), 'T' = in transaction block,
 	// 'E' = in a failed transaction block. Starts 'I' since a freshly
 	// opened connection has no transaction in progress.
-	private byte _transactionStatus = (byte)'I';
+	private byte _transactionStatus = (byte)TransactionStatus.Idle;
 
 	private readonly long _id;
 	private readonly DateTime _creationTime;
@@ -97,7 +77,7 @@ public sealed class Connection : IConnection
 		if (_sqlSendBufferSize > 0)
 		{
 			_sqlSendBuffer = new byte[_sqlSendBufferSize];
-			_sqlSendBuffer[0] = MsgSimpleQuery;
+			_sqlSendBuffer[0] = (byte)FrontendMessageCode.Query;
 		}
 		else _sqlSendBuffer = Array.Empty<byte>();
 	}
@@ -107,7 +87,7 @@ public sealed class Connection : IConnection
 	{
 		if (_state != ConnectionState.Open)
 			throw new InvalidOperationException("The connection is not open.");
-		if (_transactionStatus != (byte)'I')
+		if (_transactionStatus != (byte)TransactionStatus.Idle)
 			throw new InvalidOperationException("A transaction is already in progress.");
 
 		try
@@ -212,7 +192,7 @@ public sealed class Connection : IConnection
 	{
 		if (_state != ConnectionState.Open)
 			throw new InvalidOperationException("The connection is not open.");
-		if (_transactionStatus == (byte)'I')
+		if (_transactionStatus == (byte)TransactionStatus.Idle)
 			throw new InvalidOperationException("Commit() was called but no transaction is currently active.");
 
 		try
@@ -287,10 +267,11 @@ public sealed class Connection : IConnection
 	}
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
-	public void Execute(in AlterQuery query, ReadOnlySpan<char> sql, int sqlByteCount) 
-	{ 
+	public ConnectionOperationalError? Execute(in AlterQuery query, ReadOnlySpan<char> sql, int sqlByteCount) 
+	{
+		// Code size: 31 (0x1f)
 		SendQuery(sql, sqlByteCount);
-		DrainToReadyForQuery();
+		return _stream.DrainToReadyForQuery(query.Table.PhysicalName);
 	}
 	public ValueTask ExecuteAsync(in AlterQuery query, ReadOnlySpan<char> sql, int sqlByteCount, CancellationToken cancellationToken = default)
 	{
@@ -323,7 +304,7 @@ public sealed class Connection : IConnection
 	{
 		if (_state != ConnectionState.Open)
 			throw new InvalidOperationException("The connection is not open.");
-		if (_transactionStatus == (byte)'I')
+		if (_transactionStatus == (byte)TransactionStatus.Idle)
 			throw new InvalidOperationException("Rollback() was called but no transaction is currently active.");
 
 		try
@@ -369,59 +350,6 @@ public sealed class Connection : IConnection
 		DrainToReadyForQuery();
 	}
 
-
-	/// <summary>
-	///     DDL-specific variant of <see cref="DrainToReadyForQuery"/>, used
-	///     only by <see cref="Execute(in AlterQuery, ReadOnlySpan{char}, int)"/>.
-	///     On ErrorResponse, reads only the SQLSTATE ('C' field) as a slice of
-	///     the existing buffer via <see cref="AuthenticationHelper.ReadSqlStateBytes"/>
-	///     - no string allocation - to check it against 42P07 (duplicate_table).
-	///     A CREATE TABLE/INDEX/etc. against something that already exists is
-	///     treated as a harmless no-op rather than thrown, since the desired
-	///     end state already holds; the full field parse (and its allocations)
-	///     only happens for codes other than 42P07, right before throwing.
-	///     BEGIN/COMMIT/ROLLBACK go through <see cref="DrainToReadyForQuery"/>
-	///     instead and always throw on any error - this relaxed handling is
-	///     specific to DDL.
-	/// </summary>
-	private void DrainDdlToReadyForQuery()
-	{
-		while (true)
-		{
-			var (code, body) = ReadMessage(_stream);
-
-			if (code == MsgReadyForQuery)
-			{
-				_transactionStatus = body.Length > 0 ? body[0] : (byte)'I';
-				return;
-			}
-
-			if (code == MsgErrorResponse)
-			{
-				var isDuplicateTable = body.ReadSqlStateBytes();
-				var error = isDuplicateTable.Length>1 ? null : AuthenticationHelper.ParseErrorResponse(body);
-
-				// Drain remaining messages so the connection is left in a
-				// clean, known state (ReadyForQuery) before returning/throwing.
-				byte drainCode;
-				byte[] drainBody;
-				do
-				{
-					(drainCode, drainBody) = ReadMessage(_stream);
-				} while (drainCode != MsgReadyForQuery);
-				_transactionStatus = drainBody.Length > 0 ? drainBody[0] : (byte)'I';
-
-				if (error != null) throw error;
-				return;
-			}
-
-			// CommandComplete, NoticeResponse, ParameterStatus, RowDescription,
-			// DataRow, etc. - nothing to do for a fire-and-forget command.
-		}
-	}
-
-
-
 	/// <summary>
 	///     Reads backend messages until ReadyForQuery, updating
 	///     <see cref="_transactionStatus"/> from its status byte
@@ -432,30 +360,32 @@ public sealed class Connection : IConnection
 	/// </summary>
 	private void DrainToReadyForQuery()
 	{
+		// Code size: 112 (0x70)
 		//eg. SQL Error[42P07]: ERREUR: la relation « @meta » existe déjà
 		while (true)
 		{
-			var (code, body) = ReadMessage(_stream);
-
-			if (code == MsgReadyForQuery)
+			var (code, body) = _stream.ReadMessage(true);
+			
+			if (code == (byte)BackendMessageCode.ReadyForQuery)
 			{
-				_transactionStatus = body.Length > 0 ? body[0] : (byte)'I';
+				_transactionStatus = body.Length > 0 ? (byte)body[0] : (byte)TransactionStatus.Idle;
 				return;
 			}
 
-			if (code == MsgErrorResponse)
+			if (code == (byte)BackendMessageCode.ErrorResponse)
 			{
-				var error = AuthenticationHelper.ParseErrorResponse(body);
+				//var error = AuthenticationHelper.ParseErrorResponse(body);
 				// Drain remaining messages so the connection is left in a
 				// clean, known state (ReadyForQuery) before surfacing the error.
 				byte drainCode;
 				byte[] drainBody;
-				do
-				{
-					(drainCode, drainBody) = ReadMessage(_stream);
-				} while (drainCode != MsgReadyForQuery);
-				_transactionStatus = drainBody.Length > 0 ? drainBody[0] : (byte)'I';
-				throw error;
+				
+				do 
+					(drainCode, drainBody) = _stream.ReadMessage(false);	
+				while (drainCode != (byte)BackendMessageCode.ReadyForQuery);
+
+				_transactionStatus = drainBody.Length > 0 ? (byte)drainBody[0] : (byte)TransactionStatus.Idle;
+				//throw error;
 			}
 
 			// CommandComplete, NoticeResponse, ParameterStatus, RowDescription,
@@ -486,7 +416,7 @@ public sealed class Connection : IConnection
 		{
 			// case 1: very short query, small enough to fit on the stack.
 			Span<byte> buffer = stackalloc byte[messageLength];
-			buffer[0] = MsgSimpleQuery;
+			buffer[0] = (byte)FrontendMessageCode.Query;
 			BinaryPrimitives.WriteInt32BigEndian(buffer.Slice(1, 4), messageLength - 1);
 			encoding.GetBytes(sql, buffer[5..^1]);
 			buffer[^1] = 0; // null terminator
@@ -505,7 +435,7 @@ public sealed class Connection : IConnection
 		{
 			// case 3: query is too large for the preallocated send buffer.
 			var buffer = new byte[messageLength];
-			buffer[0] = MsgSimpleQuery;
+			buffer[0] = (byte)FrontendMessageCode.Query;
 			BinaryPrimitives.WriteInt32BigEndian(buffer.AsSpan(1, 4), messageLength - 1);
 			encoding.GetBytes(sql, buffer.AsSpan(5..^1));
 			stream.Write(buffer);
@@ -735,41 +665,41 @@ public sealed class Connection : IConnection
 
 		while (true)
 		{
-			var (code, body) = ReadMessage(_stream);
+			var (code, body) =	_stream.ReadMessage(false);
 
-			if (code == MsgDataRow)
+			if (code == (byte)BackendMessageCode.DataRow)
 			{
-				AppendDataRow(body, results);
-			}
-			else if (code == MsgReadyForQuery)
+				//AppendDataRow(body, results);
+			}	
+			else if (code == (byte)BackendMessageCode.ReadyForQuery)
 			{
-				_transactionStatus = body.Length > 0 ? body[0] : (byte)'I';
+				_transactionStatus = body.Length > 0 ? (byte)body[0] : (byte)TransactionStatus.Idle;
 				return results.ToArray();
 			}
-			else if (code == MsgErrorResponse)
+			else if (code == (byte)BackendMessageCode.ErrorResponse)
 			{
-				var error = AuthenticationHelper.ParseErrorResponse(body);
+				//var error = AuthenticationHelper.ParseErrorResponse(body);
 				// Drain remaining messages so the connection is left in a
 				// clean, known state (ReadyForQuery) before surfacing the error.
 				byte drainCode;
 				byte[] drainBody;
 				do
 				{
-					(drainCode, drainBody) = ReadMessage(_stream);
-				} while (drainCode != MsgReadyForQuery);
-				_transactionStatus = drainBody.Length > 0 ? drainBody[0] : (byte)'I';
-				throw error;
+					(drainCode, drainBody) = _stream.ReadMessage(false);
+				} while (drainCode != (byte)BackendMessageCode.ReadyForQuery);
+				_transactionStatus = drainBody.Length > 0 ? (byte)drainBody[0] : (byte)TransactionStatus.Idle;
+				//throw error;
 			}
-			else if (code == MsgRowDescription
-				|| code == MsgCommandComplete
-				|| code == MsgEmptyQueryResponse
-				|| code == MsgNoticeResponse
-				|| code == MsgParameterStatus
-				|| code == MsgNotificationResponse
-				|| code == MsgParseComplete
-				|| code == MsgBindComplete
-				|| code == MsgNoData
-				|| code == MsgParameterDescription)
+			else if (code == (byte)BackendMessageCode.RowDescription
+				|| code == (byte)BackendMessageCode.CommandComplete
+				|| code == (byte)BackendMessageCode.EmptyQueryResponse
+				|| code == (byte)BackendMessageCode.NoticeResponse
+				|| code == (byte)BackendMessageCode.ParameterStatus
+				|| code == (byte)BackendMessageCode.NotificationResponse
+				|| code == (byte)BackendMessageCode.ParseComplete
+				|| code == (byte)BackendMessageCode.BindComplete
+				|| code == (byte)BackendMessageCode.NoData
+				|| code == (byte)BackendMessageCode.ParameterDescription)
 			{
 				// Informational / already-implied-by-DataRow messages; nothing to do.
 				// ParseComplete/BindComplete/NoData/ParameterDescription only ever
@@ -910,81 +840,8 @@ public sealed class Connection : IConnection
 			offset += valueLength;
 		}
 	}
-
-	/// <summary>
-	///     Synchronously reads one length-prefixed backend message:
-	///     1-byte type code + Int32 length (self-inclusive) + body.
-	/// </summary>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private static (byte Code, byte[] Body) ReadMessage(Stream stream)
-	{
-		// Code size: 160 (0xa0)
-		const int headerSize = 5;
-		Span<byte> header = stackalloc byte[headerSize];
-		var read = 0;
-
-		// ReadFully(stream, header);
-		while (read < headerSize)
-		{
-			var n = stream.Read(header[read..]);
-			if (n == 0) ThrowConnectionWasClosedByServer();
-			read += n;
-		}
-
-		var code = header[0];
-		var length = BinaryPrimitives.ReadInt32BigEndian(header[1..]);
-		var bodyLength = length - 4;
-
-		if (bodyLength <= 0)
-			return (code, Array.Empty<byte>());
-
-		var body = new byte[bodyLength]; // heap allocation
-		var bodySpan = new Span<byte>(body);
-
-		// ReadFully(stream, body);
-		read = 0;
-		while (read < bodyLength)
-		{
-			var n = stream.Read(bodySpan[read..]);
-			if (n == 0) ThrowConnectionWasClosedByServer();
-			read += n;
-		}
-		return (code, body);
-	}
-
-	// NetworkStream's constructor requires a genuinely connected Stream-type
-	// socket (it throws IOException "not connected on non-connected sockets"
-	// otherwise), so a sentinel can't be built from a bare, never-connected
-	// Socket. Instead this spins up a throwaway TCP loopback pair, wraps one
-	// end in a NetworkStream, then disposes everything immediately. What's
-	// left is a real, fully-disposed NetworkStream: never connected to
-	// anything meaningful, and any accidental read/write on it now throws
-	// ObjectDisposedException rather than the misleading "not connected" error.
-	private static NetworkStream CreateClosedStream()
-	{
-		// Code size: 124 (0x7c)
-		using var listener = new TcpListener(IPAddress.Loopback, 0);
-		listener.Start();
-		try
-		{
-			using var client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-			client.Connect(IPAddress.Loopback, ((IPEndPoint)listener.LocalEndpoint).Port);
-			using var server = listener.AcceptSocket();
-			using var stream = new NetworkStream(client, ownsSocket: true);
-			return stream;
-		}
-		finally
-		{
-			listener.Stop();
-		}
-	}
-
-	// exceptions 
-	[MethodImpl(MethodImplOptions.NoInlining)]
-	[DoesNotReturn]
-	private static void ThrowConnectionWasClosedByServer() => throw new EndOfStreamException("The connection was closed by the server while reading a message.");
-
-		
+	
+			
 	#endregion
 
 }

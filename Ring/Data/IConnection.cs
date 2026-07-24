@@ -21,7 +21,7 @@ public interface IConnection : IDisposable
 	Task CloseAsync(CancellationToken cancellationToken);
 	IConnection CreateInstance(int id, int sqlSendBufferSize);
 	string?[] Execute(in RetrieveQuery query);
-	void Execute(in AlterQuery query, ReadOnlySpan<char> sql, int sqlByteCount);
+	ConnectionOperationalError? Execute(in AlterQuery query, ReadOnlySpan<char> sql, int sqlByteCount);
 	ValueTask ExecuteAsync(in AlterQuery query, ReadOnlySpan<char> sql, int sqlByteCount, CancellationToken cancellationToken = default);
 	long Execute(in SaveQuery query);
 }

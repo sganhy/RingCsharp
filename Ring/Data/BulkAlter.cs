@@ -102,7 +102,9 @@ internal sealed class BulkAlter : IEquatable<BulkAlter>
 			if (sql is not null)
 			{
 				var byteCount = encoding.GetByteCount(sql);
-				connection.Execute(query, sql, byteCount);
+				var error = connection.Execute(query, sql, byteCount);
+				int oi = 0;
+				++oi;
 			}
 			else ThrowUnsuportedAlterQueryType(query.Type);
 			// add sql log if subscription
