@@ -21,7 +21,7 @@ public interface IConnection : IDisposable
 	Task CloseAsync(CancellationToken cancellationToken);
 	IConnection CreateInstance(int id, int sqlSendBufferSize);
 	string?[] Execute(in RetrieveQuery query);
-	ConnectionOperationalError? Execute(in AlterQuery query, ReadOnlySpan<char> sql, int sqlByteCount);
+	OperationalError? Execute(in AlterQuery query, ReadOnlySpan<char> sql, int sqlByteCount); // AlterQuery: No defensive-copy penalty — the JIT knows no member access can mutate it.
 	ValueTask ExecuteAsync(in AlterQuery query, ReadOnlySpan<char> sql, int sqlByteCount, CancellationToken cancellationToken = default);
 	long Execute(in SaveQuery query);
 }

@@ -5,6 +5,7 @@ using Ring.PostgreSQL.Enums;
 using Ring.PostgreSQL.Exceptions;
 using Ring.PostgreSQL.Extensions;
 using Ring.PostgreSQL.Helpers;
+using Ring.Util.Builders.PostgreSQL;
 using System.Buffers.Binary;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
@@ -15,6 +16,7 @@ namespace Ring.PostgreSQL;
 public sealed class Connection : IConnection
 {
 	private static readonly NetworkStream ClosedStream = NetworkStreamExtensions.CreateClosedStream(null);
+	private static readonly DdlBuilder _ddlBuilder = new();
 
 	// Transaction status as last reported by the server's ReadyForQuery
 	// message: 'I' = idle (no transaction), 'T' = in transaction block,
@@ -267,11 +269,13 @@ public sealed class Connection : IConnection
 	}
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
-	public ConnectionOperationalError? Execute(in AlterQuery query, ReadOnlySpan<char> sql, int sqlByteCount) 
+	public OperationalError? Execute(in AlterQuery query, ReadOnlySpan<char> sql, int sqlByteCount) 
 	{
-		// Code size: 31 (0x1f)
+		// Code size: 37 (0x25) - no virtual call
 		SendQuery(sql, sqlByteCount);
-		return _stream.DrainToReadyForQuery(query.Table.PhysicalName);
+		var returnValue = _stream.DrainToReadyForQuery();
+		returnValue?.Set(query, _ddlBuilder);
+		return returnValue;
 	}
 	public ValueTask ExecuteAsync(in AlterQuery query, ReadOnlySpan<char> sql, int sqlByteCount, CancellationToken cancellationToken = default)
 	{

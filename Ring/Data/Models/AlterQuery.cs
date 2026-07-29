@@ -19,7 +19,7 @@ public readonly struct AlterQuery : IEquatable<AlterQuery>
 	/// <summary>
 	/// 	Ctor
 	/// </summary>
-	internal AlterQuery(int id, Table table, AlterQueryType type, Column? column, Constraint? constraint, Index? index, TableSpace? tableSpace)
+	internal AlterQuery(int id, Table table, AlterQueryType type, in Column? column, Constraint? constraint, Index? index, TableSpace? tableSpace)
 	{
 		Id = id;
 		Table = table;

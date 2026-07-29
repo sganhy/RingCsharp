@@ -380,8 +380,8 @@ public struct Record : IEquatable<Record>
 		var trackerIndex = _offset + table.RecordSize - 1;
 		if (relation is null) ThrowRecordUnknownRelationName(name);
 		var column = table.GetColumn(relation.Id, EntityType.Relation);
-		if (column is null) ThrowRecordWrongRelationType(name);
-		var index = column.RecordIndex;
+		if (!column.HasValue) ThrowRecordWrongRelationType(name);
+		var index = column.Value.RecordIndex;
 		if (index >= 0) return data[trackerIndex] is not null && IsColumnChanged(data, index, trackerIndex);
 		return false;
 	}
@@ -401,8 +401,8 @@ public struct Record : IEquatable<Record>
 		var relation = table.GetRelation(name);
 		if (relation is null) ThrowRecordUnknownRelationName(name);
 		var column = table.GetColumn(relation.Id, EntityType.Relation);
-		if (column is null) ThrowRecordWrongRelationType(name);
-		var index = _offset + column.RecordIndex;
+		if (!column.HasValue) ThrowRecordWrongRelationType(name);
+		var index = _offset + column.Value.RecordIndex;
 		var value = _data[index];
 		return value != null ? long.Parse(value, CultureInfo.InvariantCulture) : null;
 	}
@@ -410,14 +410,14 @@ public struct Record : IEquatable<Record>
 #pragma warning disable IDE0251 // Make member 'readonly'
 	internal void SetRelation(string name, long? value)
 	{
-		// Code size: 137 (0x89) - no virtual calls
+		// Code size: 152 (0x98) - no virtual calls
 		var table = _type;
 		if (table.Id == -1) ThrowRecordUnknownRecordType();
 		var relation = table.GetRelation(name);
 		if (relation is null) ThrowRecordUnknownRelationName(name);
 		var column = table.GetColumn(relation.Id, EntityType.Relation);
-		if (column is null) ThrowRecordUnknownRelationName(name);
-		var index = column.RecordIndex;
+		if (!column.HasValue) ThrowRecordUnknownRelationName(name);
+		var index = column.Value.RecordIndex;
 		if (index >= 0) SetRelationData(_data, table, _offset, index, value?.ToString(DefaultCulture));
 		else ThrowRecordWrongRelationType(name);
 	}

@@ -57,7 +57,7 @@ internal static class IntExtensions
 	private const int TableTypeLexiconItemId = (int)TableType.LexiconItem;
 	private const int TableTypeSchemaCatalogId = (int)TableType.SchemaCatalog;
 	private const int TableTypeTableCatalogId = (int)TableType.TableCatalog;
-	private const int TableTypeTableSpaceCatalogId = (int)TableType.TableSpaceCatalog;
+	private const int TableTypeTableSpaceCatalogId = (int)TableType.TablespaceCatalog;
 	private const int TableTypeLogicalId = (int)TableType.Logical;
 
 	// relation types constants
@@ -125,7 +125,7 @@ internal static class IntExtensions
 			case TableTypeLexiconItemId: return TableType.LexiconItem;
 			case TableTypeSchemaCatalogId: return TableType.SchemaCatalog;
 			case TableTypeTableCatalogId: return TableType.TableCatalog;
-			case TableTypeTableSpaceCatalogId: return TableType.TableSpaceCatalog;
+			case TableTypeTableSpaceCatalogId: return TableType.TablespaceCatalog;
 			case TableTypeLogicalId: return TableType.Logical;
 		}
 		return TableType.Undefined;

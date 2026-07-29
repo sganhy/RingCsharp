@@ -46,7 +46,7 @@ internal class ConnectionMock : IConnection
         throw new NotImplementedException();
     }
 
-    public ConnectionOperationalError? Execute(in AlterQuery query, ReadOnlySpan<char> sql, int sqlByteCount)
+    public OperationalError? Execute(in AlterQuery query, ReadOnlySpan<char> sql, int sqlByteCount)
     {
         throw new NotImplementedException();
     }

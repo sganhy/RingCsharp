@@ -11,7 +11,13 @@ internal static class NamingConvention
     private static readonly string SpecialCharacterStr = SpecialCharacter.ToString();
     private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
 
-    public static string? ToSnakeCase(string? name)
+    public static string? ToCamelCase(string? name)
+    {
+        //TODO
+        return ToSnakeCase(name);
+    }
+
+	public static string? ToSnakeCase(string? name)
     {
         // Code size: 251 (0xfb)
 #pragma warning disable CA1308 // Normalize strings to uppercase

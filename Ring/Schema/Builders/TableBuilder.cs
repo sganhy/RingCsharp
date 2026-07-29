@@ -80,7 +80,7 @@ internal sealed class TableBuilder
 			GetField(FieldMethod, FieldType.String, 80, false, SearchableType.None),
 			GetField(FieldLineNumber, FieldType.Int, 80, false, SearchableType.None),
 			GetField(FieldMessage, FieldType.String, 255, false, SearchableType.None),
-			GetField(FieldDescription, FieldType.String, 0, false, SearchableType.None)
+			GetField(FieldDescription, FieldType.LongString,false),
 		};
 		var metaTable = GetTable((int)TableType.Log, TableType.Log.GetLogicalName(), TableType.Log);
 		metaList.Add(GetIndex(false, new[] { metaList[1] }));
@@ -116,11 +116,11 @@ internal sealed class TableBuilder
 	internal Table GetCatalog(EntityType entityType, DatabaseProvider provider) 
 	{
 		// Code size: 99 (0x63)
+		var ddlBuilder = provider.GetDdlBuilder();
 		var tableType = entityType.ToTableType();
-		var metaList = new List<Meta>(){ GetField(provider.GetSchemaFieldName(entityType), FieldType.String) };
-		if (entityType != EntityType.Schema)
-			metaList.Add(GetField(provider.GetEntityFieldName(entityType), FieldType.String));
-		var catalog = GetTable((int)tableType, provider.GetCatalogViewName(entityType), tableType);
+		var metaList = new List<Meta>() { }; //GetField(provider.GetSchemaFieldName(entityType), FieldType.String) };
+		//if (entityType != EntityType.Schema) metaList.Add(GetField(provider.GetEntityFieldName(entityType), FieldType.String));
+		var catalog = GetTable((int)tableType, tableType.GetLogicalName(), tableType);
 		return GetTable(provider.GetCatalogSchema(), provider, metaList.ToArray(), catalog, PhysicalType.View);
 	}
 #pragma warning restore CA1822, S2325

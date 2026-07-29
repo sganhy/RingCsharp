@@ -38,7 +38,7 @@ internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
 		}
 		return _catalogTable;
 	}
-	protected abstract string GetSelection(Column column);
+	protected abstract string GetSelection(in Column column);
 
 	#region private methods 
 

@@ -241,11 +241,11 @@ internal static class NetworkStreamExtensions
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	internal static ConnectionOperationalError? DrainToReadyForQuery(this NetworkStream stream, string? tableName)
+	internal static OperationalError? DrainToReadyForQuery(this NetworkStream stream)
 	{
 		// Code size: 112 (0x70)
 		//eg. SQL Error[42P07]: ERREUR: la relation « @meta » existe déjà
-		ConnectionOperationalError? operationalError = null;
+		OperationalError? operationalError = null;
 		while (true)
 		{
 			var (code, body) = stream.ReadMessage(true);
@@ -259,15 +259,15 @@ internal static class NetworkStreamExtensions
 				byte drainCode;
 				byte[] drainBody;
 				
-				operationalError = body.ParseErrorResponse(tableName);
+				operationalError = body.ParseErrorFields();
 
 				do
 					(drainCode, drainBody) = stream.ReadMessage(false); 
 				while (drainCode != (byte)BackendMessageCode.ReadyForQuery);
 
-
-//				_transactionStatus = drainBody.Length > 0 ? drainBody[0] : (byte)'I';
-//throw error;
+				//				_transactionStatus = drainBody.Length > 0 ? drainBody[0] : (byte)'I';
+				//throw error;return operationalError;
+				return operationalError;
 			}
 
 			// CommandComplete, NoticeResponse, ParameterStatus, RowDescription,

@@ -38,6 +38,11 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	protected static readonly string DdlTruncate = @"TRUNCATE ";
 	protected static readonly string DdlNotNull = @"NOT NULL";
 
+	// system table names
+	protected static readonly string TableCatalogTableName = TableType.TableCatalog.GetLogicalName();
+	protected static readonly string TablespaceCatalogTableName = TableType.TablespaceCatalog.GetLogicalName();
+	protected static readonly string SchemaCatalogTableName = TableType.SchemaCatalog.GetLogicalName();
+
 	// format
 	protected const char Indent = '\t';
 
@@ -47,10 +52,12 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	protected static readonly string DefaultIndexPrefix = @"idx_";
 
 	// conventions
-	protected static readonly char SpecialEntityPrefix = '@';
+	protected static readonly char LogSpecialEntityPrefix = TableTypeExtensions.SystemTablePrefix; // systeme table logical name prefix
+	protected abstract char PhysSpecialEntityPrefix { get; }
 	protected abstract string SearchableFieldPrefix { get; }
 	protected abstract string? TimeZoneOffsetPrefix { get; }
 	protected abstract string GetPhysicalName(Constraint constraint);
+	protected abstract string GetCatalogPhysicalName(TableType tableType);
 	public bool HasTimeZoneOffsetColumn => TimeZoneOffsetPrefix is not null;
 
 	public string AlterAddColumn(Table table, Column column) // Code size: 90 (0x5a)
@@ -92,34 +99,33 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	
 	public virtual string GetPhysicalName(EntityType entityType, string name)
 	{
-		// Code size: 318 (0x13e)
+		// Code size: 319 (0x13f)
 		switch (entityType)
 		{
+			case EntityType.Table: return GetTablePhysicalName(Provider, name);
 			case EntityType.Schema:
 			case EntityType.Tablespace:
 			case EntityType.Relation:
 			case EntityType.Field:
-#pragma warning disable CA1308 // Normalize strings to uppercase
-				// build different convention connected to ==> Provider
-				var physicalName = NamingConvention.ToSnakeCase(name)?.ToLowerInvariant() ?? string.Empty;
-#pragma warning restore CA1308
-				return name.StartsWith(SpecialEntityPrefix) ^ Provider.IsReservedWord(physicalName) ?
-					string.Join(null, StartPhysicalNameDelimiter, physicalName, EndPhysicalNameDelimiter) : physicalName;
+				{
+					var physicalName = GetPhysicalName(Provider, name);
+					return name.StartsWith(LogSpecialEntityPrefix) ^ Provider.IsReservedWord(physicalName) ?
+						string.Join(null, StartPhysicalNameDelimiter, physicalName, EndPhysicalNameDelimiter) : physicalName;
+				}
 			case EntityType.SearchableColumn:
-				return Provider.IsReservedWord(name) ^ name.StartsWith(SpecialEntityPrefix)
+				return Provider.IsReservedWord(name) ^ name.StartsWith(LogSpecialEntityPrefix)
 				? string.Join(null, StartPhysicalNameDelimiter, SearchableFieldPrefix, name, EndPhysicalNameDelimiter) :
 					SearchableFieldPrefix + name;
 			case EntityType.TimeZoneColumn:
 				{
 					var newValue = TimeZoneOffsetPrefix + name;
-					return Provider.IsReservedWord(newValue) ^ newValue.StartsWith(SpecialEntityPrefix)
+					return Provider.IsReservedWord(newValue) ^ newValue.StartsWith(LogSpecialEntityPrefix)
 					? string.Join(null, StartPhysicalNameDelimiter, TimeZoneOffsetPrefix, name, EndPhysicalNameDelimiter) :
 						TimeZoneOffsetPrefix + name;
 				}
 		}
 		return string.Empty;
 	}
-
 	public string GetPhysicalName(Index index, Table table)
 	{
 		// Code size: 139 (0x8b)
@@ -147,45 +153,12 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 		}
 		return result.ToString();
 	}
-	public string GetPhysicalName(Table table, DbSchema schema)
-	{
-		// Code size: 212 (0xd4)
-		var result = new StringBuilder(63); // schema name max length(30)  + table name max length(30) + 1 '.' + 2 '"'
-#pragma warning disable CA1308 // Normalize strings to uppercase
-		var tableName = NamingConvention.ToSnakeCase(table.Name)?.ToLowerInvariant();
-#pragma warning restore CA1308 
-		result.Append(GetPhysicalName(EntityType.Schema, schema.Name))
-			.Append(SchemaSeparator);
 
-		switch (table.Type)
-		{
-			case TableType.Mtm:
-				result.Append(StartPhysicalNameDelimiter)
-					.Append(MtmPrefix)
-					.Append(tableName)
-					.Append(EndPhysicalNameDelimiter);
-				break;
-			case TableType.SchemaCatalog:
-			case TableType.TableCatalog:
-			case TableType.TableSpaceCatalog:
-				result.Append(tableName);
-				break; 
-			default:
-				if (table.Name.StartsWith(SpecialEntityPrefix))
-				{
-					result.Append(StartPhysicalNameDelimiter)
-						.Append(tableName)
-						.Append(EndPhysicalNameDelimiter);
-				}
-				else
-				{
-					result.Append(TablePrefix)
-						.Append(tableName);
-				}
-				break;
-		}
-		return result.ToString();
-	}
+	public string GetPhysicalName(Table table, DbSchema schema) // Code size: 58 (0x3a)
+		=> new StringBuilder()
+			.Append(GetPhysicalName(EntityType.Schema, schema.Name))
+			.Append(SchemaSeparator)
+			.Append(GetPhysicalName(EntityType.Table, table.Name)).ToString();
 
 	protected abstract string MtmPrefix { get; }
 
@@ -332,7 +305,6 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	{
 		var result = new List<Constraint>();
 		if (table.HasPrimaryKey()) result.Add(GetPrimaryKey(table));
-
 		return result.ToArray();
 	}
 
@@ -405,6 +377,72 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 			}
 		}
 		return result;
+	}
+
+	private static string GetPhysicalName(DatabaseProvider provider, string name)
+	{
+		// Code size: 116 (0x74)
+		// build different convention connected to ==> Provider
+		switch (provider)
+		{
+			case DatabaseProvider.PostgreSql:
+			case DatabaseProvider.MySql:
+			case DatabaseProvider.SqlLite:
+#pragma warning disable CA1308 // Normalize strings to uppercase
+				return NamingConvention.ToSnakeCase(name)?.ToLowerInvariant() ?? string.Empty;
+#pragma warning restore CA1308 // Normalize strings to uppercase
+			case DatabaseProvider.SqlServer:
+				return NamingConvention.ToCamelCase(name) ?? string.Empty;
+			case DatabaseProvider.Oracle:
+				return NamingConvention.ToSnakeCase(name)?.ToUpperInvariant() ?? string.Empty;
+			default:
+				return name;
+		}
+	}
+
+	private string GetTablePhysicalName(DatabaseProvider provider, string name)
+	{
+		// special entities are not prefixed with "@"
+		if (name.StartsWith(LogSpecialEntityPrefix))
+		{
+			// catalogs
+			if (name == TableCatalogTableName) return GetCatalogPhysicalName(TableType.TableCatalog);
+			if (name == TablespaceCatalogTableName) return GetCatalogPhysicalName(TableType.TablespaceCatalog);
+			if (name == SchemaCatalogTableName) return GetCatalogPhysicalName(TableType.SchemaCatalog);
+
+			return GetPhysicalName(provider, StartPhysicalNameDelimiter + name.Replace(LogSpecialEntityPrefix, PhysSpecialEntityPrefix) + EndPhysicalNameDelimiter);
+		}
+
+		/*
+		switch (table.Type)
+		{
+			case TableType.Mtm:
+				result.Append(StartPhysicalNameDelimiter)
+					.Append(MtmPrefix)
+					.Append(tableName)
+					.Append(EndPhysicalNameDelimiter);
+				break;
+			case TableType.SchemaCatalog:
+			case TableType.TableCatalog:
+			case TableType.TablespaceCatalog:
+				result.Append(tableName);
+				break;
+			default:
+				if (table.Name.StartsWith(SpecialEntityPrefix))
+				{
+					result.Append(StartPhysicalNameDelimiter)
+						.Append(tableName)
+						.Append(EndPhysicalNameDelimiter);
+				}
+				else
+				{
+					result.Append(TablePrefix)
+						.Append(tableName);
+				}
+				break;
+		}
+		*/
+		return string.Empty;
 	}
 
 	#endregion

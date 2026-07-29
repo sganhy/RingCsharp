@@ -130,7 +130,7 @@ internal sealed class BulkAlter : IEquatable<BulkAlter>
 			_queries.Add(new AlterQuery(table.Id, table, AlterQueryType.CreatePrimaryKey, null, constraint, null, GetTableSpace(table, EntityType.Constraint)));
 	}
 
-	private void AppendDdlCommand(AlterQueryType type, Table table, Column? column = null)
+	private void AppendDdlCommand(AlterQueryType type, Table table, in Column? column = null)
 	{
 		switch (type)
 		{

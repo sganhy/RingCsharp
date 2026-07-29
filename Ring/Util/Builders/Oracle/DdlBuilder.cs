@@ -33,10 +33,15 @@ internal sealed class DdlBuilder : BaseDdlBuilder
     protected sealed override int VarcharMaxSize => 65535;
     protected sealed override string StringCollateInformation => throw new NotImplementedException();
     protected sealed override string SchemaSeparator => ".";
-    protected sealed override string StartPhysicalNameDelimiter => "`";
+	protected sealed override char PhysSpecialEntityPrefix => '@';
+	protected sealed override string StartPhysicalNameDelimiter => "`";
     protected sealed override string EndPhysicalNameDelimiter => StartPhysicalNameDelimiter;
     protected sealed override string TablePrefix => DefaultTablePrefix;
     protected sealed override string SearchableFieldPrefix => "s_";
     protected sealed override string GetPhysicalName(Constraint constraint) => string.Empty;
 
+	protected override string GetCatalogPhysicalName(TableType tableType)
+	{
+		throw new NotImplementedException();
+	}
 }

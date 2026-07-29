@@ -12,7 +12,7 @@ internal static class ArrayExtensions
 	private const byte ErrorDetail = (byte)ErrorTypeCode.Detail;
 	private const byte ErrorHint = (byte)ErrorTypeCode.Hint;
 
-	internal static ConnectionOperationalError ParseErrorResponse(this byte[] body, string? tableName)
+	internal static OperationalError ParseErrorFields(this byte[] body)
 	{
 		string? severity = null, sqlState = null, message = null, detail = null, hint = null;
 		var offset = 0;
@@ -29,7 +29,16 @@ internal static class ArrayExtensions
 				case ErrorHint: hint = value; break;
 			}
 		}
-		return new ConnectionOperationalError(message ?? "An error was returned by the server.", sqlState ?? string.Empty, severity ?? string.Empty, detail, tableName);
+		// string message, string state, string severity, string? detail, string hint, string? tableName
+		var result = new OperationalError
+		{
+			Message = message ?? string.Empty,
+			SqlState = sqlState ?? string.Empty,
+			Severity = severity ?? string.Empty,
+			Detail = detail,
+			Hint = hint
+		};
+		return result;
 	}
 
 	#region private methods 

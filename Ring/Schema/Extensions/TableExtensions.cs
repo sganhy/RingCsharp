@@ -56,7 +56,7 @@ internal static class TableExtensions
 	{
 		// Code size: 28 (0x1c)
 		var column = GetColumn(table, id, EntityType.Field);
-		return column is not null ? table.Fields[column.RecordIndex] : null;
+		return column.HasValue ? table.Fields[column.Value.RecordIndex] : null;
 	}
 
 	/// <summary>
@@ -218,7 +218,7 @@ internal static class TableExtensions
 
 	internal static int GetColumnIndex(this Table table, int id, EntityType type)
 	{
-		// Code size: 137 (0x89)
+		// Code size: 135 (0x87)
 		var colWeight = Meta.ColumnTypeWeight(type);
 		var span = new ReadOnlySpan<Column>(table.Columns); // sorted by Id
 		int indexerLeft = 0, indexerRight = span.Length - 1;

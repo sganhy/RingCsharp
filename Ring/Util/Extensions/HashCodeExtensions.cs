@@ -96,7 +96,7 @@ internal static class HashCodeExtensions
         hashCode.Add(alterQuery.Table.SchemaId);
         hashCode.Add((int)alterQuery.Type);
 		//hashCode.Add(alterQuery.Builder); // ==> nok
-		if (alterQuery.Column is not null) AddColumn(ref hashCode, alterQuery.Column);
+		if (alterQuery.Column.HasValue) AddColumn(ref hashCode, alterQuery.Column.Value);
 		if (alterQuery.Index is not null) AddIndex(ref hashCode, alterQuery.Index);
     }
 

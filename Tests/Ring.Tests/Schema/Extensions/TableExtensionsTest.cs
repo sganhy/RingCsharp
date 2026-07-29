@@ -234,7 +234,7 @@ public class TableExtensionsTest : BaseTest
 
         // assert
         Assert.NotNull(column);
-        Assert.Equal(6, column.Id);
+        Assert.Equal(6, column.Value.Id);
     }
 
     [Fact]
@@ -251,7 +251,7 @@ public class TableExtensionsTest : BaseTest
 
         // assert
         Assert.NotNull(column);
-        Assert.Equal(EntityType.Relation, column.Type);
+        Assert.Equal(EntityType.Relation, column.Value.Type);
     }
 
     [Fact]
@@ -268,7 +268,7 @@ public class TableExtensionsTest : BaseTest
 
         // assert
         Assert.NotNull(column);
-        Assert.Equal(EntityType.SearchableColumn, column.Type);
+        Assert.Equal(EntityType.SearchableColumn, column.Value.Type);
     }
 
 

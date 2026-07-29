@@ -338,7 +338,7 @@ public class DdlBuilderTest : BaseBuilderTest
     }
 
 
-    [Fact]
+	[Fact]
     public void GetPhysicalName_Field1_FieldName()
     {
         // arrange 

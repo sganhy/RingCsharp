@@ -14,7 +14,7 @@ internal enum TableType : byte
 	Test = 22,
 	SchemaCatalog = 32,
 	TableCatalog = 34,
-	TableSpaceCatalog = 35,
+	TablespaceCatalog = 35,
 	Logical = 37,
 	// 124 reserved for unit tests
 	Undefined = 127

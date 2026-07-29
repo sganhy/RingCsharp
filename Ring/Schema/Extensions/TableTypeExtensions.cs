@@ -19,9 +19,12 @@ internal static class TableTypeExtensions
             case TableType.Meta:
             case TableType.Log:
             case TableType.Test:
-                return SystemTablePrefix + tableType.ToString().ToLowerInvariant();
-            case TableType.MetaId: 
-                return SystemTablePrefix + NamingConvention.ToSnakeCase(tableType.ToString());
+				return SystemTablePrefix + tableType.ToString().ToLowerInvariant();
+            case TableType.MetaId:
+			case TableType.TableCatalog:
+			case TableType.TablespaceCatalog:
+			case TableType.SchemaCatalog:
+				return SystemTablePrefix + NamingConvention.ToSnakeCase(tableType.ToString())?.ToLowerInvariant();
         }
 #pragma warning restore CA1308
         return string.Empty;

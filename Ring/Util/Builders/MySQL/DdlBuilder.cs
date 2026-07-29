@@ -1,12 +1,15 @@
 ﻿using Ring.Schema.Enums;
+using Ring.Schema.Extensions;
 using Ring.Schema.Models;
+using PostgreSqlDdlBuilder = Ring.Util.Builders.PostgreSQL.DdlBuilder;
 
 namespace Ring.Util.Builders.MySQL;
 
 internal sealed class DdlBuilder : BaseDdlBuilder
 {
     private readonly static DatabaseProvider _currentProvider = DatabaseProvider.MySql;
-    private readonly static Dictionary<FieldType, string> _dataType = new()
+	private readonly static PostgreSqlDdlBuilder _pgDdlBuilder = new();
+	private readonly static Dictionary<FieldType, string> _dataType = new()
     {
         { FieldType.String,        "VARCHAR"   },
         { FieldType.LongString,    "LONGTEXT"  },
@@ -33,9 +36,21 @@ internal sealed class DdlBuilder : BaseDdlBuilder
     protected sealed override int VarcharMaxSize => 65535;
     protected sealed override string StringCollateInformation => throw new NotImplementedException();
     protected sealed override string SchemaSeparator => ".";
-    protected sealed override string StartPhysicalNameDelimiter => "`";
+	protected sealed override char PhysSpecialEntityPrefix => '@';
+	protected sealed override string StartPhysicalNameDelimiter => "`";
     protected sealed override string EndPhysicalNameDelimiter => StartPhysicalNameDelimiter;
     protected sealed override string TablePrefix => DefaultTablePrefix;
     protected sealed override string SearchableFieldPrefix => "s_";
     protected sealed override string GetPhysicalName(Constraint constraint) => string.Empty;
+
+	protected override string GetCatalogPhysicalName(TableType tableType)
+	{
+		switch (tableType)
+		{
+			case TableType.TableCatalog: return _pgDdlBuilder.GetPhysicalName(EntityType.Table, tableType.GetLogicalName());
+			case TableType.TablespaceCatalog: return "tablespaces";
+			case TableType.SchemaCatalog: return "schemas";
+		}
+		return string.Empty;
+	}
 }

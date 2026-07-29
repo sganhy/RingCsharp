@@ -36,6 +36,7 @@ internal sealed class DdlBuilder : BaseDdlBuilder
 	protected sealed override int VarcharMaxSize => 65535;
 	protected sealed override Dictionary<FieldType, string> DataType => _dataType;
 	protected sealed override string SchemaSeparator => ".";
+	protected sealed override char PhysSpecialEntityPrefix => '@';
 	protected sealed override string StartPhysicalNameDelimiter => "\"";
 	protected sealed override string EndPhysicalNameDelimiter => StartPhysicalNameDelimiter;
 	protected sealed override string TablePrefix => DefaultTablePrefix;
@@ -62,7 +63,7 @@ internal sealed class DdlBuilder : BaseDdlBuilder
             case ConstraintType.PrimaryKey:
 				// apply short version of prefix 'pk'
 				var prefix = constraint.ToTable.Name.Length > 27 ? DefaultPrimaryKeyPrefix[..^1] : DefaultPrimaryKeyPrefix;
-				if (constraint.ToTable.Name.StartsWith(SpecialEntityPrefix))
+				if (constraint.ToTable.Name.StartsWith(PhysSpecialEntityPrefix))
 					result.Append(StartPhysicalNameDelimiter)
 						  .Append(prefix)
 						  .Append(constraint.ToTable.Name)
@@ -72,4 +73,15 @@ internal sealed class DdlBuilder : BaseDdlBuilder
 		}
         return result.ToString();
     }
+
+	protected override string GetCatalogPhysicalName(TableType tableType)
+	{
+		switch (tableType)
+		{
+			case TableType.TableCatalog: return "tables";
+			case TableType.TablespaceCatalog: return "tablespaces";
+			case TableType.SchemaCatalog: return "schemas";
+		}
+		return string.Empty;
+	}
 }

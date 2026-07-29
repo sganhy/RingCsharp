@@ -9,14 +9,17 @@ public class TableTypeExtensionsTest
     [InlineData(TableType.Meta, "@meta")]
     [InlineData(TableType.MetaId, "@meta_id")]
     [InlineData(TableType.Log, "@log")]
-    internal void GetLogicalName(TableType tableType, string expectedValue)
+	[InlineData(TableType.TableCatalog, "@table_catalog")]
+	[InlineData(TableType.TablespaceCatalog, "@tablespace_catalog")]
+	[InlineData(TableType.SchemaCatalog, "@schema_catalog")]
+	internal void GetLogicalName(TableType tableType, string expectedValue)
     {
         // arrange 
         // act 
         var result = TableTypeExtensions.GetLogicalName(tableType);
 
         // assert
-        Assert.Equal(result, expectedValue);
+        Assert.Equal(expectedValue, result);
     }
 
 }

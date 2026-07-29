@@ -27,11 +27,11 @@ public sealed class BaseDdlBuilderTest : BaseBuilderTest
         table.Fields[10] = field;
         var col = table.GetColumn(field.Id, EntityType.Field);
         Assert.NotNull(col);
-        col = col.SetFieldType(FieldType.String);
-        var expectedSql = $"ALTER TABLE {table.PhysicalName} ADD {col.PhysicalName} varchar(80) COLLATE \"C\"";
+        col = col.Value.SetFieldType(FieldType.String);
+        var expectedSql = $"ALTER TABLE {table.PhysicalName} ADD {col.Value.PhysicalName} varchar(80) COLLATE \"C\"";
 
         // act 
-        var dql = _sut.AlterAddColumn(table, col);
+        var dql = _sut.AlterAddColumn(table, col.Value);
 
         // assert
         Assert.Equal(expectedSql, dql);
@@ -47,11 +47,11 @@ public sealed class BaseDdlBuilderTest : BaseBuilderTest
         table.Fields[11] = field;
         var col = table.GetColumn(field.Id, EntityType.Field);
         Assert.NotNull(col);
-        col = col.SetFieldType(FieldType.DateTimeOffset);
-        var expectedSql = $"ALTER TABLE {table.PhysicalName} ADD {col.PhysicalName} timestamp without time zone";
+        col = col.Value.SetFieldType(FieldType.DateTimeOffset);
+        var expectedSql = $"ALTER TABLE {table.PhysicalName} ADD {col.Value.PhysicalName} timestamp without time zone";
 
         // act 
-        var dql = _sut.AlterAddColumn(table, col);
+        var dql = _sut.AlterAddColumn(table, col.Value);
 
         // assert
         Assert.Equal(expectedSql, dql);
@@ -67,11 +67,11 @@ public sealed class BaseDdlBuilderTest : BaseBuilderTest
         table.Fields[9] = field;
         var col = table.GetColumn(field.Id, EntityType.Field);
         Assert.NotNull(col);
-        col = col.SetFieldType(FieldType.Byte);
-        var expectedSql = $"ALTER TABLE {table.PhysicalName} ADD {col.PhysicalName} int2";
+        col = col.Value.SetFieldType(FieldType.Byte);
+        var expectedSql = $"ALTER TABLE {table.PhysicalName} ADD {col.Value.PhysicalName} int2";
 
         // act 
-        var dql = _sut.AlterAddColumn(table, col);
+        var dql = _sut.AlterAddColumn(table, col.Value);
 
         // assert
         Assert.Equal(expectedSql, dql);
@@ -85,12 +85,12 @@ public sealed class BaseDdlBuilderTest : BaseBuilderTest
         var relation = table.Relations[10];
         var col = table.GetColumn(relation.Id, EntityType.Relation);
         Assert.NotNull(col);
-        col = col.SetFieldType(FieldType.Int);
-        table.Columns[table.GetColumnIndex(relation.Id, EntityType.Relation)] = col;
-        var expectedSql = $"ALTER TABLE {table.PhysicalName} ADD {col.PhysicalName} int4";
+        col = col.Value.SetFieldType(FieldType.Int);
+        table.Columns[table.GetColumnIndex(relation.Id, EntityType.Relation)] = col.Value;
+        var expectedSql = $"ALTER TABLE {table.PhysicalName} ADD {col.Value.PhysicalName} int4";
 
         // act 
-        var dql = _sut.AlterAddColumn(table, col);
+        var dql = _sut.AlterAddColumn(table, col.Value);
 
         // assert
         Assert.Equal(expectedSql, dql);
@@ -104,10 +104,10 @@ public sealed class BaseDdlBuilderTest : BaseBuilderTest
         var field = table.Fields[16];
         var col = table.GetColumn(field.Id, EntityType.Field);
         Assert.NotNull(col);
-        var expectedSql = $"ALTER TABLE {table.PhysicalName} DROP COLUMN {col.PhysicalName}";
+        var expectedSql = $"ALTER TABLE {table.PhysicalName} DROP COLUMN {col.Value.PhysicalName}";
 
         // act 
-        var dql = _sut.AlterDropColumn(table, col);
+        var dql = _sut.AlterDropColumn(table, col.Value);
 
         // assert
         Assert.Equal(expectedSql, dql);
@@ -121,10 +121,10 @@ public sealed class BaseDdlBuilderTest : BaseBuilderTest
         var relation = table.Relations[20];
         var col = table.GetColumn(relation.Id, EntityType.Relation);
         Assert.NotNull(col);
-        var expectedSql = $"ALTER TABLE {table.PhysicalName} DROP COLUMN {col.PhysicalName}";
+        var expectedSql = $"ALTER TABLE {table.PhysicalName} DROP COLUMN {col.Value.PhysicalName}";
 
         // act 
-        var dql = _sut.AlterDropColumn(table, col);
+        var dql = _sut.AlterDropColumn(table, col.Value);
 
         // assert
         Assert.Equal(expectedSql, dql);

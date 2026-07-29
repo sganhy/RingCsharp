@@ -1,5 +1,4 @@
 ﻿using Ring.Schema.Enums;
-using Ring.Schema.Models;
 using Ring.Util.Builders;
 using Ring.Util.Helpers;
 
@@ -13,11 +12,6 @@ internal static class DatabaseProviderExtensions
 	private static readonly Lazy<HashSet<string>> MySqlWords = new(() => new(ResourceHelper.GetReservedWords(DatabaseProvider.MySql), StringComparer.OrdinalIgnoreCase), true);
 	private static readonly Lazy<HashSet<string>> SqlServerWords = new(() => new(ResourceHelper.GetReservedWords(DatabaseProvider.SqlServer), StringComparer.OrdinalIgnoreCase), true);
 	private static readonly Lazy<HashSet<string>> SqlLiteWords = new(() => new(ResourceHelper.GetReservedWords(DatabaseProvider.SqlLite), StringComparer.OrdinalIgnoreCase), true);
-
-	// catalogs
-	private static readonly Dictionary<EntityType, Catalog> PostreSqlCatalog = new() {
-		{ EntityType.Table, new Catalog { FieldSchemaName="table_schema", FieldEntityName= "table_name", ViewName="tables" } }
-	};
 
 	internal static IDdlBuilder GetDdlBuilder(this DatabaseProvider provider)
 	{
@@ -86,46 +80,6 @@ internal static class DatabaseProviderExtensions
 			case DatabaseProvider.SqlLite: return string.Empty;
 		}
 		throw new NotImplementedException();
-	}
-
-	internal static string GetCatalogViewName(this DatabaseProvider provider, EntityType entityType)
-	{
-		switch (provider)
-		{
-			case DatabaseProvider.PostgreSql:
-			case DatabaseProvider.MySql:
-			case DatabaseProvider.SqlServer:
-				return PostreSqlCatalog[entityType].ViewName;
-		}
-		throw new NotImplementedException();
-	}
-
-	internal static string GetSchemaFieldName(this DatabaseProvider provider, EntityType entityType)
-	{
-		var result = string.Empty;
-		switch (provider)
-		{
-			case DatabaseProvider.PostgreSql:
-			case DatabaseProvider.MySql:
-			case DatabaseProvider.SqlServer:
-				result = PostreSqlCatalog[entityType].FieldSchemaName;
-				break;
-		}
-		return result;
-	}
-
-	internal static string GetEntityFieldName(this DatabaseProvider provider, EntityType entityType)
-	{
-		var result = string.Empty;
-		switch (provider)
-		{
-			case DatabaseProvider.PostgreSql:
-			case DatabaseProvider.MySql:
-			case DatabaseProvider.SqlServer:
-				result = PostreSqlCatalog[entityType].FieldEntityName;
-				break;
-		}
-		return result;
 	}
 
 }
