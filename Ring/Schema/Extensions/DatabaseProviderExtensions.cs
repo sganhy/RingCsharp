@@ -69,17 +69,4 @@ internal static class DatabaseProviderExtensions
 		throw new NotImplementedException();
 	}
 
-	internal static string GetCatalogSchema(this DatabaseProvider provider)
-	{
-		switch (provider)
-		{
-			case DatabaseProvider.PostgreSql:
-			case DatabaseProvider.MySql:
-			case DatabaseProvider.SqlServer: return "information_schema";
-			case DatabaseProvider.Oracle:
-			case DatabaseProvider.SqlLite: return string.Empty;
-		}
-		throw new NotImplementedException();
-	}
-
 }

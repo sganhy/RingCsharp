@@ -38,4 +38,9 @@ internal sealed class Relation : BaseEntity, IEquatable<Relation>
 	public override bool Equals(object? obj) => obj is Relation relation && Equals(relation);
 	public bool Equals(Relation? other) => this.IsEquivalentTo(other);
 	public override int GetHashCode() => this.Hash();
+
+#if DEBUG
+	public override string ToString() => $"{Id} - {Name} ({Type.ToString().ToUpperInvariant()})";
+#endif
+
 }

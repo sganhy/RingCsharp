@@ -26,12 +26,12 @@ internal sealed class DdlBuilder : BaseDdlBuilder
         { FieldType.DateTimeOffset,  "TIMESTAMP" }
     };
 
-    public DdlBuilder() : base() { }
+    public DdlBuilder() : base() {}
 
     public sealed override string Create(TableSpace tablespace) => tablespace.Name;
     public sealed override DatabaseProvider Provider => _currentProvider;
-    protected sealed override string MtmPrefix => "@mtm_";
-    protected sealed override string? TimeZoneOffsetPrefix => null;
+    protected sealed override string MtmPrefix => TableType.Mtm.GetLogicalName(); // physical name prefix for many-to-many tables
+	protected sealed override string? TimeZoneOffsetPrefix => null;
     protected sealed override Dictionary<FieldType, string> DataType => _dataType;
     protected sealed override int VarcharMaxSize => 65535;
     protected sealed override string StringCollateInformation => throw new NotImplementedException();
@@ -52,5 +52,10 @@ internal sealed class DdlBuilder : BaseDdlBuilder
 			case TableType.SchemaCatalog: return "schemas";
 		}
 		return string.Empty;
+	}
+
+	protected override string GetSchemaPhysicalName(TableType tableType)
+	{
+		throw new NotImplementedException();
 	}
 }

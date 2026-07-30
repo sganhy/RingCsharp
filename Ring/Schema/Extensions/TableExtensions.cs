@@ -193,7 +193,7 @@ internal static class TableExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static Column? GetColumn(this Table table, int id, EntityType type)
 	{
-		// Code size: 145 (0x91) - no virtual calls
+		// Code size: 151 (0x97) - no virtual calls
 		var colWeight = Meta.ColumnTypeWeight(type);
 		var span = new ReadOnlySpan<Column>(table.Columns); // sorted by Id
 		int indexerLeft = 0, indexerRight = span.Length - 1;
@@ -201,12 +201,13 @@ internal static class TableExtensions
 		while (indexerLeft <= indexerRight)
 		{
 			var indexerMiddle = (indexerLeft + indexerRight) >> 1;
-			var indexerCompare = id - span[indexerMiddle].Id;
+			ref readonly var candidate = ref span[indexerMiddle]; // one indexer call, aliased — no Column copy yet
+			var indexerCompare = id - candidate.Id;
 			if (indexerCompare == 0)
 			{
 				// sub search on Column.Type
-				var weightCompare = colWeight - Meta.ColumnTypeWeight(span[indexerMiddle].Type);
-				if (weightCompare == 0) return span[indexerMiddle];
+				var weightCompare = colWeight - Meta.ColumnTypeWeight(candidate.Type);
+				if (weightCompare == 0) return candidate; // the only copy: building the Column? to return
 				if (weightCompare > 0) indexerLeft = indexerMiddle + 1;
 				else indexerRight = indexerMiddle - 1;
 			}

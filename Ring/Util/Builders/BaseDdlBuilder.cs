@@ -58,9 +58,10 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	protected abstract string? TimeZoneOffsetPrefix { get; }
 	protected abstract string GetPhysicalName(Constraint constraint);
 	protected abstract string GetCatalogPhysicalName(TableType tableType);
+	protected abstract string GetSchemaPhysicalName(TableType tableType);
 	public bool HasTimeZoneOffsetColumn => TimeZoneOffsetPrefix is not null;
 
-	public string AlterAddColumn(Table table, Column column) // Code size: 90 (0x5a)
+	public string AlterAddColumn(Table table, in Column column) // Code size: 90 (0x5a)
 		=> new StringBuilder()
 			.Append(DdlAlter)
 			.Append(DdlTable)
@@ -72,7 +73,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 			.Append(GetDataType(table, column, null))
 			.ToString();
 	
-	public string AlterDropColumn(Table table, Column column) // Code size: 80 (0x50)
+	public string AlterDropColumn(Table table, in Column column) // Code size: 80 (0x50)
 		=> new StringBuilder()
 			.Append(DdlAlter)
 			.Append(DdlTable)
@@ -154,11 +155,14 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 		return result.ToString();
 	}
 
-	public string GetPhysicalName(Table table, DbSchema schema) // Code size: 58 (0x3a)
-		=> new StringBuilder()
-			.Append(GetPhysicalName(EntityType.Schema, schema.Name))
-			.Append(SchemaSeparator)
-			.Append(GetPhysicalName(EntityType.Table, table.Name)).ToString();
+	public string GetPhysicalName(Table table, DbSchema schema)
+	{
+		// Code size: 97 (0x61)
+		var result = new StringBuilder();
+		if (table.Type.IsCatalog())	result.Append(GetSchemaPhysicalName(table.Type));
+		else result.Append(GetPhysicalName(EntityType.Schema, schema.Name));
+		return result.Append(SchemaSeparator).Append(GetPhysicalName(EntityType.Table, table.Name)).ToString();
+	}
 
 	protected abstract string MtmPrefix { get; }
 
@@ -412,37 +416,11 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 
 			return GetPhysicalName(provider, StartPhysicalNameDelimiter + name.Replace(LogSpecialEntityPrefix, PhysSpecialEntityPrefix) + EndPhysicalNameDelimiter);
 		}
-
-		/*
-		switch (table.Type)
+		else 
 		{
-			case TableType.Mtm:
-				result.Append(StartPhysicalNameDelimiter)
-					.Append(MtmPrefix)
-					.Append(tableName)
-					.Append(EndPhysicalNameDelimiter);
-				break;
-			case TableType.SchemaCatalog:
-			case TableType.TableCatalog:
-			case TableType.TablespaceCatalog:
-				result.Append(tableName);
-				break;
-			default:
-				if (table.Name.StartsWith(SpecialEntityPrefix))
-				{
-					result.Append(StartPhysicalNameDelimiter)
-						.Append(tableName)
-						.Append(EndPhysicalNameDelimiter);
-				}
-				else
-				{
-					result.Append(TablePrefix)
-						.Append(tableName);
-				}
-				break;
+			// business tables
+			return GetPhysicalName(provider, TablePrefix + name);
 		}
-		*/
-		return string.Empty;
 	}
 
 	#endregion

@@ -115,22 +115,22 @@ internal sealed class TableBuilder
 #pragma warning disable CA1822, S2325 // Mark members as static
 	internal Table GetCatalog(EntityType entityType, DatabaseProvider provider) 
 	{
-		// Code size: 99 (0x63)
+		// Code size: 61 (0x3d)
 		var ddlBuilder = provider.GetDdlBuilder();
 		var tableType = entityType.ToTableType();
-		var metaList = new List<Meta>() { }; //GetField(provider.GetSchemaFieldName(entityType), FieldType.String) };
-		//if (entityType != EntityType.Schema) metaList.Add(GetField(provider.GetEntityFieldName(entityType), FieldType.String));
+		var metaList = new List<Meta>() { GetField(FieldName, FieldType.String) };
 		var catalog = GetTable((int)tableType, tableType.GetLogicalName(), tableType);
-		return GetTable(provider.GetCatalogSchema(), provider, metaList.ToArray(), catalog, PhysicalType.View);
+		var tableObject = GetTable(string.Empty, provider, metaList.ToArray(), catalog, PhysicalType.View);
+		return tableObject;
 	}
 #pragma warning restore CA1822, S2325
 
 #pragma warning disable CA1822, S2325 // Mark members as static
 	internal Table GetMtm(Table partialTable, IDdlBuilder ddlBuilder, string physicalName, int objectIndex, Relation relation1, Relation relation2) 
 	{
-        // Code size: 226 (0xe2)
-        // add @ prefix to logical name
-        var metaTable = new Meta(0, (byte)EntityType.Table, 0, (int)TableType.Mtm, 0L, TableType.Mtm.GetLogicalName(partialTable.Name), null,null,true);
+		// Code size: 219 (0xdb)
+		// add @ prefix to logical name
+		var metaTable = new Meta(0, (byte)EntityType.Table, 0, (int)TableType.Mtm, 0L, partialTable.Name, null,null,true);
 		var metaRelation1 = relation1.ToMeta(partialTable.Id);
 		var metaRelation2 = relation2.ToMeta(partialTable.Id);
 		// add index 

@@ -442,12 +442,27 @@ public class DdlBuilderTest : BaseBuilderTest
         Assert.Equal(expectedResult, result);
     }
 
-    [Fact]
+	[Fact]
+	public void GetPhysicalName_Table1_TableCatalogPhysicalName()
+	{
+		// arrange 
+		var meta = Meta.Create("@Test");
+		var schema = Meta.GetDefaultSchema(meta, DatabaseProvider.PostgreSql);
+		var expectedResult = "\"@test\"";
+
+		// act 
+		var result = _sut.GetPhysicalName(EntityType.Schema, meta.Name);
+
+		// assert
+		Assert.Equal(expectedResult, result);
+	}
+
+	[Fact]
     public void GetPhysicalName_MtmTable1_TableName()
     {
         // arrange 
         var metaTable = new Meta(_faker.Random.Number(int.MinValue,int.MaxValue), (byte)EntityType.Table, 0, (int)TableType.Mtm
-            , 0L, "Test", null, null, true);
+            , 0L, TableType.Mtm.GetLogicalName("Test"), null, null, true);
         var emptyTable = Meta.GetDefaultTable(metaTable);
         var emptySchema = Meta.GetDefaultSchema(Meta.Create("Where"), DatabaseProvider.MySql);
         var ddlBuilder = DatabaseProvider.PostgreSql.GetDdlBuilder();

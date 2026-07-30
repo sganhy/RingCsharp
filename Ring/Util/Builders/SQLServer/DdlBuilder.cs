@@ -1,4 +1,5 @@
 ﻿using Ring.Schema.Enums;
+using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 
 namespace Ring.Util.Builders.SQLServer;
@@ -29,8 +30,8 @@ internal sealed class DdlBuilder : BaseDdlBuilder
         throw new NotImplementedException();
     }
     public sealed override DatabaseProvider Provider => DatabaseProvider.SqlServer;
-    protected sealed override string MtmPrefix => "@mtm_";
-    protected sealed override string? TimeZoneOffsetPrefix => null;
+    protected sealed override string MtmPrefix => TableType.Mtm.GetLogicalName(); // physical name prefix for many-to-many tables
+	protected sealed override string? TimeZoneOffsetPrefix => null;
     protected sealed override Dictionary<FieldType, string> DataType => _dataType;
     protected sealed override int VarcharMaxSize => -1;
     protected sealed override string StringCollateInformation => throw new NotImplementedException();
@@ -43,6 +44,11 @@ internal sealed class DdlBuilder : BaseDdlBuilder
     protected sealed override string GetPhysicalName(Constraint constraint) => string.Empty;
 
 	protected override string GetCatalogPhysicalName(TableType tableType)
+	{
+		throw new NotImplementedException();
+	}
+
+	protected override string GetSchemaPhysicalName(TableType tableType)
 	{
 		throw new NotImplementedException();
 	}

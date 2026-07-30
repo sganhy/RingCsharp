@@ -25,8 +25,8 @@ internal readonly struct Column : IEquatable<Column>
 		SearchableType = searchableType;
 	}
 
-	public static bool operator ==(Column left, Column right) => left.Equals(right);
-	public static bool operator !=(Column left, Column right) => !left.Equals(right);
+	public static bool operator ==(in Column left, in Column right) => left.Equals(right);
+	public static bool operator !=(in Column left,in Column right) => !left.Equals(right);
 	public override bool Equals(object? obj) => obj is Column column && Equals(column);
 	public bool Equals(Column other) => this.IsEquivalentTo(other);
 	public override int GetHashCode() => this.Hash();

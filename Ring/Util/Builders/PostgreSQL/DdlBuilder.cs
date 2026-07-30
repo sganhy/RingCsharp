@@ -1,4 +1,5 @@
 ﻿using Ring.Schema.Enums;
+using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using System.Text;
 
@@ -31,7 +32,7 @@ internal sealed class DdlBuilder : BaseDdlBuilder
 
 	public sealed override DatabaseProvider Provider => DatabaseProvider.PostgreSql;
 	protected sealed override string StringCollateInformation => @"COLLATE ""C""";
-	protected sealed override string MtmPrefix => "@mtm_";
+	protected sealed override string MtmPrefix => TableType.Mtm.GetLogicalName(); // physical name prefix for many-to-many tables
 	protected sealed override string TimeZoneOffsetPrefix => "@tz_offset_";
 	protected sealed override int VarcharMaxSize => 65535;
 	protected sealed override Dictionary<FieldType, string> DataType => _dataType;
@@ -83,5 +84,10 @@ internal sealed class DdlBuilder : BaseDdlBuilder
 			case TableType.SchemaCatalog: return "schemas";
 		}
 		return string.Empty;
+	}
+
+	protected override string GetSchemaPhysicalName(TableType tableType)
+	{
+		return "information_schema";
 	}
 }

@@ -7,8 +7,8 @@ namespace Ring.Util.Builders;
 
 internal interface IDdlBuilder : ISqlBuilder
 {
-	string AlterAddColumn(Table table, Column column);
-	string AlterDropColumn(Table table, Column column);
+	string AlterAddColumn(Table table, in Column column);
+	string AlterDropColumn(Table table, in Column column);
 	string Create(DbSchema schema);
 	string Create(TableSpace tablespace);
 	string Create(Table table, TableSpace? tablespace = null);
