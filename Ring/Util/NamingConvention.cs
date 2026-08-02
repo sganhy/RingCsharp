@@ -1,4 +1,6 @@
-﻿using System.Globalization;
+﻿using Ring.Schema.Enums;
+using Ring.Schema.Extensions;
+using System.Globalization;
 using System.Text;
 
 namespace Ring.Util;
@@ -7,7 +9,7 @@ internal static class NamingConvention
 {
     private const char Space = ' ';
     private const char SnakeCaseSeparator = '_';
-    private const char SpecialCharacter = '@';
+    private static readonly char SpecialCharacter = TableType.NonBusinessTable.GetLogicalName()[0];
     private static readonly string SpecialCharacterStr = SpecialCharacter.ToString();
     private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
 

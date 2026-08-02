@@ -13,6 +13,7 @@ internal sealed class SchemaBuilder
 
 	internal DbSchema GetMeta(DatabaseProvider provider, IConfiguration configuration, bool includeInactive=true)
 	{
+		// Code size: 484 (0x1e4)
 		var metaList = new List<Meta>();
         const SchemaType type = SchemaType.Static;
         const SchemaLoadType loadType = SchemaLoadType.Full;
@@ -33,11 +34,13 @@ internal sealed class SchemaBuilder
 		metaList.AddRange(_tableBuilder.GetMeta(configuration.DefaultSchema, provider).ToMeta(0));
 		metaList.AddRange(_tableBuilder.GetMetaId(configuration.DefaultSchema, provider).ToMeta(0));
 		metaList.AddRange(_tableBuilder.GetLog(configuration.DefaultSchema, provider).ToMeta(0));
-		if (includeInactive)
-			metaList.AddRange(_tableBuilder.GetTest(configuration.DefaultSchema, provider).ToMeta(0));
+		if (includeInactive) metaList.AddRange(_tableBuilder.GetTest(configuration.DefaultSchema, provider).ToMeta(0));
+		metaList.AddRange(_tableBuilder.GetCatalog(EntityType.Table, provider).ToMeta(0));
+		metaList.AddRange(_tableBuilder.GetCatalog(EntityType.Tablespace, provider).ToMeta(0));
+		metaList.AddRange(_tableBuilder.GetCatalog(EntityType.Schema, provider).ToMeta(0));
 
-        // load tablespace info
-        if (!string.IsNullOrWhiteSpace(configuration.DefaultTableStorage))
+		// load tablespace info
+		if (!string.IsNullOrWhiteSpace(configuration.DefaultTableStorage))
 			metaList.Add(GetStorage(configuration.DefaultTableStorage, false, true));
 		if (!string.IsNullOrWhiteSpace(configuration.DefaultIndexStorage))
 			metaList.Add(GetStorage(configuration.DefaultIndexStorage, true, false));

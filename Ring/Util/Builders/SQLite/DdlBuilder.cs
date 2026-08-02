@@ -34,7 +34,7 @@ internal sealed class DdlBuilder : BaseDdlBuilder
 	protected sealed override string? TimeZoneOffsetPrefix => null;
     protected sealed override int VarcharMaxSize => -1;
     protected sealed override string SchemaSeparator => ".";
-	protected sealed override char PhysSpecialEntityPrefix => '@';
+	protected sealed override char PhysSpecialEntityPrefix => TableType.NonBusinessTable.GetLogicalName()[0];
 	protected sealed override string StringCollateInformation => string.Empty;
     protected sealed override string StartPhysicalNameDelimiter => "\"";
     protected sealed override string EndPhysicalNameDelimiter => StartPhysicalNameDelimiter;
@@ -48,6 +48,10 @@ internal sealed class DdlBuilder : BaseDdlBuilder
 	}
 
 	protected override string GetSchemaPhysicalName(TableType tableType)
+	{
+		throw new NotImplementedException();
+	}
+	protected override string GetPhysicalName(TableType tableType, Field field)
 	{
 		throw new NotImplementedException();
 	}

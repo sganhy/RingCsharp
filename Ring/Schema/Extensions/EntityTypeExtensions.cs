@@ -6,23 +6,13 @@ internal static class EntityTypeExtensions
 {
 	internal static TableType ToTableType(this EntityType entityType)
 	{
-		// Code size: 34 (0x22)
-		TableType result;
+		// Code size: 26 (0x1a)
 		switch (entityType)
 		{
-			case EntityType.Table:
-				result = TableType.TableCatalog;
-				break;
-			case EntityType.Schema:
-				result = TableType.SchemaCatalog;
-				break;
-			case EntityType.Tablespace:
-				result = TableType.TableCatalog;
-				break;
-			default:
-				result = TableType.Logical;
-				break;
+			case EntityType.Table: return TableType.TableCatalog;
+			case EntityType.Schema: return TableType.SchemaCatalog;
+			case EntityType.Tablespace: return TableType.TablespaceCatalog;
+			default: return TableType.Logical;
 		}
-		return result;
 	}
 }

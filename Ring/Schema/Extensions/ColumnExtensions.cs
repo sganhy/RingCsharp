@@ -8,6 +8,8 @@ internal static class ColumnExtensions
 {
 	internal static Column SetFieldType(this in Column column, FieldType fieldType) // Code size: 37 (0x25)
 		=> new(column.Type, fieldType, column.PhysicalName, column.SearchableType, column.Id, column.RecordIndex);
+	internal static Column SetPhysicalName(this in Column column, string physicalName) // Code size: 37 (0x25)
+		=> new(column.Type, column.FieldType, physicalName, column.SearchableType, column.Id, column.RecordIndex);
 
 	internal static int Hash(this in Column column)
 	{

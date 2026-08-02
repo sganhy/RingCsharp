@@ -7,10 +7,7 @@ namespace Ring.Tests.Schema.Builders;
 public class TableBuilderTest
 {
     private readonly TableBuilder _sut;
-    public TableBuilderTest()
-    {
-        _sut = new TableBuilder();
-    }
+    public TableBuilderTest() => _sut = new TableBuilder();
 
     [Fact]
     internal void GetMeta_AnonymousSchema_MetaTableObject()
@@ -19,78 +16,98 @@ public class TableBuilderTest
         var schemaName = "Test1";
 
         // act 
-        var metaTable = _sut.GetMeta(schemaName, DatabaseProvider.PostgreSql);
+        var metaTablePostGre = _sut.GetMeta(schemaName, DatabaseProvider.PostgreSql);
+		var metaTableMySql = _sut.GetMeta(schemaName, DatabaseProvider.MySql);
 
-        // assert
-        Assert.Equal("test1.\"@meta\"", metaTable.PhysicalName);
-        Assert.Equal(10, metaTable.Fields.Length);
-        Assert.Equal(TableType.Meta, metaTable.Type);
-        Assert.True(metaTable.Baseline);
-        Assert.True(metaTable.Cached);
-        Assert.True(metaTable.Readonly);
-        Assert.True(metaTable.Active);
-        Assert.False(metaTable.AllowHardDeletion);
-        Assert.False(metaTable.UsePreparedStatement);
-        Assert.False(metaTable.AllowAttributeExtension);
-        Assert.NotNull(metaTable.GetField("id"));
-        Assert.NotNull(metaTable.GetField("schema_id"));
-        Assert.NotNull(metaTable.GetField("object_type"));
-        Assert.NotNull(metaTable.GetField("reference_id"));
-        Assert.NotNull(metaTable.GetField("data_type"));
-        Assert.NotNull(metaTable.GetField("flags"));
-        Assert.NotNull(metaTable.GetField("name"));
-        Assert.NotNull(metaTable.GetField("description"));
-        Assert.NotNull(metaTable.GetField("value"));
-        Assert.NotNull(metaTable.GetField("active"));
-        Assert.NotNull(metaTable.GetColumn("id"));
-        Assert.NotNull(metaTable.GetColumn("schema_id"));
-        Assert.NotNull(metaTable.GetColumn("object_type"));
-        Assert.Equal("id", metaTable.Fields[metaTable.Columns[0].RecordIndex].Name);
-        Assert.Equal("schema_id", metaTable.Fields[metaTable.Columns[1].RecordIndex].Name);
-        Assert.Equal("object_type", metaTable.Fields[metaTable.Columns[2].RecordIndex].Name);
-        Assert.Equal("reference_id", metaTable.Fields[metaTable.Columns[3].RecordIndex].Name);
-        Assert.Equal("data_type", metaTable.Fields[metaTable.Columns[4].RecordIndex].Name);
-        Assert.Equal("flags", metaTable.Fields[metaTable.Columns[5].RecordIndex].Name);
-        Assert.Equal("name", metaTable.Fields[metaTable.Columns[6].RecordIndex].Name);
-        Assert.Equal("description", metaTable.Fields[metaTable.Columns[7].RecordIndex].Name);
-        Assert.Equal("value", metaTable.Fields[metaTable.Columns[8].RecordIndex].Name);
-        Assert.Equal("active", metaTable.Fields[metaTable.Columns[9].RecordIndex].Name);
-    }
+		// assert
+		Assert.NotNull(metaTablePostGre);
+		Assert.NotNull(metaTableMySql);
+		Assert.Equal("@meta", metaTablePostGre.Name);
+		Assert.Equal("@meta", metaTableMySql.Name);
+		Assert.Equal("test1.\"@meta\"", metaTablePostGre.PhysicalName);
+		Assert.Equal("test1.`@meta`", metaTableMySql.PhysicalName);
+		Assert.Equal(10, metaTablePostGre.Fields.Length);
+        Assert.Equal(TableType.Meta, metaTablePostGre.Type);
+        Assert.True(metaTablePostGre.Baseline);
+        Assert.True(metaTablePostGre.Cached);
+        Assert.True(metaTablePostGre.Readonly);
+        Assert.True(metaTablePostGre.Active);
+        Assert.False(metaTablePostGre.AllowHardDeletion);
+        Assert.False(metaTablePostGre.UsePreparedStatement);
+        Assert.False(metaTablePostGre.AllowAttributeExtension);
+        Assert.NotNull(metaTablePostGre.GetField("id"));
+        Assert.NotNull(metaTablePostGre.GetField("schema_id"));
+        Assert.NotNull(metaTablePostGre.GetField("object_type"));
+        Assert.NotNull(metaTablePostGre.GetField("reference_id"));
+        Assert.NotNull(metaTablePostGre.GetField("data_type"));
+        Assert.NotNull(metaTablePostGre.GetField("flags"));
+        Assert.NotNull(metaTablePostGre.GetField("name"));
+        Assert.NotNull(metaTablePostGre.GetField("description"));
+        Assert.NotNull(metaTablePostGre.GetField("value"));
+        Assert.NotNull(metaTablePostGre.GetField("active"));
+        Assert.NotNull(metaTablePostGre.GetColumn("id"));
+        Assert.NotNull(metaTablePostGre.GetColumn("schema_id"));
+        Assert.NotNull(metaTablePostGre.GetColumn("object_type"));
+        Assert.Equal("id", metaTablePostGre.Fields[metaTablePostGre.Columns[0].RecordIndex].Name);
+        Assert.Equal("schema_id", metaTablePostGre.Fields[metaTablePostGre.Columns[1].RecordIndex].Name);
+        Assert.Equal("object_type", metaTablePostGre.Fields[metaTablePostGre.Columns[2].RecordIndex].Name);
+        Assert.Equal("reference_id", metaTablePostGre.Fields[metaTablePostGre.Columns[3].RecordIndex].Name);
+        Assert.Equal("data_type", metaTablePostGre.Fields[metaTablePostGre.Columns[4].RecordIndex].Name);
+        Assert.Equal("flags", metaTablePostGre.Fields[metaTablePostGre.Columns[5].RecordIndex].Name);
+        Assert.Equal("name", metaTablePostGre.Fields[metaTablePostGre.Columns[6].RecordIndex].Name);
+        Assert.Equal("description", metaTablePostGre.Fields[metaTablePostGre.Columns[7].RecordIndex].Name);
+        Assert.Equal("value", metaTablePostGre.Fields[metaTablePostGre.Columns[8].RecordIndex].Name);
+        Assert.Equal("active", metaTablePostGre.Fields[metaTablePostGre.Columns[9].RecordIndex].Name);
+		Assert.Equal(1, metaTableMySql?.Indexes.Length);
+		Assert.Equal(4, metaTableMySql?.Indexes[0].Columns.Length);
+		Assert.True(metaTableMySql?.Indexes[0].Unique);
+		Assert.Equal("id", metaTableMySql?.Indexes[0].Columns[0].PhysicalName);
+		Assert.Equal("schema_id", metaTableMySql?.Indexes[0].Columns[1].PhysicalName);
+		Assert.Equal("object_type", metaTableMySql?.Indexes[0].Columns[2].PhysicalName);
+		Assert.Equal("reference_id", metaTableMySql?.Indexes[0].Columns[3].PhysicalName);
+	}
 
 
-    [Fact]
+	[Fact]
     internal void GetMetaId_AnonymousSchema_MetaIdTableObject()
     {
         // arrange 
         var schemaName = "Test2";
 
         // act 
-        var metaIdTable = _sut.GetMetaId(schemaName, DatabaseProvider.PostgreSql);
+        var metaIdTablePostGre = _sut.GetMetaId(schemaName, DatabaseProvider.PostgreSql);
+		var metaIdTableMySql = _sut.GetMetaId(schemaName, DatabaseProvider.MySql);
 
-        // assert
-        Assert.True(metaIdTable.Baseline);
-        Assert.True(metaIdTable.Cached);
-        Assert.True(metaIdTable.Readonly);
-        Assert.True(metaIdTable.Active);
-        Assert.False(metaIdTable.AllowHardDeletion);
-        Assert.True(metaIdTable.UsePreparedStatement);
-        Assert.False(metaIdTable.AllowAttributeExtension);
-        Assert.Equal("test2.\"@meta_id\"", metaIdTable.PhysicalName);
-        Assert.Equal(TableType.MetaId, metaIdTable.Type);
-        Assert.Equal(4, metaIdTable.Fields.Length);
-        Assert.NotNull(metaIdTable.GetField("id"));
-        Assert.NotNull(metaIdTable.GetField("schema_id"));
-        Assert.NotNull(metaIdTable.GetField("object_type"));
-        Assert.NotNull(metaIdTable.GetField("value"));
-        Assert.Equal("id", metaIdTable.Fields[metaIdTable.Columns[0].RecordIndex].Name);
-        Assert.Equal("schema_id", metaIdTable.Fields[metaIdTable.Columns[1].RecordIndex].Name);
-        Assert.Equal("object_type", metaIdTable.Fields[metaIdTable.Columns[2].RecordIndex].Name);
-        Assert.Equal("value", metaIdTable.Fields[metaIdTable.Columns[3].RecordIndex].Name);
-        Assert.Equal(FieldType.Int, metaIdTable.Fields[metaIdTable.Columns[0].RecordIndex].Type);
-        Assert.Equal(FieldType.Int, metaIdTable.Fields[metaIdTable.Columns[1].RecordIndex].Type);
-        Assert.Equal(FieldType.Byte, metaIdTable.Fields[metaIdTable.Columns[2].RecordIndex].Type);
-        Assert.Equal(FieldType.Long, metaIdTable.Fields[metaIdTable.Columns[3].RecordIndex].Type);
-    }
+		// assert
+		Assert.NotNull(metaIdTablePostGre);
+		Assert.NotNull(metaIdTableMySql);
+		Assert.True(metaIdTablePostGre.Baseline);
+        Assert.True(metaIdTablePostGre.Cached);
+        Assert.True(metaIdTablePostGre.Readonly);
+        Assert.True(metaIdTablePostGre.Active);
+        Assert.False(metaIdTablePostGre.AllowHardDeletion);
+        Assert.True(metaIdTablePostGre.UsePreparedStatement);
+        Assert.False(metaIdTablePostGre.AllowAttributeExtension);
+        Assert.Equal("test2.\"@meta_id\"", metaIdTablePostGre.PhysicalName);
+        Assert.Equal(TableType.MetaId, metaIdTablePostGre.Type);
+        Assert.Equal(4, metaIdTablePostGre.Fields.Length);
+        Assert.NotNull(metaIdTablePostGre.GetField("id"));
+        Assert.NotNull(metaIdTablePostGre.GetField("schema_id"));
+        Assert.NotNull(metaIdTablePostGre.GetField("object_type"));
+        Assert.NotNull(metaIdTablePostGre.GetField("value"));
+        Assert.Equal("id", metaIdTablePostGre.Fields[metaIdTablePostGre.Columns[0].RecordIndex].Name);
+        Assert.Equal("schema_id", metaIdTablePostGre.Fields[metaIdTablePostGre.Columns[1].RecordIndex].Name);
+        Assert.Equal("object_type", metaIdTablePostGre.Fields[metaIdTablePostGre.Columns[2].RecordIndex].Name);
+        Assert.Equal("value", metaIdTablePostGre.Fields[metaIdTablePostGre.Columns[3].RecordIndex].Name);
+        Assert.Equal(FieldType.Int, metaIdTablePostGre.Fields[metaIdTablePostGre.Columns[0].RecordIndex].Type);
+        Assert.Equal(FieldType.Int, metaIdTablePostGre.Fields[metaIdTablePostGre.Columns[1].RecordIndex].Type);
+        Assert.Equal(FieldType.Byte, metaIdTablePostGre.Fields[metaIdTablePostGre.Columns[2].RecordIndex].Type);
+        Assert.Equal(FieldType.Long, metaIdTablePostGre.Fields[metaIdTablePostGre.Columns[3].RecordIndex].Type);
+		Assert.Equal(1, metaIdTableMySql?.Indexes.Length);
+		Assert.Equal("id", metaIdTableMySql?.Indexes[0].Columns[0].PhysicalName);
+		Assert.Equal("schema_id", metaIdTableMySql?.Indexes[0].Columns[1].PhysicalName);
+		Assert.Equal("object_type", metaIdTableMySql?.Indexes[0].Columns[2].PhysicalName);
+	}
 
     [Fact]
     internal void GetCatalog_PostgreSqlTable_TableCatalog()
@@ -103,9 +120,13 @@ public class TableBuilderTest
         Assert.Equal("information_schema.tables", catalog.PhysicalName);
         Assert.Equal(PhysicalType.View, catalog.PhysicalType);
         Assert.Equal(2, catalog.Fields.Length);
-        Assert.Equal("table_schema", catalog.Fields[catalog.Columns[0].RecordIndex].Name);
-        Assert.Equal("table_name", catalog.Fields[catalog.Columns[1].RecordIndex].Name);
-    }
+		Assert.Equal(34, catalog.Id);
+		Assert.Equal("schema_name", catalog.Fields[catalog.Columns[0].RecordIndex].Name);
+        Assert.Equal("name", catalog.Fields[catalog.Columns[1].RecordIndex].Name);
+		Assert.Equal(2, catalog.Columns.Length);
+		Assert.Equal("table_schema", catalog.Columns[0].PhysicalName);
+		Assert.Equal("table_name", catalog.Columns[1].PhysicalName);
+	}
 
     [Fact]
     internal void GetCatalog_MySqlTable_TableCatalog()
@@ -114,13 +135,17 @@ public class TableBuilderTest
         // act 
         var catalog = _sut.GetCatalog(EntityType.Table, DatabaseProvider.MySql);
 
-        // assert
-        Assert.Equal("information_schema.tables", catalog.PhysicalName);
-        Assert.Equal(PhysicalType.View, catalog.PhysicalType);
-        Assert.Equal(2, catalog.Fields.Length);
-        Assert.Equal("table_schema", catalog.Fields[catalog.Columns[0].RecordIndex].Name);
-        Assert.Equal("table_name", catalog.Fields[catalog.Columns[1].RecordIndex].Name);
-    }
+		// assert
+		Assert.Equal("information_schema.tables", catalog.PhysicalName);
+		Assert.Equal(PhysicalType.View, catalog.PhysicalType);
+		Assert.Equal(2, catalog.Fields.Length);
+		Assert.Equal(34, catalog.Id);
+		Assert.Equal("schema_name", catalog.Fields[catalog.Columns[0].RecordIndex].Name);
+		Assert.Equal("name", catalog.Fields[catalog.Columns[1].RecordIndex].Name);
+		Assert.Equal(2, catalog.Columns.Length);
+		Assert.Equal("table_schema", catalog.Columns[0].PhysicalName);
+		Assert.Equal("table_name", catalog.Columns[1].PhysicalName);
+	}
 
     [Fact]
     internal void GetLog_AnonymousSchema_LogTableObject()
@@ -131,8 +156,9 @@ public class TableBuilderTest
         // act 
         var logTable = _sut.GetLog(schemaName, DatabaseProvider.PostgreSql);
 
-        // assert
-        Assert.Equal("test.\"@log\"", logTable.PhysicalName);
+		// assert
+		Assert.NotNull(logTable);
+		Assert.Equal("test.\"@log\"", logTable.PhysicalName);
         Assert.Equal(TableType.Log, logTable.Type);
         Assert.Equal(11, logTable.Fields.Length);
         Assert.True(logTable.Baseline);
@@ -158,7 +184,10 @@ public class TableBuilderTest
         Assert.Equal("line_number", logTable.Fields[logTable.Columns[8].RecordIndex].Name);
         Assert.Equal("message", logTable.Fields[logTable.Columns[9].RecordIndex].Name);
         Assert.Equal("description", logTable.Fields[logTable.Columns[10].RecordIndex].Name);
-    }
+		Assert.Equal(1, logTable?.Indexes.Length);
+		Assert.Equal(1, logTable?.Indexes[0].Columns.Length);
+		Assert.Equal("entry_time", logTable?.Indexes[0].Columns[0].PhysicalName);
+	}
 
 
 }

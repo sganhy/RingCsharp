@@ -11,7 +11,7 @@ internal sealed class DdlBuilder : BaseDdlBuilder
 	//     1) GetPhysicalName(Constraint): StringBuilder capacity too small; Severity: Medium (Done)
 	//     2) _dataType: DateTimeOffset maps to timestamp without time zone — Semantic bug; Severity: Medium (Not a bug)
 
-	private readonly static Dictionary<FieldType, string> _dataType = new()
+	private readonly Dictionary<FieldType, string> _dataType = new()
 	{
 		{ FieldType.String,        "varchar"},
 		{ FieldType.LongString,    "text"},
@@ -37,7 +37,7 @@ internal sealed class DdlBuilder : BaseDdlBuilder
 	protected sealed override int VarcharMaxSize => 65535;
 	protected sealed override Dictionary<FieldType, string> DataType => _dataType;
 	protected sealed override string SchemaSeparator => ".";
-	protected sealed override char PhysSpecialEntityPrefix => '@';
+	protected sealed override char PhysSpecialEntityPrefix => TableType.NonBusinessTable.GetLogicalName()[0];
 	protected sealed override string StartPhysicalNameDelimiter => "\"";
 	protected sealed override string EndPhysicalNameDelimiter => StartPhysicalNameDelimiter;
 	protected sealed override string TablePrefix => DefaultTablePrefix;
@@ -75,7 +75,7 @@ internal sealed class DdlBuilder : BaseDdlBuilder
         return result.ToString();
     }
 
-	protected override string GetCatalogPhysicalName(TableType tableType)
+	protected override string GetCatalogPhysicalName(TableType tableType) 
 	{
 		switch (tableType)
 		{
@@ -89,5 +89,19 @@ internal sealed class DdlBuilder : BaseDdlBuilder
 	protected override string GetSchemaPhysicalName(TableType tableType)
 	{
 		return "information_schema";
+	}
+
+	protected override string GetPhysicalName(TableType tableType, Field field)
+	{
+		switch (tableType)
+		{
+			case TableType.TableCatalog:
+				if ("name".Equals(field.Name, StringComparison.Ordinal)) return "table_name";
+				else return "table_schema";
+			case TableType.TablespaceCatalog:
+			case TableType.SchemaCatalog: 
+				return field.Name;
+		}
+		return string.Empty;
 	}
 }

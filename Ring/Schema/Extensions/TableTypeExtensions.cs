@@ -10,28 +10,25 @@ internal static class TableTypeExtensions
 
     internal static string GetLogicalName(this TableType tableType, string? partialName=null)
     {
-        // Convert switch statement to expression
-        // Normalize strings to uppercase 
-#pragma warning disable CA1308
-        switch (tableType)
+		// Code size: 188 (0xbc)
+		switch (tableType)
         {
-            case TableType.Mtm: 
-                return MtmTablePrefix + partialName;
+			case TableType.Mtm: return MtmTablePrefix + partialName;
             case TableType.Meta:
             case TableType.Log:
-            case TableType.Test:
-				return SystemTablePrefix + tableType.ToString().ToLowerInvariant();
-            case TableType.MetaId:
+#pragma warning disable CA1308
+			case TableType.Test: return SystemTablePrefix + tableType.ToString().ToLowerInvariant();
+#pragma warning restore CA1308
+			case TableType.MetaId:
 			case TableType.TableCatalog:
 			case TableType.TablespaceCatalog:
-			case TableType.SchemaCatalog:
-				return SystemTablePrefix + NamingConvention.ToSnakeCase(tableType.ToString())?.ToLowerInvariant();
-        }
-#pragma warning restore CA1308
+			case TableType.SchemaCatalog: return SystemTablePrefix + NamingConvention.ToSnakeCase(tableType.ToString());
+            case TableType.NonBusinessTable: return SystemTablePrefix.ToString();
+		}
         return string.Empty;
     }
 
-	internal static bool IsCatalog(this TableType tableType, string? partialName = null) 
+	internal static bool IsCatalog(this TableType tableType) 
         => tableType == TableType.TableCatalog || tableType == TableType.TablespaceCatalog || tableType == TableType.SchemaCatalog;
 
 }

@@ -1,77 +1,79 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
-using Ring.Util.Builders;
 
 namespace Ring.Schema.Builders;
 
 internal sealed class TableBuilder
 {
-	internal static readonly string FieldId = "id";
-	internal static readonly string FieldSchemaId = "schema_id";
-	internal static readonly string FieldObjectType = "object_type";
-	internal static readonly string FieldValue = "value";
-	internal static readonly string FieldReferenceId = "reference_id";
-	internal static readonly string FieldDataType = "data_type";
-	internal static readonly string FieldFlags = "flags";
-	internal static readonly string FieldName = "name";
-	internal static readonly string FieldTestPrefix = "test_";
-	internal static readonly string FieldActive = "active";
-	internal static readonly string FieldDescription = "description";
-	internal static readonly string FieldLevelId = "level_id";
-	internal static readonly string FieldEntryTime = "entry_time";
-	internal static readonly string FieldThreadId = "thread_id";
-	internal static readonly string FieldCallSite = "call_site";
-	internal static readonly string FieldJobId = "job_id";
-	internal static readonly string FieldMethod = "method";
-	internal static readonly string FieldLineNumber = "line_number";
-	internal static readonly string FieldMessage = "message";
+	private readonly string FieldId = "id";
+	private readonly string FieldSchemaId = "schema_id";
+	private readonly string FieldObjectType = "object_type";
+	private readonly string FieldValue = "value";
+	private readonly string FieldReferenceId = "reference_id";
+	private readonly string FieldDataType = "data_type";
+	private readonly string FieldFlags = "flags";
+	private readonly string FieldName = "name";
+	private readonly string FieldSchemaName = "schema_name";
+	private readonly string FieldTestPrefix = "test_";
+	private readonly string FieldActive = "active";
+	private readonly string FieldDescription = "description";
+	private readonly string FieldLevelId = "level_id";
+	private readonly string FieldEntryTime = "entry_time";
+	private readonly string FieldThreadId = "thread_id";
+	private readonly string FieldCallSite = "call_site";
+	private readonly string FieldJobId = "job_id";
+	private readonly string FieldMethod = "method";
+	private readonly string FieldLineNumber = "line_number";
+	private readonly string FieldMessage = "message";
 
-#pragma warning disable CA1822, S2325
 	internal Table GetMeta(string schemaName, DatabaseProvider provider) {
-#pragma warning restore CA1822, S2325
-		// Code size: 301 (0x12d)
-		var metaList = new List<Meta> {
-			GetField(FieldId, FieldType.Int),
-			GetField(FieldSchemaId, FieldType.Int),
-			GetField(FieldObjectType, FieldType.Byte),
-			GetField(FieldReferenceId, FieldType.Int),
+		// Code size: 310 (0x136)
+		var id = GetField(FieldId, FieldType.Int);
+		var schemaId = GetField(FieldSchemaId, FieldType.Int);
+		var objectType = GetField(FieldObjectType, FieldType.Byte);
+		var referenceId = GetField(FieldReferenceId, FieldType.Int);
+		// increase IL code to 374 bytes - better to copy Meta struct twice than to use ref readonly
+		// ref readonly var id = ref fieldId;
+		// ref readonly var schemaId = ref fieldSchemaId;
+		// ref readonly var objectType = ref fieldObjectType;
+		// ref readonly var referenceId = ref fieldReferenceId;
+		var metaArr = new[] {
+			id, schemaId, objectType, referenceId,
 			GetField(FieldDataType, FieldType.Int),
 			GetField(FieldFlags, FieldType.Long),
-			GetField(FieldName, FieldType.String,30),
+			GetField(FieldName, FieldType.String,60),
 			GetField(FieldDescription, FieldType.LongString,false),
 			GetField(FieldValue, FieldType.LongString,false),
-			GetField(FieldActive, FieldType.Boolean)
+			GetField(FieldActive, FieldType.Boolean),
+			GetIndex(true, new [] { id, schemaId, objectType, referenceId })
 		};
-		metaList.Add(GetIndex(true, new [] { metaList[0], metaList[1], metaList[2], metaList[3] }));
 		var metaTable = GetTable((int)TableType.Meta, TableType.Meta.GetLogicalName(), TableType.Meta);
-		return GetTable(schemaName, provider, metaList.ToArray(), metaTable);
+		return GetTable(schemaName, provider, metaArr, metaTable);
 	}
 
-#pragma warning disable CA1822, S2325 // Mark members as static
 	internal Table GetMetaId(string schemaName, DatabaseProvider provider) 
 	{
-		// Code size: 177 (0xb1)
-#pragma warning restore CA1822, S2325
-		var metaList = new List<Meta> {
-			GetField(FieldId, FieldType.Int),
-			GetField(FieldSchemaId, FieldType.Int),
-			GetField(FieldObjectType, FieldType.Byte),
+		// Code size: 173 (0xad)
+		var id = GetField(FieldId, FieldType.Int);
+		var schemaId = GetField(FieldSchemaId, FieldType.Int);
+		var objectType = GetField(FieldObjectType, FieldType.Byte);
+		var metaArr = new[] {
+			id, schemaId, objectType,
 			GetField(FieldValue, FieldType.Long),
+			GetIndex(true, new[] { id, schemaId, objectType })
 		};
 		var metaTable = GetTable((int)TableType.MetaId, TableType.MetaId.GetLogicalName(), TableType.MetaId);
-		metaList.Add(GetIndex(true, new[] { metaList[0], metaList[1], metaList[2] }));
-		return GetTable(schemaName, provider, metaList.ToArray(), metaTable);
+		return GetTable(schemaName, provider, metaArr, metaTable);
 	}
 
-#pragma warning disable CA1822, S2325 // Mark members as static
 	internal Table GetLog(string schemaName, DatabaseProvider provider) 
 	{
-		// Code size: 300 (0x12c)
-#pragma warning restore CA1822, S2325
-		var metaList = new List<Meta> {
+		// Code size: 322 (0x142)
+		var entryTime = GetField(FieldEntryTime, FieldType.DateTime);
+		var metaList = new[] {
 			GetField(FieldId, FieldType.Long),
-			GetField(FieldEntryTime, FieldType.DateTime),
+			entryTime,
 			GetField(FieldLevelId, FieldType.Short),
 			GetField(FieldSchemaId, FieldType.Int),
 			GetField(FieldThreadId, FieldType.Int,false),
@@ -81,17 +83,15 @@ internal sealed class TableBuilder
 			GetField(FieldLineNumber, FieldType.Int, 80, false, SearchableType.None),
 			GetField(FieldMessage, FieldType.String, 255, false, SearchableType.None),
 			GetField(FieldDescription, FieldType.LongString,false),
+			GetIndex(false, new[] { entryTime })
 		};
 		var metaTable = GetTable((int)TableType.Log, TableType.Log.GetLogicalName(), TableType.Log);
-		metaList.Add(GetIndex(false, new[] { metaList[1] }));
 		return GetTable(schemaName, provider, metaList.ToArray(), metaTable);
 	}
 
-#pragma warning disable CA1822, S2325 // Mark members as static
 	internal Table GetTest(string schemaName, DatabaseProvider provider)
 	{
 		// Code size: 272 (0x110)
-#pragma warning restore CA1822, S2325
 		var metaList = new List<Meta>();
 		var values = Enum.GetValues<FieldType>();
 		var i = 0;
@@ -112,41 +112,22 @@ internal sealed class TableBuilder
 		return GetTable(schemaName, provider, metaList.ToArray(), metaTest);
 	}
 
-#pragma warning disable CA1822, S2325 // Mark members as static
 	internal Table GetCatalog(EntityType entityType, DatabaseProvider provider) 
 	{
-		// Code size: 61 (0x3d)
+		// Code size: 236 (0xec)
 		var ddlBuilder = provider.GetDdlBuilder();
+		var fieldName = GetField(FieldSchemaName, FieldType.String);
+		var defaultField = Meta.GetDefaultField(fieldName,FieldType.String);
 		var tableType = entityType.ToTableType();
-		var metaList = new List<Meta>() { GetField(FieldName, FieldType.String) };
+		var metaList = new[] { fieldName, GetField(FieldName, FieldType.String)	};
 		var catalog = GetTable((int)tableType, tableType.GetLogicalName(), tableType);
 		var tableObject = GetTable(string.Empty, provider, metaList.ToArray(), catalog, PhysicalType.View);
+		tableObject.Columns[0] = tableObject.Columns[0].SetPhysicalName(
+			ddlBuilder.GetPhysicalName(tableObject.GetField(FieldSchemaName) ?? defaultField, tableObject));
+		tableObject.Columns[1] = tableObject.Columns[1].SetPhysicalName(
+			ddlBuilder.GetPhysicalName(tableObject.GetField(FieldName) ?? defaultField, tableObject));
 		return tableObject;
 	}
-#pragma warning restore CA1822, S2325
-
-#pragma warning disable CA1822, S2325 // Mark members as static
-	internal Table GetMtm(Table partialTable, IDdlBuilder ddlBuilder, string physicalName, int objectIndex, Relation relation1, Relation relation2) 
-	{
-		// Code size: 219 (0xdb)
-		// add @ prefix to logical name
-		var metaTable = new Meta(0, (byte)EntityType.Table, 0, (int)TableType.Mtm, 0L, partialTable.Name, null,null,true);
-		var metaRelation1 = relation1.ToMeta(partialTable.Id);
-		var metaRelation2 = relation2.ToMeta(partialTable.Id);
-		// add index 
-		var flags = 0L;
-		var reltArr = new [] { metaRelation1.Name, metaRelation2.Name };
-        var value = Meta.GetColumnList(reltArr);
-		flags = Meta.SetIndexUnique(flags, true);
-		var metaIndex = new Meta(0, (byte)EntityType.Index, 0, 0, flags, partialTable.Name, null, value, true);
-		var metaArr = new [] { metaRelation1, metaRelation2, metaIndex };
-		var segMent = new ReadOnlySpan<Meta>(metaArr, 0, 3);
-		var result = metaTable.ToTable(segMent, PhysicalType.Table, ddlBuilder, physicalName, objectIndex) ?? partialTable;
-		result.Relations[0] = relation1;
-		result.Relations[1] = relation2;
-		return result;
-	}
-#pragma warning restore CA1822, S2325
 
 	#region private methods 
 
@@ -166,12 +147,11 @@ internal sealed class TableBuilder
 
 	private static Meta GetTable(int id, string name, TableType tableType, bool active=true) 
 	{
-        // Code size: 104 (0x68)
-        var flags = 0L;
+		// Code size: 96 (0x60)
+		var flags = 0L;
 		flags = Meta.SetEntityBaseline(flags, true);
         flags = Meta.SetTableReadonly(flags, true);
         flags = Meta.SetTableAllowAttributeExtension(flags, false); // no flexible attributes!
-        flags = Meta.SetTableReadonly(flags, true);
         switch (tableType)
 		{ 
 			case TableType.Meta:

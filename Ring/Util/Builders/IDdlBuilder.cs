@@ -17,6 +17,7 @@ internal interface IDdlBuilder : ISqlBuilder
 	string Drop(Table table);
 	string GetPhysicalName(Table table, DbSchema schema);
 	string GetPhysicalName(Index index, Table table);
+	string GetPhysicalName(Field field, Table table);
 	string GetPhysicalName(EntityType entityType, string name);
 	Constraint[] GetConstraints(Table table);
 	bool HasTimeZoneOffsetColumn { get; }

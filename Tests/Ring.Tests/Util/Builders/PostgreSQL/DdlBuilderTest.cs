@@ -162,7 +162,7 @@ public class DdlBuilderTest : BaseBuilderTest
 #pragma warning disable CS8602
         var expectedSql = $"CREATE TABLE test.\"@meta\" (\n" + "\tid int4 NOT NULL,\n" +
                 "\tschema_id int4 NOT NULL,\n" + "\tobject_type int2 NOT NULL,\n" + "\treference_id int4 NOT NULL,\n" +
-                "\tdata_type int4 NOT NULL,\n" + "\tflags int8 NOT NULL,\n" + "\tname varchar(30) COLLATE \"C\" NOT NULL,\n" +
+                "\tdata_type int4 NOT NULL,\n" + "\tflags int8 NOT NULL,\n" + "\tname varchar(60) COLLATE \"C\" NOT NULL,\n" +
                 "\tdescription text COLLATE \"C\",\n" + $"\tvalue text COLLATE \"C\",\n\tactive bool NOT NULL) TABLESPACE {tablespaceName}";
         Assert.NotNull(metaTable);
 

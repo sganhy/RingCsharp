@@ -1,5 +1,4 @@
-﻿using Ring.Schema.Builders;
-using Ring.Schema.Enums;
+﻿using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using Ring.Util.Builders;
@@ -800,10 +799,9 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	private static void LoadMtm(DbSchema schema, int mtmCount)
 	{
-		// Code size: 362 (0x16a) - boxing removed
+		// Code size: 350 (0x15e) - boxing removed
 		// BUG — inverseRelation dereferenced without null check
 		var ddlBuilder = schema.Provider.GetDdlBuilder();
-		var tableBuilder = new TableBuilder();
 		var span = new Span<Table>(schema.TablesById);
 		var mtm = new Dictionary<string, Table>(mtmCount * 2); // store mtm physical name
 		foreach (var table in span)
@@ -822,7 +820,7 @@ internal readonly struct Meta : IEquatable<Meta>
 					if (!mtm.TryGetValue(physicalName, out var mtmTable))
 					{
 						var compareLessThan0 = string.CompareOrdinal(relation.Name, inverseRelation.Name) < 0;
-						mtmTable = tableBuilder.GetMtm(emptyTable, ddlBuilder, physicalName, mtm.Count,
+						mtmTable = GetMtm(emptyTable, ddlBuilder, physicalName, mtm.Count,
 							compareLessThan0 ? relation.SetTypeAndId(RelationType.Mto,1, true) : inverseRelation.SetTypeAndId(RelationType.Mto,1, true),
 							compareLessThan0 ? inverseRelation.SetTypeAndId(RelationType.Mto,2, true) : relation.SetTypeAndId(RelationType.Mto, 2, true));
 						mtm.Add(physicalName, mtmTable);
@@ -900,6 +898,26 @@ internal readonly struct Meta : IEquatable<Meta>
 		return w1.CompareTo(w2);
 	}
 
-	#endregion
+	private static Table GetMtm(Table partialTable, IDdlBuilder ddlBuilder, string physicalName, int objectIndex, Relation relation1, Relation relation2)
+	{
+		// Code size: 218 (0xda)
+		// add @ prefix to logical name
+		var metaTable = new Meta(0, (byte)EntityType.Table, 0, (int)TableType.Mtm, 0L, partialTable.Name, null, null, true);
+		var metaRelation1 = relation1.ToMeta(partialTable.Id);
+		var metaRelation2 = relation2.ToMeta(partialTable.Id);
+		// add index 
+		var flags = 0L;
+		var reltArr = new[] { metaRelation1.Name, metaRelation2.Name };
+		var value = GetColumnList(reltArr);
+		flags = SetIndexUnique(flags, true);
+		var metaIndex = new Meta(0, (byte)EntityType.Index, 0, 0, flags, partialTable.Name, null, value, true);
+		var metaArr = new[] { metaRelation1, metaRelation2, metaIndex };
+		var segMent = new ReadOnlySpan<Meta>(metaArr, 0, 3);
+		var result = metaTable.ToTable(segMent, PhysicalType.Table, ddlBuilder, physicalName, objectIndex) ?? partialTable;
+		result.Relations[0] = relation1;
+		result.Relations[1] = relation2;
+		return result;
+	}
 
+	#endregion
 }

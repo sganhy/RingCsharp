@@ -59,6 +59,7 @@ internal static class IntExtensions
 	private const int TableTypeTableCatalogId = (int)TableType.TableCatalog;
 	private const int TableTypeTableSpaceCatalogId = (int)TableType.TablespaceCatalog;
 	private const int TableTypeLogicalId = (int)TableType.Logical;
+	private const int TableTypeNonBusinessTableId = (int)TableType.NonBusinessTable;
 
 	// relation types constants
 	private const int RelationTypeOtopId = (int)RelationType.Otop;
@@ -110,7 +111,7 @@ internal static class IntExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static TableType ToTableType(this int dataType)
 	{
-		// Code size: 141 (0x8d)
+		// Code size: 152 (0x98)
 		switch (dataType)
 		{
 			case TableTypeBusinessId: return TableType.Business;
@@ -127,6 +128,7 @@ internal static class IntExtensions
 			case TableTypeTableCatalogId: return TableType.TableCatalog;
 			case TableTypeTableSpaceCatalogId: return TableType.TablespaceCatalog;
 			case TableTypeLogicalId: return TableType.Logical;
+			case TableTypeNonBusinessTableId: return TableType.NonBusinessTable;
 		}
 		return TableType.Undefined;
 	}

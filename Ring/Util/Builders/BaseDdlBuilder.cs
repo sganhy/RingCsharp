@@ -1,4 +1,5 @@
-﻿using Ring.Schema.Enums;
+﻿using Ring.Schema;
+using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using System.Globalization;
@@ -12,7 +13,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 {
 	// Rider check 2025-07-23
 	protected static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
-
+	
 	// entity
 	protected static readonly string DdlView = @"VIEW";
 	protected static readonly string DdlTable = @"TABLE ";  // final space character needed!
@@ -59,8 +60,10 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	protected abstract string GetPhysicalName(Constraint constraint);
 	protected abstract string GetCatalogPhysicalName(TableType tableType);
 	protected abstract string GetSchemaPhysicalName(TableType tableType);
+	protected abstract string GetPhysicalName(TableType tableType, Field field); // get field physical name eg. "table_schema" or "table_name" for information_schema.tables
 	public bool HasTimeZoneOffsetColumn => TimeZoneOffsetPrefix is not null;
 
+	
 	public string AlterAddColumn(Table table, in Column column) // Code size: 90 (0x5a)
 		=> new StringBuilder()
 			.Append(DdlAlter)
@@ -164,6 +167,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 		return result.Append(SchemaSeparator).Append(GetPhysicalName(EntityType.Table, table.Name)).ToString();
 	}
 
+	public string GetPhysicalName(Field field, Table table) => GetPhysicalName(table.Type, field);
 	protected abstract string MtmPrefix { get; }
 
 	private string GetDataType(Table table, Column column, int? size)
@@ -422,7 +426,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 			return GetPhysicalName(provider, TablePrefix + name);
 		}
 	}
-
+		
 	#endregion
 
 }

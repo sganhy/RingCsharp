@@ -16,6 +16,7 @@ internal enum TableType : byte
 	TableCatalog = 34,
 	TablespaceCatalog = 35,
 	Logical = 37,
+	NonBusinessTable = 44, // non-business table, used to return logical system table prefixes. eg. @meta, @log, @mtm, @test, @lexicon, @lexicon_item
 	// 124 reserved for unit tests
 	Undefined = 127
 }
