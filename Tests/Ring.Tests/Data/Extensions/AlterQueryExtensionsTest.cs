@@ -3,7 +3,6 @@ using Ring.Data.Extensions;
 using Ring.Data.Models;
 using Ring.Schema.Builders;
 using Ring.Schema.Enums;
-using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using System.Linq.Expressions;
 

@@ -57,7 +57,7 @@ public class DdlBuilderTest : BaseBuilderTest
         table2.Relations[1] = GetAnonymousRelation(RelationType.Mto, 1, @"skill2book");
         table2.Relations[0] = GetAnonymousRelation(RelationType.Mtm, 8, @"ability2book");
 
-        var expectedSql = $"CREATE TABLE {physicalName} (\n" + "\tid int2 NOT NULL,\n" +
+        var expectedSql = $"CREATE TABLE {physicalName} (\n" + "\tid int2,\n" +
                 "\tname varchar(80) COLLATE \"C\",\n" + "\ts_name varchar(80) COLLATE \"C\",\n" + 
                 "\tsub_name varchar(30) COLLATE \"C\",\n" + "\tis_group bool,\n" +
                 "\tcategory varchar(8) COLLATE \"C\",\n" + "\tarmor_penality int2,\n" + "\ttrained_only bool,\n" +
@@ -83,7 +83,7 @@ public class DdlBuilderTest : BaseBuilderTest
         var relation  = table.GetRelation("synergy2skill");
         Assert.NotNull(relation);
         var mtmTable = relation.ToTable;
-        var expectedSql = $"CREATE TABLE {mtmTable.PhysicalName} (\n" + "\tskill2synergy int2 NOT NULL,\n\tsynergy2skill int2 NOT NULL)";
+        var expectedSql = $"CREATE TABLE {mtmTable.PhysicalName} (\n" + "\tskill2synergy int2,\n\tsynergy2skill int2)";
 
         // act 
         var ddl = _sut.Create(mtmTable);
@@ -105,11 +105,11 @@ public class DdlBuilderTest : BaseBuilderTest
         Assert.NotNull(table3);
         // load relation
         table3.Relations[0] = GetAnonymousRelation(RelationType.Mto, 8, @"skill2book");
-        var expectedSql = $"CREATE TABLE {physicalName} (\n" + "\tid int2 NOT NULL,\n" +
-                "\tname varchar(80) COLLATE \"C\" NOT NULL,\n" + "\ts_name varchar(80) COLLATE \"C\" NOT NULL,\n" +
-                "\tsub_name varchar(30) COLLATE \"C\",\n" + "\tis_group bool NOT NULL,\n" +
-                "\tcategory varchar(8) COLLATE \"C\",\n" + "\tarmor_penality int2 NOT NULL,\n" + "\ttrained_only bool NOT NULL,\n" +
-                "\ttry_again bool NOT NULL,\n" + "\tskill2book int8 NOT NULL)";
+        var expectedSql = $"CREATE TABLE {physicalName} (\n" + "\tid int2,\n" +
+                "\tname varchar(80) COLLATE \"C\",\n" + "\ts_name varchar(80) COLLATE \"C\",\n" +
+                "\tsub_name varchar(30) COLLATE \"C\",\n" + "\tis_group bool,\n" +
+                "\tcategory varchar(8) COLLATE \"C\",\n" + "\tarmor_penality int2,\n" + "\ttrained_only bool,\n" +
+                "\ttry_again bool,\n" + "\tskill2book int8)";
 
         // act 
         var ddl = _sut.Create(table3);
@@ -133,11 +133,11 @@ public class DdlBuilderTest : BaseBuilderTest
 #pragma warning disable CS8602
         table4.Relations[0] = GetAnonymousRelation(RelationType.Mto, 11, @"skill2book", false);
         
-        var expectedSql = $"CREATE TABLE {physicalName} (\n" + "\tid int2 NOT NULL,\n" +
-                "\tname varchar(80) COLLATE \"C\" NOT NULL,\n" + "\ts_name varchar(80) COLLATE \"C\" NOT NULL,\n" +
-                "\tsub_name varchar(30) COLLATE \"C\",\n" + "\tis_group bool NOT NULL,\n" +
-                "\tcategory varchar(8) COLLATE \"C\",\n" + "\tarmor_penality int2 NOT NULL,\n" + "\ttrained_only bool NOT NULL,\n" +
-                "\ttry_again bool NOT NULL,\n" + $"\tskill2book int8) TABLESPACE {tablespaceName}";
+        var expectedSql = $"CREATE TABLE {physicalName} (\n" + "\tid int2,\n" +
+                "\tname varchar(80) COLLATE \"C\",\n" + "\ts_name varchar(80) COLLATE \"C\",\n" +
+                "\tsub_name varchar(30) COLLATE \"C\",\n" + "\tis_group bool,\n" +
+                "\tcategory varchar(8) COLLATE \"C\",\n" + "\tarmor_penality int2,\n" + "\ttrained_only bool,\n" +
+                "\ttry_again bool,\n" + $"\tskill2book int8) TABLESPACE {tablespaceName}";
 
         // act 
         var ddl = _sut.Create(table4, tablespace);
@@ -160,10 +160,10 @@ public class DdlBuilderTest : BaseBuilderTest
         var metaTable = schema.GetTable("@meta");
         
 #pragma warning disable CS8602
-        var expectedSql = $"CREATE TABLE test.\"@meta\" (\n" + "\tid int4 NOT NULL,\n" +
-                "\tschema_id int4 NOT NULL,\n" + "\tobject_type int2 NOT NULL,\n" + "\treference_id int4 NOT NULL,\n" +
-                "\tdata_type int4 NOT NULL,\n" + "\tflags int8 NOT NULL,\n" + "\tname varchar(60) COLLATE \"C\" NOT NULL,\n" +
-                "\tdescription text COLLATE \"C\",\n" + $"\tvalue text COLLATE \"C\",\n\tactive bool NOT NULL) TABLESPACE {tablespaceName}";
+        var expectedSql = $"CREATE TABLE test.\"@meta\" (\n" + "\tid int4,\n" +
+                "\tschema_id int4,\n" + "\tobject_type int2,\n" + "\treference_id int4,\n" +
+                "\tdata_type int4,\n" + "\tflags int8,\n" + "\tname varchar(60) COLLATE \"C\",\n" +
+                "\tdescription text COLLATE \"C\",\n" + $"\tvalue text COLLATE \"C\",\n\tactive bool) TABLESPACE {tablespaceName}";
         Assert.NotNull(metaTable);
 
         // act 
@@ -194,8 +194,8 @@ public class DdlBuilderTest : BaseBuilderTest
                 "\ttest_1 int4,\n" + "\ttest_2 int2,\n" + "\ttest_3 int2,\n" +
                 "\ttest_4 float4,\n" + "\ttest_5 float8,\n" + "\ttest_6 varchar(16) COLLATE \"C\",\n" + "\ttest_7 varchar(512) COLLATE \"C\",\n" +
                 "\ts_test_7 varchar(512) COLLATE \"C\",\n" + "\ttest_8 varchar(64) COLLATE \"C\",\n" + "\ts_test_8 varchar(64) COLLATE \"C\",\n" +
-                "\ttest_9 date,\n" + "\ttest_10 timestamp without time zone,\n\ttest_11 timestamp without time zone NOT NULL,\n" +
-                "\t\"@tz_offset_11\" int2 NOT NULL,\n" + "\ttest_12 bytea,\n" + "\ttest_13 bool,\n\ttest_14 text COLLATE \"C\")" +
+                "\ttest_9 date,\n" + "\ttest_10 timestamp without time zone,\n\ttest_11 timestamp without time zone,\n" +
+                "\t\"@tz_offset_11\" int2,\n" + "\ttest_12 bytea,\n" + "\ttest_13 bool,\n\ttest_14 text COLLATE \"C\")" +
                 $" TABLESPACE {tablespaceName}";
 
         // act 
@@ -303,7 +303,27 @@ public class DdlBuilderTest : BaseBuilderTest
         Assert.Equal(expectedSql, dql);
     }
 
-    [Fact]
+	[Fact]
+	public void Create_NotNullConstraint_DdlQuery()
+	{
+		// arrange 
+		var schBuilder = new SchemaBuilder();
+		var schemaName = "@Test";
+		var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
+		var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
+		var table = schema.GetTable("@meta");
+		Assert.NotNull(table);
+		var notNull = schema.DdlBuilder.GetConstraints(table).First(p => p.Type == ConstraintType.NotNull);
+		var expectedSql = "ALTER TABLE \"@test\".\"@meta\" ALTER COLUMN id SET NOT NULL";
+
+		// act 
+		var dql = _sut.Create(notNull);
+
+		// assert
+		Assert.Equal(expectedSql, dql);
+	}
+
+	[Fact]
     public void Create_PkConstraintMetaId_DdlQuery()
     {
         // arrange 

@@ -40,8 +40,8 @@ internal sealed class DdlBuilder : BaseDdlBuilder
 	protected sealed override string StartPhysicalNameDelimiter => "`";
     protected sealed override string EndPhysicalNameDelimiter => StartPhysicalNameDelimiter;
     protected sealed override string TablePrefix => DefaultTablePrefix;
-    protected sealed override string SearchableFieldPrefix => "s_";
-    protected sealed override string GetPhysicalName(Constraint constraint) => string.Empty;
+	protected sealed override string AlterColumnStatment => string.Empty;
+	protected sealed override string SearchableFieldPrefix => "s_";
 	protected override string GetCatalogPhysicalName(TableType tableType) => _pgDdlBuilder.GetPhysicalName(EntityType.Table, tableType.GetLogicalName()); // use PostgreSQL DDL builder to get the physical name for catalogs
 	protected override string GetSchemaPhysicalName(TableType tableType) 
     {
@@ -64,4 +64,6 @@ internal sealed class DdlBuilder : BaseDdlBuilder
 		var currentTable = Meta.GetDefaultTable(meta);
 		return _pgDdlBuilder.GetPhysicalName(field, currentTable);  // use PostgreSQL DDL builder to get the physical name for catalogs
 	}
+
+    protected override Constraint? HasCheckConstraint(Table table, Column column) => null;
 }

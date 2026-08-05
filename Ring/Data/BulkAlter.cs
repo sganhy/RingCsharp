@@ -4,12 +4,12 @@ using Ring.Data.Models;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
-using Ring.Util.Enums;
 using Ring.Util.Helpers;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using Database = Ring.Schema.Models.Schema;
 using Index = Ring.Schema.Models.Index;
+using ResourceType = Ring.Util.Enums.ResourceType;
 
 namespace Ring.Data;
 
@@ -86,7 +86,7 @@ internal sealed class BulkAlter : IEquatable<BulkAlter>
 		// Code size: 157 (0x9d)
 		// sort by Type
 #pragma warning disable RCS1048 // Use lambda expression instead of anonymous method - never!
-		_queries.Sort(static delegate (AlterQuery q1, AlterQuery q2)
+		_queries.Sort(static delegate (AlterQuery q1,AlterQuery q2)
 		{
 			if (q1.Type == q2.Type) return q1.Id.CompareTo(q2.Id);
 			return q1.Type.CompareTo(q2.Type);
@@ -124,10 +124,12 @@ internal sealed class BulkAlter : IEquatable<BulkAlter>
 
 	private void AppendDdlCommand(AlterQueryType type, Constraint constraint)
 	{
-		// Code size: 83 (0x53)
+		// Code size: 178 (0xb2)
 		var table = constraint.ToTable;
 		if (type == AlterQueryType.CreateTable && constraint.Type == ConstraintType.PrimaryKey)
 			_queries.Add(new AlterQuery(table.Id, table, AlterQueryType.CreatePrimaryKey, null, constraint, null, GetTableSpace(table, EntityType.Constraint)));
+		if (type == AlterQueryType.CreateTable && constraint.Type == ConstraintType.NotNull)
+			_queries.Add(new AlterQuery(table.Id, table, AlterQueryType.CreateNotNull, null, constraint, null, null));
 	}
 
 	private void AppendDdlCommand(AlterQueryType type, Table table, in Column? column = null)

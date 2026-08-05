@@ -28,6 +28,9 @@ internal static class TableTypeExtensions
         return string.Empty;
     }
 
+	internal static PhysicalType ToPhysicalType(this TableType tableType) =>
+		tableType.IsCatalog() ? PhysicalType.View : PhysicalType.Table;
+
 	internal static bool IsCatalog(this TableType tableType) 
         => tableType == TableType.TableCatalog || tableType == TableType.TablespaceCatalog || tableType == TableType.SchemaCatalog;
 

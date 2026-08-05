@@ -6,14 +6,23 @@ internal sealed class Constraint
 {
 	internal readonly ConstraintType Type;
 	internal readonly Table ToTable;
-	internal readonly List<Column> columns;
+	internal readonly List<Column> Columns;
 	internal readonly string PhysicalName;
+	internal readonly int MinValue;
+	internal readonly int MaxValue;
 
-	internal Constraint(ConstraintType type, Table table, string physicalName)
+	internal Constraint(ConstraintType type, Table table, string physicalName, int minValue=0, int maxValue=0)
 	{
 		Type = type;
 		ToTable = table;
-		columns = new List<Column>();
+		Columns = new List<Column>();
 		PhysicalName = physicalName;
+		MinValue = minValue;
+		MaxValue = maxValue;
 	}
+
+#if DEBUG
+	public override string ToString() => $"{Type} - {ToTable.Name}";
+#endif
+
 }

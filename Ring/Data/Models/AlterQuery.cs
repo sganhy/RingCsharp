@@ -7,7 +7,6 @@ namespace Ring.Data.Models;
 
 public readonly struct AlterQuery : IEquatable<AlterQuery>
 {
-#pragma warning restore CA1815
 	internal readonly int Id;
 	internal readonly Table Table;
 	internal readonly AlterQueryType Type;

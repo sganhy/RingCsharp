@@ -1,6 +1,7 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
+using System.Globalization;
 using System.Text;
 
 namespace Ring.Util.Builders.PostgreSQL;
@@ -38,6 +39,7 @@ internal sealed class DdlBuilder : BaseDdlBuilder
 	protected sealed override Dictionary<FieldType, string> DataType => _dataType;
 	protected sealed override string SchemaSeparator => ".";
 	protected sealed override char PhysSpecialEntityPrefix => TableType.NonBusinessTable.GetLogicalName()[0];
+	protected sealed override string AlterColumnStatment => "ALTER COLUMN";
 	protected sealed override string StartPhysicalNameDelimiter => "\"";
 	protected sealed override string EndPhysicalNameDelimiter => StartPhysicalNameDelimiter;
 	protected sealed override string TablePrefix => DefaultTablePrefix;
@@ -53,28 +55,7 @@ internal sealed class DdlBuilder : BaseDdlBuilder
 			.Append('\'')
 			.Append(tablespace.FileName)
 			.Append('\'').ToString();
-
-	protected sealed override string GetPhysicalName(Constraint constraint)
-    {
-		// Code size: 171 (0xab)
-		var result = new StringBuilder(32); // pk_ (3) + table_name (max 27) + delimiters (2) = 32
-		switch (constraint.Type)
-        {
-            //name:  pk_{table_name}
-            case ConstraintType.PrimaryKey:
-				// apply short version of prefix 'pk'
-				var prefix = constraint.ToTable.Name.Length > 27 ? DefaultPrimaryKeyPrefix[..^1] : DefaultPrimaryKeyPrefix;
-				if (constraint.ToTable.Name.StartsWith(PhysSpecialEntityPrefix))
-					result.Append(StartPhysicalNameDelimiter)
-						  .Append(prefix)
-						  .Append(constraint.ToTable.Name)
-						  .Append(EndPhysicalNameDelimiter);
-				else result.Append(prefix).Append(constraint.ToTable.Name);
-				break;
-		}
-        return result.ToString();
-    }
-
+				
 	protected override string GetCatalogPhysicalName(TableType tableType) 
 	{
 		switch (tableType)
@@ -104,4 +85,17 @@ internal sealed class DdlBuilder : BaseDdlBuilder
 		}
 		return string.Empty;
 	}
+
+	protected override Constraint? HasCheckConstraint(Table table, Column column) 
+	{
+		// Code size: 72 (0x48)
+		if (column.FieldType == FieldType.Byte && column.Type == EntityType.Field)
+		{
+			var result = new Constraint(ConstraintType.Check, table, GetPhysicalName(ConstraintType.Check, table, table.Fields[column.RecordIndex].Id), sbyte.MinValue, sbyte.MaxValue);
+			result.Columns.Add(column);
+			return result;
+		}
+		return null;
+	}
+
 }

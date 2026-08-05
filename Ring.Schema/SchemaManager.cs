@@ -22,7 +22,7 @@ public sealed class SchemaManager
 		var bulkAlter =  new BulkAlter(initialSchema);
 		foreach (var table in initialSchema.TablesById)
 		{
-			bulkAlter.CreateTable(table);
+			if (table.PhysicalType == Enums.PhysicalType.Table) bulkAlter.CreateTable(table);
 		}
 		bulkAlter.Apply(_connection);
 	}

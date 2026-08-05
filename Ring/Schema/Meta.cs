@@ -544,7 +544,7 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	private static Table[] GetTables(Meta[] schema, IDdlBuilder ddlBuilder, in Meta metaSchema, DatabaseProvider provider,	int mtmCount, int tableCount)
 	{
-		// Code size: 375 (0x177)
+		// Code size: 398 (0x18e)
 		// bug : pass 1 : Incorrect segment start index — High Severity
 		var dicoSize = tableCount * 2;
 		var dico = new Dictionary<int, (int, int)>(dicoSize); // table_id, (start index, count)
@@ -576,7 +576,8 @@ internal readonly struct Meta : IEquatable<Meta>
 					? new ReadOnlySpan<Meta>(schema, range.Item1, range.Item2)
 					: ReadOnlySpan<Meta>.Empty;
 				var physicalName = ddlBuilder.GetPhysicalName(GetDefaultTable(meta), emptySchema);
-				var table = meta.ToTable(segment, PhysicalType.Table, ddlBuilder, physicalName, mtmCount + tableIndex)
+				var tableType = meta.DataType.ToTableType();
+				var table = meta.ToTable(segment, tableType.ToPhysicalType(), ddlBuilder, physicalName, mtmCount + tableIndex)
 					?? GetDefaultTable(meta);
 				result.Add(table);
 				++tableIndex;

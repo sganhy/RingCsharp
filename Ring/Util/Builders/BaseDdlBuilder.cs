@@ -1,5 +1,4 @@
-﻿using Ring.Schema;
-using Ring.Schema.Enums;
+﻿using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using System.Globalization;
@@ -11,9 +10,8 @@ namespace Ring.Util.Builders;
 
 internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 {
-	// Rider check 2025-07-23
 	protected static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
-	
+
 	// entity
 	protected static readonly string DdlView = @"VIEW";
 	protected static readonly string DdlTable = @"TABLE ";  // final space character needed!
@@ -38,6 +36,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	protected static readonly string DdlColumn = @"COLUMN ";
 	protected static readonly string DdlTruncate = @"TRUNCATE ";
 	protected static readonly string DdlNotNull = @"NOT NULL";
+	protected static readonly string DdlSet = @"SET ";
 
 	// system table names
 	protected static readonly string TableCatalogTableName = TableType.TableCatalog.GetLogicalName();
@@ -50,15 +49,17 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	// prefixes 
 	protected static readonly string DefaultTablePrefix = @"t_";
 	protected static readonly string DefaultPrimaryKeyPrefix = @"pk_";
+	protected static readonly string DefaultCheckPrefix = @"ck_";
 	protected static readonly string DefaultIndexPrefix = @"idx_";
 
 	// conventions
 	protected static readonly char LogSpecialEntityPrefix = TableTypeExtensions.SystemTablePrefix; // systeme table logical name prefix
 	protected abstract char PhysSpecialEntityPrefix { get; }
 	protected abstract string SearchableFieldPrefix { get; }
+	protected abstract string AlterColumnStatment { get; }
 	protected abstract string? TimeZoneOffsetPrefix { get; }
-	protected abstract string GetPhysicalName(Constraint constraint);
 	protected abstract string GetCatalogPhysicalName(TableType tableType);
+	protected abstract Constraint? HasCheckConstraint(Table table, Column column);
 	protected abstract string GetSchemaPhysicalName(TableType tableType);
 	protected abstract string GetPhysicalName(TableType tableType, Field field); // get field physical name eg. "table_schema" or "table_name" for information_schema.tables
 	public bool HasTimeZoneOffsetColumn => TimeZoneOffsetPrefix is not null;
@@ -100,7 +101,37 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 			.Append(DdlTable)
 			.Append(table.PhysicalName)
 			.ToString();
-	
+
+	protected string GetPhysicalName(ConstraintType type, Table toTable, int fieldId)
+	{
+		// Code size: 273 (0x111)
+		var result = new StringBuilder();
+		switch (type)
+		{
+			case ConstraintType.Check:
+				result.Append(DefaultCheckPrefix);
+				//physicalName (business): ck_{table_id}_{field_id}
+				if (toTable.Type == TableType.Business) result.Append(toTable.Id.ToString(CultureInfo.InvariantCulture).PadLeft(3, '0'));
+				else result.Append(toTable.Name); //else physicalName (non-business): ck_{table_name}_{field_id}
+				result.Append('_');
+				result.Append(fieldId.ToString(CultureInfo.InvariantCulture).PadLeft(3, '0'));
+				break;
+			//name:  pk_{table_name}
+			case ConstraintType.PrimaryKey:
+				//pk_ (3) + table_name (max 27) + delimiters (2) = 32
+				//apply short version of prefix 'pk'
+				var prefix = toTable.Name.Length > 27 ? DefaultPrimaryKeyPrefix[..^1] : DefaultPrimaryKeyPrefix;
+				if (toTable.Name.StartsWith(PhysSpecialEntityPrefix))
+					result.Append(StartPhysicalNameDelimiter)
+						  .Append(prefix)
+						  .Append(toTable.Name)
+						  .Append(EndPhysicalNameDelimiter);
+				else result.Append(prefix).Append(toTable.Name);
+				break;
+		}
+		return result.ToString();
+	}
+
 	public virtual string GetPhysicalName(EntityType entityType, string name)
 	{
 		// Code size: 319 (0x13f)
@@ -224,20 +255,20 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	}
 	public string Create(Constraint constraint, TableSpace? tablespace = null)
 	{
-		// Code size: 255 (0xff)
+		// Code size: 353 (0x161)
 		var result = new StringBuilder();
 		result.Append(DdlAlter)
 					.Append(DdlTable)
 					.Append(constraint.ToTable.PhysicalName)
-					.Append(SqlSpace)
-					.Append(DdlAdd)
-					.Append(DdlConstraint)
-					.Append(constraint.PhysicalName)
 					.Append(SqlSpace);
 		switch (constraint.Type)
 		{
 			 case ConstraintType.PrimaryKey:
-				result.Append(DdlPrimaryKey)
+				result.Append(DdlAdd)
+					.Append(DdlConstraint)
+					.Append(constraint.PhysicalName)
+					.Append(SqlSpace)
+					.Append(DdlPrimaryKey)
 					.Append('(')
 					.Append(string.Join(',', constraint.ToTable.GetPrimaryKey().ConvertAll(delegate (Column column)
 					{
@@ -245,7 +276,13 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 					})
 					.ToArray()))
 					.Append(')');
-			 break; 
+				break; 
+			case ConstraintType.NotNull:
+				// alter table my_schema.my_table alter column my_column set not null;
+				result.Append(AlterColumnStatment).Append(SqlSpace).Append(constraint.Columns[0].PhysicalName).Append(SqlSpace);
+				if (Provider == DatabaseProvider.PostgreSql) result.Append(DdlSet);
+				result.Append(DdlNotNull);
+				break; 
 		}
 		if (tablespace is not null)
 		{
@@ -309,10 +346,28 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 		}
 		return result.ToString();
 	}
+
 	public Constraint[] GetConstraints(Table table) 
 	{
+		// Code size: 239 (0xef)
 		var result = new List<Constraint>();
-		if (table.HasPrimaryKey()) result.Add(GetPrimaryKey(table));
+		if (table.HasPrimaryKey()) result.Add(new(ConstraintType.PrimaryKey, table, GetPhysicalName(ConstraintType.PrimaryKey, table, -1)));
+		var fieldCount = table.Fields.Length;
+
+		foreach (var column in table.Columns.AsSpan())
+		{
+			var constraint = HasCheckConstraint(table, column);
+			if (constraint is not null) result.Add(constraint);
+			if (table.Type == TableType.Business) continue;
+			// not null constraints
+			if ((column.Type == EntityType.Field && table.Fields[column.RecordIndex].NotNull) ||
+				(column.Type == EntityType.Relation && table.Relations[column.RecordIndex - fieldCount].NotNull))
+			{
+				var newConstraint = new Constraint(ConstraintType.NotNull, table, string.Empty);
+				newConstraint.Columns.Add(column);
+				result.Add(newConstraint);
+			}
+		}
 		return result.ToArray();
 	}
 
@@ -321,33 +376,18 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 
 	private void Create(StringBuilder subResult, Table table, Column column, Field? field, Relation? relation)
 	{
+		// Code size: 82 (0x52)
 		int? size = null;
-		var notNull = string.Empty;
 		if (field is not null)
 		{
 			size = field.Size;
-			if ((field.IsPrimaryKey() || table.Type != TableType.Business) && field.NotNull)
-				notNull = SqlSpace + DdlNotNull;
-		}
-		if (relation is not null)
-		{
-			if (table.Type != TableType.Business && relation.NotNull) 
-				notNull = SqlSpace + DdlNotNull;
 		}
 		subResult.Append(Indent)
 				 .Append(column.PhysicalName)
 				 .Append(SqlSpace)
 				 .Append(GetDataType(table, column, size))
-				 .Append(notNull)
 				 .Append(',')
 				 .Append(SqlLineFeed);
-	}
-
-	private Constraint GetPrimaryKey(Table table)
-	{
-		// Code size: 28 (0x1c)
-		var result =new Constraint(ConstraintType.PrimaryKey, table, string.Empty);
-		return new(ConstraintType.PrimaryKey, table, GetPhysicalName(result));
 	}
 
 	/// <summary>
