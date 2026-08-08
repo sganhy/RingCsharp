@@ -1,11 +1,8 @@
-﻿using Ring.Schema.Attributes;
-
-namespace Ring.Schema.Enums;
+﻿namespace Ring.Schema.Enums;
 
 /// <summary>
 /// 	values above 15 are reserved for testing; value should be defined as [1,127[
 /// </summary>
-[Range(1, 126)]
 internal enum RelationType : byte
 {
 	Otop = 1,

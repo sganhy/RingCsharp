@@ -1,7 +1,7 @@
 ﻿namespace Ring.Data.Enums;
 
 // using enum value to order ddl execution
-internal enum AlterQueryType : short
+internal enum AlterQueryType : byte
 {
     CreateSchema = 1,
     CreateTable = 10,
@@ -10,5 +10,5 @@ internal enum AlterQueryType : short
 	CreateCheckConstraint = 14,
 	CreatePrimaryKey = 15,
 	CreateIndex = 103,
-    Undefined = short.MaxValue
+    Undefined = byte.MaxValue
 }

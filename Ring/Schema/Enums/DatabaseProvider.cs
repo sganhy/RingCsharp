@@ -8,5 +8,6 @@ internal enum DatabaseProvider : byte
 	InfluxDb = 5,
 	SqlServer = 7,
 	SqlLite = 8,
+	MariaDb = 9,
 	Undefined = 127
 }

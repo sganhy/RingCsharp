@@ -33,7 +33,7 @@ internal sealed class BulkAlter : IEquatable<BulkAlter>
 		// Code size: 118 (0x76)
 		AppendDdlCommand(AlterQueryType.CreateTable, table);
 		// create constraints 
-		foreach(var constraint in _schema.DdlBuilder.GetConstraints(table)) AppendDdlCommand(AlterQueryType.CreateTable, constraint);
+		foreach(var constraint in _schema.DdlBuilder.GetConstraints(table).AsSpan()) AppendDdlCommand(AlterQueryType.CreateTable, constraint);
 		// create indexes
 		foreach (var index in table.Indexes) AppendDdlCommand(AlterQueryType.CreateIndex, table, index);
 	}
@@ -85,13 +85,11 @@ internal sealed class BulkAlter : IEquatable<BulkAlter>
 	{
 		// Code size: 157 (0x9d)
 		// sort by Type
-#pragma warning disable RCS1048 // Use lambda expression instead of anonymous method - never!
 		_queries.Sort(static delegate (AlterQuery q1,AlterQuery q2)
 		{
 			if (q1.Type == q2.Type) return q1.Id.CompareTo(q2.Id);
 			return q1.Type.CompareTo(q2.Type);
 		});
-#pragma warning restore RCS1048
 
 		var encoding = connection.ClientEncoding;
 		var builder = _schema.DdlBuilder;
@@ -124,12 +122,21 @@ internal sealed class BulkAlter : IEquatable<BulkAlter>
 
 	private void AppendDdlCommand(AlterQueryType type, Constraint constraint)
 	{
-		// Code size: 178 (0xb2)
+		// Code size: 182 (0xb6)
 		var table = constraint.ToTable;
-		if (type == AlterQueryType.CreateTable && constraint.Type == ConstraintType.PrimaryKey)
-			_queries.Add(new AlterQuery(table.Id, table, AlterQueryType.CreatePrimaryKey, null, constraint, null, GetTableSpace(table, EntityType.Constraint)));
-		if (type == AlterQueryType.CreateTable && constraint.Type == ConstraintType.NotNull)
-			_queries.Add(new AlterQuery(table.Id, table, AlterQueryType.CreateNotNull, null, constraint, null, null));
+		if (type == AlterQueryType.CreateTable)
+			switch (constraint.Type)
+			{
+				case ConstraintType.PrimaryKey:
+					_queries.Add(new AlterQuery(table.Id, table, AlterQueryType.CreatePrimaryKey, null, constraint, null, GetTableSpace(table, EntityType.Constraint)));
+					break;
+				case ConstraintType.NotNull:
+					_queries.Add(new AlterQuery(table.Id, table, AlterQueryType.CreateNotNull, null, constraint, null, GetTableSpace(table, EntityType.Constraint)));
+					break;
+				case ConstraintType.Check:
+					_queries.Add(new AlterQuery(table.Id, table, AlterQueryType.CreateCheckConstraint, null, constraint, null, GetTableSpace(table, EntityType.Constraint)));
+					break;
+			}
 	}
 
 	private void AppendDdlCommand(AlterQueryType type, Table table, in Column? column = null)

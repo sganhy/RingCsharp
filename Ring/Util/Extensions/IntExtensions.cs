@@ -76,6 +76,7 @@ internal static class IntExtensions
 	private const int ProviderInfluxDbId = (int)DatabaseProvider.InfluxDb;
 	private const int ProviderSqlServerId = (int)DatabaseProvider.SqlServer;
 	private const int ProviderSqlLiteId = (int)DatabaseProvider.SqlLite;
+	private const int ProviderMariaDbId = (int)DatabaseProvider.MariaDb;
 
 	// parameter type
 	private const int SchemaVersionId = (int)ParameterType.SchemaVersion;
@@ -92,7 +93,7 @@ internal static class IntExtensions
 
 	internal static DatabaseProvider ToDatabaseProvider(this int providerId)
 	{
-		// Code size: 57 (0x39)
+		// Code size: 64 (0x40)
 		switch (providerId)
 		{
 			case ProviderOracleId: return DatabaseProvider.Oracle;
@@ -101,6 +102,7 @@ internal static class IntExtensions
 			case ProviderInfluxDbId: return DatabaseProvider.InfluxDb;
 			case ProviderSqlServerId: return DatabaseProvider.SqlServer;
 			case ProviderSqlLiteId: return DatabaseProvider.SqlLite;
+			case ProviderMariaDbId: return DatabaseProvider.MariaDb;
 		}
 		return DatabaseProvider.Undefined;
 	}

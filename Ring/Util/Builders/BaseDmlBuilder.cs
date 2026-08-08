@@ -17,7 +17,6 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 	private static readonly string DmlSet = @" SET {0}";
 	private static readonly string DmlDelete = @"DELETE FROM ";
 	private static readonly string DmlWhere = @" WHERE ";
-	private static readonly string DmlAnd = " AND ";
 	private static readonly string FirstParameter = @"1";
 
 	private string?[] _tableDelete;
@@ -128,7 +127,7 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 				result.AppendFormat(CultureInfo.InvariantCulture, VariableNameTemplate, 
 					variableIndex.ToString(CultureInfo.InvariantCulture));
 				// last element?
-				if (i< keyCount-1) result.Append(DmlAnd);
+				if (i< keyCount-1) result.Append(SqlAnd);
 			}
 		}
 		return result.ToString();
@@ -162,7 +161,7 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 					.AppendFormat(CultureInfo.InvariantCulture, VariableNameTemplate, 
 					variableIndex.ToString(CultureInfo.InvariantCulture));
 				// last element?
-				if (i < keyCount - 1) result.Append(DmlAnd);
+				if (i < keyCount - 1) result.Append(SqlAnd);
 			}
 		}
 		return result.ToString();

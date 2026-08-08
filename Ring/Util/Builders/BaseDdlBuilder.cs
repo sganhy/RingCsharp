@@ -32,6 +32,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	protected static readonly string DdlCreate = @"CREATE ";
 	protected static readonly string DdlAlter = @"ALTER "; // final space character needed!
 	protected static readonly string DdlDrop = @"DROP ";
+	protected static readonly string DdlCheck = @"CHECK ";
 	protected static readonly string DdlAdd = @"ADD ";
 	protected static readonly string DdlColumn = @"COLUMN ";
 	protected static readonly string DdlTruncate = @"TRUNCATE ";
@@ -63,8 +64,8 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	protected abstract string GetSchemaPhysicalName(TableType tableType);
 	protected abstract string GetPhysicalName(TableType tableType, Field field); // get field physical name eg. "table_schema" or "table_name" for information_schema.tables
 	public bool HasTimeZoneOffsetColumn => TimeZoneOffsetPrefix is not null;
+	internal Dictionary<FieldType, string> ProviderDataType => DataType;
 
-	
 	public string AlterAddColumn(Table table, in Column column) // Code size: 90 (0x5a)
 		=> new StringBuilder()
 			.Append(DdlAlter)
@@ -104,7 +105,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 
 	protected string GetPhysicalName(ConstraintType type, Table toTable, int fieldId)
 	{
-		// Code size: 273 (0x111)
+		// Code size: 160 (0xa0)
 		var result = new StringBuilder();
 		switch (type)
 		{
@@ -120,31 +121,26 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 			case ConstraintType.PrimaryKey:
 				//pk_ (3) + table_name (max 27) + delimiters (2) = 32
 				//apply short version of prefix 'pk'
-				var prefix = toTable.Name.Length > 27 ? DefaultPrimaryKeyPrefix[..^1] : DefaultPrimaryKeyPrefix;
-				if (toTable.Name.StartsWith(PhysSpecialEntityPrefix))
-					result.Append(StartPhysicalNameDelimiter)
-						  .Append(prefix)
-						  .Append(toTable.Name)
-						  .Append(EndPhysicalNameDelimiter);
-				else result.Append(prefix).Append(toTable.Name);
+				result.Append(DefaultPrimaryKeyPrefix).Append(toTable.Name); // check size for specific database
 				break;
 		}
-		return result.ToString();
+		return GetPhysicalName(EntityType.Constraint,result.ToString());
 	}
 
 	public virtual string GetPhysicalName(EntityType entityType, string name)
 	{
-		// Code size: 319 (0x13f)
+		// Code size: 335 (0x14f)
 		switch (entityType)
 		{
 			case EntityType.Table: return GetTablePhysicalName(Provider, name);
 			case EntityType.Schema:
 			case EntityType.Tablespace:
 			case EntityType.Relation:
+			case EntityType.Constraint:
 			case EntityType.Field:
 				{
 					var physicalName = GetPhysicalName(Provider, name);
-					return name.StartsWith(LogSpecialEntityPrefix) ^ Provider.IsReservedWord(physicalName) ?
+					return name.Contains(LogSpecialEntityPrefix) ^ Provider.IsReservedWord(physicalName) ?
 						string.Join(null, StartPhysicalNameDelimiter, physicalName, EndPhysicalNameDelimiter) : physicalName;
 				}
 			case EntityType.SearchableColumn:
@@ -278,10 +274,25 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 					.Append(')');
 				break; 
 			case ConstraintType.NotNull:
-				// alter table my_schema.my_table alter column my_column set not null;
+				//alter table my_schema.my_table alter column my_column set not null;
 				result.Append(AlterColumnStatment).Append(SqlSpace).Append(constraint.Columns[0].PhysicalName).Append(SqlSpace);
 				if (Provider == DatabaseProvider.PostgreSql) result.Append(DdlSet);
 				result.Append(DdlNotNull);
+				break;
+			case ConstraintType.Check:
+				//eg. alter table public."@meta" ADD CONSTRAINT "ck_@meta_002" CHECK (object_type between 0 and 124);
+				result.Append(DdlAdd)
+					  .Append(DdlConstraint)
+					  .Append(constraint.PhysicalName)
+					  .Append(SqlSpace)
+					  .Append(DdlCheck)
+					  .Append('(')
+					  .Append(constraint.Columns[0].PhysicalName)
+					  .Append(SqlBetween)
+					  .Append(constraint.MinValue)
+					  .Append(SqlAnd)
+					  .Append(constraint.MaxValue)
+					  .Append(')');
 				break; 
 		}
 		if (tablespace is not null)
@@ -356,8 +367,15 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 
 		foreach (var column in table.Columns.AsSpan())
 		{
-			var constraint = HasCheckConstraint(table, column);
-			if (constraint is not null) result.Add(constraint);
+			if (table.Type == TableType.Meta || table.Type == TableType.MetaId)
+			{
+				if ()
+			}
+			else
+			{
+				var constraint = HasCheckConstraint(table, column);
+				if (constraint is not null) result.Add(constraint);
+			}
 			if (table.Type == TableType.Business) continue;
 			// not null constraints
 			if ((column.Type == EntityType.Field && table.Fields[column.RecordIndex].NotNull) ||

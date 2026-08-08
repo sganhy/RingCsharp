@@ -9,7 +9,7 @@
 		<PlatformTarget>x64</PlatformTarget>
 		<SignAssembly>True</SignAssembly>
 		<AssemblyOriginatorKeyFile>Ring.Tests.snk</AssemblyOriginatorKeyFile>
-		<NoWarn>RCS1196</NoWarn>
+		<NoWarn>RCS1196;CA1859</NoWarn>
 	</PropertyGroup>
 
 	<ItemGroup>

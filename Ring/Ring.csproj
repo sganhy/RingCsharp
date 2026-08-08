@@ -74,5 +74,9 @@
 		<PackageReference Include="Microsoft.DotNet.ILCompiler" />
 		<PackageReference Include="Microsoft.NET.ILLink.Tasks" />
 	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Util\Builders\MariaDB\" />
+	</ItemGroup>
  
 </Project>

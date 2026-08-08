@@ -10,10 +10,10 @@ using DdlBuilder = Ring.Util.Builders.PostgreSQL.DdlBuilder; // test only for Po
 
 namespace Ring.Tests.Util.Builders.PostgreSQL;
 
-public class DdlBuilderTest : BaseBuilderTest
+public sealed class DdlBuilderTest : BaseBuilderTest
 {
-    private readonly IDdlBuilder _sut = new DdlBuilder();
-    private readonly Faker _faker = new();
+	private readonly IDdlBuilder _sut = new DdlBuilder();
+	private readonly Faker _faker = new();
 
     [Fact]
     public void Drop_Table1_DdlQuery()
@@ -25,8 +25,8 @@ public class DdlBuilderTest : BaseBuilderTest
         // act 
         var dql = _sut.Drop(table);
 
-        // assert
-        Assert.Equal(expectedSql, dql);
+		// assert
+		Assert.Equal(expectedSql, dql);
     }
 
     [Fact]
@@ -65,7 +65,6 @@ public class DdlBuilderTest : BaseBuilderTest
 
         // act 
         var ddl = _sut.Create(table2);
-
 
         // assert
         Assert.Equal(expectedSql, ddl);
@@ -130,8 +129,8 @@ public class DdlBuilderTest : BaseBuilderTest
         var segment = new ArraySegment<Meta>(metaItems, 0, metaItems.Length);
         var table4 = metaTable.ToTable(segment, PhysicalType.Table, _sut, physicalName, 0);
 
-#pragma warning disable CS8602
-        table4.Relations[0] = GetAnonymousRelation(RelationType.Mto, 11, @"skill2book", false);
+        Assert.NotNull(table4); // <-- test if null
+		table4.Relations[0] = GetAnonymousRelation(RelationType.Mto, 11, @"skill2book", false);
         
         var expectedSql = $"CREATE TABLE {physicalName} (\n" + "\tid int2,\n" +
                 "\tname varchar(80) COLLATE \"C\",\n" + "\ts_name varchar(80) COLLATE \"C\",\n" +
@@ -142,7 +141,6 @@ public class DdlBuilderTest : BaseBuilderTest
         // act 
         var ddl = _sut.Create(table4, tablespace);
 
-#pragma warning restore  CS8602
 
         // assert
         Assert.Equal(expectedSql, ddl);
@@ -158,8 +156,6 @@ public class DdlBuilderTest : BaseBuilderTest
         var config = new Configuration() { DefaultSchema = "test", MaxConnectionPoolSize = 1 };
         var schema = builder.GetMeta(DatabaseProvider.PostgreSql, config);
         var metaTable = schema.GetTable("@meta");
-        
-#pragma warning disable CS8602
         var expectedSql = $"CREATE TABLE test.\"@meta\" (\n" + "\tid int4,\n" +
                 "\tschema_id int4,\n" + "\tobject_type int2,\n" + "\treference_id int4,\n" +
                 "\tdata_type int4,\n" + "\tflags int8,\n" + "\tname varchar(60) COLLATE \"C\",\n" +
@@ -168,8 +164,6 @@ public class DdlBuilderTest : BaseBuilderTest
 
         // act 
         var ddl = _sut.Create(metaTable, tablespace);
-
-#pragma warning restore  CS8602
 
         // assert
         Assert.Equal(expectedSql, ddl);
@@ -189,7 +183,6 @@ public class DdlBuilderTest : BaseBuilderTest
         Assert.NotNull(testTable);
         var index = testTable.GetFieldIndex("test_11");
         testTable.Fields[index] = testTable.Fields[index].SetNotNull(true);
-
         var expectedSql = $"CREATE TABLE test.\"@test\" (\n" + "\ttest_0 int8,\n" +
                 "\ttest_1 int4,\n" + "\ttest_2 int2,\n" + "\ttest_3 int2,\n" +
                 "\ttest_4 float4,\n" + "\ttest_5 float8,\n" + "\ttest_6 varchar(16) COLLATE \"C\",\n" + "\ttest_7 varchar(512) COLLATE \"C\",\n" +
@@ -231,11 +224,10 @@ public class DdlBuilderTest : BaseBuilderTest
         var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
         var table = schema?.GetTable("book");
         var expectedResult = "CREATE INDEX idx_1021_02 ON rpg_sheet.t_book (s_title)";
+        Assert.NotNull(table);
 
-        // act 
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
-        var dql = _sut.Create(table.Indexes[1], table);
-#pragma warning restore CS8602
+		// act 
+		var dql = _sut.Create(table.Indexes[1], table);
 
         // assert
         Assert.Equal(expectedResult, dql);
@@ -251,11 +243,10 @@ public class DdlBuilderTest : BaseBuilderTest
         var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
         var table = schema.GetTable("@meta");
         var expectedResult = "CREATE UNIQUE INDEX \"idx_@meta_10\" ON \"@test\".\"@meta\" (id,schema_id,object_type,reference_id)";
+        Assert.NotNull(table);
 
         // act 
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
         var dql = _sut.Create(table.Indexes[0], table);
-#pragma warning restore CS8602
 
         // assert
         Assert.Equal(expectedResult, dql);
@@ -273,11 +264,11 @@ public class DdlBuilderTest : BaseBuilderTest
         var tablespace = schema.TableSpaces[0];
         var table = schema.GetTable("@meta");
         var expectedResult = "CREATE UNIQUE INDEX \"idx_@meta_10\" ON \"@test\".\"@meta\" (id,schema_id,object_type,reference_id) TABLESPACE tblSpc_test";
+        Assert.NotNull(table);
+        Assert.NotNull(tablespace);
 
         // act 
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
         var dql = _sut.Create(table.Indexes[0], table, tablespace);
-#pragma warning restore CS8602
 
         // assert
         Assert.Equal(expectedResult, dql);
@@ -324,6 +315,27 @@ public class DdlBuilderTest : BaseBuilderTest
 	}
 
 	[Fact]
+	public void Create_CheckConstraint_DdlQuery()
+	{
+		// arrange 
+		var schBuilder = new SchemaBuilder();
+		var schemaName = "@Test";
+		var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
+		var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
+		var table = schema.GetTable("@meta");
+		Assert.NotNull(table);
+		var check = schema.DdlBuilder.GetConstraints(table).First(p => p.Type == ConstraintType.Check);
+		//eg. ALTER TABLE public."@meta" ADD CONSTRAINT "ck_@meta_002" CHECK (object_type between 0 and 124);
+		var expectedSql = $"ALTER TABLE \"@test\".\"@meta\" ADD CONSTRAINT \"ck_@meta_002\" CHECK (object_type BETWEEN {check.MinValue} AND {check.MaxValue})";
+
+		// act 
+		var dql = _sut.Create(check);
+
+		// assert
+		Assert.Equal(expectedSql, dql);
+	}
+
+	[Fact]
     public void Create_PkConstraintMetaId_DdlQuery()
     {
         // arrange 
@@ -333,7 +345,7 @@ public class DdlBuilderTest : BaseBuilderTest
         var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
         var table = schema.GetTable("@meta_id");
         Assert.NotNull(table);
-        var pk = ((IEnumerable<Constraint>)schema.DdlBuilder.GetConstraints(table)).First(p => p.Type == ConstraintType.PrimaryKey);
+        var pk = schema.DdlBuilder.GetConstraints(table).First(p => p.Type == ConstraintType.PrimaryKey);
         var expectedSql = "ALTER TABLE \"@test\".\"@meta_id\" ADD CONSTRAINT \"pk_@meta_id\" PRIMARY KEY (id,schema_id,object_type)";
 
         // act 
@@ -437,7 +449,6 @@ public class DdlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var meta = Meta.Create("RpgSheet");
-        var schema = Meta.GetDefaultSchema(meta, DatabaseProvider.PostgreSql);
         var expectedResult = "rpg_sheet";
 
         // act 
@@ -452,7 +463,6 @@ public class DdlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var meta = Meta.Create("@Test");
-        var schema = Meta.GetDefaultSchema(meta, DatabaseProvider.PostgreSql);
         var expectedResult = "\"@test\"";
 
         // act 
@@ -467,7 +477,6 @@ public class DdlBuilderTest : BaseBuilderTest
 	{
 		// arrange 
 		var meta = Meta.Create("@Test");
-		var schema = Meta.GetDefaultSchema(meta, DatabaseProvider.PostgreSql);
 		var expectedResult = "\"@test\"";
 
 		// act 
@@ -504,12 +513,11 @@ public class DdlBuilderTest : BaseBuilderTest
         var table = schema?.GetTable("feat");
         var ddlBuilder = DatabaseProvider.PostgreSql.GetDdlBuilder();
         var expectedResult = "pk_feat";
-#pragma warning disable CS8604 // Possible null reference argument.
+        Assert.NotNull(table);
         var constraint = new Constraint(ConstraintType.PrimaryKey, table, string.Empty);
-#pragma warning restore CS8604 // Possible null reference argument.
         
         // act 
-        var constraintPk = ((IEnumerable<Constraint>)ddlBuilder.GetConstraints(table)).First(p => p.Type == ConstraintType.PrimaryKey);
+        var constraintPk = ddlBuilder.GetConstraints(table).First(p => p.Type == ConstraintType.PrimaryKey);
 
         // assert
         Assert.Equal(expectedResult, constraintPk.PhysicalName);
@@ -524,11 +532,10 @@ public class DdlBuilderTest : BaseBuilderTest
         var table = schema?.GetTable("deity");
         var ddlBuilder = DatabaseProvider.PostgreSql.GetDdlBuilder();
         var expectedResult = "idx_1037_01";
+        Assert.NotNull(table);
 
-        // act 
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
-        var physicalName = ddlBuilder.GetPhysicalName(table.Indexes[0], table);
-#pragma warning restore CS8602
+		// act 
+		var physicalName = ddlBuilder.GetPhysicalName(table.Indexes[0], table);
 
         // assert
         Assert.Equal(expectedResult, physicalName);
@@ -544,11 +551,10 @@ public class DdlBuilderTest : BaseBuilderTest
         var table = schema.GetTable("@log");
         var ddlBuilder = DatabaseProvider.PostgreSql.GetDdlBuilder();
         var expectedResult = "\"idx_@log_11\"";
+		Assert.NotNull(table);
 
-        // act 
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
-        var physicalName = ddlBuilder.GetPhysicalName(table.Indexes[0], table);
-#pragma warning restore CS8602
+		// act 
+		var physicalName = ddlBuilder.GetPhysicalName(table.Indexes[0], table);
 
         // assert
         Assert.Equal(expectedResult, physicalName);

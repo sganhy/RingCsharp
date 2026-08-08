@@ -16,7 +16,7 @@ internal static class AlterQueryExtensions
 				return builder.Create(query.Table, query.TableSpace);
 			case AlterQueryType.CreateNotNull:
 			case AlterQueryType.CreatePrimaryKey:
-			//case AlterQueryType.CreateCheckConstraint:
+			case AlterQueryType.CreateCheckConstraint:
 				return builder.Create(query.Constraint!, query.TableSpace);
 			case AlterQueryType.CreateIndex: 
 				return builder.Create(query.Index!, query.Table, query.TableSpace);

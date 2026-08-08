@@ -24,6 +24,11 @@ internal abstract class BaseSqlBuilder : ISqlBuilder
 	protected static readonly string SqlFrom = @" FROM ";
 	protected static readonly string SqlWhere = @" WHERE ";
 
+	// common operators in dml, dql and ddl
+	protected static readonly string SqlBetween  = @" BETWEEN ";
+	protected static readonly string SqlAnd = @" AND ";
+
+
 	public abstract DatabaseProvider Provider { get; }
 
 	protected BaseSqlBuilder() {}
