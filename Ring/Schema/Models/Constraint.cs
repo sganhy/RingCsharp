@@ -8,10 +8,10 @@ internal sealed class Constraint
 	internal readonly Table ToTable;
 	internal readonly List<Column> Columns;
 	internal readonly string PhysicalName;
-	internal readonly int MinValue;
-	internal readonly int MaxValue;
+	internal readonly int? MinValue;
+	internal readonly int? MaxValue;
 
-	internal Constraint(ConstraintType type, Table table, string physicalName, int minValue=0, int maxValue=0)
+	internal Constraint(ConstraintType type, Table table, string physicalName, int? minValue= null, int? maxValue= null)
 	{
 		Type = type;
 		ToTable = table;

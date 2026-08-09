@@ -324,9 +324,11 @@ public sealed class DdlBuilderTest : BaseBuilderTest
 		var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
 		var table = schema.GetTable("@meta");
 		Assert.NotNull(table);
-		var check = schema.DdlBuilder.GetConstraints(table).First(p => p.Type == ConstraintType.Check);
+		var checks = schema.DdlBuilder.GetConstraints(table).Where(p => p.Type == ConstraintType.Check).ToArray();
+		Assert.Equal(3, checks.Length);
+		var check = checks[1];
 		//eg. ALTER TABLE public."@meta" ADD CONSTRAINT "ck_@meta_002" CHECK (object_type between 0 and 124);
-		var expectedSql = $"ALTER TABLE \"@test\".\"@meta\" ADD CONSTRAINT \"ck_@meta_002\" CHECK (object_type BETWEEN {check.MinValue} AND {check.MaxValue})";
+		var expectedSql = $"ALTER TABLE \"@test\".\"@meta\" ADD CONSTRAINT \"ck_@meta_002\" CHECK (object_type>={check.MinValue} AND object_type<={check.MaxValue})";
 
 		// act 
 		var dql = _sut.Create(check);

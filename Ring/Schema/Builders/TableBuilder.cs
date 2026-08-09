@@ -129,6 +129,10 @@ internal sealed class TableBuilder
 		return tableObject;
 	}
 
+	internal Meta GetObjectTypeMeta() => GetField(FieldObjectType, FieldType.Byte); // Code size: 13 (0xd)
+	internal Meta GetSchemaIdMeta() => GetField(FieldSchemaId, FieldType.Int); // Code size: 13 (0xd)
+	internal Meta GetReferenceIdMeta() => GetField(FieldReferenceId, FieldType.Int); // Code size: 13 (0xd)
+
 	#region private methods 
 
 	private static Table GetTable(string schemaName, DatabaseProvider provider, Meta[] metaArray, Meta metaTable, PhysicalType? physicalType=null)

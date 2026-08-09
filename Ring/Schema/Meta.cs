@@ -350,7 +350,7 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	internal Column ToColumn(int id, string physicalName, int recordIndex, SearchableType? searchableType= SearchableType.None)
 	{
-		// Code size: 144 (0x90)
+		// Code size: 148 (0x94)
 		if (IsField)
 		{
 			// FieldType fieldType, EntityType type, string physicalName, SearchableType searchableType, int id, int recordIndex, int size

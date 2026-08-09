@@ -1,4 +1,7 @@
-﻿using Ring.Schema.Enums;
+﻿using Ring.Data;
+using Ring.Data.Extensions;
+using Ring.Schema.Builders;
+using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using System.Globalization;
@@ -251,7 +254,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	}
 	public string Create(Constraint constraint, TableSpace? tablespace = null)
 	{
-		// Code size: 353 (0x161)
+		// Code size: 613 (0x265)
 		var result = new StringBuilder();
 		result.Append(DdlAlter)
 					.Append(DdlTable)
@@ -280,19 +283,17 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 				result.Append(DdlNotNull);
 				break;
 			case ConstraintType.Check:
-				//eg. alter table public."@meta" ADD CONSTRAINT "ck_@meta_002" CHECK (object_type between 0 and 124);
+				//eg. alter table public."@meta" ADD CONSTRAINT "ck_@meta_002" CHECK (object_type>=0 and object_type<=124);
 				result.Append(DdlAdd)
-					  .Append(DdlConstraint)
-					  .Append(constraint.PhysicalName)
-					  .Append(SqlSpace)
-					  .Append(DdlCheck)
-					  .Append('(')
-					  .Append(constraint.Columns[0].PhysicalName)
-					  .Append(SqlBetween)
-					  .Append(constraint.MinValue)
-					  .Append(SqlAnd)
-					  .Append(constraint.MaxValue)
-					  .Append(')');
+						.Append(DdlConstraint)
+						.Append(constraint.PhysicalName)
+						.Append(SqlSpace)
+						.Append(DdlCheck)
+						.Append('(');
+				if (constraint.MinValue.HasValue) result.Append(constraint.Columns[0].PhysicalName).Append('>').Append('=').Append(constraint.MinValue);
+				result.Append(constraint.MinValue.HasValue && constraint.MaxValue.HasValue ? SqlAnd : string.Empty);
+				if (constraint.MaxValue.HasValue) result.Append(constraint.Columns[0].PhysicalName).Append('<').Append('=').Append(constraint.MaxValue);
+				result.Append(')');
 				break; 
 		}
 		if (tablespace is not null)
@@ -360,16 +361,38 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 
 	public Constraint[] GetConstraints(Table table) 
 	{
-		// Code size: 239 (0xef)
+		// Code size: 874 (0x36a)
 		var result = new List<Constraint>();
 		if (table.HasPrimaryKey()) result.Add(new(ConstraintType.PrimaryKey, table, GetPhysicalName(ConstraintType.PrimaryKey, table, -1)));
 		var fieldCount = table.Fields.Length;
+		TableBuilder? tblBuilder = table.Type == TableType.Meta || table.Type == TableType.MetaId ? new TableBuilder() : null; // avoid TableBuilder instance by default.
+		var objectTypeMeta = tblBuilder?.GetObjectTypeMeta();
+		var schemaIdMeta = tblBuilder?.GetSchemaIdMeta();
+		var referenceIdMeta = tblBuilder?.GetReferenceIdMeta();
+		var objectTypeCol = objectTypeMeta?.ToColumn(0, GetPhysicalName(EntityType.Field, objectTypeMeta.Value.Name), 0);
+		var schemaIdCol = schemaIdMeta?.ToColumn(0, GetPhysicalName(EntityType.Field, schemaIdMeta.Value.Name), 0);
+		var referenceIdCol = referenceIdMeta?.ToColumn(0, GetPhysicalName(EntityType.Field, referenceIdMeta.Value.Name), 0);
 
 		foreach (var column in table.Columns.AsSpan())
 		{
-			if (table.Type == TableType.Meta || table.Type == TableType.MetaId)
+			if (tblBuilder is not null)
 			{
-				if ()
+				// (1) - object_type 
+				if (column.PhysicalName.Equals(objectTypeCol?.PhysicalName, StringComparison.OrdinalIgnoreCase))
+				{
+					(var min , var max) = EntityType.Field.GetRange();
+					var constraint = new Constraint(ConstraintType.Check, table, GetPhysicalName(ConstraintType.Check, table, column.Id), min, max);
+					constraint.Columns.Add(column);
+					result.Add(constraint);
+				}
+				// (2) - schema_id or reference_id
+				if (column.PhysicalName.Equals(schemaIdCol?.PhysicalName, StringComparison.OrdinalIgnoreCase) ||
+					column.PhysicalName.Equals(referenceIdCol?.PhysicalName, StringComparison.OrdinalIgnoreCase))
+				{
+					var constraint = new Constraint(ConstraintType.Check, table, GetPhysicalName(ConstraintType.Check, table, column.Id), 0);
+					constraint.Columns.Add(column);
+					result.Add(constraint);
+				}
 			}
 			else
 			{
