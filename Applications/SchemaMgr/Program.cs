@@ -19,7 +19,6 @@ public static class Program
 		var SchemaManager = new SchemaManager(connection);
 		SchemaManager.CreateInitialSchema("public");
 
-
 		/*
 		connection.Execute();
 		if (connection.IsConnectionAlive()==false)

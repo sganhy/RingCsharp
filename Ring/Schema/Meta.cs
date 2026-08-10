@@ -24,7 +24,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	//     4) GetFieldSize(): bit shift is off by one; Severity: Low (not a bug)
 
 	#region constants
-	private static readonly Meta DefaultMetaRelation = new(0, (byte)EntityType.Relation, 0, 0, 0L, string.Empty, null, null, true);
+	private static readonly Meta DefaultMetaRelation = GetDefaultMeta(EntityType.Relation);
 
 	// entity type constants
 	private const byte TableId = (byte)EntityType.Table;
@@ -233,6 +233,9 @@ internal readonly struct Meta : IEquatable<Meta>
 			GetDefaultTable(new Meta(0, (byte)EntityType.Table, 0, (int)toTableType, 0L,
 			meta.Name,null, null, false)), FieldType.Undefined, false, false, true, true);
 
+	internal static Meta GetDefaultMeta(EntityType  entityType) // Code size: 56 (0x38)
+		=> new (0, (byte)entityType, 0, 0, 0L,	string.Empty, null, null, false);
+
 	internal static Field GetDefaultField(in Meta meta, FieldType fieldType) // Code size: 33 (0x21)
 		=> new(meta.Id, meta.Name, meta.Description, fieldType, 0, null, SearchableType.None, true, false, false, true, true);
 
@@ -264,10 +267,12 @@ internal readonly struct Meta : IEquatable<Meta>
 	/// <summary>
 	///		The static method orchestrates the complex process of building a complete database schema object.
 	/// </summary>
-	internal static DbSchema? ToSchema(Meta[] schema, DatabaseProvider provider, SchemaType type = SchemaType.Static, SchemaLoadType loadType = SchemaLoadType.Full)
+	internal static DbSchema? ToSchema(Meta[] schema, DatabaseProvider provider, SchemaType type = SchemaType.Static, SchemaLoadType loadType = SchemaLoadType.Full, 
+		Table[]? prebuiltTables = null)
 	{
-		// Code size: 383 (0x17f)
+		// Code size: 387 (0x183)
 		// sort ASC by reference_id, name
+		// prebuiltTables: table array should be sorted by name, if not, sort it before passing to this method
 		schema.AsSpan().Sort(static (x, y) => MetaSchemaComparer(x, y));
 		var meta = GetSchema(schema);
 		if (meta.HasValue)
@@ -275,11 +280,11 @@ internal readonly struct Meta : IEquatable<Meta>
 			var metaValue = meta.Value;
 			var ddlBuilder = provider.GetDdlBuilder();
 			var mtmCount = GetMtmCount(schema);
-			var tableCount = GetTableCount(schema);
+			var tableCount = prebuiltTables is null ? GetTableCount(schema) : prebuiltTables.Length; 
 			var parameters = GetParameters(schema);
-			var lexicons = new List<Lexicon>();
-			var sequences = new List<Sequence>();
-			var tableByName = GetTables(schema, ddlBuilder, metaValue, provider, mtmCount, tableCount);
+			var lexicons = GetLexicons(schema);
+			var sequences = GetSequences(schema);
+			var tableByName = prebuiltTables ?? GetTables(schema, ddlBuilder, metaValue, provider, mtmCount, tableCount);
 			var tableById = new Table[tableByName.Length];
 			tableByName.CopyTo(tableById,0);
 			var tableSpaces = GetTableSpaces(schema, ddlBuilder);
@@ -288,10 +293,11 @@ internal readonly struct Meta : IEquatable<Meta>
 			parameters.AsSpan().Sort(static (x, y) => x.Id.CompareTo(y.Id));
 			tableById.AsSpan().Sort(static (x, y) => x.Id.CompareTo(y.Id));
 
-			// build schema to result
+			// build schema to result - 
+			// ObjectCount <-- table count + mtm count + view count
 			var result = new DbSchema(meta.Value.Id, metaValue.Name, ddlBuilder.GetPhysicalName(EntityType.Schema, metaValue.Name), 
-				metaValue.Description, parameters, lexicons.ToArray(), loadType, type, sequences.ToArray(), tableById.ToArray(), tableByName.ToArray(), 
-				tableSpaces.ToArray(), provider, tableCount + mtmCount, metaValue.Active, metaValue.IsEntityBaseline());
+				metaValue.Description, parameters, lexicons, loadType, type, sequences, tableById, tableByName, 
+				tableSpaces, provider, tableCount + mtmCount, metaValue.Active, metaValue.IsEntityBaseline());
 
 			LoadRelations(result, schema, mtmCount);
 
@@ -476,6 +482,9 @@ internal readonly struct Meta : IEquatable<Meta>
 		return result.ToArray();
 	}
 
+	private static Sequence[] GetSequences(ReadOnlySpan<Meta> schema) => Array.Empty<Sequence>();
+	private static Lexicon[] GetLexicons(ReadOnlySpan<Meta> schema) => Array.Empty<Lexicon>();
+
 	private static Parameter[] GetParameters(ReadOnlySpan<Meta> schema)
 	{
 		// Code size: 70 (0x46)
@@ -544,7 +553,7 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	private static Table[] GetTables(Meta[] schema, IDdlBuilder ddlBuilder, in Meta metaSchema, DatabaseProvider provider,	int mtmCount, int tableCount)
 	{
-		// Code size: 398 (0x18e)
+		// Code size: 384 (0x180)
 		// bug : pass 1 : Incorrect segment start index — High Severity
 		var dicoSize = tableCount * 2;
 		var dico = new Dictionary<int, (int, int)>(dicoSize); // table_id, (start index, count)
@@ -566,7 +575,7 @@ internal readonly struct Meta : IEquatable<Meta>
 		}
 
 		// pass 2: create tableArray
-		var result = new List<Table>(dico.Count);
+		var result = new Table[tableCount];
 		var tableIndex = 0;
 		foreach (ref readonly Meta meta in schemaSpan)
 		{
@@ -579,11 +588,11 @@ internal readonly struct Meta : IEquatable<Meta>
 				var tableType = meta.DataType.ToTableType();
 				var table = meta.ToTable(segment, tableType.ToPhysicalType(), ddlBuilder, physicalName, mtmCount + tableIndex)
 					?? GetDefaultTable(meta);
-				result.Add(table);
+				result[tableIndex] = table;
 				++tableIndex;
 			}
 		}
-		return result.ToArray();
+		return result;
 	}
 
 	private static int MetaSchemaComparer(in Meta meta1,in Meta meta2)

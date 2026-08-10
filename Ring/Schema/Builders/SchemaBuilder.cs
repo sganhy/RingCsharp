@@ -1,6 +1,7 @@
 ﻿using Ring.Data;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
+using Ring.Schema.Models;
 using System.Globalization;
 using DbSchema = Ring.Schema.Models.Schema;
 
@@ -13,9 +14,8 @@ internal sealed class SchemaBuilder
 
 	internal DbSchema GetMeta(DatabaseProvider provider, IConfiguration configuration, bool includeInactive=true)
 	{
-		// Code size: 484 (0x1e4)
-		var metaList = new List<Meta>();
-        const SchemaType type = SchemaType.Static;
+		// Code size: 491 (0x1eb)
+		const SchemaType type = SchemaType.Static;
         const SchemaLoadType loadType = SchemaLoadType.Full;
 		var schemaInfo = GetMetaWSchemaInfo(configuration.DefaultSchema);
 		var minConnectionPoolSize = int.Max(configuration.MinConnectionPoolSize,1);
@@ -23,29 +23,32 @@ internal sealed class SchemaBuilder
 
 		if (minConnectionPoolSize > maxConnectionPoolSize) maxConnectionPoolSize = minConnectionPoolSize;
 
-		metaList.Add(schemaInfo);
-		metaList.Add(_parameterBuilder.GetParameter(ParameterType.MinPoolSize,
-			minConnectionPoolSize.ToString(CultureInfo.InvariantCulture), 0).ToMeta());
-		metaList.Add(_parameterBuilder.GetParameter(ParameterType.MaxPoolSize,
-			maxConnectionPoolSize.ToString(CultureInfo.InvariantCulture),0).ToMeta());
-		metaList.Add(_parameterBuilder.GetParameter(ParameterType.DbConnectionString,
-			configuration.ConnectionString, 0).ToMeta());
+		// get parameters - metaArray
+		var metaArray = new Meta[] {
+			schemaInfo,
+			_parameterBuilder.GetParameter(ParameterType.MinPoolSize, minConnectionPoolSize.ToString(CultureInfo.InvariantCulture), 0).ToMeta(),
+			_parameterBuilder.GetParameter(ParameterType.MaxPoolSize, maxConnectionPoolSize.ToString(CultureInfo.InvariantCulture),0).ToMeta(),
+			_parameterBuilder.GetParameter(ParameterType.DbConnectionString, configuration.ConnectionString, 0).ToMeta(),
+			!string.IsNullOrWhiteSpace(configuration.DefaultTableStorage)? GetStorage(configuration.DefaultTableStorage, false, true) : Meta.GetDefaultMeta(EntityType.Undefined),
+			!string.IsNullOrWhiteSpace(configuration.DefaultIndexStorage)? GetStorage(configuration.DefaultIndexStorage, true, false) : Meta.GetDefaultMeta(EntityType.Undefined)
+		};
+		
 
-		metaList.AddRange(_tableBuilder.GetMeta(configuration.DefaultSchema, provider).ToMeta(0));
-		metaList.AddRange(_tableBuilder.GetMetaId(configuration.DefaultSchema, provider).ToMeta(0));
-		metaList.AddRange(_tableBuilder.GetLog(configuration.DefaultSchema, provider).ToMeta(0));
-		if (includeInactive) metaList.AddRange(_tableBuilder.GetTest(configuration.DefaultSchema, provider).ToMeta(0));
-		metaList.AddRange(_tableBuilder.GetCatalog(EntityType.Table, provider).ToMeta(0));
-		metaList.AddRange(_tableBuilder.GetCatalog(EntityType.Tablespace, provider).ToMeta(0));
-		metaList.AddRange(_tableBuilder.GetCatalog(EntityType.Schema, provider).ToMeta(0));
+		// get tables - prebuiltTables
+		var prebuiltTables = new Table[] {
+			_tableBuilder.GetMeta(configuration.DefaultSchema, provider),
+			_tableBuilder.GetMetaId(configuration.DefaultSchema, provider),
+			_tableBuilder.GetLog(configuration.DefaultSchema, provider),
+			_tableBuilder.GetTest(configuration.DefaultSchema, provider),
+			_tableBuilder.GetCatalog(EntityType.Table, provider),
+			_tableBuilder.GetCatalog(EntityType.Tablespace, provider),
+			_tableBuilder.GetCatalog(EntityType.Schema, provider)
+		};
 
-		// load tablespace info
-		if (!string.IsNullOrWhiteSpace(configuration.DefaultTableStorage))
-			metaList.Add(GetStorage(configuration.DefaultTableStorage, false, true));
-		if (!string.IsNullOrWhiteSpace(configuration.DefaultIndexStorage))
-			metaList.Add(GetStorage(configuration.DefaultIndexStorage, true, false));
+		// sort prebuiltTables by Name
+		prebuiltTables.AsSpan().Sort(static (x, y) => string.CompareOrdinal(x.Name, y.Name));
 
-		var result = Meta.ToSchema(metaList.ToArray(),provider, type, loadType) ?? Meta.GetDefaultSchema(schemaInfo, provider);
+		var result = Meta.ToSchema(metaArray, provider, type, loadType, prebuiltTables) ?? Meta.GetDefaultSchema(schemaInfo, provider);
 		// initialise cache for : DmlBuilder & DqlBuilder
 		result.DmlBuilder.Init(result);
 		result.DqlBuilder.Init(result);
