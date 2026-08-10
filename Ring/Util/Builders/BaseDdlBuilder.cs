@@ -361,7 +361,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 
 	public Constraint[] GetConstraints(Table table) 
 	{
-		// Code size: 874 (0x36a)
+		// Code size: 1012 (0x3f4) - too big  
 		var result = new List<Constraint>();
 		if (table.HasPrimaryKey()) result.Add(new(ConstraintType.PrimaryKey, table, GetPhysicalName(ConstraintType.PrimaryKey, table, -1)));
 		var fieldCount = table.Fields.Length;
@@ -369,9 +369,11 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 		var objectTypeMeta = tblBuilder?.GetObjectTypeMeta();
 		var schemaIdMeta = tblBuilder?.GetSchemaIdMeta();
 		var referenceIdMeta = tblBuilder?.GetReferenceIdMeta();
+		var IdMeta = tblBuilder?.GetIdMeta();
 		var objectTypeCol = objectTypeMeta?.ToColumn(0, GetPhysicalName(EntityType.Field, objectTypeMeta.Value.Name), 0);
 		var schemaIdCol = schemaIdMeta?.ToColumn(0, GetPhysicalName(EntityType.Field, schemaIdMeta.Value.Name), 0);
 		var referenceIdCol = referenceIdMeta?.ToColumn(0, GetPhysicalName(EntityType.Field, referenceIdMeta.Value.Name), 0);
+		var idCol = IdMeta?.ToColumn(0, GetPhysicalName(EntityType.Field, IdMeta.Value.Name), 0);
 
 		foreach (var column in table.Columns.AsSpan())
 		{
@@ -385,9 +387,10 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 					constraint.Columns.Add(column);
 					result.Add(constraint);
 				}
-				// (2) - schema_id or reference_id
+				// (2) - schema_id or reference_id or id
 				if (column.PhysicalName.Equals(schemaIdCol?.PhysicalName, StringComparison.OrdinalIgnoreCase) ||
-					column.PhysicalName.Equals(referenceIdCol?.PhysicalName, StringComparison.OrdinalIgnoreCase))
+					column.PhysicalName.Equals(referenceIdCol?.PhysicalName, StringComparison.OrdinalIgnoreCase) ||
+					column.PhysicalName.Equals(idCol?.PhysicalName, StringComparison.OrdinalIgnoreCase))
 				{
 					var constraint = new Constraint(ConstraintType.Check, table, GetPhysicalName(ConstraintType.Check, table, column.Id), 0);
 					constraint.Columns.Add(column);

@@ -1,11 +1,15 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
+using System.Runtime.CompilerServices;
 
 namespace Ring.Schema.Builders;
 
 internal sealed class TableBuilder
 {
+	// BUGS & IMPROVEMENTS:
+	//     1) GetIndex() pass 1: Where memory actually gets duplicated; replaced Meta[] lstMeta parameter; Severity: High (Solved)
+
 	private readonly string FieldId = "id";
 	private readonly string FieldSchemaId = "schema_id";
 	private readonly string FieldObjectType = "object_type";
@@ -28,25 +32,19 @@ internal sealed class TableBuilder
 	private readonly string FieldMessage = "message";
 
 	internal Table GetMeta(string schemaName, DatabaseProvider provider) {
-		// Code size: 310 (0x136)
-		var id = GetField(FieldId, FieldType.Int);
-		var schemaId = GetField(FieldSchemaId, FieldType.Int);
-		var objectType = GetField(FieldObjectType, FieldType.Byte);
-		var referenceId = GetField(FieldReferenceId, FieldType.Int);
-		// increase IL code to 374 bytes - better to copy Meta struct twice than to use ref readonly
-		// ref readonly var id = ref fieldId;
-		// ref readonly var schemaId = ref fieldSchemaId;
-		// ref readonly var objectType = ref fieldObjectType;
-		// ref readonly var referenceId = ref fieldReferenceId;
+		// Code size: 301 (0x12d)
 		var metaArr = new[] {
-			id, schemaId, objectType, referenceId,
+			GetField(FieldId, FieldType.Int),
+			GetField(FieldSchemaId, FieldType.Int), 
+			GetField(FieldObjectType, FieldType.Byte),
+			GetField(FieldReferenceId, FieldType.Int),
 			GetField(FieldDataType, FieldType.Int),
 			GetField(FieldFlags, FieldType.Long),
 			GetField(FieldName, FieldType.String,60),
 			GetField(FieldDescription, FieldType.LongString,false),
 			GetField(FieldValue, FieldType.LongString,false),
 			GetField(FieldActive, FieldType.Boolean),
-			GetIndex(true, new [] { id, schemaId, objectType, referenceId })
+			GetIndex(true, new [] { FieldId, FieldSchemaId, FieldObjectType, FieldReferenceId }) // memory actually gets duplicated with [] Meta.
 		};
 		var metaTable = GetTable((int)TableType.Meta, TableType.Meta.GetLogicalName(), TableType.Meta);
 		return GetTable(schemaName, provider, metaArr, metaTable);
@@ -54,14 +52,13 @@ internal sealed class TableBuilder
 
 	internal Table GetMetaId(string schemaName, DatabaseProvider provider) 
 	{
-		// Code size: 173 (0xad)
-		var id = GetField(FieldId, FieldType.Int);
-		var schemaId = GetField(FieldSchemaId, FieldType.Int);
-		var objectType = GetField(FieldObjectType, FieldType.Byte);
+		// Code size: 167 (0xa7)
 		var metaArr = new[] {
-			id, schemaId, objectType,
+			GetField(FieldId, FieldType.Int),
+			GetField(FieldSchemaId, FieldType.Int),
+			GetField(FieldObjectType, FieldType.Byte),
 			GetField(FieldValue, FieldType.Long),
-			GetIndex(true, new[] { id, schemaId, objectType })
+			GetIndex(true, new[] { FieldId, FieldSchemaId, FieldObjectType })
 		};
 		var metaTable = GetTable((int)TableType.MetaId, TableType.MetaId.GetLogicalName(), TableType.MetaId);
 		return GetTable(schemaName, provider, metaArr, metaTable);
@@ -69,11 +66,10 @@ internal sealed class TableBuilder
 
 	internal Table GetLog(string schemaName, DatabaseProvider provider) 
 	{
-		// Code size: 322 (0x142)
-		var entryTime = GetField(FieldEntryTime, FieldType.DateTime);
+		// Code size: 316 (0x13c)
 		var metaList = new[] {
 			GetField(FieldId, FieldType.Long),
-			entryTime,
+			GetField(FieldEntryTime, FieldType.DateTime),
 			GetField(FieldLevelId, FieldType.Short),
 			GetField(FieldSchemaId, FieldType.Int),
 			GetField(FieldThreadId, FieldType.Int,false),
@@ -83,10 +79,10 @@ internal sealed class TableBuilder
 			GetField(FieldLineNumber, FieldType.Int, 80, false, SearchableType.None),
 			GetField(FieldMessage, FieldType.String, 255, false, SearchableType.None),
 			GetField(FieldDescription, FieldType.LongString,false),
-			GetIndex(false, new[] { entryTime })
+			GetIndex(false, new[] { FieldEntryTime })
 		};
 		var metaTable = GetTable((int)TableType.Log, TableType.Log.GetLogicalName(), TableType.Log);
-		return GetTable(schemaName, provider, metaList.ToArray(), metaTable);
+		return GetTable(schemaName, provider, metaList, metaTable);
 	}
 
 	internal Table GetTest(string schemaName, DatabaseProvider provider)
@@ -114,14 +110,14 @@ internal sealed class TableBuilder
 
 	internal Table GetCatalog(EntityType entityType, DatabaseProvider provider) 
 	{
-		// Code size: 236 (0xec)
+		// Code size: 231 (0xe7)
 		var ddlBuilder = provider.GetDdlBuilder();
 		var fieldName = GetField(FieldSchemaName, FieldType.String);
 		var defaultField = Meta.GetDefaultField(fieldName,FieldType.String);
 		var tableType = entityType.ToTableType();
-		var metaList = new[] { fieldName, GetField(FieldName, FieldType.String)	};
+		var metaArr = new[] { fieldName, GetField(FieldName, FieldType.String)	};
 		var catalog = GetTable((int)tableType, tableType.GetLogicalName(), tableType);
-		var tableObject = GetTable(string.Empty, provider, metaList.ToArray(), catalog, PhysicalType.View);
+		var tableObject = GetTable(string.Empty, provider, metaArr, catalog, PhysicalType.View);
 		tableObject.Columns[0] = tableObject.Columns[0].SetPhysicalName(
 			ddlBuilder.GetPhysicalName(tableObject.GetField(FieldSchemaName) ?? defaultField, tableObject));
 		tableObject.Columns[1] = tableObject.Columns[1].SetPhysicalName(
@@ -132,6 +128,7 @@ internal sealed class TableBuilder
 	internal Meta GetObjectTypeMeta() => GetField(FieldObjectType, FieldType.Byte); // Code size: 13 (0xd)
 	internal Meta GetSchemaIdMeta() => GetField(FieldSchemaId, FieldType.Int); // Code size: 13 (0xd)
 	internal Meta GetReferenceIdMeta() => GetField(FieldReferenceId, FieldType.Int); // Code size: 13 (0xd)
+	internal Meta GetIdMeta() => GetField(FieldId, FieldType.Int); // Code size: 13 (0xd)
 
 	#region private methods 
 
@@ -171,12 +168,16 @@ internal sealed class TableBuilder
         return new(id, (byte)EntityType.Table, 0, (int)tableType, flags, name, null, null, active);
 	}
 	private static Meta GetSchema(int id, string name) => new(id, (byte)EntityType.Schema, 0, 0, 0L, name, null, null, true);
-	private static Meta GetField(string name, FieldType fieldType, bool notNull)
-		=> GetField(name, fieldType, 0, notNull, SearchableType.None);
-	private static Meta GetField(string name, FieldType fieldType, int fieldSize)
-		=> GetField(name, fieldType, fieldSize, true, SearchableType.None);
-	private static Meta GetField(string name, FieldType fieldType)
-		=> GetField(name, fieldType, 0, true,SearchableType.None);
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static Meta GetField(string name, FieldType fieldType, bool notNull) => GetField(name, fieldType, 0, notNull, SearchableType.None); // Code size: 11 (0xb)
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static Meta GetField(string name, FieldType fieldType, int fieldSize) => GetField(name, fieldType, fieldSize, true, SearchableType.None); // Code size: 11 (0xb)
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static Meta GetField(string name, FieldType fieldType) => GetField(name, fieldType, 0, true,SearchableType.None); // Code size: 11 (0xb)
+
 	private static Meta GetField(string name, FieldType fieldType, int fieldSize, bool notNull, SearchableType searchableType)
 	{
 		var flags = 0L;
@@ -188,14 +189,12 @@ internal sealed class TableBuilder
 		dataType = Meta.SetFieldType(dataType, fieldType);
 		return new (0, (byte)EntityType.Field, 0, dataType, flags, name, null, null, true);
 	}
-	private static Meta GetIndex(bool unique, Meta[] lstMeta)
+	private static Meta GetIndex(bool unique, params string[] fieldNames)
 	{
-		var fields = new List<string>();
-		for (var i = 0; i < lstMeta.Length; ++i) fields.Add(lstMeta[i].Name);
 		var flags = 0L;
 		flags = Meta.SetEntityBaseline(flags, true);
 		flags = Meta.SetIndexUnique(flags, unique);
-		return new (0, (byte)EntityType.Index, 0, 0, flags, string.Empty, null, Meta.GetColumnList(fields.ToArray()), true);
+		return new(0, (byte)EntityType.Index, 0, 0, flags, string.Empty, null, Meta.GetColumnList(fieldNames), true);
 	}
 
 	#endregion

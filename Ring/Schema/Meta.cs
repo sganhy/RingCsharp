@@ -17,7 +17,7 @@ namespace Ring.Schema;
 internal readonly struct Meta : IEquatable<Meta>
 {
 
-	// BUGS (Claude source 4.6):
+	// BUGS & IMPROVEMENTS:
 	//     1) GetTables() pass 1: Wrong segment start index → wrong field slice per table; Severity: High (not a bug)
 	//     2) SetRelationType(): Wrong bitmask → corrupts adjacent flags; Severity: Medium (Done)
 	//     3) GetSearchableType(): bit shift is off by one; Severity: Low (Done)

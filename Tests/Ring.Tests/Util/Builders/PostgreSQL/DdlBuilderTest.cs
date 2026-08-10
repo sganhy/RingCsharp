@@ -325,8 +325,8 @@ public sealed class DdlBuilderTest : BaseBuilderTest
 		var table = schema.GetTable("@meta");
 		Assert.NotNull(table);
 		var checks = schema.DdlBuilder.GetConstraints(table).Where(p => p.Type == ConstraintType.Check).ToArray();
-		Assert.Equal(3, checks.Length);
-		var check = checks[1];
+		Assert.Equal(4, checks.Length);
+		var check = checks[2];
 		//eg. ALTER TABLE public."@meta" ADD CONSTRAINT "ck_@meta_002" CHECK (object_type between 0 and 124);
 		var expectedSql = $"ALTER TABLE \"@test\".\"@meta\" ADD CONSTRAINT \"ck_@meta_002\" CHECK (object_type>={check.MinValue} AND object_type<={check.MaxValue})";
 
