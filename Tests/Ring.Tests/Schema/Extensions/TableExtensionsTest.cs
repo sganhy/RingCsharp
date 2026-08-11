@@ -378,7 +378,48 @@ public class TableExtensionsTest : BaseTest
         Assert.Null(index);
     }
 
-    [Fact]
+	[Fact]
+	internal void GetDescription_BookTable_IsbnFieldDescription()
+	{
+		// arrange 
+		var metaList = GetSchema1();
+		var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
+		var table = schema?.GetTable("book");
+        var expectedDesc = "International Standard Book Number (ISBN) - 13 digits long";    
+
+		// act 
+		Assert.NotNull(schema);
+		Assert.NotNull(table);
+        var column = table.GetColumn("isbn");
+		Assert.NotNull(column);
+		var result = TableExtensions.GetDescription(table, column.Value);
+
+        // assert
+        Assert.Equal(expectedDesc, result);
+	}
+
+	[Fact]
+	internal void GetDescription_ArmorTable_BookRelationDescription()
+	{
+		// arrange 
+		var metaList = GetSchema1();
+		var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
+		var table = schema?.GetTable("armor");
+		var expectedDesc = "armor2book";
+
+		// act 
+		Assert.NotNull(schema);
+		Assert.NotNull(table);
+		var column = table.GetColumn("armor2book");
+		Assert.NotNull(column);
+		var result = TableExtensions.GetDescription(table, column.Value);
+
+		// assert
+		Assert.Equal(expectedDesc, result);
+	}
+
+
+	[Fact]
     internal void HasPrimaryKey_LogTable_False()
     {
         // arrange 

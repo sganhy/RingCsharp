@@ -233,7 +233,7 @@ internal readonly struct Meta : IEquatable<Meta>
 			GetDefaultTable(new Meta(0, (byte)EntityType.Table, 0, (int)toTableType, 0L,
 			meta.Name,null, null, false)), FieldType.Undefined, false, false, true, true);
 
-	internal static Meta GetDefaultMeta(EntityType  entityType) // Code size: 56 (0x38)
+	internal static Meta GetDefaultMeta(EntityType  entityType) // Code size: 20 (0x14)
 		=> new (0, (byte)entityType, 0, 0, 0L,	string.Empty, null, null, false);
 
 	internal static Field GetDefaultField(in Meta meta, FieldType fieldType) // Code size: 33 (0x21)

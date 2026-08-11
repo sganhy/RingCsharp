@@ -187,6 +187,14 @@ internal static class TableExtensions
 		return type != EntityType.Undefined ? GetColumn(table, id, type) : null;
 	}
 
+	internal static string? GetDescription(this Table table,in Column column)
+	{
+		// Code size: 67 (0x43)
+		if (column.Type == EntityType.Relation) return table.Relations[column.RecordIndex-table.Fields.Length].Description;
+		else if (column.Type == EntityType.Field) return table.Fields[column.RecordIndex].Description;
+		return null;
+	}
+
 	/// <summary>
 	/// 	Get column bye id - O(log N)
 	/// </summary>

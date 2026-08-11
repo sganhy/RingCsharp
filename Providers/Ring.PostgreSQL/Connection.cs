@@ -408,7 +408,7 @@ public sealed class Connection : IConnection
 	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
 	private void SendQuery(ReadOnlySpan<char> sql, int sqlByteCount)
 	{
-		// Code size: 325 (0x145)
+		// Code size: 325 (0x145) - no allocations
 		// Exact byte count either way - see GetSqlByteCount.
 		var encoding = _encoding;
 		var stream = _stream;

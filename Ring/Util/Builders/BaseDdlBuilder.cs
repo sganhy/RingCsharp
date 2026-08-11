@@ -1,6 +1,4 @@
-﻿using Ring.Data;
-using Ring.Data.Extensions;
-using Ring.Schema.Builders;
+﻿using Ring.Schema.Builders;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
@@ -38,9 +36,11 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	protected static readonly string DdlCheck = @"CHECK ";
 	protected static readonly string DdlAdd = @"ADD ";
 	protected static readonly string DdlColumn = @"COLUMN ";
+	protected static readonly string DdlComment = @"COMMENT ";
 	protected static readonly string DdlTruncate = @"TRUNCATE ";
 	protected static readonly string DdlNotNull = @"NOT NULL";
 	protected static readonly string DdlSet = @"SET ";
+	protected static readonly string DdlIs = @"IS ";
 
 	// system table names
 	protected static readonly string TableCatalogTableName = TableType.TableCatalog.GetLogicalName();
@@ -129,6 +129,26 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 		}
 		return GetPhysicalName(EntityType.Constraint,result.ToString());
 	}
+
+	public string Comment(Table table)
+	{
+		throw new NotImplementedException();
+	}
+
+	public string Comment(Table table, in Column column)
+		=> new StringBuilder() // Code size: 128 (0x80)
+			.Append(DdlComment)
+			.Append(DdlOn)
+			.Append(DdlColumn)
+			.Append(table.PhysicalName)
+			.Append('.')
+			.Append(column.PhysicalName)
+			.Append(SqlSpace)
+			.Append(DdlIs)
+			.Append(SqlQuote)
+			.Append(table.GetDescription(column) ?? string.Empty)
+			.Append(SqlQuote)
+			.ToString();
 
 	public virtual string GetPhysicalName(EntityType entityType, string name)
 	{
@@ -510,7 +530,6 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 			return GetPhysicalName(provider, TablePrefix + name);
 		}
 	}
-		
 	#endregion
 
 }

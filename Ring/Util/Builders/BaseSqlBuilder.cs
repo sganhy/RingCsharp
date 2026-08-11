@@ -23,6 +23,7 @@ internal abstract class BaseSqlBuilder : ISqlBuilder
 	protected static readonly string SqlSelect = @"SELECT ";
 	protected static readonly string SqlFrom = @" FROM ";
 	protected static readonly string SqlWhere = @" WHERE ";
+	protected static readonly string SqlQuote = @"'";
 
 	// common operators in dml, dql and ddl
 	protected static readonly string SqlAnd = @" AND ";

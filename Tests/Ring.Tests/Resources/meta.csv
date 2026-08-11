@@ -48,7 +48,7 @@
 14,0,1,1015,3,2,speed,,,true
 15,0,1,1015,1,2,weight,,,true
 16,0,1,1015,1,2,cost,,,true
-1,0,2,1015,1021,11534360,armor2book,,book2armor,true
+1,0,2,1015,1021,11534360,armor2book,armor2book,book2armor,true
 1,0,3,1015,0,8736,name,,name;armor2book,true
 1021,0,0,1,1,8736,book,Role playing description,,true
 1,0,1,1021,1,2,id,,,true
