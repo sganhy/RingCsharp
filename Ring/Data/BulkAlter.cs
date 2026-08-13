@@ -28,12 +28,22 @@ internal sealed class BulkAlter : IEquatable<BulkAlter>
 		_tablespaces = GetTableSpaceDictionary(schema);
 	}
 
-	internal void CreateTable(Table table)
+	internal void CreateTable(Table table, bool createComment=true)
 	{
-		// Code size: 118 (0x76)
+		// Code size: 223 (0xdf)
 		AppendDdlCommand(AlterQueryType.CreateTable, table);
 		// create constraints 
 		foreach(var constraint in _schema.DdlBuilder.GetConstraints(table).AsSpan()) AppendDdlCommand(AlterQueryType.CreateTable, constraint);
+		// create comments
+		if (createComment)
+		{
+			if (table.Description is not null) AppendDdlCommand(AlterQueryType.CreateTableComment, table);
+			foreach (var column in table.Columns.AsSpan())
+			{
+				var description = table.GetDescription(column);
+				if (description is not null) AppendDdlCommand(AlterQueryType.CreateColumnComment, table, column);
+			}
+		}
 		// create indexes
 		foreach (var index in table.Indexes) AppendDdlCommand(AlterQueryType.CreateIndex, table, index);
 	}
@@ -146,6 +156,9 @@ internal sealed class BulkAlter : IEquatable<BulkAlter>
 			
 			case AlterQueryType.CreateTable:
 				_queries.Add(new AlterQuery(table.Id, table, type, null, null, null, GetTableSpace(table, EntityType.Table)));
+				break;
+			case AlterQueryType.CreateTableComment:
+				_queries.Add(new AlterQuery(table.Id, table, type, null, null, null, null));
 				break;
 		}
 	}

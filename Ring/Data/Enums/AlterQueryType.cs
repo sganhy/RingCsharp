@@ -5,10 +5,12 @@ internal enum AlterQueryType : byte
 {
     CreateSchema = 1,
     CreateTable = 10,
-	AlterTableAddColumn = 12,
-	CreateNotNull = 13,
-	CreateCheckConstraint = 14,
-	CreatePrimaryKey = 15,
+	CreateTableComment = 11,
+	CreateColumnComment = 12,
+	AlterTableAddColumn = 13,
+	CreateNotNull = 14,
+	CreateCheckConstraint = 15,
+	CreatePrimaryKey = 16,
 	CreateIndex = 103,
     Undefined = byte.MaxValue
 }

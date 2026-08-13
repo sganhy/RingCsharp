@@ -59,7 +59,14 @@ internal enum ResourceType : short
 	DdlTableCreated = 296,
 
 	/// <summary>
+	/// Meta schema tables description
+	/// </summary>
+	MetaTableDescription = 1013,
+	MetaIdTableDescription = 1014,
+
+	/// <summary>
 	/// Reserved for unit tests
 	/// </summary>
 	UnitTest = 350
+
 }

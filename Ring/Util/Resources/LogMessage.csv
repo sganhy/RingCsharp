@@ -20,3 +20,5 @@
 294,Operation {0}.{1} #{2} is not supported.
 295,Failed to {0} '{1}'.
 296,{0} | time={1}ms.
+1013,"Central catalog that describes every structural element of the database."
+1014,"Provides controlled, scoped id generation."

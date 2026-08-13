@@ -131,12 +131,20 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	}
 
 	public string Comment(Table table)
-	{
-		throw new NotImplementedException();
-	}
+		=> new StringBuilder() // Code size: 114 (0x72)
+			.Append(DdlComment)
+			.Append(DdlOn)
+			.Append(DdlTable)
+			.Append(table.PhysicalName)
+			.Append(SqlSpace)
+			.Append(DdlIs)
+			.Append(SqlQuote)
+			.Append(EscapeString(table.Description) ?? string.Empty)
+			.Append(SqlQuote)
+			.ToString();
 
 	public string Comment(Table table, in Column column)
-		=> new StringBuilder() // Code size: 128 (0x80)
+		=> new StringBuilder() // Code size: 133 (0x85)
 			.Append(DdlComment)
 			.Append(DdlOn)
 			.Append(DdlColumn)
@@ -146,7 +154,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 			.Append(SqlSpace)
 			.Append(DdlIs)
 			.Append(SqlQuote)
-			.Append(table.GetDescription(column) ?? string.Empty)
+			.Append(EscapeString(table.GetDescription(column)) ?? string.Empty)
 			.Append(SqlQuote)
 			.ToString();
 

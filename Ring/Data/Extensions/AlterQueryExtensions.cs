@@ -9,17 +9,16 @@ internal static class AlterQueryExtensions
 {
 	internal static string? ToSql(this AlterQuery query, IDdlBuilder builder)
 	{
-		// Code size: 91 (0x5b)
+		// Code size: 173 (0xad)
 		switch (query.Type)
 		{
-			case AlterQueryType.CreateTable: 
-				return builder.Create(query.Table, query.TableSpace);
+			case AlterQueryType.CreateTable: return builder.Create(query.Table, query.TableSpace);
+			case AlterQueryType.CreateTableComment: return builder.Comment(query.Table);
+			case AlterQueryType.CreateColumnComment: return query.Column.HasValue? builder.Comment(query.Table, query.Column.Value): null;
 			case AlterQueryType.CreateNotNull:
 			case AlterQueryType.CreatePrimaryKey:
-			case AlterQueryType.CreateCheckConstraint:
-				return builder.Create(query.Constraint!, query.TableSpace);
-			case AlterQueryType.CreateIndex: 
-				return builder.Create(query.Index!, query.Table, query.TableSpace);
+			case AlterQueryType.CreateCheckConstraint: return builder.Create(query.Constraint!, query.TableSpace);
+			case AlterQueryType.CreateIndex: return builder.Create(query.Index!, query.Table, query.TableSpace);
 		}
 		return null;
 	}

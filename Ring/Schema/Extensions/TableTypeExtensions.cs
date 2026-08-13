@@ -1,5 +1,7 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Util;
+using Ring.Util.Enums;
+using Ring.Util.Helpers;
 
 namespace Ring.Schema.Extensions;
 
@@ -27,6 +29,17 @@ internal static class TableTypeExtensions
 		}
         return string.Empty;
     }
+
+	internal static string? GetDescription(this TableType tableType)
+	{
+		// Code size: 188 (0xbc)
+		switch (tableType)
+		{
+			case TableType.MetaId: return ResourceHelper.GetMessage(ResourceType.MetaIdTableDescription);
+			case TableType.Meta: return ResourceHelper.GetMessage(ResourceType.MetaTableDescription);
+		}
+		return null;
+	}
 
 	internal static PhysicalType ToPhysicalType(this TableType tableType) =>
 		tableType.IsCatalog() ? PhysicalType.View : PhysicalType.Table;

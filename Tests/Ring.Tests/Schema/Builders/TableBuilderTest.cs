@@ -26,6 +26,7 @@ public class TableBuilderTest
 		Assert.Equal("@meta", metaTableMySql.Name);
 		Assert.Equal("test1.\"@meta\"", metaTablePostGre.PhysicalName);
 		Assert.Equal("test1.`@meta`", metaTableMySql.PhysicalName);
+		Assert.Equal("Central catalog that describes every structural element of the database.", metaTableMySql.Description);
 		Assert.Equal(10, metaTablePostGre.Fields.Length);
         Assert.Equal(TableType.Meta, metaTablePostGre.Type);
         Assert.True(metaTablePostGre.Baseline);
@@ -89,7 +90,8 @@ public class TableBuilderTest
         Assert.True(metaIdTablePostGre.UsePreparedStatement);
         Assert.False(metaIdTablePostGre.AllowAttributeExtension);
         Assert.Equal("test2.\"@meta_id\"", metaIdTablePostGre.PhysicalName);
-        Assert.Equal(TableType.MetaId, metaIdTablePostGre.Type);
+		Assert.Equal("Provides controlled, scoped id generation.", metaIdTableMySql.Description);
+		Assert.Equal(TableType.MetaId, metaIdTablePostGre.Type);
         Assert.Equal(4, metaIdTablePostGre.Fields.Length);
         Assert.NotNull(metaIdTablePostGre.GetField("id"));
         Assert.NotNull(metaIdTablePostGre.GetField("schema_id"));
@@ -107,9 +109,11 @@ public class TableBuilderTest
 		Assert.Equal("id", metaIdTableMySql?.Indexes[0].Columns[0].PhysicalName);
 		Assert.Equal("schema_id", metaIdTableMySql?.Indexes[0].Columns[1].PhysicalName);
 		Assert.Equal("object_type", metaIdTableMySql?.Indexes[0].Columns[2].PhysicalName);
+		
+
 	}
 
-    [Fact]
+	[Fact]
     internal void GetCatalog_PostgreSqlTable_TableCatalog()
     {
         // arrange 

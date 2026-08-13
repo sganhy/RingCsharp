@@ -29,7 +29,45 @@ public sealed class DdlBuilderTest : BaseBuilderTest
 		Assert.Equal(expectedSql, dql);
     }
 
-    [Fact]
+	[Fact]
+	public void Comment_BookTableDescription_DdlQuery()
+	{
+		// arrange 
+		var metaList = GetSchema1();
+		var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
+		Assert.NotNull(schema);
+		var table = schema.GetTable("book");
+		Assert.NotNull(table);
+		var expectedSql = $"COMMENT ON TABLE rpg_sheet.t_book IS '{table.Description}'";
+
+		// act 
+		var dql = _sut.Comment(table);
+
+		// assert
+		Assert.Equal(expectedSql, dql);
+	}
+
+	[Fact]
+	public void Comment_RuleTableVersionColumn_DdlQuery()
+	{
+		// arrange 
+		var metaList = GetSchema1();
+		var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
+		Assert.NotNull(schema);
+		var table = schema.GetTable("rule");
+		Assert.NotNull(table);
+		var column = table.GetColumn("version");
+		Assert.NotNull(column);
+		var expectedSql = $"COMMENT ON COLUMN rpg_sheet.t_rule.version IS '{table.GetDescription(column.Value)}'";
+
+		// act 
+		var dql = _sut.Comment(table, column.Value);
+
+		// assert
+		Assert.Equal(expectedSql, dql);
+	}
+
+	[Fact]
     public void Create_Table1_DdlQuery()
     {
         // arrange 

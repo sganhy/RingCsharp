@@ -23,16 +23,20 @@ internal abstract class BaseSqlBuilder : ISqlBuilder
 	protected static readonly string SqlSelect = @"SELECT ";
 	protected static readonly string SqlFrom = @" FROM ";
 	protected static readonly string SqlWhere = @" WHERE ";
-	protected static readonly string SqlQuote = @"'";
+	protected static readonly char SqlQuote = '\'';
 
 	// common operators in dml, dql and ddl
 	protected static readonly string SqlAnd = @" AND ";
-
 
 	public abstract DatabaseProvider Provider { get; }
 
 	protected BaseSqlBuilder() {}
 
+	protected static string EscapeString(string? description) // Code size: 66 (0x42)
+		=> description is null || !description.Contains(SqlQuote)
+			? description
+			: description.Replace(SqlQuote.ToString(), 
+			SqlQuote.ToString() + SqlQuote);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 #pragma warning disable CA1822 // Mark members as static
