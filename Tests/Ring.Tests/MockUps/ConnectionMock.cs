@@ -56,8 +56,8 @@ internal class ConnectionMock : IConnection
         throw new NotImplementedException();
     }
 
-    public ValueTask ExecuteAsync(in AlterQuery query, ReadOnlySpan<char> sql, int sqlByteCount, CancellationToken cancellationToken = default)
-    {
+	public ValueTask<OperationalError?> ExecuteAsync(AlterQuery query, string sql, int sqlByteCount, CancellationToken cancellationToken = default)
+	{
         throw new NotImplementedException();
     }
 

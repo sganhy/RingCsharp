@@ -1,46 +1,40 @@
-﻿using Ring.Schema;
-using Ring.Schema.Models;
+﻿using Ring.Schema.Models;
 using Ring.Data.Enums;
-using Ring.Util.Builders;
+using Ring.Data.Extensions;
 
 namespace Ring.Data.Models;
 
-#pragma warning disable CA1815 // Override equals and operator equals on value types
-public struct RetrieveQuery
+public struct RetrieveQuery : IEquatable<RetrieveQuery>
 {
-#pragma warning restore CA1815
-
     // 56 bytes
     internal readonly Table Table;
     internal readonly RetrieveQueryType Type;
-    internal readonly IDqlBuilder Builder;
     internal readonly int ParentQueryId;
-    internal readonly List<RetrieveFilter> Filters;
-    internal RetrieveSort? Sorts;
+    internal readonly SpanList<RetrieveFilter> Filters;
+    internal readonly SpanList<RetrieveSort> Sorts;
     internal PageInfo? Page;
 
     /// <summary>
     /// Ctor
     /// </summary>
-    public RetrieveQuery()
-    {
-        Table = Meta.GetDefaultTable(new Meta());
-        Type = RetrieveQueryType.Undefined;
-        Builder = new Util.Builders.PostgreSQL.DqlBuilder();
-        ParentQueryId = 0;
-        Sorts = null;
-        Filters = new List<RetrieveFilter>();
-        Page = null;
-    }
-    internal RetrieveQuery(Table table, RetrieveQueryType type, IDqlBuilder builder, int parentQueryId)
+    internal RetrieveQuery(Table table, RetrieveQueryType type, int parentQueryId)
     {
         Table = table;
         Type = type;
-        Builder = builder;
         ParentQueryId = parentQueryId;
-        Sorts = null;
-        Filters = new List<RetrieveFilter>();
+        Sorts = new SpanList<RetrieveSort>();
+		Filters = new SpanList<RetrieveFilter>();
         Page = null;
     }
+
+	public static bool operator ==(RetrieveQuery left, RetrieveQuery right) => left.Equals(right);
+	public static bool operator !=(RetrieveQuery left, RetrieveQuery right) => !left.Equals(right);
+	public override readonly bool Equals(object? obj) => obj is RetrieveQuery field && Equals(field);
+	public readonly bool Equals(RetrieveQuery other) => this.IsEquivalentTo(other);
+	public override readonly int GetHashCode() => this.Hash();
+
+#if DEBUG
+	public override string ToString() => $"{Type} - {Table}";
+#endif
 
 }

@@ -34,7 +34,15 @@ internal static class NetworkStreamExtensions
 		Console.WriteLine($"{title}: {buffer.Length} bytes -> {sb}");
 	}
 
-	internal static async ValueTask<(byte Code, byte[] Body)> ReadMessageAsync(this NetworkStream stream, CancellationToken cancellationToken = default)
+	/// <summary>
+	///     Async counterpart to <see cref="ReadMessage"/>. Reads one length-
+	///     prefixed backend message: 1-byte type code + Int32 length (self-
+	///     inclusive) + body. When <paramref name="errorOnly"/> is true and
+	///     the message isn't an ErrorResponse, the body is drained without
+	///     allocating a buffer sized to it - and without the hex-dump log,
+	///     since there's no body to show.
+	/// </summary>
+	internal static async ValueTask<(byte Code, byte[] Body)> ReadMessageAsync(this NetworkStream stream, bool errorOnly, CancellationToken cancellationToken = default)
 	{
 		var header = new byte[5];
 		await stream.ReadExactlyAsync(header.AsMemory(), cancellationToken).ConfigureAwait(false);
@@ -42,6 +50,12 @@ internal static class NetworkStreamExtensions
 		var code = header[0];
 		var bodyLength = BinaryPrimitives.ReadInt32BigEndian(header.AsSpan(1)) - 4;
 		if (bodyLength < 0) ThrowInvalidMessageLength();
+
+		if (errorOnly && code != (byte)BackendMessageCode.ErrorResponse)
+		{
+			await stream.SkipBodyAsync(bodyLength, cancellationToken).ConfigureAwait(false);
+			return (code, Array.Empty<byte>());
+		}
 
 		var body = bodyLength > 0 ? new byte[bodyLength] : Array.Empty<byte>();
 		if (bodyLength > 0)	await stream.ReadExactlyAsync(body.AsMemory(), cancellationToken).ConfigureAwait(false);
@@ -55,34 +69,51 @@ internal static class NetworkStreamExtensions
 		return (code, body);
 	}
 
-	internal static async ValueTask<(int? BackendPid, int? BackendSecret)> WaitUntilReadyAsync(this NetworkStream stream, CancellationToken cancellationToken = default)
+	/// <summary>
+	///     Synchronously reads one length-prefixed backend message:
+	///     1-byte type code + Int32 length (self-inclusive) + body. When
+	///     <paramref name="errorOnly"/> is true and the message isn't an
+	///     ErrorResponse, the body is skipped without allocating a buffer
+	///     sized to it. Async counterpart: <see cref="ReadMessageAsync"/>.
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal static (byte Code, byte[] Body) ReadMessage(this NetworkStream stream, bool errorOnly)
 	{
-		int? pid = null;
-		int? secret = null;
-		while (true)
+		// Code size: 187 (0xbb)
+		const int headerSize = 5;
+		Span<byte> header = stackalloc byte[headerSize];
+		var read = 0;
+
+		while (read < headerSize)
 		{
-			var (code, body) = await stream.ReadMessageAsync(cancellationToken).ConfigureAwait(false);
-			switch ((BackendMessageCode)code)
-			{
-				case BackendMessageCode.BackendKeyData:
-					if (body.Length >= 8)
-					{
-						pid = BinaryPrimitives.ReadInt32BigEndian(body.AsSpan(0, 4));
-						secret = BinaryPrimitives.ReadInt32BigEndian(body.AsSpan(4, 4));
-					}
-					continue;
-				case BackendMessageCode.ParameterStatus:
-				case BackendMessageCode.NoticeResponse:
-					continue;
-				case BackendMessageCode.ReadyForQuery:
-					return (pid, secret);
-				case BackendMessageCode.ErrorResponse:
-					//throw ParseErrorResponse(body);
-					break;
-				default:
-					break;
-			}
+			var n = stream.Read(header[read..]);
+			if (n == 0) ThrowConnectionWasClosedByServer();
+			read += n;
 		}
+
+		var code = header[0];
+		var bodyLength = BinaryPrimitives.ReadInt32BigEndian(header[1..]) - 4;
+		if (bodyLength < 0) ThrowInvalidMessageLength();
+
+		if (errorOnly && code != (byte)BackendMessageCode.ErrorResponse)
+		{
+			SkipBody(stream, bodyLength);
+			return (code, Array.Empty<byte>());
+		}
+
+		if (bodyLength == 0) return (code, Array.Empty<byte>());
+
+		var body = new byte[bodyLength]; // heap allocation, only for messages we actually decode
+		var bodySpan = new Span<byte>(body);
+
+		read = 0;
+		while (read < bodyLength)
+		{
+			var n = stream.Read(bodySpan[read..]);
+			if (n == 0) ThrowConnectionWasClosedByServer();
+			read += n;
+		}
+		return (code, body);
 	}
 
 	internal static async ValueTask SendSASLResponseAsync(this NetworkStream stream, byte[] data, CancellationToken cancellationToken = default)
@@ -208,50 +239,13 @@ internal static class NetworkStreamExtensions
 			: ReadRetrieveRecordsPooled(stream, ref transactionStatus, encoding, columnCount);
 				
 	/// <summary>
-	///     Synchronously reads one length-prefixed backend message:
-	///     1-byte type code + Int32 length (self-inclusive) + body.
+	///     Reads backend messages until ReadyForQuery, updating
+	///     <see cref="_transactionStatus"/> from its status byte
+	///     ('I'/'T'/'E'). Used for commands where the row payload (if any)
+	///     is irrelevant - BEGIN/COMMIT/ROLLBACK always reply with just
+	///     CommandComplete, but this also tolerates other message types
+	///     defensively.
 	/// </summary>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	internal static (byte code, byte[] message) ReadMessage(this NetworkStream stream, bool errorOnly)
-	{
-		// Code size: 187 (0xbb)
-		const int headerSize = 5;
-		Span<byte> header = stackalloc byte[headerSize];
-		var read = 0;
-
-		while (read < headerSize)
-		{
-			var n = stream.Read(header[read..]);
-			if (n == 0) ThrowConnectionWasClosedByServer();
-			read += n;
-		}
-
-		var code = header[0];
-		var length = BinaryPrimitives.ReadInt32BigEndian(header[1..]);
-		var bodyLength = length - 4;
-
-		if (errorOnly && code != (byte)BackendMessageCode.ErrorResponse)
-		{
-			SkipBody(stream, bodyLength);
-			return (code, Array.Empty<byte>());
-		}
-
-		if (bodyLength <= 0)
-			return (code, Array.Empty<byte>());
-
-		var body = new byte[bodyLength]; // heap allocation, only for messages we actually decode
-		var bodySpan = new Span<byte>(body);
-
-		read = 0;
-		while (read < bodyLength)
-		{
-			var n = stream.Read(bodySpan[read..]);
-			if (n == 0) ThrowConnectionWasClosedByServer();
-			read += n;
-		}
-		return (code, body);
-	}
-
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static OperationalError? DrainToReadyForQuery(this NetworkStream stream, ref byte transactionStatus)
 	{
@@ -306,18 +300,16 @@ internal static class NetworkStreamExtensions
 		OperationalError? operationalError = null;
 		while (true)
 		{
-			var (code, body) = await stream.ReadMessageAsync(cancellationToken).ConfigureAwait(false);
+			var (code, body) = await stream.ReadMessageAsync(true, cancellationToken).ConfigureAwait(false);
 
 			if (code == (byte)BackendMessageCode.ReadyForQuery) return (operationalError, Array.Empty<byte>());
 			if (code == (byte)BackendMessageCode.ErrorResponse)
 			{
 				byte drainCode;
 				byte[] drainBody;
-
 				operationalError = body.ParseErrorFields();
 
-				do
-					(drainCode, drainBody) = await stream.ReadMessageAsync(cancellationToken).ConfigureAwait(false);
+				do (drainCode, drainBody) = await stream.ReadMessageAsync(false, cancellationToken).ConfigureAwait(false);
 				while (drainCode != (byte)BackendMessageCode.ReadyForQuery);
 
 				return (operationalError, drainBody);
@@ -342,7 +334,7 @@ internal static class NetworkStreamExtensions
 		// type + length + encoding.GetByteCount(sql) + null terminator
 		var messageLength = 1 + 4 + sqlByteCount + 1;
 
-		if (messageLength <= 5)
+		if (messageLength <= 128)
 		{
 			// case 1: very short query, small enough to fit on the stack.
 			Span<byte> buffer = stackalloc byte[messageLength];
@@ -371,6 +363,36 @@ internal static class NetworkStreamExtensions
 			stream.Write(buffer);
 		}
 		stream.Flush();
+	}
+
+	internal static async ValueTask<(int? BackendPid, int? BackendSecret)> WaitUntilReadyAsync(this NetworkStream stream, CancellationToken cancellationToken = default)
+	{
+		int? pid = null;
+		int? secret = null;
+		while (true)
+		{
+			var (code, body) = await stream.ReadMessageAsync(false, cancellationToken).ConfigureAwait(false);
+			switch ((BackendMessageCode)code)
+			{
+				case BackendMessageCode.BackendKeyData:
+					if (body.Length >= 8)
+					{
+						pid = BinaryPrimitives.ReadInt32BigEndian(body.AsSpan(0, 4));
+						secret = BinaryPrimitives.ReadInt32BigEndian(body.AsSpan(4, 4));
+					}
+					continue;
+				case BackendMessageCode.ParameterStatus:
+				case BackendMessageCode.NoticeResponse:
+					continue;
+				case BackendMessageCode.ReadyForQuery:
+					return (pid, secret);
+				case BackendMessageCode.ErrorResponse:
+					//throw ParseErrorResponse(body);
+					break;
+				default:
+					break;
+			}
+		}
 	}
 
 	#region private methods
@@ -558,6 +580,30 @@ internal static class NetworkStreamExtensions
 		Array.Copy(buffer, grown, usedCount);
 		pool.Return(buffer, clearArray: true); // clearArray: true to avoid leaking references to the pooled array!
 		buffer = grown;
+	}
+
+	// Async counterpart to SkipBody. Reads bodyLength bytes from the socket
+	// without allocating a buffer sized to the message - stackalloc can't
+	// cross an await, so this rents a small scratch buffer instead.
+	private static async ValueTask SkipBodyAsync(this NetworkStream stream, int bodyLength, CancellationToken cancellationToken)
+	{
+		if (bodyLength <= 0) return;
+		var chunkSize = Math.Min(bodyLength, 128);
+		var scratch = ArrayPool<byte>.Shared.Rent(chunkSize);
+		try
+		{
+			var remaining = bodyLength;
+			while (remaining > 0)
+			{
+				var n = await stream.ReadAsync(scratch.AsMemory(0, Math.Min(remaining, chunkSize)), cancellationToken).ConfigureAwait(false);
+				if (n == 0) ThrowConnectionWasClosedByServer();
+				remaining -= n;
+			}
+		}
+		finally
+		{
+			ArrayPool<byte>.Shared.Return(scratch);
+		}
 	}
 
 	/// <summary>

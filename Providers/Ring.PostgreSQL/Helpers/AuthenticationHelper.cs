@@ -24,7 +24,7 @@ internal static class AuthenticationHelper
 	{
 		while (true)
 		{
-			var (code, body) = await stream.ReadMessageAsync(cancellationToken).ConfigureAwait(false);
+			var (code, body) = await stream.ReadMessageAsync(false, cancellationToken).ConfigureAwait(false);
 
 			switch ((BackendMessageCode)code)
 			{
@@ -77,7 +77,7 @@ internal static class AuthenticationHelper
 
 		await stream.SendSASLInitialResponseAsync("SCRAM-SHA-256", Encoding.UTF8.GetBytes(gs2Header + clientFirstBare), cancellationToken).ConfigureAwait(false);
 
-		var (code, body) = await stream.ReadMessageAsync(cancellationToken).ConfigureAwait(false);
+		var (code, body) = await stream.ReadMessageAsync(false, cancellationToken).ConfigureAwait(false);
 		ThrowIfError(code, body);
 		if (code != (byte)BackendMessageCode.AuthenticationRequest || ReadInt32BE(body, 0) != AuthSASLContinue)
 			throw UnexpectedMessage(code, "AuthenticationSASLContinue");
@@ -98,7 +98,7 @@ internal static class AuthenticationHelper
 		var clientFinalMessage = $"{clientFinalNoProof},p={Convert.ToBase64String(clientProof)}";
 		await stream.SendSASLResponseAsync(Encoding.UTF8.GetBytes(clientFinalMessage), cancellationToken).ConfigureAwait(false);
 
-		(code, body) = await stream.ReadMessageAsync(cancellationToken).ConfigureAwait(false);
+		(code, body) = await stream.ReadMessageAsync(false, cancellationToken).ConfigureAwait(false);
 		ThrowIfError(code, body);
 		if (code != (byte)BackendMessageCode.AuthenticationRequest || ReadInt32BE(body, 0) != AuthSASLFinal)
 			throw UnexpectedMessage(code, "AuthenticationSASLFinal");

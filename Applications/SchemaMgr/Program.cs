@@ -1,4 +1,5 @@
-﻿using Ring.Schema;
+﻿using Ring.Data;
+using Ring.Schema;
 
 namespace SchemaMgr;
 
@@ -17,7 +18,12 @@ public static class Program
 		var connection = connection2;
 		connection.Open();
 		var SchemaManager = new SchemaManager(connection);
-		SchemaManager.CreateInitialSchema("public");
+
+		BulkRetrieve query = new BulkRetrieve();
+
+
+		//SchemaManager.CreateInitialSchema("public");
+		var lst =  SchemaManager.SelecMeta("public");
 
 		/*
 		connection.Execute();
@@ -29,7 +35,7 @@ public static class Program
 		connection.Close();
 
 		connection.Open(); // reopen test 
-		//connection.Execute(new Ring.PostgreSQL.RetrieveQuery("SELECT * FROM pg_catalog.pg_tables;"));
+		connection.Execute();
 		connection.Close();
 
 		/*

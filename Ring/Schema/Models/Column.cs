@@ -27,9 +27,9 @@ internal readonly struct Column : IEquatable<Column>
 
 	public static bool operator ==(in Column left, in Column right) => left.Equals(right);
 	public static bool operator !=(in Column left,in Column right) => !left.Equals(right);
-	public override bool Equals(object? obj) => obj is Column column && Equals(column);
-	public bool Equals(Column other) => this.IsEquivalentTo(other);
-	public override int GetHashCode() => this.Hash();
+	public override readonly bool Equals(object? obj) => obj is Column column && Equals(column);
+	public readonly bool Equals(Column other) => this.IsEquivalentTo(other);
+	public override readonly int GetHashCode() => this.Hash();
 
 #if DEBUG
 	public override string ToString() => $"{Id} - {PhysicalName}";

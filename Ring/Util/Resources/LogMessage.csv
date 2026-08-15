@@ -1,14 +1,28 @@
 19,File not found,File '{0}' not found.
 70,Column name '{0}' does not exist for object type '{1}'.
 71,Object type '{0}' does not exist.
-99,Relation name '{0}' has a wrong RelationType.
-100,Relation name '{0}' does not exist for object type '{1}'.
-101,Field name '{0}' does not exist for object type '{1}'.
-102,This Record object has an unknown RecordType.  The RecordType |||property must be set before performing this operation.
-103,Input string was not in a correct format.
-104,Value was either too high or too low for an {0}.
-105,'{0}' was not recognized as a valid Boolean.
-106,Cannot implicitly convert type '{0}' to '{1}'.
+80,This BulkRetrieve does not have a level #{0} to retrieve results for.
+81,An invalid page size was detected (page size should be greater than 0).
+82,An invalid page number was detected (page size should be greater than 1).
+83,The value '{0}' is not a valid number.
+84,Date/time entered is not valid.
+85,An invalid list was detected (at {0}).
+86,ThisIndex {0} already exist.
+87,An invalid list type was detected (at {0}).
+88,No conversion proc for 'unknown data type' (from 'collection header' to 'long integer').	
+89,The list of criteria can't be empty.
+90,The parent index '{0}' for the traversal map number '{1}' is invalid.
+91,Circular traversal map for traversal map number '{0}' is invalid.
+92,Schema name {0} is not valid.
+93,"Object type '{0}' is not valid."
+119,Relation name '{0}' has a wrong RelationType.
+120,Relation name '{0}' does not exist for object type '{1}'.
+121,Field name '{0}' does not exist for object type '{1}'.
+122,This Record object has an unknown RecordType.  The RecordType |||property must be set before performing this operation.
+123,Input string was not in a correct format.
+124,Value was either too high or too low for an {0}.
+125,'{0}' was not recognized as a valid Boolean.
+126,Cannot implicitly convert type '{0}' to '{1}'.
 201,"Year, Month, and Day parameters describe an un-representable DateTime."
 202,The DateTime represented by the string '{0}' is not supported in calendar 'System.Globalization.GregorianCalendar'.
 203,The input is not a valid Base-64 string.

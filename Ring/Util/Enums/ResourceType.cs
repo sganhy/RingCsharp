@@ -23,17 +23,32 @@ internal enum ResourceType : short
 	BulkAlterInvalidTableName = 71,
 	BulkAlterUnsuportedAlterQueryType = 72,
 
+	BulkRetrieveInvalidIndex = 80,
+	BulkRetrieveInvalidPageSize = 81,
+	BulkRetrieveInvalidPageNumber = 82,
+	BulkRetrieveInvalidNumber = 83,
+	BulkRetrieveInvalidDate = 84,
+	BulkRetrieveInvalidList = 85,
+	BulkRetrieveIndexAlreadyExist = 86,
+	BulkRetrieveInvalidListType = 87,
+	BulkRetrieveInvalidOperation = 88,
+	BulkRetrieveCriteriaListEmpty = 89,
+	BulkRetrieveParentEntryIndex = 90,
+	BulkRetrieveTraverseFromRoot = 91,
+	BulkRetrieveInvalidSchemaName = 92,
+	BulkRetrieveInvalidObject = 93,
+
 	/// <summary>
 	/// Record ressources
 	/// </summary>
-	RecordWrongRelationType = 99,
-	RecordUnkownRelationName = 100,
-	RecordUnkownFieldName = 101,
-	RecordUnkownRecordType = 102,
-	RecordWrongStringFormat = 103,
-	RecordValueTooLarge = 104,
-	RecordWrongBooleanValue = 105,
-	RecordCannotConvert = 106,
+	RecordWrongRelationType = 119,
+	RecordUnkownRelationName = 120,
+	RecordUnkownFieldName = 121,
+	RecordUnkownRecordType = 122,
+	RecordWrongStringFormat = 123,
+	RecordValueTooLarge = 124,
+	RecordWrongBooleanValue = 125,
+	RecordCannotConvert = 126,
 
 	/// <summary>
 	/// Miscellaneous

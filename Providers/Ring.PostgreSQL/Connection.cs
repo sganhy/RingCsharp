@@ -18,6 +18,10 @@ public sealed class Connection : IConnection
 	private static readonly NetworkStream ClosedStream = NetworkStreamExtensions.CreateClosedStream(null);
 	private static readonly DdlBuilder _ddlBuilder = new();
 
+	// Terminate message ('X' + Int32 self-inclusive length=4, no payload) is
+	// wire-protocol-constant - computed once instead of allocated on every Close.
+	private static readonly byte[] TerminateMessage = { (byte)'X', 0, 0, 0, 4 };
+
 	// Transaction status as last reported by the server's ReadyForQuery
 	// message: 'I' = idle (no transaction), 'T' = in transaction block,
 	// 'E' = in a failed transaction block. Starts 'I' since a freshly
@@ -62,8 +66,8 @@ public sealed class Connection : IConnection
 	public ConnectionState State => _state;
 
 	// build ConnectionParameters from connection string
-	public Connection(string connectionString) : this(connectionString.ToConnectionParameters()) {}
-	
+	public Connection(string connectionString) : this(connectionString.ToConnectionParameters()) { }
+
 	internal Connection(ConnectionParameters parameters)
 	{
 		_parameters = parameters;
@@ -87,12 +91,13 @@ public sealed class Connection : IConnection
 
 	public void BeginTransaction()
 	{
-		if (_state != ConnectionState.Open)	throw new InvalidOperationException("The connection is not open.");
-		if (_transactionStatus != (byte)TransactionStatus.Idle)	throw new InvalidOperationException("A transaction is already in progress.");
+		if (_state != ConnectionState.Open) throw new InvalidOperationException("The connection is not open.");
+		if (_transactionStatus != (byte)TransactionStatus.Idle) throw new InvalidOperationException("A transaction is already in progress.");
 
 		try
 		{
-			SendSimpleCommand("BEGIN");
+			_stream.SendQuery("BEGIN".AsSpan(), _encoding.GetByteCount("BEGIN"), _encoding, _sqlSendBuffer);
+			_stream.DrainToReadyForQuery(ref _transactionStatus);
 		}
 		catch (PgOperationalError)
 		{
@@ -123,13 +128,11 @@ public sealed class Connection : IConnection
 
 	public void Close()
 	{
-		// If not open, nothing to do
+		// If not open, nothing to do beyond releasing any lingering resources
 		if (_state != ConnectionState.Open && _state != ConnectionState.Connecting)
 		{
 			_state = ConnectionState.Closed;
-			_stream.Dispose();
-			_stream = ClosedStream;
-			_socket = null;
+			DisposeStream();
 			_backendPid = 0;
 			_backendSecret = 0;
 			return;
@@ -137,15 +140,11 @@ public sealed class Connection : IConnection
 
 		try
 		{
-			// Send Terminate message: type 'X', length = 4
 			if (_stream.CanWrite)
 			{
-				var buffer = new byte[1 + 4];
-				buffer[0] = (byte)'X';
-				BinaryPrimitives.WriteInt32BigEndian(buffer.AsSpan(1), 4);
 				try
 				{
-					_stream.Write(buffer);
+					_stream.Write(TerminateMessage);
 					_stream.Flush();
 				}
 				catch
@@ -153,20 +152,17 @@ public sealed class Connection : IConnection
 					// Ignore write failures during close; proceed to dispose
 				}
 			}
-
-			_stream.Dispose();
-			_stream = ClosedStream;
-			_socket = null;
+			DisposeStream();
 			_backendPid = 0;
 			_backendSecret = 0;
 			_state = ConnectionState.Closed;
 		}
 		catch
 		{
-			// If disposing failed, mark connection as broken
-			try { _stream.Dispose(); } catch { }
-			_stream = ClosedStream;
-			_socket = null;
+			// If disposing failed, mark connection as broken. DisposeStream()
+			// already cleared _stream/_socket before the throw (it swaps fields
+			// to ClosedStream/null before attempting Dispose), so there's
+			// nothing left to reset here.
 			_state = ConnectionState.Broken;
 			_backendPid = 0;
 			_backendSecret = 0;
@@ -197,7 +193,8 @@ public sealed class Connection : IConnection
 
 		try
 		{
-			SendSimpleCommand("COMMIT");
+			_stream.SendQuery("COMMIT".AsSpan(), _encoding.GetByteCount("COMMIT"), _encoding, _sqlSendBuffer);
+			_stream.DrainToReadyForQuery(ref _transactionStatus);
 		}
 		catch (PgOperationalError)
 		{
@@ -214,7 +211,7 @@ public sealed class Connection : IConnection
 	}
 
 	public IConnection CreateInstance(int id, int sqlSendBufferSize) => new Connection(_parameters.Set(id, sqlSendBufferSize));
-	
+
 	public void Dispose()
 	{
 		throw new NotImplementedException();
@@ -232,12 +229,12 @@ public sealed class Connection : IConnection
 	{
 		if (_state != ConnectionState.Open)
 			throw new InvalidOperationException("The connection is not open.");
+		
+
 
 		// Filters/sorting/paging need RetrieveFilter/RetrieveSort/PageInfo -> SQL
 		// translation that isn't wired up yet. Fail loudly instead of silently
 		// returning an unfiltered result set.
-		if (query.Filters.Count > 0)
-			throw new NotSupportedException("Execute(RetrieveQuery) does not yet support filters.");
 		/*
 	if (query.Sorts.HasValue)
 		throw new NotSupportedException("Execute(RetrieveQuery) does not yet support sorting.");
@@ -248,11 +245,12 @@ public sealed class Connection : IConnection
 
 		try
 		{
-			var sql = "SELECT schemaname, tablename, tableowner, hasindexes FROM pg_catalog.pg_tables";
 			
+			var sql = "SELECT schemaname, tablename, tableowner, hasindexes FROM pg_catalog.pg_tables";
+
 			// fire-and-forget, no Describe/RowDescription needed for generic parsing; 
 			// keep it synchronous to avoid async overhead for a single round trip
-			_stream.SendQuery(sql, _encoding.GetByteCount(sql), _encoding, _sqlSendBuffer); 
+			_stream.SendQuery(sql, _encoding.GetByteCount(sql), _encoding, _sqlSendBuffer);
 
 			return _stream.ReadRetrieveRecords(ref _transactionStatus, _encoding, 4);
 		}
@@ -272,7 +270,7 @@ public sealed class Connection : IConnection
 	}
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
-	public OperationalError? Execute(in AlterQuery query, ReadOnlySpan<char> sql, int sqlByteCount) 
+	public OperationalError? Execute(in AlterQuery query, ReadOnlySpan<char> sql, int sqlByteCount)
 	{
 		// Code size: 54 (0x36) - no virtual call
 		_stream.SendQuery(sql, sqlByteCount, _encoding, _sqlSendBuffer);
@@ -324,7 +322,8 @@ public sealed class Connection : IConnection
 
 		try
 		{
-			SendSimpleCommand("ROLLBACK");
+			_stream.SendQuery("ROLLBACK".AsSpan(), _encoding.GetByteCount("ROLLBACK"), _encoding, _sqlSendBuffer);
+			_stream.DrainToReadyForQuery(ref _transactionStatus);
 		}
 		catch (PgOperationalError)
 		{
@@ -342,6 +341,22 @@ public sealed class Connection : IConnection
 
 	#region private methods
 
+	// Swaps the current stream/socket out for the ClosedStream sentinel before
+	// attempting to dispose them, so the Connection's fields are already in
+	// "closed" state even if Dispose() itself throws. Shared by Close()'s fast
+	// and success paths. Async counterpart: DisposeStreamAsync.
+	private void DisposeStream()
+	{
+		var stream = _stream;
+		_stream = ClosedStream;
+		_socket = null;
+
+		if (!ReferenceEquals(stream, ClosedStream))
+			stream.Dispose();
+	}
+
+	// Async counterpart to DisposeStream. Shared by CloseAsyncImpl()'s fast
+	// and success paths.
 	private async ValueTask DisposeStreamAsync()
 	{
 		var stream = _stream;
@@ -350,62 +365,6 @@ public sealed class Connection : IConnection
 
 		if (!ReferenceEquals(stream, ClosedStream))
 			await stream.DisposeAsync().ConfigureAwait(false);
-	}
-
-
-	/// <summary>
-	///     Sends a Simple Query for a command that produces no result rows
-	///     (BEGIN/COMMIT/ROLLBACK) and drains the response through
-	///     ReadyForQuery, updating <see cref="_transactionStatus"/> from the
-	///     status byte it carries.
-	/// </summary>
-	private void SendSimpleCommand(string sql)
-	{
-		_stream.SendQuery(sql.AsSpan(), _encoding.GetByteCount(sql), _encoding, _sqlSendBuffer);
-		DrainToReadyForQuery();
-	}
-
-	/// <summary>
-	///     Reads backend messages until ReadyForQuery, updating
-	///     <see cref="_transactionStatus"/> from its status byte
-	///     ('I'/'T'/'E'). Used for commands where the row payload (if any)
-	///     is irrelevant - BEGIN/COMMIT/ROLLBACK always reply with just
-	///     CommandComplete, but this also tolerates other message types
-	///     defensively.
-	/// </summary>
-	private void DrainToReadyForQuery()
-	{
-		// Code size: 112 (0x70)
-		//eg. SQL Error[42P07]: ERREUR: la relation « @meta » existe déjà
-		while (true)
-		{
-			var (code, body) = _stream.ReadMessage(true);
-			
-			if (code == (byte)BackendMessageCode.ReadyForQuery)
-			{
-				_transactionStatus = body.Length > 0 ? (byte)body[0] : (byte)TransactionStatus.Idle;
-				return;
-			}
-
-			if (code == (byte)BackendMessageCode.ErrorResponse)
-			{
-				//var error = AuthenticationHelper.ParseErrorResponse(body);
-				// Drain remaining messages so the connection is left in a
-				// clean, known state (ReadyForQuery) before surfacing the error.
-				byte drainCode;
-				byte[] drainBody;
-				
-				do 
-					(drainCode, drainBody) = _stream.ReadMessage(false);	
-				while (drainCode != (byte)BackendMessageCode.ReadyForQuery);
-
-				_transactionStatus = drainBody.Length > 0 ? (byte)drainBody[0] : (byte)TransactionStatus.Idle;
-				//throw error;
-			}
-
-			// CommandComplete, NoticeResponse, ParameterStatus, RowDescription,
-			// DataRow, etc. - nothing to do for a fire-and-forget command.
-		}
 	}
 
 
@@ -468,12 +427,9 @@ public sealed class Connection : IConnection
 
 		if (_stream.CanWrite)
 		{
-			var buffer = new byte[1 + 4];
-			buffer[0] = (byte)'X';
-			BinaryPrimitives.WriteInt32BigEndian(buffer.AsSpan(1), 4);
 			try
 			{
-				await _stream.WriteAsync(buffer, cancellationToken).ConfigureAwait(false);
+				await _stream.WriteAsync(TerminateMessage, cancellationToken).ConfigureAwait(false);
 			}
 			catch (OperationCanceledException)
 			{
@@ -493,9 +449,10 @@ public sealed class Connection : IConnection
 		}
 		catch
 		{
-			// If disposing failed, mark connection as broken
-			_stream = ClosedStream;
-			_socket = null;
+			// If disposing failed, mark connection as broken. DisposeStreamAsync()
+			// already cleared _stream/_socket before the throw (it swaps fields
+			// to ClosedStream/null before awaiting Dispose), so there's nothing
+			// left to reset here.
 			_state = ConnectionState.Broken;
 			_backendPid = 0;
 			_backendSecret = 0;

@@ -27,6 +27,13 @@ public sealed class SchemaManager
 		bulkAlter.Apply(_connection);
 	}
 
+	public List<Record> SelecMeta(string physicalSchema)
+	{
+		var query = new BulkRetrieve();
+		return new List<Record>();
+	}
+
+	// create initial schema
 	private static IConfiguration GetInitSchemaConfiguration(string physicalSchema,string? defaultTableStorage, string? defaultIndexStorage) => new Configuration
 	{
 		DefaultSchema = physicalSchema,

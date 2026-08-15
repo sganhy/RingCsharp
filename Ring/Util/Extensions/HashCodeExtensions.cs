@@ -1,4 +1,6 @@
-﻿using Ring.Data.Models;
+﻿using Ring.Data;
+using Ring.Data.Enums;
+using Ring.Data.Models;
 using Ring.Schema.Models;
 using System.Runtime.CompilerServices;
 using Index = Ring.Schema.Models.Index;
@@ -100,7 +102,26 @@ internal static class HashCodeExtensions
 		if (alterQuery.Index is not null) AddIndex(ref hashCode, alterQuery.Index);
     }
 
-    internal static void AddTable(this ref HashCode hashCode, Table table)
+	internal static void AddRetrieveQuery(this ref HashCode hashCode, RetrieveQuery retrieveQuery)
+	{
+		/*
+			Table Table;
+			RetrieveQueryType Type;
+			int ParentQueryId;
+			SpanList<RetrieveFilter> Filters;
+			RetrieveSort? Sorts;
+			PageInfo? Page;
+		*/
+		hashCode.AddTable(retrieveQuery.Table);
+		hashCode.Add((int)retrieveQuery.Type);
+		hashCode.Add(retrieveQuery.ParentQueryId);
+		//foreach (var filter in retrieveQuery.Filters) AddFilter(ref hashCode, filter);
+		//if (retrieveQuery.Sorts is not null) AddSort(ref hashCode, retrieveQuery.Sorts);
+		//if (retrieveQuery.Page is not null) AddPage(ref hashCode, retrieveQuery.Page);
+	}
+
+
+	internal static void AddTable(this ref HashCode hashCode, Table table)
 	{
 		// Code size: 192 (0xc0)
 		/* table definition: 
