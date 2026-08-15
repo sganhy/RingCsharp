@@ -282,7 +282,8 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	}
 	public string Create(Constraint constraint, TableSpace? tablespace = null)
 	{
-		// Code size: 613 (0x265)
+		// Code size: 620 (0x26c)
+		var skipTableSpace = true;
 		var result = new StringBuilder();
 		result.Append(DdlAlter)
 					.Append(DdlTable)
@@ -303,6 +304,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 					})
 					.ToArray()))
 					.Append(')');
+				skipTableSpace = false;
 				break; 
 			case ConstraintType.NotNull:
 				//alter table my_schema.my_table alter column my_column set not null;
@@ -324,7 +326,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 				result.Append(')');
 				break; 
 		}
-		if (tablespace is not null)
+		if (tablespace is not null && !skipTableSpace)
 		{
 			result
 				.Append(SqlSpace)

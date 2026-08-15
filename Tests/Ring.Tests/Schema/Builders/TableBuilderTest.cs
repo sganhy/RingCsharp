@@ -1,6 +1,8 @@
-﻿using Ring.Schema.Builders;
+﻿using Microsoft.VisualStudio.TestPlatform.ObjectModel;
+using Ring.Schema.Builders;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
+using static Microsoft.ApplicationInsights.MetricDimensionNames.TelemetryContext;
 
 namespace Ring.Tests.Schema.Builders;
 
@@ -177,7 +179,8 @@ public class TableBuilderTest
         Assert.NotNull(logTable.GetField("line_number"));
         Assert.NotNull(logTable.GetField("message"));
         Assert.NotNull(logTable.GetField("description"));
-        Assert.Equal("id", logTable.Fields[logTable.Columns[0].RecordIndex].Name);
+        Assert.Equal("Serves as the operational audit trail.", logTable.Description);
+		Assert.Equal("id", logTable.Fields[logTable.Columns[0].RecordIndex].Name);
         Assert.Equal("entry_time", logTable.Fields[logTable.Columns[1].RecordIndex].Name);
         Assert.Equal("level_id", logTable.Fields[logTable.Columns[2].RecordIndex].Name);
         Assert.Equal("schema_id", logTable.Fields[logTable.Columns[3].RecordIndex].Name);

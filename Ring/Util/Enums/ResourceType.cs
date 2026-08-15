@@ -59,10 +59,18 @@ internal enum ResourceType : short
 	DdlTableCreated = 296,
 
 	/// <summary>
+	/// Providers error message 501-799
+	/// </summary>
+	UnexpectedProviderMessage = 501,
+	ConnectionClosedByServer = 502,
+	InvalidMessageLengthFromServer = 503,
+
+	/// <summary>
 	/// Meta schema tables description
 	/// </summary>
 	MetaTableDescription = 1013,
 	MetaIdTableDescription = 1014,
+	MetaAuditTableDescription = 1017,
 
 	/// <summary>
 	/// Reserved for unit tests

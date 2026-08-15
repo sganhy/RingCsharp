@@ -132,7 +132,7 @@ internal sealed class BulkAlter : IEquatable<BulkAlter>
 
 	private void AppendDdlCommand(AlterQueryType type, Constraint constraint)
 	{
-		// Code size: 182 (0xb6)
+		// Code size: 166 (0xa6)
 		var table = constraint.ToTable;
 		if (type == AlterQueryType.CreateTable)
 			switch (constraint.Type)
@@ -141,10 +141,10 @@ internal sealed class BulkAlter : IEquatable<BulkAlter>
 					_queries.Add(new AlterQuery(table.Id, table, AlterQueryType.CreatePrimaryKey, null, constraint, null, GetTableSpace(table, EntityType.Constraint)));
 					break;
 				case ConstraintType.NotNull:
-					_queries.Add(new AlterQuery(table.Id, table, AlterQueryType.CreateNotNull, null, constraint, null, GetTableSpace(table, EntityType.Constraint)));
+					_queries.Add(new AlterQuery(table.Id, table, AlterQueryType.CreateNotNull, null, constraint, null, null));
 					break;
 				case ConstraintType.Check:
-					_queries.Add(new AlterQuery(table.Id, table, AlterQueryType.CreateCheckConstraint, null, constraint, null, GetTableSpace(table, EntityType.Constraint)));
+					_queries.Add(new AlterQuery(table.Id, table, AlterQueryType.CreateCheckConstraint, null, constraint, null, null));
 					break;
 			}
 	}

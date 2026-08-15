@@ -18,7 +18,7 @@ public sealed class SchemaManager
 		// create initial schema
 		var schemaBuilder = new SchemaBuilder();
 		var dbProvider = _connection.ProviderId().ToDatabaseProvider();
-		var initialSchema = schemaBuilder.GetMeta(dbProvider, GetInitSchemaConfiguration(physicalSchema, "meta_table"), true);
+		var initialSchema = schemaBuilder.GetMeta(dbProvider, GetInitSchemaConfiguration(physicalSchema, "meta_table", "meta_index"), true);
 		var bulkAlter =  new BulkAlter(initialSchema);
 		foreach (var table in initialSchema.TablesById)
 		{
@@ -27,11 +27,12 @@ public sealed class SchemaManager
 		bulkAlter.Apply(_connection);
 	}
 
-	private static IConfiguration GetInitSchemaConfiguration(string physicalSchema,string? defaultTableStorage) => new Configuration
+	private static IConfiguration GetInitSchemaConfiguration(string physicalSchema,string? defaultTableStorage, string? defaultIndexStorage) => new Configuration
 	{
 		DefaultSchema = physicalSchema,
 		ConnectionString = string.Empty,
 		DefaultTableStorage = defaultTableStorage,
+		DefaultIndexStorage = defaultIndexStorage,
 		MinConnectionPoolSize = 1,
 		MaxConnectionPoolSize = 1
 	};

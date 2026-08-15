@@ -32,11 +32,12 @@ internal static class TableTypeExtensions
 
 	internal static string? GetDescription(this TableType tableType)
 	{
-		// Code size: 188 (0xbc)
+		// Code size: 69 (0x45)
 		switch (tableType)
 		{
 			case TableType.MetaId: return ResourceHelper.GetMessage(ResourceType.MetaIdTableDescription);
 			case TableType.Meta: return ResourceHelper.GetMessage(ResourceType.MetaTableDescription);
+			case TableType.Log: return ResourceHelper.GetMessage(ResourceType.MetaAuditTableDescription);
 		}
 		return null;
 	}
