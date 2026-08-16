@@ -173,24 +173,7 @@ internal sealed class BulkAlter : IEquatable<BulkAlter>
 				break;
 		}
 	}
-
-	[DoesNotReturn]
-	private static void ThrowInvalidObjectType(string objectType) =>
-		throw new ArgumentException(string.Format(DefaultCulture, ResourceHelper.GetMessage(ResourceType.BulkAlterInvalidTableName), objectType));
-
-	[DoesNotReturn]
-	private static void ThrowUnsuportedAlterQueryType(AlterQueryType type) =>
-		throw new ArgumentException(string.Format(DefaultCulture, ResourceHelper.GetMessage(ResourceType.BulkAlterUnsuportedAlterQueryType), type));
-
-	//TODO - create a specific message for invalid index name
-	[DoesNotReturn]
-	private static void ThrowInvalidIndexName(string objectType, string indexName) =>
-		throw new ArgumentException(string.Format(DefaultCulture, ResourceHelper.GetMessage(ResourceType.BulkAlterInvalidTableName), objectType));
-
-	[DoesNotReturn]
-	private static void ThrowInvalidFieldName(string objectType, string fieldName) =>
-		throw new ArgumentException(string.Format(DefaultCulture, ResourceHelper.GetMessage(ResourceType.BulkAlterInvalidFieldName), fieldName, objectType));
-
+		
 	private TableSpace? GetTableSpace(Table table, EntityType entityType)
 	{
 		if (_tablespaces.TryGetValue(entityType, out Dictionary<string, TableSpace>? subDico))
@@ -248,6 +231,24 @@ internal sealed class BulkAlter : IEquatable<BulkAlter>
 		if (tablespace.Constraint && !dico[EntityType.Constraint].ContainsKey(tableName))
 			dico[EntityType.Constraint].Add(tableName, tablespace);
 	}
+
+	// error handling
+	[DoesNotReturn]
+	private static void ThrowInvalidObjectType(string objectType) =>
+		throw new ArgumentException(string.Format(DefaultCulture, ResourceHelper.GetMessage(ResourceType.BulkAlterInvalidTableName), objectType));
+
+	[DoesNotReturn]
+	private static void ThrowUnsuportedAlterQueryType(AlterQueryType type) =>
+		throw new ArgumentException(string.Format(DefaultCulture, ResourceHelper.GetMessage(ResourceType.BulkAlterUnsuportedAlterQueryType), type));
+
+	//TODO - create a specific message for invalid index name
+	[DoesNotReturn]
+	private static void ThrowInvalidIndexName(string objectType, string indexName) =>
+		throw new ArgumentException(string.Format(DefaultCulture, ResourceHelper.GetMessage(ResourceType.BulkAlterInvalidTableName), objectType));
+
+	[DoesNotReturn]
+	private static void ThrowInvalidFieldName(string objectType, string fieldName) =>
+		throw new ArgumentException(string.Format(DefaultCulture, ResourceHelper.GetMessage(ResourceType.BulkAlterInvalidFieldName), fieldName, objectType));
 
 	#endregion
 

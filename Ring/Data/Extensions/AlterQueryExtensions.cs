@@ -7,7 +7,7 @@ namespace Ring.Data.Extensions;
 
 internal static class AlterQueryExtensions
 {
-	internal static string? ToSql(this AlterQuery query, IDdlBuilder builder)
+	internal static string? ToSql(this in AlterQuery query, IDdlBuilder builder)
 	{
 		// Code size: 173 (0xad)
 		switch (query.Type)
@@ -23,7 +23,7 @@ internal static class AlterQueryExtensions
 		return null;
 	}
 
-	internal static int Hash(this AlterQuery alterQuery)
+	internal static int Hash(this in AlterQuery alterQuery)
 	{
 		// // Code size: 24 (0x18)
 		var hash = new HashCode();
@@ -36,7 +36,7 @@ internal static class AlterQueryExtensions
 	/// Determines if two AlterQuery instances have equivalent definitions,
 	/// regardless of whether they're the same object reference.
 	/// </summary>
-	internal static bool IsEquivalentTo(this AlterQuery alterQuery, AlterQuery? other)
+	internal static bool IsEquivalentTo(this in AlterQuery alterQuery, AlterQuery? other)
 	{
 		if (!other.HasValue) return false;
 		var otherValue = other.Value;

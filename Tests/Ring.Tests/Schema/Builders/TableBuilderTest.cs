@@ -1,8 +1,6 @@
-﻿using Microsoft.VisualStudio.TestPlatform.ObjectModel;
-using Ring.Schema.Builders;
+﻿using Ring.Schema.Builders;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
-using static Microsoft.ApplicationInsights.MetricDimensionNames.TelemetryContext;
 
 namespace Ring.Tests.Schema.Builders;
 
@@ -30,7 +28,9 @@ public class TableBuilderTest
 		Assert.Equal("test1.`@meta`", metaTableMySql.PhysicalName);
 		Assert.Equal("Central catalog that describes every structural element of the database.", metaTableMySql.Description);
 		Assert.Equal(10, metaTablePostGre.Fields.Length);
-        Assert.Equal(TableType.Meta, metaTablePostGre.Type);
+        Assert.Equal(0, metaTableMySql.ObjectIndex);
+		Assert.Equal(0, metaTablePostGre.ObjectIndex);
+		Assert.Equal(TableType.Meta, metaTablePostGre.Type);
         Assert.True(metaTablePostGre.Baseline);
         Assert.True(metaTablePostGre.Cached);
         Assert.True(metaTablePostGre.Readonly);

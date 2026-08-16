@@ -12,7 +12,7 @@ internal sealed class SchemaBuilder
 	private readonly TableBuilder _tableBuilder = new();
 	private readonly ParameterBuilder _parameterBuilder = new();
 
-	internal DbSchema GetMeta(DatabaseProvider provider, IConfiguration configuration, bool includeInactive=true)
+	internal DbSchema GetMeta(DatabaseProvider provider, IConfiguration configuration)
 	{
 		// Code size: 491 (0x1eb)
 		const SchemaType type = SchemaType.Static;

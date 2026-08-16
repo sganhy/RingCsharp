@@ -6,7 +6,6 @@ using Ring.PostgreSQL.Exceptions;
 using Ring.PostgreSQL.Extensions;
 using Ring.PostgreSQL.Helpers;
 using Ring.Util.Builders.PostgreSQL;
-using System.Buffers.Binary;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -217,15 +216,8 @@ public sealed class Connection : IConnection
 		throw new NotImplementedException();
 	}
 
-	public string?[] Execute()
-	{
-		//Table table, RetrieveQueryType type, IDqlBuilder builder, int parentQueryId
-		//var retrieveQuery = new RetrieveQuery("SELECT * FROM pg_catalog.pg_tables;");
-		var retrieveQuery = new RetrieveQuery();
-		return Execute(retrieveQuery);
-	}
 
-	public string?[] Execute(in RetrieveQuery query)
+	public string?[] Execute(in RetrieveQuery query, ReadOnlySpan<char> sql, int sqlByteCount)
 	{
 		if (_state != ConnectionState.Open)
 			throw new InvalidOperationException("The connection is not open.");
@@ -246,13 +238,13 @@ public sealed class Connection : IConnection
 		try
 		{
 			
-			var sql = "SELECT schemaname, tablename, tableowner, hasindexes FROM pg_catalog.pg_tables";
+			//var sql = "SELECT schemaname, tablename, tableowner, hasindexes FROM pg_catalog.pg_tables";
 
 			// fire-and-forget, no Describe/RowDescription needed for generic parsing; 
 			// keep it synchronous to avoid async overhead for a single round trip
 			_stream.SendQuery(sql, _encoding.GetByteCount(sql), _encoding, _sqlSendBuffer);
 
-			return _stream.ReadRetrieveRecords(ref _transactionStatus, _encoding, 4);
+			return _stream.ReadRetrieveRecords(ref _transactionStatus, _encoding, query.Table);
 		}
 		catch (PgOperationalError)
 		{

@@ -1,6 +1,7 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
+using Ring.Util.Extensions;
 using System.Runtime.CompilerServices;
 
 namespace Ring.Schema.Builders;
@@ -104,7 +105,7 @@ internal sealed class TableBuilder
 			}
 			else metaList.Add(GetField(FieldTestPrefix + i++, fieldType, false));
 		}
-		var metaTest = GetTable((int)TableType.Test, TableType.Test.GetLogicalName(), TableType.Logical, false);
+		var metaTest = GetTable((int)TableType.Test, TableType.Test.GetLogicalName(), TableType.Test, false);
 		return GetTable(schemaName, provider, metaList.ToArray(), metaTest);
 	}
 
@@ -139,11 +140,11 @@ internal sealed class TableBuilder
 		var emptyTable = Meta.GetDefaultTable(metaTable);
 		var emptySchema = Meta.GetDefaultSchema(GetSchema(0, schemaName), provider);
 		var physicalName = ddlBuilder.GetPhysicalName(emptyTable, emptySchema);
-
+		var tableType = metaTable.DataType.ToTableType();
 		var spanMeta = metaArray.AsSpan();
 		for (var i=0; i< spanMeta.Length; ++i) spanMeta[i] = Meta.Create(i,spanMeta[i]);
-		return metaTable.ToTable(new ReadOnlySpan<Meta>(metaArray, 0, metaArray.Length),
-				physicalType ?? PhysicalType.Table, ddlBuilder, physicalName, 0) ?? emptyTable;
+		return metaTable.ToTable(new ReadOnlySpan<Meta>(metaArray, 0, metaArray.Length), 
+			physicalType ?? PhysicalType.Table, ddlBuilder, physicalName, tableType.GetObjectIndex()) ?? emptyTable;
 	}
 
 	private static Meta GetTable(int id, string name, TableType tableType, bool active=true) 

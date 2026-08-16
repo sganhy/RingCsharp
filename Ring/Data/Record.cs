@@ -201,13 +201,28 @@ public struct Record : IEquatable<Record>
 		value = null;
 		var field = table.Fields[fieldId];
 		var fieldType = field.Type;
-#pragma warning disable RCS1001 // Add braces (when expression spans over multiple lines)
 		if (fieldType != FieldType.Byte && fieldType != FieldType.Short &&
 			fieldType != FieldType.Int && fieldType != FieldType.Long)
 			ThrowImpossibleConversion(fieldType, FieldType.Long);
-#pragma warning restore RCS1001
 		var result = data[fieldId + _offset] ?? field.DefaultValue;
 		if (result is not null) value = long.Parse(result, DefaultCulture); // already validated in SetField method!!!
+	}
+
+	public readonly void GetField(string name, out double? value)
+	{
+		// Code size: 136 (0x88)
+		var data = _data;
+		var table = _type;
+		if (table.Id == -1) ThrowRecordUnknownRecordType();
+		var fieldId = table.GetFieldIndex(name);
+		if (fieldId <= -1) ThrowRecordUnknownFieldName(table, name);
+		value = null;
+		var field = table.Fields[fieldId];
+		var fieldType = field.Type;
+		if (fieldType != FieldType.Float && fieldType != FieldType.Double)
+			ThrowImpossibleConversion(fieldType, FieldType.Double);
+		var result = data[fieldId + _offset] ?? field.DefaultValue;
+		if (result is not null) value = double.Parse(result, DefaultCulture);
 	}
 
 	/// <summary>

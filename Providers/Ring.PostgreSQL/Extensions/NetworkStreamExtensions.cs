@@ -2,6 +2,8 @@
 using Ring.Data.Enums;
 using Ring.Data.Models;
 using Ring.PostgreSQL.Enums;
+using Ring.Schema.Enums;
+using Ring.Schema.Models;
 using Ring.Util.Enums;
 using Ring.Util.Helpers;
 using System.Buffers;
@@ -20,7 +22,9 @@ internal static class NetworkStreamExtensions
 	private const int InitialRowCapacityHint = 16;
 	private const int RecordTrackerSlotCount = 1;
 	private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
-
+	private static readonly string BooleanTrue = true.ToString(DefaultCulture);
+	private static readonly string BooleanFalse = false.ToString(DefaultCulture);
+	private static readonly string PostGreTrue = "t";
 
 	// Diagnostic helper: prints a hex dump of a buffer to the console.
 	private static void LogHex(string title, byte[] buffer)
@@ -233,10 +237,10 @@ internal static class NetworkStreamExtensions
 		}
 	}
 
-	internal static string?[] ReadRetrieveRecords(this NetworkStream stream, ref byte transactionStatus, Encoding encoding, int columnCount, int rowCount = -1)
+	internal static string?[] ReadRetrieveRecords(this NetworkStream stream, ref byte transactionStatus, Encoding encoding, Table table, int rowCount = -1)
 		=> rowCount > 0
-			? ReadRetrieveRecordsExact(stream, ref transactionStatus, encoding, columnCount, rowCount)
-			: ReadRetrieveRecordsPooled(stream, ref transactionStatus, encoding, columnCount);
+			? ReadRetrieveRecordsExact(stream, ref transactionStatus, encoding, table, rowCount)
+			: ReadRetrieveRecordsPooled(stream, ref transactionStatus, encoding, table);
 				
 	/// <summary>
 	///     Reads backend messages until ReadyForQuery, updating
@@ -424,10 +428,10 @@ internal static class NetworkStreamExtensions
 	///     One allocation total.
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private static string?[] ReadRetrieveRecordsExact(NetworkStream stream, ref byte transactionStatus, Encoding encoding, int columnCount, int rowCount)
+	private static string?[] ReadRetrieveRecordsExact(NetworkStream stream, ref byte transactionStatus, Encoding encoding, Table table, int rowCount)
 	{
 		// Code size: 331 (0x14b)
-		var results = new string?[(columnCount + RecordTrackerSlotCount) * rowCount];
+		var results = new string?[(table.Columns.Length + RecordTrackerSlotCount) * rowCount];
 		var count = 0;
 
 		while (true)
@@ -437,7 +441,7 @@ internal static class NetworkStreamExtensions
 			switch (code)
 			{
 				case (byte)BackendMessageCode.DataRow:
-					AppendDataRow(body, encoding, null, ref results, ref count);
+					AppendDataRow(body, encoding, null, table, ref results, ref count);
 					break;
 				case (byte)BackendMessageCode.ReadyForQuery:
 					transactionStatus = body.Length > 0 ? body[0] : (byte)TransactionStatus.Idle;
@@ -483,11 +487,11 @@ internal static class NetworkStreamExtensions
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private static string?[] ReadRetrieveRecordsPooled(NetworkStream stream, ref byte transactionStatus, Encoding encoding, int columnCount)
+	private static string?[] ReadRetrieveRecordsPooled(NetworkStream stream, ref byte transactionStatus, Encoding encoding, Table table)
 	{
 		// Code size: 273 (0x111)
 		var pool = ArrayPool<string?>.Shared;
-		var initialCapacity = (columnCount + RecordTrackerSlotCount) * InitialRowCapacityHint;
+		var initialCapacity = (table.Columns.Length + RecordTrackerSlotCount) * InitialRowCapacityHint;
 		var buffer = pool.Rent(initialCapacity);
 		var count = 0;
 
@@ -498,7 +502,7 @@ internal static class NetworkStreamExtensions
 			switch (code)
 			{
 				case (byte)BackendMessageCode.DataRow:
-					AppendDataRow(body, encoding, pool, ref buffer, ref count);
+					AppendDataRow(body, encoding, pool, table, ref buffer, ref count);
 					break;
 				case (byte)BackendMessageCode.ReadyForQuery:
 					{
@@ -546,12 +550,13 @@ internal static class NetworkStreamExtensions
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private static void AppendDataRow(byte[] body, Encoding encoding, ArrayPool<string?>? pool, ref string?[] buffer, ref int count)
+	private static void AppendDataRow(byte[] body, Encoding encoding, ArrayPool<string?>? pool, Table table, ref string?[] buffer, ref int count)
 	{
-		// Code size: 161 (0xa1)
+		// Code size: 248 (0xf8) - no virtual calls, no allocations except for the buffer if it needs to grow
 		var offset = 0;
 		var columnCount = BinaryPrimitives.ReadInt16BigEndian(body.AsSpan(offset));
 		var required = count + columnCount + RecordTrackerSlotCount;
+		var expectedColumnCount = table.Columns.Length;
 		offset += 2;
 
 		// EnsureCapacity
@@ -566,7 +571,15 @@ internal static class NetworkStreamExtensions
 				buffer[count++] = null; // SQL NULL
 				continue;
 			}
-			buffer[count++] = encoding.GetString(body, offset, valueLength);
+			var currentType = table.Columns[i % expectedColumnCount].FieldType;
+			buffer[count] = encoding.GetString(body, offset, valueLength);
+			switch (currentType)
+			{
+				case FieldType.Boolean:
+					buffer[count] = string.Equals(PostGreTrue, buffer[count],StringComparison.OrdinalIgnoreCase) ? BooleanTrue : BooleanFalse;
+					break; 
+			}
+			++count ;
 			offset += valueLength;
 		}
 

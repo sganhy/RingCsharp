@@ -20,7 +20,7 @@ public interface IConnection : IDisposable
 	void Close();
 	Task CloseAsync(CancellationToken cancellationToken);
 	IConnection CreateInstance(int id, int sqlSendBufferSize);
-	string?[] Execute(in RetrieveQuery query);
+	string?[] Execute(in RetrieveQuery query, ReadOnlySpan<char> sql, int sqlByteCount);
 	OperationalError? Execute(in AlterQuery query, ReadOnlySpan<char> sql, int sqlByteCount); // AlterQuery: No defensive-copy penalty — the JIT knows no member access can mutate it.
 	ValueTask<OperationalError?> ExecuteAsync(AlterQuery query, string sql, int sqlByteCount, CancellationToken cancellationToken = default);
 	long Execute(in SaveQuery query);

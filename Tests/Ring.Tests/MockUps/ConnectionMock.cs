@@ -41,11 +41,6 @@ internal class ConnectionMock : IConnection
     public IConnection CreateInstance(int id, int sqlSendBufferSize) => new ConnectionMock(id, _databaseProvider, _connectionString);
     public void Dispose() => Expression.Empty();
 
-    public string?[] Execute(in RetrieveQuery query)
-    {
-        throw new NotImplementedException();
-    }
-
     public OperationalError? Execute(in AlterQuery query, ReadOnlySpan<char> sql, int sqlByteCount)
     {
         throw new NotImplementedException();
@@ -55,6 +50,11 @@ internal class ConnectionMock : IConnection
     {
         throw new NotImplementedException();
     }
+
+	public string?[] Execute(in RetrieveQuery query, ReadOnlySpan<char> sql, int sqlByteCount)
+	{
+		throw new NotImplementedException();
+	}
 
 	public ValueTask<OperationalError?> ExecuteAsync(AlterQuery query, string sql, int sqlByteCount, CancellationToken cancellationToken = default)
 	{

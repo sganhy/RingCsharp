@@ -30,6 +30,21 @@ internal static class TableTypeExtensions
         return string.Empty;
     }
 
+	internal static int GetObjectIndex(this TableType tableType)
+	{
+		switch (tableType)
+		{
+			case TableType.Meta: return 0;
+			case TableType.MetaId: return 1;
+			case TableType.Log: return 2;
+			case TableType.Test: return 3;
+			case TableType.TableCatalog: return 4;
+			case TableType.TablespaceCatalog: return 5;
+			case TableType.SchemaCatalog: return 6;
+			default: return -1;
+		}
+	}
+
 	internal static string? GetDescription(this TableType tableType)
 	{
 		// Code size: 69 (0x45)

@@ -35,7 +35,6 @@ public static class Program
 		connection.Close();
 
 		connection.Open(); // reopen test 
-		connection.Execute();
 		connection.Close();
 
 		/*

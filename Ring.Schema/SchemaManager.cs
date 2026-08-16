@@ -18,7 +18,7 @@ public sealed class SchemaManager
 		// create initial schema
 		var schemaBuilder = new SchemaBuilder();
 		var dbProvider = _connection.ProviderId().ToDatabaseProvider();
-		var initialSchema = schemaBuilder.GetMeta(dbProvider, GetInitSchemaConfiguration(physicalSchema, "meta_table", "meta_index"), true);
+		var initialSchema = schemaBuilder.GetMeta(dbProvider, GetInitSchemaConfiguration(physicalSchema, "meta_table", "meta_index"));
 		var bulkAlter =  new BulkAlter(initialSchema);
 		foreach (var table in initialSchema.TablesById)
 		{
@@ -30,6 +30,11 @@ public sealed class SchemaManager
 	public List<Record> SelecMeta(string physicalSchema)
 	{
 		var query = new BulkRetrieve();
+		var schemaBuilder = new SchemaBuilder();
+		var dbProvider = _connection.ProviderId().ToDatabaseProvider();
+		query.Schema = schemaBuilder.GetMeta(dbProvider, GetInitSchemaConfiguration(physicalSchema, "meta_table", "meta_index"));
+		query.SimpleQuery(0, "@meta");
+		query.RetrieveRecords(_connection);
 		return new List<Record>();
 	}
 
