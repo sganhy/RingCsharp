@@ -1,4 +1,5 @@
 ﻿using Bogus;
+using Ring.Data;
 using Ring.Schema;
 using Ring.Schema.Builders;
 using Ring.Schema.Enums;
@@ -27,7 +28,7 @@ public sealed class DqlBuilderTest : BaseBuilderTest
     [Fact]
     internal void Select_Table1_SqlQuery()
     {
-        // arrange 
+        // arrange
         var table = _schema.GetTable("skill");
         var expectedResult = "SELECT id,name,skill2ability,sub_name,is_group,category,armor_penality,trained_only,try_again FROM rpg_sheet.t_skill";
 
@@ -184,7 +185,7 @@ public sealed class DqlBuilderTest : BaseBuilderTest
         var metaList = new List<Meta>() { metaSch };
         metaList.AddRange(metaTbl);
         var schema = Meta.ToSchema(metaList.ToArray(), DatabaseProvider.PostgreSql);
-        var expectedResult = "SELECT id,to_char(entry_time,'yyyy-mm-dd\"T\"HH24:MI:SS.US\"Z\"'),level_id,schema_id,thread_id,call_site,job_id,method,line_number,message,description FROM \"@test\".\"@log\"";
+        var expectedResult = "SELECT id,to_char(entry_time,'yyyy-mm-dd HH24:MI:SS.US'),level_id,schema_id,thread_id,call_site,job_id,method,line_number,message,description FROM \"@test\".\"@log\"";
         table = schema?.GetTable(table.Id);
 
         // act 
@@ -199,7 +200,29 @@ public sealed class DqlBuilderTest : BaseBuilderTest
         Assert.Equal(expectedResult, result2);
     }
 
-    [Fact]
+	[Fact]
+	internal void Select_TableTest_SqlQuery()
+	{
+		// arrange 
+		var sut = new DqlBuilder();
+		var schBuilder = new SchemaBuilder();
+		var schemaName = "@Test2";
+		var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
+		var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
+		var testTable = schema.GetTable("@test");
+		var expectedResult = "SELECT test_0,test_1,test_2,test_3,test_4,test_5,test_6,test_7,test_8,to_char(test_9,'yyyy-mm-dd'),to_char(test_10,'yyyy-mm-dd HH24:MI:SS.US'),test_11,\"@tz_offset_11\",test_12,test_13,test_14 FROM \"@test2\".\"@test\"";
+
+		// act 
+		Assert.NotNull(schema);
+		Assert.NotNull(testTable);
+		sut.Init(schema);
+		var result1 = sut.SelectFrom(testTable);
+
+		// assert
+		Assert.Equal(expectedResult, result1);
+	}
+
+	[Fact]
     internal void Select_TableWithSpecFields_SqlQuery()
     {
         // field with reserved word in PostGreSQl eg. CURRENT_TIMESTAMP, ANALYZE, and @User
@@ -226,6 +249,4 @@ public sealed class DqlBuilderTest : BaseBuilderTest
         // assert
         Assert.Equal(expectedResult, result);
     }
-
-
 }

@@ -1,6 +1,7 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Models;
 using System.Globalization;
+using System.Text;
 
 namespace Ring.Util.Builders.PostgreSQL;
 
@@ -12,11 +13,12 @@ internal sealed class DqlBuilder : BaseDqlBuilder
 	 *   LongDateTime
 	 *   ByteArray 
 	 */
-
     private static readonly string CastPrefix = "to_char({0},";
     private static readonly string DateFormat = "'yyyy-mm-dd";
     private static readonly string ShortDateFormat = CastPrefix + DateFormat + "')";
-    private static readonly string DateTimeFormat = CastPrefix + DateFormat + "\"T\"HH24:MI:SS.US\"Z\"')";
+    private static readonly string DateTimeFormat = CastPrefix + DateFormat + " HH24:MI:SS.US')";
+    private static readonly CompositeFormat ShortDateFormatComposite = CompositeFormat.Parse(ShortDateFormat);
+    private static readonly CompositeFormat DateTimeFormatComposite = CompositeFormat.Parse(DateTimeFormat);
     public override DatabaseProvider Provider => DatabaseProvider.PostgreSql;
     public DqlBuilder() : base() {}
 
@@ -25,9 +27,9 @@ internal sealed class DqlBuilder : BaseDqlBuilder
         switch (column.FieldType)
         {
             case FieldType.Date: 
-                return string.Format(CultureInfo.InvariantCulture, ShortDateFormat, column.PhysicalName);
+                return string.Format(CultureInfo.InvariantCulture, ShortDateFormatComposite, column.PhysicalName);
             case FieldType.DateTime: 
-                return string.Format(CultureInfo.InvariantCulture, DateTimeFormat, column.PhysicalName);
+                return string.Format(CultureInfo.InvariantCulture, DateTimeFormatComposite, column.PhysicalName);
             default: return column.PhysicalName;
         }
     }

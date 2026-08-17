@@ -88,7 +88,7 @@ internal sealed class TableBuilder
 
 	internal Table GetTest(string schemaName, DatabaseProvider provider)
 	{
-		// Code size: 272 (0x110)
+		// Code size: 277 (0x115)
 		var metaList = new List<Meta>();
 		var values = Enum.GetValues<FieldType>();
 		var i = 0;
@@ -105,8 +105,13 @@ internal sealed class TableBuilder
 			}
 			else metaList.Add(GetField(FieldTestPrefix + i++, fieldType, false));
 		}
-		var metaTest = GetTable((int)TableType.Test, TableType.Test.GetLogicalName(), TableType.Test, false);
-		return GetTable(schemaName, provider, metaList.ToArray(), metaTest);
+		var metaTest = GetTable((int)TableType.Test, TableType.Test.GetLogicalName(), TableType.Test);
+#if DEBUG
+		var physicalType = PhysicalType.Table;
+#else
+		var physicalType = PhysicalType.Logical;
+#endif
+		return GetTable(schemaName, provider, metaList.ToArray(), metaTest, physicalType);
 	}
 
 	internal Table GetCatalog(EntityType entityType, DatabaseProvider provider) 
@@ -147,7 +152,7 @@ internal sealed class TableBuilder
 			physicalType ?? PhysicalType.Table, ddlBuilder, physicalName, tableType.GetObjectIndex()) ?? emptyTable;
 	}
 
-	private static Meta GetTable(int id, string name, TableType tableType, bool active=true) 
+	private static Meta GetTable(int id, string name, TableType tableType) 
 	{
 		// Code size: 101 (0x65)
 		var flags = 0L;
@@ -166,7 +171,7 @@ internal sealed class TableBuilder
                 flags = Meta.SetPreparedStatement(flags, true);
                 break;
         }
-        return new(id, (byte)EntityType.Table, 0, (int)tableType, flags, name, tableType.GetDescription(), null, active);
+        return new(id, (byte)EntityType.Table, 0, (int)tableType, flags, name, tableType.GetDescription(), null, true);
 	}
 	private static Meta GetSchema(int id, string name) => new(id, (byte)EntityType.Schema, 0, 0, 0L, name, null, null, true);
 

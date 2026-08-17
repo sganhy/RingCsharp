@@ -1,5 +1,4 @@
-﻿using Ring.Schema.Builders;
-using Ring.Schema.Enums;
+﻿using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using System.Text;
@@ -10,7 +9,6 @@ namespace Ring.Util.Builders;
 internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
 {
 	private string[] _tableSelect; // include relations: yes , include searchable: no
-	private string? _catalogTable;
 	protected readonly IDdlBuilder _ddlBuilder;
 
 	protected BaseDqlBuilder()
@@ -23,42 +21,27 @@ internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
 	{
 		_tableSelect = GetTableSelect(schema);   // pre load selection for all tables
 	}
-
 	public string SelectFrom(Table table) => _tableSelect[table.ObjectIndex]; // Code size: 14 (0xe)
-
-	public string Exists(Table table)
-	{
-		if (_catalogTable==null)
-		{
-			var tableBuilder = new TableBuilder();
-			table = tableBuilder.GetCatalog(EntityType.Table, Provider);
-			var result= new StringBuilder(BuildSelect(table, false,false));
-			//AppendFilter()
-			_catalogTable = result.ToString();
-		}
-		return _catalogTable;
-	}
 	protected abstract string GetSelection(in Column column);
 
 	#region private methods 
 
-	private string BuildSelect(Table table, bool includeRelations, bool includeSearchables)
+	private string BuildSelect(Table table, bool includeRelations)
 	{
-		// Code size: 153 (0x99)
+		// Code size: 157 (0x9d) - drivers are built 
 		var result = new StringBuilder();
-		var columnCount = table.Columns.Length;
-		var i=0;
+		var columns = table.Columns.AsSpan();
+
+		//var includeSearchables = false; // exclude searchable columns for now, as they are not needed
 		result.Append(SqlSelect);
 
 		// select clause 
-		while (i<columnCount)
+		foreach (var column in columns) 
 		{
-			var column = table.Columns[i];
-			if (column.Type == EntityType.Field || 
-				(column.Type == EntityType.Relation && includeRelations) ||
-				(column.Type == EntityType.SearchableColumn && includeSearchables)) 
-				result.Append(GetSelection(column)).Append(ColumnDelimiter);
-			++i; // just before continue
+			//before: (column.Type == EntityType.SearchableColumn && includeSearchables)
+			if (column.Type == EntityType.SearchableColumn) continue;
+			if (column.Type == EntityType.Relation && !includeRelations) continue;
+			result.Append(GetSelection(column)).Append(ColumnDelimiter);
 		}
 		--result.Length;
 		result.Append(SqlFrom).Append(table.PhysicalName);
@@ -67,21 +50,21 @@ internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
 
 	private string[] GetTableSelect(DbSchema schema)
 	{
-		// Code size: 154 (0x9a)
+		// Code size: 152 (0x98)
 		var result = new string[schema.ObjectCount];
 		var tableSpan = new ReadOnlySpan<Table>(schema.TablesById);
 
 		foreach (var table in tableSpan)
 		{
 			var index = table.ObjectIndex;
-			result[index] = BuildSelect(table, true, false);
+			result[index] = BuildSelect(table, true);
 			for (var i=table.Relations.Length-1; i>=0; --i)
 			{
 				var relation = table.Relations[i];
 				if (relation.Type==RelationType.Mtm)
 				{
 					index = relation.ToTable.ObjectIndex;
-					result[index] = BuildSelect(relation.ToTable, true, false);
+					result[index] = BuildSelect(relation.ToTable, true); // reserved for future use, but not used for now
 				}
 			}
 		}

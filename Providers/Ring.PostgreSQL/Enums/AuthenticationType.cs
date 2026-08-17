@@ -1,6 +1,6 @@
 ﻿namespace Ring.PostgreSQL.Enums;
 
-internal enum AuthenticationRequestType
+internal enum AuthenticationType
 {
 	Ok = 0,
 	CleartextPassword = 3,
@@ -10,5 +10,6 @@ internal enum AuthenticationRequestType
 	SSPI = 9,
 	SASL = 10,
 	SASLContinue = 11,
-	SASLFinal = 12
+	SASLFinal = 12,
+	Undefined = int.MaxValue
 }

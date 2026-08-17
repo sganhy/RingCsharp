@@ -33,7 +33,8 @@ public sealed class SchemaManager
 		var schemaBuilder = new SchemaBuilder();
 		var dbProvider = _connection.ProviderId().ToDatabaseProvider();
 		query.Schema = schemaBuilder.GetMeta(dbProvider, GetInitSchemaConfiguration(physicalSchema, "meta_table", "meta_index"));
-		query.SimpleQuery(0, "@meta");
+		//query.SimpleQuery(0, "@test");
+		query.SimpleQuery(0, "@test");
 		query.RetrieveRecords(_connection);
 		return new List<Record>();
 	}

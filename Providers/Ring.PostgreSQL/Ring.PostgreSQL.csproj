@@ -57,9 +57,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Compile Update="Connection.cs">
-	    <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-	  </Compile>
+		<InternalsVisibleTo Include="Ring.PostgreSQL.Tests" PublicKey="0024000004800000940000000602000000240000525341310004000001000100a5842f21c36cdd68e588f0f2a972cf301eb60e92fdf08ec5d823b13c4e3202cce83a05f968475eb856c377a2efc5ae19278ed1bd8f170cc206f8e3d2778f39e1e8002e45285da1c424bae28c47b47f433c48508a744338afcfdc936a8ff15ebce3abc6b8ffd6547d8865fb984c36c79aa28bb0a8ba1d4d51661915d03b016bc9" />
 	</ItemGroup>
 
 </Project>

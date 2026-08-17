@@ -95,6 +95,7 @@ internal sealed class BulkAlter : IEquatable<BulkAlter>
 	{
 		// Code size: 157 (0x9d)
 		// sort by Type
+		if (connection.State != ConnectionState.Open)	throw new InvalidOperationException("The connection is not open.");
 		_queries.Sort(static delegate (AlterQuery q1,AlterQuery q2)
 		{
 			if (q1.Type == q2.Type) return q1.Id.CompareTo(q2.Id);

@@ -219,8 +219,7 @@ public sealed class Connection : IConnection
 
 	public string?[] Execute(in RetrieveQuery query, ReadOnlySpan<char> sql, int sqlByteCount)
 	{
-		if (_state != ConnectionState.Open)
-			throw new InvalidOperationException("The connection is not open.");
+		
 		
 
 

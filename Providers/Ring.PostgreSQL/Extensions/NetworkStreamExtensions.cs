@@ -20,7 +20,7 @@ namespace Ring.PostgreSQL.Extensions;
 internal static class NetworkStreamExtensions
 {
 	private const int InitialRowCapacityHint = 16;
-	private const int RecordTrackerSlotCount = 1;
+	private const int SkipBodyChunkSize = 128;
 	private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
 	private static readonly string BooleanTrue = true.ToString(DefaultCulture);
 	private static readonly string BooleanFalse = false.ToString(DefaultCulture);
@@ -431,7 +431,7 @@ internal static class NetworkStreamExtensions
 	private static string?[] ReadRetrieveRecordsExact(NetworkStream stream, ref byte transactionStatus, Encoding encoding, Table table, int rowCount)
 	{
 		// Code size: 331 (0x14b)
-		var results = new string?[(table.Columns.Length + RecordTrackerSlotCount) * rowCount];
+		var results = new string?[table.RecordSize * rowCount];
 		var count = 0;
 
 		while (true)
@@ -441,7 +441,8 @@ internal static class NetworkStreamExtensions
 			switch (code)
 			{
 				case (byte)BackendMessageCode.DataRow:
-					AppendDataRow(body, encoding, null, table, ref results, ref count);
+					AppendRecordData(body, encoding, null, table, ref results, count);
+					count+= table.RecordSize; // items per row, including tracker slot
 					break;
 				case (byte)BackendMessageCode.ReadyForQuery:
 					transactionStatus = body.Length > 0 ? body[0] : (byte)TransactionStatus.Idle;
@@ -491,18 +492,18 @@ internal static class NetworkStreamExtensions
 	{
 		// Code size: 273 (0x111)
 		var pool = ArrayPool<string?>.Shared;
-		var initialCapacity = (table.Columns.Length + RecordTrackerSlotCount) * InitialRowCapacityHint;
+		var initialCapacity = table.RecordSize * InitialRowCapacityHint;
 		var buffer = pool.Rent(initialCapacity);
 		var count = 0;
 
 		while (true)
 		{
 			var (code, body) = stream.ReadMessage(false);
-
 			switch (code)
 			{
 				case (byte)BackendMessageCode.DataRow:
-					AppendDataRow(body, encoding, pool, table, ref buffer, ref count);
+					AppendRecordData(body, encoding, pool, table, ref buffer, count);
+					count += table.RecordSize; // items per row, including tracker slot
 					break;
 				case (byte)BackendMessageCode.ReadyForQuery:
 					{
@@ -550,40 +551,59 @@ internal static class NetworkStreamExtensions
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private static void AppendDataRow(byte[] body, Encoding encoding, ArrayPool<string?>? pool, Table table, ref string?[] buffer, ref int count)
+	private static void AppendRecordData(byte[] body, Encoding encoding, ArrayPool<string?>? pool, Table table, ref string?[] buffer, int count)
 	{
-		// Code size: 248 (0xf8) - no virtual calls, no allocations except for the buffer if it needs to grow
+		// Code size: 281 (0x119) - no virtual calls, no allocations except for the buffer if it needs to grow
 		var offset = 0;
-		var columnCount = BinaryPrimitives.ReadInt16BigEndian(body.AsSpan(offset));
-		var required = count + columnCount + RecordTrackerSlotCount;
-		var expectedColumnCount = table.Columns.Length;
+		var required = count + table.RecordSize;
+		var columns = new ReadOnlySpan<Column>(table.Columns);
 		offset += 2;
 
 		// EnsureCapacity
 		if (required > buffer.Length && pool is not null) EnsureCapacity(pool, ref buffer, count, required);
 
-		for (var i = 0; i < columnCount; i++)
+		foreach (var column in columns)
 		{
+			if (column.Type == EntityType.SearchableColumn) continue;
+
 			var valueLength = BinaryPrimitives.ReadInt32BigEndian(body.AsSpan(offset));
+			var index = column.RecordIndex + count;
+
 			offset += 4;
 			if (valueLength < 0)
 			{
-				buffer[count++] = null; // SQL NULL
+				buffer[index] = null; // SQL NULL - no value bytes follow, offset stays put
 				continue;
 			}
-			var currentType = table.Columns[i % expectedColumnCount].FieldType;
-			buffer[count] = encoding.GetString(body, offset, valueLength);
-			switch (currentType)
+
+			if (column.Type == EntityType.TimeZoneColumn)
 			{
-				case FieldType.Boolean:
-					buffer[count] = string.Equals(PostGreTrue, buffer[count],StringComparison.OrdinalIgnoreCase) ? BooleanTrue : BooleanFalse;
-					break; 
+				// TODO: timezone-specific handling goes here (e.g. combine with
+				// the paired DateTimeOffset column). Until then, still consume
+				// the value bytes so offset stays aligned with the next column's
+				// length prefix - skipping this was desyncing every column that
+				// follows a TimeZoneColumn for the rest of the row.
+				offset += valueLength;
+				continue;
 			}
-			++count ;
+
+			if (column.FieldType == FieldType.ByteArray)
+			{
+				// Postgres text-mode bytea arrives hex-encoded ('\x' + 2 hex
+				// chars/byte); Record.GetField(out byte[]?) expects Base64, so
+				// re-encode here rather than storing Postgres' own wire format.
+				buffer[index] = body.ParseByteaHexToBase64(offset, valueLength);
+			}
+			else
+			{
+				buffer[index] = encoding.GetString(body, offset, valueLength);
+				if (column.FieldType == FieldType.Boolean)
+					buffer[index] = string.Equals(PostGreTrue, buffer[index], StringComparison.OrdinalIgnoreCase) ? BooleanTrue : BooleanFalse;
+			}
 			offset += valueLength;
 		}
 
-		buffer[count++] = null; // Record's dirty-tracker slot: a freshly loaded row is never dirty
+		buffer[table.RecordSize - 1] = null; // Record's dirty-tracker slot: a freshly loaded row is never dirty
 	}
 
 	private static void EnsureCapacity(ArrayPool<string?> pool, ref string?[] buffer, int usedCount, int required)
@@ -601,14 +621,13 @@ internal static class NetworkStreamExtensions
 	private static async ValueTask SkipBodyAsync(this NetworkStream stream, int bodyLength, CancellationToken cancellationToken)
 	{
 		if (bodyLength <= 0) return;
-		var chunkSize = Math.Min(bodyLength, 128);
-		var scratch = ArrayPool<byte>.Shared.Rent(chunkSize);
+		var scratch = ArrayPool<byte>.Shared.Rent(SkipBodyChunkSize);
 		try
 		{
 			var remaining = bodyLength;
 			while (remaining > 0)
 			{
-				var n = await stream.ReadAsync(scratch.AsMemory(0, Math.Min(remaining, chunkSize)), cancellationToken).ConfigureAwait(false);
+				var n = await stream.ReadAsync(scratch.AsMemory(0, Math.Min(remaining, SkipBodyChunkSize)), cancellationToken).ConfigureAwait(false);
 				if (n == 0) ThrowConnectionWasClosedByServer();
 				remaining -= n;
 			}
@@ -619,9 +638,6 @@ internal static class NetworkStreamExtensions
 		}
 	}
 
-	/// <summary>
-	///     Throws an exception indicating the connection was closed by the server.
-	/// </summary>
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
 	private static void ThrowConnectionWasClosedByServer() => // Code size: 17 (0x11)

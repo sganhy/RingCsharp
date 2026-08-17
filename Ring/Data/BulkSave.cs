@@ -161,8 +161,8 @@ public readonly struct BulkSave : IBulkSave
 
 	internal void Save(IConnection connection, bool noTransaction=false)
 	{
-        // Code size: 77 (0x4d)
-        var queryCount = _info.Queries.Count;
+		// Code size: 77 (0x4d)
+		var queryCount = _info.Queries.Count;
 
 		if (queryCount == 0) return;
 

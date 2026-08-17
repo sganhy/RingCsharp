@@ -11,15 +11,6 @@ namespace Ring.PostgreSQL.Helpers;
 
 internal static class AuthenticationHelper
 {
-	private const int AuthOk = 0;
-	private const int AuthCleartextPassword = 3;
-	private const int AuthMD5Password = 5;
-	private const int AuthGSS = 7;
-	private const int AuthSSPI = 9;
-	private const int AuthSASL = 10;
-	private const int AuthSASLContinue = 11;
-	private const int AuthSASLFinal = 12;
-
 	internal static async Task<(int? BackendPid, int? BackendSecret)> HandleAuthenticationAsync(NetworkStream stream, string user, string password, CancellationToken cancellationToken = default)
 	{
 		while (true)
@@ -40,22 +31,21 @@ internal static class AuthenticationHelper
 					break;
 			}
 
-			var authType = ReadInt32BE(body, 0);
+			var authType = GetAuthenticationType(body, 0);
 			switch (authType)
 			{
-				case AuthOk:
+				case AuthenticationType.Ok:
 					return await stream.WaitUntilReadyAsync(cancellationToken).ConfigureAwait(false);
-				case AuthCleartextPassword:
+				case AuthenticationType.CleartextPassword:
 					await stream.SendPasswordMessageAsync(password, cancellationToken).ConfigureAwait(false);
 					continue;
-				case AuthMD5Password:
+				case AuthenticationType.MD5Password:
 					await stream.SendPasswordMessageAsync(ComputeMD5Password(user, password, body[4..8]), cancellationToken).ConfigureAwait(false);
 					continue;
-				case AuthSASL:
+				case AuthenticationType.SASL:
 					return await AuthenticateSASLAsync(stream, body[4..], password, cancellationToken).ConfigureAwait(false);
-
-				case AuthGSS:
-				case AuthSSPI:
+				case AuthenticationType.GSS:
+				case AuthenticationType.SSPI:
 					throw new NotSupportedException("GSSAPI/SSPI authentication is not implemented by this driver.");
 
 				default:
@@ -65,7 +55,7 @@ internal static class AuthenticationHelper
 	}
 
 
-	private static async Task<(int? BackendPid, int? BackendSecret)> AuthenticateSASLAsync(System.Net.Sockets.NetworkStream stream, byte[] mechanismsPayload, string password, System.Threading.CancellationToken cancellationToken = default)
+	private static async Task<(int? BackendPid, int? BackendSecret)> AuthenticateSASLAsync(NetworkStream stream, byte[] mechanismsPayload, string password, System.Threading.CancellationToken cancellationToken = default)
 	{
 		var mechanisms = ParseNullTerminatedList(mechanismsPayload);
 		if (!mechanisms.Contains("SCRAM-SHA-256"))
@@ -79,7 +69,7 @@ internal static class AuthenticationHelper
 
 		var (code, body) = await stream.ReadMessageAsync(false, cancellationToken).ConfigureAwait(false);
 		ThrowIfError(code, body);
-		if (code != (byte)BackendMessageCode.AuthenticationRequest || ReadInt32BE(body, 0) != AuthSASLContinue)
+		if (code != (byte)BackendMessageCode.AuthenticationRequest || ReadInt32BE(body, 0) != (int)AuthenticationType.SASLContinue)
 			throw UnexpectedMessage(code, "AuthenticationSASLContinue");
 
 		var serverFirstMessage = Encoding.UTF8.GetString(body, 4, body.Length - 4);
@@ -100,7 +90,7 @@ internal static class AuthenticationHelper
 
 		(code, body) = await stream.ReadMessageAsync(false, cancellationToken).ConfigureAwait(false);
 		ThrowIfError(code, body);
-		if (code != (byte)BackendMessageCode.AuthenticationRequest || ReadInt32BE(body, 0) != AuthSASLFinal)
+		if (code != (byte)BackendMessageCode.AuthenticationRequest || ReadInt32BE(body, 0) != (int)AuthenticationType.SASLFinal)
 			throw UnexpectedMessage(code, "AuthenticationSASLFinal");
 
 		var serverFinalMessage = Encoding.UTF8.GetString(body, 4, body.Length - 4);
@@ -111,7 +101,10 @@ internal static class AuthenticationHelper
 		return await stream.WaitUntilReadyAsync(cancellationToken).ConfigureAwait(false);
 	}
 
+
+
 	private static int ReadInt32BE(byte[] data, int offset) => BinaryPrimitives.ReadInt32BigEndian(data.AsSpan(offset));
+	private static AuthenticationType GetAuthenticationType(byte[] data, int offset) => ReadInt32BE(data, offset).ToAuthenticationType();
 
 	private static string ComputeMD5Password(string username, string password, byte[] salt)
 	{

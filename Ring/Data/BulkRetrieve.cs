@@ -1,6 +1,7 @@
 ﻿using Ring.Data.Enums;
 using Ring.Data.Extensions;
 using Ring.Data.Models;
+using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Util.Enums;
 using Ring.Util.Helpers;
@@ -15,7 +16,7 @@ public sealed class BulkRetrieve
 {
 	private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
 	private SpanList<RetrieveQuery> _queries;
-    private Database? _schema;
+	private Database? _schema;
 
     public BulkRetrieve()
     {
@@ -37,11 +38,11 @@ public sealed class BulkRetrieve
 	/// <param name="objectname">The object type of the database records to be retrieved by the simple query.</param>
 	public void SimpleQuery(int entryIndex, string objectname)
 	{
-		// Code size: 110 (0x6e) - no virtual call
+		// Code size: 112 - no virtual call
 		if (entryIndex > _queries.Count) ThrowInvalidIndexError(_queries.Count);
 		if (entryIndex < _queries.Count) ThrowIndexAlreadyExistError(entryIndex);
 		var table = _schema?.GetTable(objectname);
-		if (table is null || !table.Active) ThrowInvalidObjectError(objectname);
+		if (table is null || table.PhysicalType == PhysicalType.Logical) ThrowInvalidObjectError(objectname);
 		_queries.Add(new RetrieveQuery(table, RetrieveQueryType.SimpleQuery, -1));
 	}
 
