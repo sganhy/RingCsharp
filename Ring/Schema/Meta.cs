@@ -109,15 +109,6 @@ internal readonly struct Meta : IEquatable<Meta>
 	internal int GetFieldSize() => (int)((Flags >> BitShiftFieldSize) & ((1L << BitCountFieldSize) - 1L)); // Code size: 18 (0x12)
 	internal SearchableType GetSearchableType() => ((int)((Flags >> BitPositionFieldSearchableType) & ((1L << BitCountFieldSearchableType) - 1L))).ToSearchableType(); // Code size: 19 (0x13)
 
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	internal string? GetFieldDefaultValue()
-	{
-		// Code size: 42 (0x2a)
-		if (!string.IsNullOrEmpty(Value)) return Value;
-		if (IsFieldNotNull()) return GetFieldType().GetDefaultValue();
-		return null;
-	}
-
 	internal static int SetFieldType(int dataType, FieldType fieldType)
 	{
 		// Code size: 16 (0x10)
@@ -237,7 +228,7 @@ internal readonly struct Meta : IEquatable<Meta>
 		=> new (0, (byte)entityType, 0, 0, 0L,	string.Empty, null, null, false);
 
 	internal static Field GetDefaultField(in Meta meta, FieldType fieldType) // Code size: 33 (0x21)
-		=> new(meta.Id, meta.Name, meta.Description, fieldType, 0, null, SearchableType.None, true, false, false, true, true);
+		=> new(meta.Id, meta.Name, meta.Description, fieldType, 0, null, null, SearchableType.None, true, false, false, true, true);
 
 	internal static Meta Create(int id,in Meta meta) => new(id, meta.ObjectType, meta.ReferenceId, meta.DataType, meta.Flags, meta.Name, meta.Description, meta.Value, meta.Active);
 	internal static Meta Create(string name) => new(default, default, default, default, default, name, null, null, true);
@@ -259,10 +250,19 @@ internal readonly struct Meta : IEquatable<Meta>
 		}
 		return null;
 	}
-	
-	internal Field? ToField() // Code size: 88 (0x58)
-		=> IsField ? new Field(Id, Name, Description, GetFieldType(), 
-			GetFieldSize(), GetFieldDefaultValue(), GetSearchableType(), IsEntityBaseline(), IsFieldNotNull(), IsFieldMultilingual(), IsFieldAllowTruncation(), Active) : null;
+
+	internal Field? ToField()
+	{
+		// Code size: 121 (0x79)
+		if (IsField)
+		{
+			var isNotNull = IsFieldNotNull();
+			var fieldType = GetFieldType();
+			var effectiveValue = isNotNull ? Value ?? fieldType.GetDefaultValue() : Value;
+			return new Field(Id, Name, Description, fieldType, GetFieldSize(), Value, effectiveValue, GetSearchableType(), IsEntityBaseline(), isNotNull, IsFieldMultilingual(), IsFieldAllowTruncation(), Active);
+		}
+		return null;
+	}
 
 	/// <summary>
 	///		The static method orchestrates the complex process of building a complete database schema object.

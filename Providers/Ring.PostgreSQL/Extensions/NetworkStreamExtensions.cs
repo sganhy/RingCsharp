@@ -48,6 +48,7 @@ internal static class NetworkStreamExtensions
 	/// </summary>
 	internal static async ValueTask<(byte Code, byte[] Body)> ReadMessageAsync(this NetworkStream stream, bool errorOnly, CancellationToken cancellationToken = default)
 	{
+		// Code size: 71 (0x47)
 		var header = new byte[5];
 		await stream.ReadExactlyAsync(header.AsMemory(), cancellationToken).ConfigureAwait(false);
 
@@ -62,13 +63,24 @@ internal static class NetworkStreamExtensions
 		}
 
 		var body = bodyLength > 0 ? new byte[bodyLength] : Array.Empty<byte>();
-		if (bodyLength > 0)	await stream.ReadExactlyAsync(body.AsMemory(), cancellationToken).ConfigureAwait(false);
+		if (bodyLength > 0) await stream.ReadExactlyAsync(body.AsMemory(), cancellationToken).ConfigureAwait(false);
 
-		// combined buffer for logging
-		var combined = new byte[5 + body.Length];
-		Array.Copy(header, 0, combined, 0, 5);
-		if (body.Length > 0) Array.Copy(body, 0, combined, 5, body.Length);
-		LogHex($"ServerMessage (code={(char)code})", combined);
+		// Combined buffer for logging only - never leaves this method (LogHex
+		// doesn't retain the reference), so unlike header/body above it's safe
+		// to pool. Rent can hand back an array larger than requested, so pass
+		// LogHex an explicit slice rather than the whole rented array.
+		var combinedLength = 5 + body.Length;
+		var combined = ArrayPool<byte>.Shared.Rent(combinedLength);
+		try
+		{
+			Array.Copy(header, 0, combined, 0, 5);
+			if (body.Length > 0) Array.Copy(body, 0, combined, 5, body.Length);
+			//LogHex($"ServerMessage (code={(char)code})", combined.AsSpan(0, combinedLength));
+		}
+		finally
+		{
+			ArrayPool<byte>.Shared.Return(combined);
+		}
 
 		return (code, body);
 	}
@@ -278,9 +290,6 @@ internal static class NetworkStreamExtensions
 				transactionStatus = drainBody.Length > 0 ? drainBody[0] : (byte)'I';
 				return operationalError;
 			}
-
-			// CommandComplete, NoticeResponse, ParameterStatus, RowDescription,
-			// DataRow, etc. - nothing to do for a fire-and-forget command.
 		}
 	}
 
@@ -321,7 +330,6 @@ internal static class NetworkStreamExtensions
 		}
 	}
 
-
 	/// <summary>
 	///     Sends a frontend Simple Query ('Q') message: Int32 length (self-
 	///     inclusive) followed by the null-terminated query string. The server
@@ -331,7 +339,7 @@ internal static class NetworkStreamExtensions
 	/// </summary>
 	[SkipLocalsInit]
 	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
-	internal static void SendQuery(this NetworkStream stream, ReadOnlySpan<char> sql, int sqlByteCount, Encoding encoding, byte[] sqlSendBuffer)
+	internal static void SendQuery(this NetworkStream stream, ReadOnlySpan<char> sql, int sqlByteCount, Encoding encoding, byte[] sqlSendBuffer, int stackallocSize)
 	{
 		// Code size: 299 (0x12b) - no allocations
 		// Exact byte count either way - see GetSqlByteCount.
@@ -360,6 +368,11 @@ internal static class NetworkStreamExtensions
 		else
 		{
 			// case 3: query is too large for the preallocated send buffer.
+			// Not pooled: in practice ~99.99% of queries never reach this
+			// branch at all, and of those that do, almost none cross the LOH
+			// threshold (~85,000 bytes) where pooling would actually avoid
+			// heap fragmentation. `new` also zero-inits for free, which Rent()
+			// doesn't - not worth trading that away for a case this rare.
 			var buffer = new byte[messageLength];
 			buffer[0] = (byte)FrontendMessageCode.Query;
 			BinaryPrimitives.WriteInt32BigEndian(buffer.AsSpan(1, 4), messageLength - 1);
@@ -490,63 +503,69 @@ internal static class NetworkStreamExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static string?[] ReadRetrieveRecordsPooled(NetworkStream stream, ref byte transactionStatus, Encoding encoding, Table table)
 	{
-		// Code size: 273 (0x111)
+		// Code size: 298 (0x12a)
 		var pool = ArrayPool<string?>.Shared;
 		var initialCapacity = table.RecordSize * InitialRowCapacityHint;
 		var buffer = pool.Rent(initialCapacity);
 		var count = 0;
 
-		while (true)
+		try
 		{
-			var (code, body) = stream.ReadMessage(false);
-			switch (code)
+			while (true)
 			{
-				case (byte)BackendMessageCode.DataRow:
-					AppendRecordData(body, encoding, pool, table, ref buffer, count);
-					count += table.RecordSize; // items per row, including tracker slot
-					break;
-				case (byte)BackendMessageCode.ReadyForQuery:
-					{
-						transactionStatus = body.Length > 0 ? body[0] : (byte)TransactionStatus.Idle;
-						var results = new string?[count];
-						Array.Copy(buffer, results, count);
-						pool.Return(buffer, clearArray: true);
-						return results;
-					}
-				case (byte)BackendMessageCode.ErrorResponse:
-					{
-						//var error = AuthenticationHelper.ParseErrorResponse(body);
-						// Drain remaining messages so the connection is left in a
-						// clean, known state (ReadyForQuery) before surfacing the error.
-						byte drainCode;
-						byte[] drainBody;
-						do
+				var (code, body) = stream.ReadMessage(false);
+				switch (code)
+				{
+					case (byte)BackendMessageCode.DataRow:
+						AppendRecordData(body, encoding, pool, table, ref buffer, count);
+						count += table.RecordSize; // items per row, including tracker slot
+						break;
+					case (byte)BackendMessageCode.ReadyForQuery:
 						{
-							(drainCode, drainBody) = stream.ReadMessage(false);
-						} while (drainCode != (byte)BackendMessageCode.ReadyForQuery);
-						transactionStatus = drainBody.Length > 0 ? drainBody[0] : (byte)TransactionStatus.Idle;
-						//throw error;
-					}
-					break;
-				// Informational / already-implied-by-DataRow messages; nothing to do.
-				// ParseComplete/BindComplete/NoData/ParameterDescription only ever
-				// appear on the Extended Query path (SendExtendedQuery), since we
-				// don't send a Describe message that would otherwise trigger one.
-				case (byte)BackendMessageCode.RowDescription:
-				case (byte)BackendMessageCode.CommandComplete:
-				case (byte)BackendMessageCode.EmptyQueryResponse:
-				case (byte)BackendMessageCode.NoticeResponse:
-				case (byte)BackendMessageCode.ParameterStatus:
-				case (byte)BackendMessageCode.NotificationResponse:
-				case (byte)BackendMessageCode.ParseComplete:
-				case (byte)BackendMessageCode.BindComplete:
-				case (byte)BackendMessageCode.NoData:
-				case (byte)BackendMessageCode.ParameterDescription:
-					break;
-				default:
-					UnexpectedProviderMessage(code);
-					break;
+							transactionStatus = body.Length > 0 ? body[0] : (byte)TransactionStatus.Idle;
+							var results = new string?[count];
+							Array.Copy(buffer, results, count);
+							return results;
+						}
+					case (byte)BackendMessageCode.ErrorResponse:
+						{
+							//var error = AuthenticationHelper.ParseErrorResponse(body);
+							// Drain remaining messages so the connection is left in a
+							// clean, known state (ReadyForQuery) before surfacing the error.
+							byte drainCode;
+							byte[] drainBody;
+							do
+							{
+								(drainCode, drainBody) = stream.ReadMessage(false);
+							} while (drainCode != (byte)BackendMessageCode.ReadyForQuery);
+							transactionStatus = drainBody.Length > 0 ? drainBody[0] : (byte)TransactionStatus.Idle;
+							//throw error;
+						}
+						break;
+					// Informational / already-implied-by-DataRow messages; nothing to do.
+					// ParseComplete/BindComplete/NoData/ParameterDescription only ever
+					// appear on the Extended Query path (SendExtendedQuery), since we
+					// don't send a Describe message that would otherwise trigger one.
+					case (byte)BackendMessageCode.RowDescription:
+					case (byte)BackendMessageCode.CommandComplete:
+					case (byte)BackendMessageCode.EmptyQueryResponse:
+					case (byte)BackendMessageCode.NoticeResponse:
+					case (byte)BackendMessageCode.ParameterStatus:
+					case (byte)BackendMessageCode.NotificationResponse:
+					case (byte)BackendMessageCode.ParseComplete:
+					case (byte)BackendMessageCode.BindComplete:
+					case (byte)BackendMessageCode.NoData:
+					case (byte)BackendMessageCode.ParameterDescription:
+						break;
+					default:
+						UnexpectedProviderMessage(code);
+						break;
+				}
 			}
+		}
+		finally
+		{
+			pool.Return(buffer, clearArray: true);
 		}
 	}
 
@@ -565,7 +584,6 @@ internal static class NetworkStreamExtensions
 		foreach (var column in columns)
 		{
 			if (column.Type == EntityType.SearchableColumn) continue;
-
 			var valueLength = BinaryPrimitives.ReadInt32BigEndian(body.AsSpan(offset));
 			var index = column.RecordIndex + count;
 
@@ -602,8 +620,7 @@ internal static class NetworkStreamExtensions
 			}
 			offset += valueLength;
 		}
-
-		buffer[table.RecordSize - 1] = null; // Record's dirty-tracker slot: a freshly loaded row is never dirty
+		buffer[count + table.RecordSize - 1] = null; // Record's dirty-tracker slot: a freshly loaded row is never dirty
 	}
 
 	private static void EnsureCapacity(ArrayPool<string?> pool, ref string?[] buffer, int usedCount, int required)

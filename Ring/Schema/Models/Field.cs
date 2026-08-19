@@ -8,8 +8,9 @@ namespace Ring.Schema.Models;
 /// </summary>
 internal sealed class Field : BaseEntity, IEquatable<Field>
 {
-	// 60 bytes - 0 bytes padding - perfectly aligned!
+	// 63 → rounded to 64 bytes. - 1 bytes padding - perfectly aligned!
 	internal readonly string? DefaultValue;
+	internal readonly string? EffectiveDefaultValue; // default value to use when creating a new record. If not specified and field is mandatory, then use the default value for the field type.
 	internal readonly int Size;
 	internal readonly FieldType Type;
 	internal readonly SearchableType SearchableType;
@@ -20,12 +21,13 @@ internal sealed class Field : BaseEntity, IEquatable<Field>
 	/// <summary>
 	/// 	Ctor
 	/// </summary>
-	internal Field(int id, string name, string? description, FieldType type, int size, string? defaultValue, SearchableType searchableType,
+	internal Field(int id, string name, string? description, FieldType type, int size, string? defaultValue, string? effectiveDefaultValue, SearchableType searchableType,
 		bool baseline, bool notNull, bool multilingual, bool allowTruncation, bool active) : base(id, name, description, baseline, active)
 	{
 		Type = type;
 		Size = size;
 		DefaultValue = defaultValue;
+		EffectiveDefaultValue = effectiveDefaultValue;
 		NotNull = notNull;
 		SearchableType = searchableType;
 		Multilingual = multilingual;

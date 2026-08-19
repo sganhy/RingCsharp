@@ -139,13 +139,12 @@ internal sealed class BulkAlter : IEquatable<BulkAlter>
 			switch (constraint.Type)
 			{
 				case ConstraintType.PrimaryKey:
-					_queries.Add(new AlterQuery(table.Id, table, AlterQueryType.CreatePrimaryKey, null, constraint, null, GetTableSpace(table, EntityType.Constraint)));
+					_queries.Add(new AlterQuery(table.Id, table, constraint.Type.ToAlterQueryType(), null, constraint, null, GetTableSpace(table, EntityType.Constraint)));
 					break;
 				case ConstraintType.NotNull:
-					_queries.Add(new AlterQuery(table.Id, table, AlterQueryType.CreateNotNull, null, constraint, null, null));
-					break;
 				case ConstraintType.Check:
-					_queries.Add(new AlterQuery(table.Id, table, AlterQueryType.CreateCheckConstraint, null, constraint, null, null));
+				case ConstraintType.Default:
+					_queries.Add(new AlterQuery(table.Id, table, constraint.Type.ToAlterQueryType(), null, constraint, null, null));
 					break;
 			}
 	}

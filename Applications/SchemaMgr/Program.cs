@@ -22,8 +22,8 @@ public static class Program
 		BulkRetrieve query = new BulkRetrieve();
 
 
-		//SchemaManager.CreateInitialSchema("public");
-		var lst =  SchemaManager.SelecMeta("public");
+		SchemaManager.CreateInitialSchema("public");
+		//var lst =  SchemaManager.SelecMeta("public");
 
 		/*
 		connection.Execute();

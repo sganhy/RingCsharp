@@ -11,6 +11,7 @@ internal enum AlterQueryType : byte
 	CreateNotNull = 14,
 	CreateCheckConstraint = 15,
 	CreatePrimaryKey = 16,
+	CreateDefaultConstraint = 17,
 	CreateIndex = 103,
     Undefined = byte.MaxValue
 }

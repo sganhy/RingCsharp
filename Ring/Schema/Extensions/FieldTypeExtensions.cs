@@ -5,7 +5,7 @@ namespace Ring.Schema.Extensions;
 
 internal static class FieldTypeExtensions
 {
-	private static readonly string DefaultNumberValue = "0";
+	private static readonly string DefaultNumberValue = default(long).ToString(CultureInfo.InvariantCulture);
 	private static readonly string DefaultBoolValue = false.ToString(CultureInfo.InvariantCulture);
 
 	internal static string RecordTypeDisplay(this FieldType fieldType) {

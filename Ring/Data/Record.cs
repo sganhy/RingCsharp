@@ -151,7 +151,7 @@ public struct Record : IEquatable<Record>
 		var table = _type;
 		if (table.Id == -1) ThrowRecordUnknownRecordType();
 		var fieldId = table.GetFieldIndex(name);
-		if (fieldId > -1) return data[fieldId + _offset] ?? table.Fields[fieldId].DefaultValue;
+		if (fieldId > -1) return data[fieldId + _offset] ?? table.Fields[fieldId].EffectiveDefaultValue;
 		ThrowRecordUnknownFieldName(table, name);
 		return null;
 	}
@@ -169,7 +169,7 @@ public struct Record : IEquatable<Record>
 		if (type != FieldType.Boolean) ThrowImpossibleConversion(type, FieldType.Boolean);
 		value = null;
 		//BooleanTrue: BooleanFalse
-		var result = data[fieldId + _offset] ?? field.DefaultValue;
+		var result = data[fieldId + _offset] ?? field.EffectiveDefaultValue;
 		if (string.Equals(BooleanTrue, result, StringComparison.Ordinal)) value = true;
 		else if (string.Equals(BooleanFalse, result, StringComparison.Ordinal)) value = false;
 	}
@@ -186,7 +186,7 @@ public struct Record : IEquatable<Record>
 		var field = table.Fields[fieldId];
 		var fieldType = field.Type;
 		if (fieldType != FieldType.ByteArray) ThrowImpossibleConversion(fieldType, FieldType.ByteArray);
-		var result = data[fieldId + _offset] ?? field.DefaultValue;
+		var result = data[fieldId + _offset] ?? field.EffectiveDefaultValue;
 		if (result is not  null) value = Convert.FromBase64String(result);
 	}
 
@@ -204,7 +204,7 @@ public struct Record : IEquatable<Record>
 		if (fieldType != FieldType.Byte && fieldType != FieldType.Short &&
 			fieldType != FieldType.Int && fieldType != FieldType.Long)
 			ThrowImpossibleConversion(fieldType, FieldType.Long);
-		var result = data[fieldId + _offset] ?? field.DefaultValue;
+		var result = data[fieldId + _offset] ?? field.EffectiveDefaultValue;
 		if (result is not null) value = long.Parse(result, DefaultCulture); // already validated in SetField method!!!
 	}
 
@@ -221,7 +221,7 @@ public struct Record : IEquatable<Record>
 		var fieldType = field.Type;
 		if (fieldType != FieldType.Float && fieldType != FieldType.Double)
 			ThrowImpossibleConversion(fieldType, FieldType.Double);
-		var result = data[fieldId + _offset] ?? field.DefaultValue;
+		var result = data[fieldId + _offset] ?? field.EffectiveDefaultValue;
 		if (result is not null) value = double.Parse(result, DefaultCulture);
 	}
 
@@ -241,7 +241,7 @@ public struct Record : IEquatable<Record>
 		var fieldType = field.Type;
 		if (fieldType != FieldType.DateTime && fieldType != FieldType.DateTimeOffset && fieldType != FieldType.Date) 
 			ThrowImpossibleConversion(fieldType, FieldType.DateTime);
-		var result = data[fieldId + _offset] ?? field.DefaultValue;
+		var result = data[fieldId + _offset] ?? field.EffectiveDefaultValue;
 		if (result is null) return;
 		value = result.ToDateTime(fieldType);
 	}
@@ -582,7 +582,7 @@ public struct Record : IEquatable<Record>
 
 	private static void MandatoryField(Table table, int fieldId)
 	{
-		if (table.Fields[fieldId].DefaultValue is null) {
+		if (table.Fields[fieldId].EffectiveDefaultValue is null) {
 			// throw exception mandatory field 
 			ThrowMandatoryFieldCannotBeNull(table, table.Fields[fieldId].Name);
 		}

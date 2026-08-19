@@ -353,6 +353,26 @@ public sealed class DdlBuilderTest : BaseBuilderTest
 	}
 
 	[Fact]
+	public void Create_DefaultConstraint_DdlQuery()
+	{
+		// arrange 
+		var schBuilder = new SchemaBuilder();
+		var schemaName = "@Test";
+		var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
+		var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
+		var table = schema.GetTable("@meta");
+		Assert.NotNull(table);
+		var defaultConstraint = schema.DdlBuilder.GetConstraints(table).Last(p => p.Type == ConstraintType.Default);
+		var expectedSql = "ALTER TABLE \"@test\".\"@meta\" ALTER COLUMN active SET DEFAULT 'True'";
+
+		// act 
+		var dql = _sut.Create(defaultConstraint);
+
+		// assert
+		Assert.Equal(expectedSql, dql);
+	}
+
+	[Fact]
 	public void Create_CheckConstraint_DdlQuery()
 	{
 		// arrange 

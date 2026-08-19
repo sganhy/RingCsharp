@@ -20,7 +20,7 @@ public class FieldExtensionsTest : BaseTest
         var fieldType = _faker.PickRandom<FieldType>();
         var defaultValue = _faker.Random.Bool()? null : _faker.Random.String(); // nullable string
         var size = _faker.Random.Number(0,int.MaxValue);
-        var field = new Field(id, name, description, fieldType, size, defaultValue, SearchableType.None, true, true, true, true, false);
+        var field = new Field(id, name, description, fieldType, size, defaultValue, defaultValue, SearchableType.None, true, true, true, true, false);
 
         // act 
         var meta = FieldExtensions.ToMeta(field, tableId);
@@ -49,7 +49,7 @@ public class FieldExtensionsTest : BaseTest
         var fieldType = _faker.PickRandom<FieldType>();
         var defaultValue = _faker.Random.Bool()? null: _faker.Random.String();
         var size = _faker.Random.Number(0,int.MaxValue);
-        var field = new Field(id, name, description, fieldType, size, defaultValue, SearchableType.IgnoreDiacritic, false, false, false, true, true);
+        var field = new Field(id, name, description, fieldType, size, defaultValue, defaultValue, SearchableType.IgnoreDiacritic, false, false, false, true, true);
 
         // act 
         var meta = FieldExtensions.ToMeta(field, tableId);
@@ -77,8 +77,8 @@ public class FieldExtensionsTest : BaseTest
         var fieldType = _faker.PickRandom<FieldType>();
         var defaultValue = _faker.Random.Bool()? null: _faker.Random.String();
         var size = _faker.Random.Number(int.MinValue,int.MaxValue);
-        var field1 = new Field(id, name, description, fieldType, size, defaultValue, SearchableType.IgnoreDiacritic, false, false, false, true, true);
-        var field2 = new Field(id, name, description, fieldType, size, defaultValue, SearchableType.IgnoreDiacritic, false, false, false, true, true);
+        var field1 = new Field(id, name, description, fieldType, size, defaultValue, defaultValue, SearchableType.IgnoreDiacritic, false, false, false, true, true);
+        var field2 = new Field(id, name, description, fieldType, size, defaultValue, defaultValue, SearchableType.IgnoreDiacritic, false, false, false, true, true);
 
         // act 
         var hash1 = FieldExtensions.Hash(field1);
@@ -98,10 +98,10 @@ public class FieldExtensionsTest : BaseTest
         var fieldType = _faker.PickRandom<FieldType>();
         var defaultValue = _faker.Random.Bool() ? null : _faker.Random.String();
         var size = _faker.Random.Number(int.MinValue,int.MaxValue);
-        var field1 = new Field(id, name, description, fieldType, size, defaultValue, SearchableType.IgnoreCase, false, false, false, true, true);
-        var field2 = new Field(id, name, description, fieldType, size, defaultValue, SearchableType.IgnoreCase, false, false, true, true, true);
-        var field3 = new Field(id, name, description, fieldType, size, defaultValue, SearchableType.IgnoreDiacritic, false, false, false, true, true);
-        var field4 = new Field(id*-1, name, description, fieldType, size, defaultValue, SearchableType.IgnoreCase, false, false, false, true, true);
+        var field1 = new Field(id, name, description, fieldType, size, defaultValue, defaultValue, SearchableType.IgnoreCase, false, false, false, true, true);
+        var field2 = new Field(id, name, description, fieldType, size, defaultValue, defaultValue, SearchableType.IgnoreCase, false, false, true, true, true);
+        var field3 = new Field(id, name, description, fieldType, size, defaultValue, defaultValue, SearchableType.IgnoreDiacritic, false, false, false, true, true);
+        var field4 = new Field(id*-1, name, description, fieldType, size, defaultValue, defaultValue, SearchableType.IgnoreCase, false, false, false, true, true);
 
         // act 
         var hash1 = FieldExtensions.Hash(field1);
@@ -155,10 +155,10 @@ public class FieldExtensionsTest : BaseTest
         var fieldType = _faker.PickRandom<FieldType>();
         var defaultValue = _faker.Random.Bool() ? null : _faker.Random.String();
         var size = _faker.Random.Number(int.MinValue, int.MaxValue);
-        var field1 = new Field(id, name, description, fieldType, size, defaultValue, SearchableType.IgnoreCase, false, false, false, true, true);
-        var field2 = new Field(id, name, description, fieldType, size, defaultValue, SearchableType.IgnoreCase, false, false, true, true, true);
-        var field3 = new Field(id, name, description, fieldType, size, defaultValue, SearchableType.IgnoreDiacritic, false, false, false, true, true);
-        var field4 = new Field(id * -1, name, description, fieldType, size, defaultValue, SearchableType.IgnoreCase, false, false, false, true, true);
+        var field1 = new Field(id, name, description, fieldType, size, defaultValue, defaultValue, SearchableType.IgnoreCase, false, false, false, true, true);
+        var field2 = new Field(id, name, description, fieldType, size, defaultValue, defaultValue, SearchableType.IgnoreCase, false, false, true, true, true);
+        var field3 = new Field(id, name, description, fieldType, size, defaultValue, defaultValue, SearchableType.IgnoreDiacritic, false, false, false, true, true);
+        var field4 = new Field(id * -1, name, description, fieldType, size, defaultValue, defaultValue, SearchableType.IgnoreCase, false, false, false, true, true);
 
         // act 
         var result1 = field1 == field2;
@@ -187,8 +187,8 @@ public class FieldExtensionsTest : BaseTest
         var fieldType = _faker.PickRandom<FieldType>();
         var defaultValue = _faker.Random.Bool() ? null : _faker.Random.String();
         var size = _faker.Random.Number(int.MinValue, int.MaxValue);
-        var field1 = new Field(id, name, description, fieldType, size, defaultValue, SearchableType.IgnoreCase, false, false, false, true, true);
-        var field2 = new Field(id, name, description, fieldType, size, defaultValue, SearchableType.IgnoreCase, false, false, false, true, true);
+        var field1 = new Field(id, name, description, fieldType, size, defaultValue, defaultValue, SearchableType.IgnoreCase, false, false, false, true, true);
+        var field2 = new Field(id, name, description, fieldType, size, defaultValue, defaultValue, SearchableType.IgnoreCase, false, false, false, true, true);
 
         // act 
         var result = field1 != field2;

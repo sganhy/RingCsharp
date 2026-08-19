@@ -39,6 +39,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	protected static readonly string DdlComment = @"COMMENT ";
 	protected static readonly string DdlTruncate = @"TRUNCATE ";
 	protected static readonly string DdlNotNull = @"NOT NULL";
+	protected static readonly string DdlDefault = @"DEFAULT ";
 	protected static readonly string DdlSet = @"SET ";
 	protected static readonly string DdlIs = @"IS ";
 
@@ -282,7 +283,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	}
 	public string Create(Constraint constraint, TableSpace? tablespace = null)
 	{
-		// Code size: 620 (0x26c)
+		// Code size: 777 (0x309)
 		var skipTableSpace = true;
 		var result = new StringBuilder();
 		result.Append(DdlAlter)
@@ -307,10 +308,16 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 				skipTableSpace = false;
 				break; 
 			case ConstraintType.NotNull:
-				//alter table my_schema.my_table alter column my_column set not null;
+				//eg. alter table my_schema.my_table alter column my_column set not null;
 				result.Append(AlterColumnStatment).Append(SqlSpace).Append(constraint.Columns[0].PhysicalName).Append(SqlSpace);
 				if (Provider == DatabaseProvider.PostgreSql) result.Append(DdlSet);
 				result.Append(DdlNotNull);
+				break;
+			case ConstraintType.Default:
+				//eg. alter table public."@meta" alter column active SET DEFAULT 'True'
+				result.Append(AlterColumnStatment).Append(SqlSpace).Append(constraint.Columns[0].PhysicalName).Append(SqlSpace);
+				if (Provider == DatabaseProvider.PostgreSql) result.Append(DdlSet);
+				result.Append(DdlDefault).Append(GetDefaultValue(constraint.ToTable.Fields[constraint.Columns[0].RecordIndex]));
 				break;
 			case ConstraintType.Check:
 				//eg. alter table public."@meta" ADD CONSTRAINT "ck_@meta_002" CHECK (object_type>=0 and object_type<=124);
@@ -391,7 +398,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 
 	public Constraint[] GetConstraints(Table table) 
 	{
-		// Code size: 1012 (0x3f4) - too big  
+		// Code size: 1112 (0x458) - too big  
 		var result = new List<Constraint>();
 		if (table.HasPrimaryKey()) result.Add(new(ConstraintType.PrimaryKey, table, GetPhysicalName(ConstraintType.PrimaryKey, table, -1)));
 		var fieldCount = table.Fields.Length;
@@ -438,6 +445,13 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 				(column.Type == EntityType.Relation && table.Relations[column.RecordIndex - fieldCount].NotNull))
 			{
 				var newConstraint = new Constraint(ConstraintType.NotNull, table, string.Empty);
+				newConstraint.Columns.Add(column);
+				result.Add(newConstraint);
+			}
+			// default constraints
+			if (column.Type == EntityType.Field && table.Fields[column.RecordIndex].DefaultValue is not null && table.Type != TableType.Business)
+			{
+				var newConstraint = new Constraint(ConstraintType.Default, table, string.Empty);
 				newConstraint.Columns.Add(column);
 				result.Add(newConstraint);
 			}
@@ -540,6 +554,12 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 			return GetPhysicalName(provider, TablePrefix + name);
 		}
 	}
+
+	private static string GetDefaultValue(Field field)
+	{
+		return field.Type == FieldType.String || field.Type == FieldType.Boolean ? '\'' +  field.DefaultValue + '\'' : field.DefaultValue;
+	}
+
 	#endregion
 
 }

@@ -2,7 +2,7 @@
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using Ring.Util.Extensions;
-using System.Runtime.CompilerServices;
+using System.Globalization;
 
 namespace Ring.Schema.Builders;
 
@@ -10,7 +10,7 @@ internal sealed class TableBuilder
 {
 	// BUGS & IMPROVEMENTS:
 	//     1) GetIndex() pass 1: Where memory actually gets duplicated; replaced Meta[] lstMeta parameter; Severity: High (Solved)
-
+	private readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
 	private readonly string FieldId = "id";
 	private readonly string FieldSchemaId = "schema_id";
 	private readonly string FieldObjectType = "object_type";
@@ -33,18 +33,18 @@ internal sealed class TableBuilder
 	private readonly string FieldMessage = "message";
 
 	internal Table GetMeta(string schemaName, DatabaseProvider provider) {
-		// Code size: 301 (0x12d)
+		// Code size: 337 (0x151)
 		var metaArr = new[] {
 			GetField(FieldId, FieldType.Int),
 			GetField(FieldSchemaId, FieldType.Int), 
 			GetField(FieldObjectType, FieldType.Byte),
 			GetField(FieldReferenceId, FieldType.Int),
 			GetField(FieldDataType, FieldType.Int),
-			GetField(FieldFlags, FieldType.Long),
+			GetField(FieldFlags, FieldType.Long,0,true,SearchableType.None,FieldType.Long.GetDefaultValue()),
 			GetField(FieldName, FieldType.String,60),
 			GetField(FieldDescription, FieldType.LongString,false),
 			GetField(FieldValue, FieldType.LongString,false),
-			GetField(FieldActive, FieldType.Boolean),
+			GetField(FieldActive, FieldType.Boolean,0,true,SearchableType.None,true.ToString(DefaultCulture)),
 			GetIndex(true, new [] { FieldId, FieldSchemaId, FieldObjectType, FieldReferenceId }) // memory actually gets duplicated with [] Meta.
 		};
 		var metaTable = GetTable((int)TableType.Meta, TableType.Meta.GetLogicalName(), TableType.Meta);
@@ -174,18 +174,12 @@ internal sealed class TableBuilder
         return new(id, (byte)EntityType.Table, 0, (int)tableType, flags, name, tableType.GetDescription(), null, true);
 	}
 	private static Meta GetSchema(int id, string name) => new(id, (byte)EntityType.Schema, 0, 0, 0L, name, null, null, true);
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static Meta GetField(string name, FieldType fieldType, bool notNull) => GetField(name, fieldType, 0, notNull, SearchableType.None); // Code size: 11 (0xb)
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static Meta GetField(string name, FieldType fieldType, int fieldSize) => GetField(name, fieldType, fieldSize, true, SearchableType.None); // Code size: 11 (0xb)
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static Meta GetField(string name, FieldType fieldType) => GetField(name, fieldType, 0, true,SearchableType.None); // Code size: 11 (0xb)
-
-	private static Meta GetField(string name, FieldType fieldType, int fieldSize, bool notNull, SearchableType searchableType)
+	private static Meta GetField(string name, FieldType fieldType, int fieldSize, bool notNull, SearchableType searchableType, string? defaultValue = null)
 	{
+		// Code size: 67 (0x43)
 		var flags = 0L;
 		var dataType = 0;
 		flags = Meta.SetFieldNotNull(flags, notNull);
@@ -193,7 +187,7 @@ internal sealed class TableBuilder
 		if (fieldType == FieldType.String) flags = Meta.SetSearchableType(flags, searchableType);
 		flags = Meta.SetEntityBaseline(flags, true);
 		dataType = Meta.SetFieldType(dataType, fieldType);
-		return new (0, (byte)EntityType.Field, 0, dataType, flags, name, null, null, true);
+		return new (0, (byte)EntityType.Field, 0, dataType, flags, name, null, defaultValue, true);
 	}
 	private static Meta GetIndex(bool unique, params string[] fieldNames)
 	{

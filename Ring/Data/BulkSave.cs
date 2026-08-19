@@ -24,7 +24,6 @@ public readonly struct BulkSave : IBulkSave
 	/// </summary>
 	internal BulkSave(Database schema) => _info = new BulkSaveInfo(32, schema);
 	public BulkSave() => _info = new BulkSaveInfo(4);
-
 	internal SpanList<SaveQuery> Queries => _info.Queries;
 
 	/// <summary>

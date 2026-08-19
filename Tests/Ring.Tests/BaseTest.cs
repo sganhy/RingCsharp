@@ -69,7 +69,7 @@ public abstract class BaseTest
     internal Field GetAnonymousField(int? id, char minChar = char.MinValue, char maxChar = char.MaxValue) =>
         new(id is null ? _faker.Random.Number(int.MinValue, int.MaxValue): id.Value, _faker.Random.String(null, minChar, maxChar),
             _faker.Random.String(), _faker.PickRandom<FieldType>(), _faker.Random.Number(int.MinValue, int.MaxValue),
-            _faker.Random.String(), _faker.PickRandom<SearchableType>(), _faker.Random.Bool(), _faker.Random.Bool(),
+            _faker.Random.String(), _faker.Random.String(), _faker.PickRandom<SearchableType>(), _faker.Random.Bool(), _faker.Random.Bool(),
             _faker.Random.Bool(), _faker.Random.Bool(), _faker.Random.Bool());
 
     internal Column GetAnonymousColumn() =>
@@ -137,7 +137,7 @@ public abstract class BaseTest
                 var line = metaLine.Split(',');
                 if (line.Length < 6) continue;
                 Meta meta = new(int.Parse(line[0]), byte.Parse(line[2]), int.Parse(line[3]), int.Parse(line[4]), long.Parse(line[5]), line[6],
-                    line[7], line[8], bool.Parse(line[9]));
+                    line[7], string.IsNullOrWhiteSpace(line[8]) ? null : line[8], bool.Parse(line[9]));
                 result.Add(meta);
             }
         }

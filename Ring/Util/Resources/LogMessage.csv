@@ -37,6 +37,7 @@
 501,"Unexpected message '{0}' received while executing a query."
 502,"The connection was closed by the server while reading a message."
 503,"Invalid message length received from server."
+507,The connection is already open.
 1013,"Central catalog that describes every structural element of the database."
 1014,"Provides controlled, scoped id generation."
 1017,"Serves as the operational audit trail."

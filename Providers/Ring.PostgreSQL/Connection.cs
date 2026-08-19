@@ -6,6 +6,9 @@ using Ring.PostgreSQL.Exceptions;
 using Ring.PostgreSQL.Extensions;
 using Ring.PostgreSQL.Helpers;
 using Ring.Util.Builders.PostgreSQL;
+using Ring.Util.Enums;
+using Ring.Util.Helpers;
+using System.Diagnostics.CodeAnalysis;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -16,6 +19,7 @@ public sealed class Connection : IConnection
 {
 	private static readonly NetworkStream ClosedStream = NetworkStreamExtensions.CreateClosedStream(null);
 	private static readonly DdlBuilder _ddlBuilder = new();
+	private const int MinTimeOut = 5000; // 5 seconds
 
 	// Terminate message ('X' + Int32 self-inclusive length=4, no payload) is
 	// wire-protocol-constant - computed once instead of allocated on every Close.
@@ -66,15 +70,14 @@ public sealed class Connection : IConnection
 
 	// build ConnectionParameters from connection string
 	public Connection(string connectionString) : this(connectionString.ToConnectionParameters()) { }
-
 	internal Connection(ConnectionParameters parameters)
 	{
 		_parameters = parameters;
 		_id = this.GetId(parameters.GetHashCode());
 		_creationTime = DateTime.Now;
-		_state = ConnectionState.Undefined;
+		_state = ConnectionState.None;
 		_lastConnectionTime = null;
-		_timeout = parameters.TimeOut;
+		_timeout = Math.Max(parameters.TimeOut, MinTimeOut); // min 5 seconds
 		_host = parameters.Host;
 		_port = parameters.Port;
 		_encoding = Encoding.GetEncoding(parameters.ClientEncoding);
@@ -95,7 +98,7 @@ public sealed class Connection : IConnection
 
 		try
 		{
-			_stream.SendQuery("BEGIN".AsSpan(), _encoding.GetByteCount("BEGIN"), _encoding, _sqlSendBuffer);
+			_stream.SendQuery("BEGIN".AsSpan(), _encoding.GetByteCount("BEGIN"), _encoding, _sqlSendBuffer, 16);
 			_stream.DrainToReadyForQuery(ref _transactionStatus);
 		}
 		catch (PgOperationalError)
@@ -185,14 +188,12 @@ public sealed class Connection : IConnection
 	/// </summary>
 	public void Commit()
 	{
-		if (_state != ConnectionState.Open)
-			throw new InvalidOperationException("The connection is not open.");
 		if (_transactionStatus == (byte)TransactionStatus.Idle)
 			throw new InvalidOperationException("Commit() was called but no transaction is currently active.");
 
 		try
 		{
-			_stream.SendQuery("COMMIT".AsSpan(), _encoding.GetByteCount("COMMIT"), _encoding, _sqlSendBuffer);
+			_stream.SendQuery("COMMIT".AsSpan(), _encoding.GetByteCount("COMMIT"), _encoding, _sqlSendBuffer, 16);
 			_stream.DrainToReadyForQuery(ref _transactionStatus);
 		}
 		catch (PgOperationalError)
@@ -219,10 +220,6 @@ public sealed class Connection : IConnection
 
 	public string?[] Execute(in RetrieveQuery query, ReadOnlySpan<char> sql, int sqlByteCount)
 	{
-		
-		
-
-
 		// Filters/sorting/paging need RetrieveFilter/RetrieveSort/PageInfo -> SQL
 		// translation that isn't wired up yet. Fail loudly instead of silently
 		// returning an unfiltered result set.
@@ -241,7 +238,7 @@ public sealed class Connection : IConnection
 
 			// fire-and-forget, no Describe/RowDescription needed for generic parsing; 
 			// keep it synchronous to avoid async overhead for a single round trip
-			_stream.SendQuery(sql, _encoding.GetByteCount(sql), _encoding, _sqlSendBuffer);
+			_stream.SendQuery(sql, _encoding.GetByteCount(sql), _encoding, _sqlSendBuffer, 128);
 
 			return _stream.ReadRetrieveRecords(ref _transactionStatus, _encoding, query.Table);
 		}
@@ -263,16 +260,18 @@ public sealed class Connection : IConnection
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	public OperationalError? Execute(in AlterQuery query, ReadOnlySpan<char> sql, int sqlByteCount)
 	{
-		// Code size: 54 (0x36) - no virtual call
-		_stream.SendQuery(sql, sqlByteCount, _encoding, _sqlSendBuffer);
+		// Code size: 76 (0x4c) - no virtual call
+		_state = ConnectionState.Open | ConnectionState.Executing; // we checked already the connection state in AlterQuery.Execute().
+		_stream.SendQuery(sql, sqlByteCount, _encoding, _sqlSendBuffer,256);
 		var returnValue = _stream.DrainToReadyForQuery(ref _transactionStatus);
 		returnValue?.Set(query, _ddlBuilder);
+		_state = ConnectionState.Open;
 		return returnValue;
 	}
 	public async ValueTask<OperationalError?> ExecuteAsync(AlterQuery query, string sql, int sqlByteCount, CancellationToken cancellationToken = default)
 	{
 		// Code size: 88 (0x58) - no virtual call
-		_stream.SendQuery(sql, sqlByteCount, _encoding, _sqlSendBuffer);
+		_stream.SendQuery(sql, sqlByteCount, _encoding, _sqlSendBuffer,256);
 		(var returnValue, var drainedBody) = await _stream.DrainToReadyForQueryAsync(cancellationToken).ConfigureAwait(false);
 		if (returnValue is not null)
 		{
@@ -286,34 +285,17 @@ public sealed class Connection : IConnection
 	{
 		throw new NotImplementedException();
 	}
-
-
-	public void Open()
-	{
-		if (_state == ConnectionState.Open)
-			throw new InvalidOperationException("The connection is already open.");
-
-		// Delegate to the async implementation and block. The sync auth path
-		// (AuthenticationHelper.HandleAuthentication) was a non-functional stub
-		// that re-sent the StartupMessage instead of reading and responding to
-		// the server's AuthenticationRequest, which caused the server to reject
-		// the connection. Reusing the async implementation avoids maintaining
-		// two copies of the wire-protocol logic.
-		OpenAsyncImpl(CancellationToken.None).GetAwaiter().GetResult();
-	}
-
+		
 	public int ProviderId() => (int)_parameters.DatabaseProvider;
 
 	public void Rollback()
 	{
-		if (_state != ConnectionState.Open)
-			throw new InvalidOperationException("The connection is not open.");
 		if (_transactionStatus == (byte)TransactionStatus.Idle)
 			throw new InvalidOperationException("Rollback() was called but no transaction is currently active.");
 
 		try
 		{
-			_stream.SendQuery("ROLLBACK".AsSpan(), _encoding.GetByteCount("ROLLBACK"), _encoding, _sqlSendBuffer);
+			_stream.SendQuery("ROLLBACK".AsSpan(), _encoding.GetByteCount("ROLLBACK"), _encoding, _sqlSendBuffer, 16);
 			_stream.DrainToReadyForQuery(ref _transactionStatus);
 		}
 		catch (PgOperationalError)
@@ -358,13 +340,19 @@ public sealed class Connection : IConnection
 			await stream.DisposeAsync().ConfigureAwait(false);
 	}
 
+	public void Open()
+	{
+		// Code size: 41 (0x29)
+		if ((_state & ConnectionState.Open) == ConnectionState.Open) ThrowConnectionAlreadyOpen();
+		// Delegate to the async implementation and block.
+		OpenAsyncImpl(CancellationToken.None).GetAwaiter().GetResult();
+	}
 
 	private Task OpenAsyncImpl(CancellationToken cancellationToken)
 	{
 		return Task.Run(async () =>
 		{
-			if (_state == ConnectionState.Open) throw new InvalidOperationException("The connection is already open.");
-
+			if ((_state & ConnectionState.Open) == ConnectionState.Open) ThrowConnectionAlreadyOpen();
 			_state = ConnectionState.Connecting;
 			try
 			{
@@ -372,7 +360,11 @@ public sealed class Connection : IConnection
 				var socket = await Task.Run(() => SocketHelper.ConnectSocket(_host, _port, _timeout), cancellationToken).ConfigureAwait(false);
 				socket.NoDelay = true;
 
-				_stream = new NetworkStream(socket, ownsSocket: true);
+				_stream = new NetworkStream(socket, ownsSocket: true)
+				{
+					WriteTimeout = _timeout,
+					ReadTimeout = _timeout
+				};
 				_socket = socket;
 
 				// Startup and authentication may perform network I/O; run on threadpool to avoid blocking
@@ -388,7 +380,7 @@ public sealed class Connection : IConnection
 				_stream.Dispose(); // also disposes underlying socket
 				_stream = ClosedStream;
 				_socket = null;
-				_state = ConnectionState.Undefined;
+				_state = ConnectionState.None;
 				throw;
 			}
 			catch
@@ -396,7 +388,7 @@ public sealed class Connection : IConnection
 				_stream.Dispose(); // also disposes underlying socket
 				_stream = ClosedStream;
 				_socket = null;
-				_state = ConnectionState.Undefined;
+				_state = ConnectionState.None;
 				throw;
 			}
 		}, cancellationToken);
@@ -456,6 +448,10 @@ public sealed class Connection : IConnection
 
 		if (canceled) throw new OperationCanceledException(cancellationToken);
 	}
+
+	[MethodImpl(MethodImplOptions.NoInlining)]
+	[DoesNotReturn]
+	private static void ThrowConnectionAlreadyOpen() =>	throw new InvalidOperationException(ResourceHelper.GetMessage(ResourceType.ConnectionAlreadyOpen));
 
 	#endregion
 

@@ -79,6 +79,7 @@ internal enum ResourceType : short
 	UnexpectedProviderMessage = 501,
 	ConnectionClosedByServer = 502,
 	InvalidMessageLengthFromServer = 503,
+	ConnectionAlreadyOpen=504,
 
 	/// <summary>
 	/// Meta schema tables description

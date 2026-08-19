@@ -1,12 +1,13 @@
 namespace Ring.Data;
 
-public enum ConnectionState 
+[Flags]
+public enum ConnectionState
 {
-	Undefined = 0,
+	None = 0,
 	Closed = 1,
 	Open = 2,
-	Connecting = 3,
-	Executing = 4,
-	Fetching = 5,
-	Broken = 6
+	Connecting = 4,
+	Executing = 8,
+	Fetching = 16,
+	Broken = 32
 }

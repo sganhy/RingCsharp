@@ -7,5 +7,6 @@ internal enum ConstraintType : byte
 	Check = 3,
 	NotNull = 8,
 	ForeignKey = 9,
+	Default = 10,
 	Undefined = 127
 }
