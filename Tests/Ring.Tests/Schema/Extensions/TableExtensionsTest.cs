@@ -418,26 +418,6 @@ public class TableExtensionsTest : BaseTest
 		Assert.Equal(expectedDesc, result);
 	}
 
-
-	[Fact]
-    internal void HasPrimaryKey_LogTable_False()
-    {
-        // arrange 
-        var schemaName = "@Test";
-        var schBuilder = new SchemaBuilder();
-        var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
-        var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
-        var logTable = schema.GetTable("@log");
-
-        // act 
-        Assert.NotNull(schema);
-        Assert.NotNull(logTable);
-        var result = logTable.HasPrimaryKey();
-
-        // assert
-        Assert.False(result);
-    }
-
     [Fact]
     internal void GetPrimaryKey_MetaIdTable_IColumnList()
     {

@@ -574,7 +574,7 @@ public sealed class DdlBuilderTest : BaseBuilderTest
         var ddlBuilder = DatabaseProvider.PostgreSql.GetDdlBuilder();
         var expectedResult = "pk_feat";
         Assert.NotNull(table);
-        var constraint = new Constraint(ConstraintType.PrimaryKey, table, string.Empty);
+        var constraint = new Constraint(ConstraintType.PrimaryKey, table, string.Empty,1);
         
         // act 
         var constraintPk = ddlBuilder.GetConstraints(table).First(p => p.Type == ConstraintType.PrimaryKey);

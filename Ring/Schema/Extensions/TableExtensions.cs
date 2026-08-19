@@ -280,8 +280,6 @@ internal static class TableExtensions
 		return index is not null ? new List<Column>(index.Columns) : EmptyColumnList;
 	}
 
-	internal static bool HasPrimaryKey(this Table table) => GetPrimaryKey(table).Count > 0;
-
 	internal static Meta[] ToMeta(this Table table, int schemaId) 
 	{
 		// Code size: 322 (0x142)

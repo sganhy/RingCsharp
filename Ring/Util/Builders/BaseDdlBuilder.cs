@@ -398,9 +398,10 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 
 	public Constraint[] GetConstraints(Table table) 
 	{
-		// Code size: 1112 (0x458) - too big  
+		// Code size: 1134 (0x46e) - too big  
 		var result = new List<Constraint>();
-		if (table.HasPrimaryKey()) result.Add(new(ConstraintType.PrimaryKey, table, GetPhysicalName(ConstraintType.PrimaryKey, table, -1)));
+		var keyCount = table.GetPrimaryKey().Count;
+		if (keyCount > 0) result.Add(new(ConstraintType.PrimaryKey, table, GetPhysicalName(ConstraintType.PrimaryKey, table, -1), keyCount));
 		var fieldCount = table.Fields.Length;
 		TableBuilder? tblBuilder = table.Type == TableType.Meta || table.Type == TableType.MetaId ? new TableBuilder() : null; // avoid TableBuilder instance by default.
 		var objectTypeMeta = tblBuilder?.GetObjectTypeMeta();
@@ -420,8 +421,8 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 				if (column.PhysicalName.Equals(objectTypeCol?.PhysicalName, StringComparison.OrdinalIgnoreCase))
 				{
 					(var min , var max) = EntityType.Field.GetRange();
-					var constraint = new Constraint(ConstraintType.Check, table, GetPhysicalName(ConstraintType.Check, table, column.Id), min, max);
-					constraint.Columns.Add(column);
+					var constraint = new Constraint(ConstraintType.Check, table, GetPhysicalName(ConstraintType.Check, table, column.Id), 1, min, max);
+					constraint.Columns[0] = column;
 					result.Add(constraint);
 				}
 				// (2) - schema_id or reference_id or id
@@ -429,8 +430,8 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 					column.PhysicalName.Equals(referenceIdCol?.PhysicalName, StringComparison.OrdinalIgnoreCase) ||
 					column.PhysicalName.Equals(idCol?.PhysicalName, StringComparison.OrdinalIgnoreCase))
 				{
-					var constraint = new Constraint(ConstraintType.Check, table, GetPhysicalName(ConstraintType.Check, table, column.Id), 0);
-					constraint.Columns.Add(column);
+					var constraint = new Constraint(ConstraintType.Check, table, GetPhysicalName(ConstraintType.Check, table, column.Id), 1, 0, null);
+					constraint.Columns[0] = column;
 					result.Add(constraint);
 				}
 			}
@@ -444,15 +445,15 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 			if ((column.Type == EntityType.Field && table.Fields[column.RecordIndex].NotNull) ||
 				(column.Type == EntityType.Relation && table.Relations[column.RecordIndex - fieldCount].NotNull))
 			{
-				var newConstraint = new Constraint(ConstraintType.NotNull, table, string.Empty);
-				newConstraint.Columns.Add(column);
+				var newConstraint = new Constraint(ConstraintType.NotNull, table, string.Empty, 1);
+				newConstraint.Columns[0] = column;
 				result.Add(newConstraint);
 			}
 			// default constraints
 			if (column.Type == EntityType.Field && table.Fields[column.RecordIndex].DefaultValue is not null && table.Type != TableType.Business)
 			{
-				var newConstraint = new Constraint(ConstraintType.Default, table, string.Empty);
-				newConstraint.Columns.Add(column);
+				var newConstraint = new Constraint(ConstraintType.Default, table, string.Empty, 1);
+				newConstraint.Columns[0] = column;
 				result.Add(newConstraint);
 			}
 		}

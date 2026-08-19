@@ -90,8 +90,8 @@ internal sealed class DdlBuilder : BaseDdlBuilder
 		// Code size: 72 (0x48)
 		if (column.FieldType == FieldType.Byte && column.Type == EntityType.Field)
 		{
-			var result = new Constraint(ConstraintType.Check, table, GetPhysicalName(ConstraintType.Check, table, column.Id), sbyte.MinValue, sbyte.MaxValue);
-			result.Columns.Add(column);
+			var result = new Constraint(ConstraintType.Check, table, GetPhysicalName(ConstraintType.Check, table, column.Id), 1, sbyte.MinValue, sbyte.MaxValue);
+			result.Columns[0] = column;
 			return result;
 		}
 		return null;

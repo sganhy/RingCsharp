@@ -107,6 +107,12 @@ internal sealed class BulkAlter : IEquatable<BulkAlter>
 
 		foreach (var query in _queries) 
 		{
+			if (query.Type == AlterQueryType.CreateCheckConstraint)
+			{
+				int oi2 = 0;
+				++oi2;
+				// Handle specific constraint
+			}
 			var sql = query.ToSql(builder);
 			if (sql is not null)
 			{
