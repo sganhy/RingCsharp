@@ -35,6 +35,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	private const byte RelationId = (byte)EntityType.Relation;
 	private const byte SequenceId = (byte)EntityType.Sequence;
 	private const byte TablespaceId = (byte)EntityType.Tablespace;
+	private const byte ConstraintId = (byte)EntityType.Constraint;
 	private const byte ParameterId = (byte)EntityType.Parameter;
 	private const byte SearchableColumnId = (byte)EntityType.SearchableColumn;
 	private const byte TimeZoneColumnId = (byte)EntityType.TimeZoneColumn;
@@ -86,6 +87,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	internal readonly bool IsRelation => ObjectType == RelationId;
 	internal readonly bool IsSequence => ObjectType == SequenceId;
 	internal readonly bool IsTableSpace => ObjectType == TablespaceId;
+	internal readonly bool IsConstraint => ObjectType == ConstraintId;
 	internal readonly bool IsParameter => ObjectType == ParameterId;
 	internal readonly bool IsSearchableColumn => ObjectType == SearchableColumnId;
 	internal readonly bool IsTimeZoneColumn => ObjectType == TimeZoneColumnId;
@@ -213,7 +215,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	internal static Table GetDefaultTable(in Meta meta) // Code size: 103 (0x67)
 		=> new(meta.Id, meta.Name, meta.Description, meta.Value, string.Empty,
 			meta.DataType.ToTableType(), Array.Empty<Relation>(), Array.Empty<Field>(), Array.Empty<Column>(),
-			Array.Empty<Index>(), meta.ReferenceId, PhysicalType.Table, -1, 0, DefaultCacheId, meta.IsEntityBaseline(), meta.Active,
+			Array.Empty<Index>(), Array.Empty<Constraint>(), meta.ReferenceId, PhysicalType.Table, -1, 0, DefaultCacheId, meta.IsEntityBaseline(), meta.Active,
 			meta.IsTableCached(), true, meta.IsTableReadonly(), meta.HasPreparedStatement(), meta.IsTableAllowAttributeExtension());
 
 	internal static Index GetDefaultIndex(in Meta meta) // Code size: 64 (0x40)
@@ -340,7 +342,7 @@ internal readonly struct Meta : IEquatable<Meta>
 			fields.AsSpan().Sort((x, y) => string.CompareOrdinal(x.Name, y.Name));
 			indexes.AsSpan().Sort((x, y) => string.CompareOrdinal(x.Name, y.Name));
 			
-			var table = new Table(Id, Name, Description, Value, physicalName, tableType, relations, fields, new Column[colCount], indexes, ReferenceId, physicalType, 
+			var table = new Table(Id, Name, Description, Value, physicalName, tableType, relations, fields, new Column[colCount], indexes, Array.Empty<Constraint>(), ReferenceId, physicalType, 
 				objectIndex, recordSize, GetCacheId(tableType), IsEntityBaseline(), Active, IsTableCached(), IsPhysicalDeletion(), IsTableReadonly(), 
 				HasPreparedStatement(), IsTableAllowAttributeExtension());
 

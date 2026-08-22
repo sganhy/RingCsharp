@@ -11,6 +11,7 @@ internal sealed class Table : BaseEntity, IEquatable<Table>
 	internal readonly Index[] Indexes;
 	internal readonly int RecordSize;
 	internal readonly Column[] Columns; // mixing Fields, Relations, and Computed columns.
+	internal readonly Constraint[] Constraints; // list of constraints for the table, sorted by id.
 	internal readonly PhysicalType PhysicalType;
 	internal readonly int SchemaId;
 	internal readonly string? Subject;
@@ -27,7 +28,7 @@ internal sealed class Table : BaseEntity, IEquatable<Table>
 	/// 	Ctor
 	/// </summary>
 	internal Table(int id, string name, string? description, string? subject, string physicalName, TableType type, Relation[] relations,
-		Field[] fields, Column[] columns, Index[] indexes, int schemaId, PhysicalType physicalType, int objectIndex, int recordSize, CacheId cacheId,
+		Field[] fields, Column[] columns, Index[] indexes, Constraint[] constraints, int schemaId, PhysicalType physicalType, int objectIndex, int recordSize, CacheId cacheId,
 		bool baseline, bool active, bool cached, bool allowHardDeletion, bool readonlyTable, bool usePreparedStatement, bool allowAttributeExtension) 
 		: base(id, name, description, baseline, active)
 	{
@@ -37,6 +38,7 @@ internal sealed class Table : BaseEntity, IEquatable<Table>
 		Columns = columns;
 		Relations = relations;
 		Indexes = indexes;
+		Constraints = constraints;
 		Readonly = readonlyTable;
 		Subject = subject;
 		CacheId = cacheId;

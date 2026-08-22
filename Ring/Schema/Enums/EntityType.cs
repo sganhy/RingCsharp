@@ -14,6 +14,7 @@ internal enum EntityType : byte
 	Sequence = 15,
 	Language = 17,
 	Tablespace = 18,
+	Constraint = 19,
 	Parameter = 23,
 	Alias = 25,
 	// specific column definition [71, 79]
@@ -21,7 +22,6 @@ internal enum EntityType : byte
 	TimeZoneColumn = 72,
 	IndexColumn = 73,
 	// not stored in @meta table
-	Constraint = 101,
 	Comment = 111,
 	// 125 & 126 reserved for unit tests
 	Undefined = 127

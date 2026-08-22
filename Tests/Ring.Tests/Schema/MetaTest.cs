@@ -296,9 +296,9 @@ public sealed class MetaTest : BaseTest
     [InlineData(15, EntityType.Sequence)]
     [InlineData(17, EntityType.Language)]
     [InlineData(18, EntityType.Tablespace)]
-    [InlineData(23, EntityType.Parameter)]
+	[InlineData(19, EntityType.Constraint)]
+	[InlineData(23, EntityType.Parameter)]
     [InlineData(25, EntityType.Alias)]
-    [InlineData(101, EntityType.Constraint)]
     [InlineData(200, EntityType.Undefined)]
     internal void GetEntityType_MutlipleInput_EntityType(byte objectType, EntityType entityType)
     {
@@ -543,7 +543,7 @@ public sealed class MetaTest : BaseTest
         Assert.Equal("name", field.Name);
         Assert.True(field.NotNull);
         Assert.True(field.Multilingual);
-        Assert.True(fieldPk.IsPrimaryKey());
+        Assert.False(fieldPk.IsPrimaryKey());
         Assert.Equal(FieldType.Short, fieldPk.Type);
     }
 

@@ -52,7 +52,8 @@ public class TableBuilderTest
         Assert.NotNull(metaTablePostGre.GetColumn("schema_id"));
         Assert.NotNull(metaTablePostGre.GetColumn("object_type"));
         Assert.Equal("id", metaTablePostGre.Fields[metaTablePostGre.Columns[0].RecordIndex].Name);
-        Assert.Equal("schema_id", metaTablePostGre.Fields[metaTablePostGre.Columns[1].RecordIndex].Name);
+		Assert.Equal(1, metaTablePostGre.Fields[metaTablePostGre.Columns[0].RecordIndex].Id);
+		Assert.Equal("schema_id", metaTablePostGre.Fields[metaTablePostGre.Columns[1].RecordIndex].Name);
         Assert.Equal("object_type", metaTablePostGre.Fields[metaTablePostGre.Columns[2].RecordIndex].Name);
         Assert.Equal("reference_id", metaTablePostGre.Fields[metaTablePostGre.Columns[3].RecordIndex].Name);
         Assert.Equal("data_type", metaTablePostGre.Fields[metaTablePostGre.Columns[4].RecordIndex].Name);
@@ -64,12 +65,12 @@ public class TableBuilderTest
 		Assert.Equal(1, metaTableMySql?.Indexes.Length);
 		Assert.Equal(4, metaTableMySql?.Indexes[0].Columns.Length);
 		Assert.True(metaTableMySql?.Indexes[0].Unique);
+		Assert.Equal("@meta_001", metaTableMySql?.Indexes[0].Name);
 		Assert.Equal("id", metaTableMySql?.Indexes[0].Columns[0].PhysicalName);
 		Assert.Equal("schema_id", metaTableMySql?.Indexes[0].Columns[1].PhysicalName);
 		Assert.Equal("object_type", metaTableMySql?.Indexes[0].Columns[2].PhysicalName);
 		Assert.Equal("reference_id", metaTableMySql?.Indexes[0].Columns[3].PhysicalName);
 	}
-
 
 	[Fact]
     internal void GetMetaId_AnonymousSchema_MetaIdTableObject()
@@ -108,11 +109,10 @@ public class TableBuilderTest
         Assert.Equal(FieldType.Byte, metaIdTablePostGre.Fields[metaIdTablePostGre.Columns[2].RecordIndex].Type);
         Assert.Equal(FieldType.Long, metaIdTablePostGre.Fields[metaIdTablePostGre.Columns[3].RecordIndex].Type);
 		Assert.Equal(1, metaIdTableMySql?.Indexes.Length);
+		Assert.Equal("@meta_id_001", metaIdTableMySql?.Indexes[0].Name);
 		Assert.Equal("id", metaIdTableMySql?.Indexes[0].Columns[0].PhysicalName);
 		Assert.Equal("schema_id", metaIdTableMySql?.Indexes[0].Columns[1].PhysicalName);
 		Assert.Equal("object_type", metaIdTableMySql?.Indexes[0].Columns[2].PhysicalName);
-		
-
 	}
 
 	[Fact]

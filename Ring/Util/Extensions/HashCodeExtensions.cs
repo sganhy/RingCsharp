@@ -32,6 +32,17 @@ internal static class HashCodeExtensions
 		hashCode.Add(field.Multilingual.ToInt());
 	}
 
+	internal static void AddConstraint(this ref HashCode hashCode, Constraint constraint)
+	{
+		hashCode.Add((int)constraint.Type);
+		hashCode.Add(constraint.ToTable.Id);
+		hashCode.Add(constraint.ToTable.SchemaId);
+		hashCode.Add(constraint.Name, StringComparer.Ordinal);
+		hashCode.Add(constraint.PhysicalName, StringComparer.Ordinal);
+		hashCode.Add(constraint.MinValue);
+		hashCode.Add(constraint.MaxValue);
+	}
+
 	internal static void AddIndex(this ref HashCode hashCode, Index index)
 	{
 		// Code size: 59 (0x3b)

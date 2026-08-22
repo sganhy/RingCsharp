@@ -386,7 +386,7 @@ public sealed class DdlBuilderTest : BaseBuilderTest
 		Assert.Equal(4, checks.Length);
 		var check = checks[2];
 		//eg. ALTER TABLE public."@meta" ADD CONSTRAINT "ck_@meta_002" CHECK (object_type between 0 and 124);
-		var expectedSql = $"ALTER TABLE \"@test\".\"@meta\" ADD CONSTRAINT \"ck_@meta_002\" CHECK (object_type>={check.MinValue} AND object_type<={check.MaxValue})";
+		var expectedSql = $"ALTER TABLE \"@test\".\"@meta\" ADD CONSTRAINT \"ck_@meta_003\" CHECK (object_type>={check.MinValue} AND object_type<={check.MaxValue})";
 
 		// act 
 		var dql = _sut.Create(check);
@@ -574,7 +574,6 @@ public sealed class DdlBuilderTest : BaseBuilderTest
         var ddlBuilder = DatabaseProvider.PostgreSql.GetDdlBuilder();
         var expectedResult = "pk_feat";
         Assert.NotNull(table);
-        var constraint = new Constraint(ConstraintType.PrimaryKey, table, string.Empty,new Column[1]);
         
         // act 
         var constraintPk = ddlBuilder.GetConstraints(table).First(p => p.Type == ConstraintType.PrimaryKey);

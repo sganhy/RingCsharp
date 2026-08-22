@@ -35,6 +35,8 @@ internal sealed class TableBuilder
 	private TableType _currentTableType = TableType.Undefined;
 	private int _currentFieldId;
 	private int _currentIndexId;
+	private string _currentTableName= string.Empty;
+
 
 	internal Table GetMeta(string schemaName, DatabaseProvider provider) {
 		// Code size: 327 (0x147)
@@ -161,6 +163,7 @@ internal sealed class TableBuilder
 		_currentTableType = tableType;
 		_currentFieldId = 0;
 		_currentIndexId = 0;
+		_currentTableName = name;
 		flags = Meta.SetEntityBaseline(flags, true);
         flags = Meta.SetTableReadonly(flags, true);
         flags = Meta.SetTableAllowAttributeExtension(flags, false); // no flexible attributes!
@@ -196,12 +199,13 @@ internal sealed class TableBuilder
 	}
 	private Meta GetIndex(bool unique, params string[] fieldNames)
 	{
-		// Code size: 62 (0x3e)
+		// Code size: 100 (0x64)
 		var flags = 0L;
 		++_currentIndexId;
 		flags = Meta.SetEntityBaseline(flags, true);
 		flags = Meta.SetIndexUnique(flags, unique);
-		return new(_currentIndexId, (byte)EntityType.Index, 0, 0, flags, string.Empty, null, Meta.GetColumnList(fieldNames), true);
+		var name = _currentTableName + '_' + _currentIndexId.ToString(DefaultCulture).PadLeft(3, '0');
+		return new(_currentIndexId, (byte)EntityType.Index, 0, 0, flags, name, null, Meta.GetColumnList(fieldNames), true);
 	}
 
 	#endregion
