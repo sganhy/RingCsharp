@@ -5,7 +5,7 @@ namespace Ring.Schema.Validators;
 
 internal class ClfyDocumentValidator : BaseDocumentValidator, IDocumentValidator
 {
-	private Dictionary<string, int> _tableDictionary = [];
+	private Dictionary<string, int> _tableDictionary = new Dictionary<string, int>();
 
 	internal ClfyDocumentValidator() : this(GetTemplate(DocumentType.XmlClfy)) { }
 	internal ClfyDocumentValidator(DocumentType documentType) : this(GetTemplate(documentType)) { }

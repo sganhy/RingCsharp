@@ -170,7 +170,7 @@ public sealed class RecordTest : BaseTest
         // Table table, SaveQueryType type, IDmlBuilder builder, string[]? data, int offset
 
 #pragma warning disable CS8620 // Argument cannot be used for parameter due to differences in the nullability of reference types.
-        var saveQuery = new SaveQuery(table, SaveQueryType.Undefined, new DmlBuilder(), bucket, rcd1.Offset);
+        var saveQuery = new SaveQuery(table, SaveQueryType.Undefined, bucket, rcd1.Offset);
 #pragma warning restore CS8620
 
         // act 
@@ -194,7 +194,7 @@ public sealed class RecordTest : BaseTest
         // Table table, SaveQueryType type, IDmlBuilder builder, string[]? data, int offset
 
 #pragma warning disable CS8620 // Argument cannot be used for parameter due to differences in the nullability of reference types.
-        var saveQuery = new SaveQuery(table, SaveQueryType.Undefined, new DmlBuilder(), bucket2, rcd1.Offset);
+        var saveQuery = new SaveQuery(table, SaveQueryType.Undefined, bucket2, rcd1.Offset);
 #pragma warning restore CS8620
 
         // act 

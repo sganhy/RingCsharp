@@ -16,7 +16,7 @@ namespace Ring.Data;
 public readonly struct BulkSave : IBulkSave
 {
 	private const byte FirstCancelOperationId = (byte)SaveQueryType.FirstCancelOperation;
-	private static readonly SaveQuery EmptySaveQuery = new(GetDefaultType(), SaveQueryType.Undefined, GetDefaultDmlBuilder(), Array.Empty<string?>(), 0);
+	private static readonly SaveQuery EmptySaveQuery = new(GetDefaultType(), SaveQueryType.Undefined, Array.Empty<string?>(), 0);
 	private readonly BulkSaveInfo _info;
 
 	/// <summary>
@@ -76,7 +76,7 @@ public readonly struct BulkSave : IBulkSave
 		// cannot use DeleteRecordById() coz of @meta objects
 		if (record.Table is null) return;
 		if (record.IsNew && record.Table.Type == TableType.Business) return;
-		_info.Queries.Add(new SaveQuery(record.Table, SaveQueryType.DeleteRecord, _info.Schema.DmlBuilder, record.Data, record.Offset));
+		_info.Queries.Add(new SaveQuery(record.Table, SaveQueryType.DeleteRecord, record.Data, record.Offset));
 	}
 
 	public void DeleteRecordById(string recordType, long id)
@@ -118,7 +118,7 @@ public readonly struct BulkSave : IBulkSave
 		if (record.Table is null) ThrowRecordUnknownRecordType();
 		if (record.Table.Readonly) return; // throw exception here ??
 		if (record.Table.Type == TableType.Business) ++_info.IdCount;
-		if (record.IsNew) _info.Queries.Add(new SaveQuery(record.Table, SaveQueryType.InsertRecord, _info.Schema.DmlBuilder, record.Data, record.Offset));
+		if (record.IsNew) _info.Queries.Add(new SaveQuery(record.Table, SaveQueryType.InsertRecord, record.Data, record.Offset));
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -126,7 +126,7 @@ public readonly struct BulkSave : IBulkSave
 	{
 		if (record.Table is null) ThrowRecordUnknownRecordType();
 		if (record.Table.Readonly) return; // throw exception here !!
-		if (!record.IsNew) _info.Queries.Add(new SaveQuery(record.Table, SaveQueryType.UpdateRecord, _info.Schema.DmlBuilder, record.Data, record.Offset));
+		if (!record.IsNew) _info.Queries.Add(new SaveQuery(record.Table, SaveQueryType.UpdateRecord, record.Data, record.Offset));
 	}
 
 	public readonly override int GetHashCode() => GetHashCode(this);
@@ -183,8 +183,7 @@ public readonly struct BulkSave : IBulkSave
 #pragma warning restore IDE0251
 	{
 		var prevQuery = _info.Queries[index];
-		_info.Queries[index] = new SaveQuery(prevQuery.Table, saveQueryType, prevQuery.Builder,
-			prevQuery.Data, prevQuery.Offset);
+		_info.Queries[index] = new SaveQuery(prevQuery.Table, saveQueryType, prevQuery.Data, prevQuery.Offset);
 	}
 
 	[MethodImpl(MethodImplOptions.NoInlining)]

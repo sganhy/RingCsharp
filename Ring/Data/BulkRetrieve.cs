@@ -38,7 +38,7 @@ public sealed class BulkRetrieve
 	/// <param name="objectname">The object type of the database records to be retrieved by the simple query.</param>
 	public void SimpleQuery(int entryIndex, string objectname)
 	{
-		// Code size: 112 - no virtual call
+		// Code size: 112 - no virtual calls
 		if (entryIndex > _queries.Count) ThrowInvalidIndexError(_queries.Count);
 		if (entryIndex < _queries.Count) ThrowIndexAlreadyExistError(entryIndex);
 		var table = _schema?.GetTable(objectname);

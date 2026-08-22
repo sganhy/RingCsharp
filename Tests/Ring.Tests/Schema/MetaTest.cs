@@ -1,10 +1,12 @@
-﻿using Ring.Schema.Enums;
-using Ring.Schema.Extensions;
-using System.Reflection;
+﻿using Bogus.DataSets;
 using Ring.Schema;
-using System.Linq.Expressions;
-using PostGDdlBuilder = Ring.Util.Builders.PostgreSQL.DdlBuilder;
+using Ring.Schema.Enums;
+using Ring.Schema.Extensions;
+using Ring.Schema.Models;
 using Ring.Util.Builders;
+using System.Linq.Expressions;
+using System.Reflection;
+using PostGDdlBuilder = Ring.Util.Builders.PostgreSQL.DdlBuilder;
 
 
 namespace Ring.Tests.Schema;
@@ -691,11 +693,11 @@ public sealed class MetaTest : BaseTest
     {
         // arrange 
         var baseMeta = Meta.Create("baseMeta");
-        var meta2 = Meta.Create(8888, baseMeta);
-        var meta1 = Meta.Create(7777, baseMeta);
+        var meta2 = new Meta(8888, 1, 0, 0, 888L, "???", string.Empty, string.Empty, true);
+        var meta1 = new Meta(7777, 1, 0, 0, 888L, "???", string.Empty, string.Empty, true);
 
-        // act 
-        var result1 = meta1 == meta2;
+		// act 
+		var result1 = meta1 == meta2;
         var result2 = meta1.Equals((object)meta2);
 
         // assert
@@ -709,10 +711,10 @@ public sealed class MetaTest : BaseTest
         // arrange 
         var meta1 = new Meta(_faker.Random.Number(int.MinValue, int.MaxValue), (byte)EntityType.Schema, _faker.Random.Number(int.MinValue, int.MaxValue), 0, 0L, "Test",
             _faker.Random.String(), null, false);
-        var meta2 = Meta.Create(meta1.Id, meta1);
+        var meta2 = new Meta(meta1.Id, meta1.ObjectType, meta1.ReferenceId, meta1.DataType, meta1.Flags, meta1.Name, meta1.Description, meta1.Value, false);
 
-        // act 
-        var result1 = meta1 == meta2;
+		// act 
+		var result1 = meta1 == meta2;
         var result2 = meta1 != meta2;
         var result3 = meta1.Equals((object)meta2);
 

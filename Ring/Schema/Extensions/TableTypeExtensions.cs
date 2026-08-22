@@ -45,7 +45,7 @@ internal static class TableTypeExtensions
 		}
 	}
 
-	internal static string? GetDescription(this TableType tableType)
+	internal static string? GetTableDescription(this TableType tableType)
 	{
 		// Code size: 69 (0x45)
 		switch (tableType)
@@ -53,6 +53,17 @@ internal static class TableTypeExtensions
 			case TableType.MetaId: return ResourceHelper.GetMessage(ResourceType.MetaIdTableDescription);
 			case TableType.Meta: return ResourceHelper.GetMessage(ResourceType.MetaTableDescription);
 			case TableType.Log: return ResourceHelper.GetMessage(ResourceType.MetaAuditTableDescription);
+		}
+		return null;
+	}
+
+	internal static string? GetFieldDescription(this TableType tableType, int fieldId)
+	{
+		const char separator = '|';
+		// Code size: 23 (0x17)
+		switch (tableType)
+		{
+			case TableType.Meta: return ResourceHelper.GetMessage(ResourceType.MetaFieldsDescription, fieldId, separator);
 		}
 		return null;
 	}

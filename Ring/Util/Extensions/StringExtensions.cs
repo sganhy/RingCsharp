@@ -178,6 +178,18 @@ internal static class StringExtensions
 		return result;
 	}
 
+	public static int IndexOfOccurrence(this string value, char character, int occurrence)
+	{
+		// Code size: 41 (0x29)
+		int count = 0;
+		for (var i = 0; i < value.Length; i++)
+		{
+			if (value[i] == character && ++count == occurrence)
+				return i;
+		}
+		return -1;
+	}
+
 	#region private methods 
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]

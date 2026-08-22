@@ -261,7 +261,7 @@ public sealed class DdlBuilderTest : BaseBuilderTest
         var metaList = GetSchema1();
         var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
         var table = schema?.GetTable("book");
-        var expectedResult = "CREATE INDEX idx_1021_02 ON rpg_sheet.t_book (s_title)";
+        var expectedResult = "CREATE INDEX idx_1021_002 ON rpg_sheet.t_book (s_title)";
         Assert.NotNull(table);
 
 		// act 
@@ -280,7 +280,7 @@ public sealed class DdlBuilderTest : BaseBuilderTest
         var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
         var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
         var table = schema.GetTable("@meta");
-        var expectedResult = "CREATE UNIQUE INDEX \"idx_@meta_10\" ON \"@test\".\"@meta\" (id,schema_id,object_type,reference_id)";
+        var expectedResult = "CREATE UNIQUE INDEX \"idx_@meta_001\" ON \"@test\".\"@meta\" (id,schema_id,object_type,reference_id)";
         Assert.NotNull(table);
 
         // act 
@@ -301,7 +301,7 @@ public sealed class DdlBuilderTest : BaseBuilderTest
         var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
         var tablespace = schema.TableSpaces[0];
         var table = schema.GetTable("@meta");
-        var expectedResult = "CREATE UNIQUE INDEX \"idx_@meta_10\" ON \"@test\".\"@meta\" (id,schema_id,object_type,reference_id) TABLESPACE tblSpc_test";
+        var expectedResult = "CREATE UNIQUE INDEX \"idx_@meta_001\" ON \"@test\".\"@meta\" (id,schema_id,object_type,reference_id) TABLESPACE tblSpc_test";
         Assert.NotNull(table);
         Assert.NotNull(tablespace);
 
@@ -574,7 +574,7 @@ public sealed class DdlBuilderTest : BaseBuilderTest
         var ddlBuilder = DatabaseProvider.PostgreSql.GetDdlBuilder();
         var expectedResult = "pk_feat";
         Assert.NotNull(table);
-        var constraint = new Constraint(ConstraintType.PrimaryKey, table, string.Empty,1);
+        var constraint = new Constraint(ConstraintType.PrimaryKey, table, string.Empty,new Column[1]);
         
         // act 
         var constraintPk = ddlBuilder.GetConstraints(table).First(p => p.Type == ConstraintType.PrimaryKey);
@@ -591,7 +591,7 @@ public sealed class DdlBuilderTest : BaseBuilderTest
         var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
         var table = schema?.GetTable("deity");
         var ddlBuilder = DatabaseProvider.PostgreSql.GetDdlBuilder();
-        var expectedResult = "idx_1037_01";
+        var expectedResult = "idx_1037_001";
         Assert.NotNull(table);
 
 		// act 
@@ -610,7 +610,7 @@ public sealed class DdlBuilderTest : BaseBuilderTest
         var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
         var table = schema.GetTable("@log");
         var ddlBuilder = DatabaseProvider.PostgreSql.GetDdlBuilder();
-        var expectedResult = "\"idx_@log_11\"";
+        var expectedResult = "\"idx_@log_001\"";
 		Assert.NotNull(table);
 
 		// act 

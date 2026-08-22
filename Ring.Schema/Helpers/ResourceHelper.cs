@@ -19,8 +19,8 @@ internal sealed class ResourceHelper
 	private static readonly string CompressedResourceSuffix = @".gz";
 	private static readonly string ResourceNameSpace = @"Ring.Schema.Resources.";
 	private static readonly string TemplateResourceNameSpace = ResourceNameSpace + @"Templates.";
-	private static Dictionary<int, SchemaTemplate> _schemaTemplates = [];
-	private static Dictionary<int, LogItem> _logItems = [];
+	private static Dictionary<int, SchemaTemplate> _schemaTemplates = new Dictionary<int, SchemaTemplate>();
+	private static Dictionary<int, LogItem> _logItems = new Dictionary<int, LogItem>();
 
 	internal static LogItem? GetLogItem(LogType logType)
 	{
@@ -105,7 +105,7 @@ internal sealed class ResourceHelper
 		var parent = string.Empty;
 		var depth = 0;
 		var entityType = EntityType.Undefined;
-		List<SchemaTemplateAttributeValue> attributeValuesLst = [];
+		List<SchemaTemplateAttributeValue> attributeValuesLst = new();
 		var attributeValues = new Dictionary<string, string>(8) { { tagId, string.Empty }, { tagParent, string.Empty }, { tagValue, string.Empty } , { tagDepth , string.Empty } };
 		using var stringReader = new StringReader(xmlString);
 		using var reader = XmlReader.Create(stringReader);
@@ -121,7 +121,7 @@ internal sealed class ResourceHelper
 					reader.LoadAttributes(attributeValues); // read attribute after node !!!
 					attributeValuesLst.Clear();
 					var xmlSchemaAttributeType = ToXmlSchemaAttributeType(attributeValues[tagId]);
-					attributes.Add(new SchemaTemplateAttribute(attributeValues[tagValue], xmlSchemaAttributeType, []));
+					attributes.Add(new SchemaTemplateAttribute(attributeValues[tagValue], xmlSchemaAttributeType, Array.Empty<SchemaTemplateAttributeValue>()));
 				}
 				else if (string.Equals(tagVal, reader.Name, StringComparison.OrdinalIgnoreCase))
 				{

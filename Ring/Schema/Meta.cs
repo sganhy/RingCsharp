@@ -25,6 +25,7 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	#region constants
 	private static readonly Meta DefaultMetaRelation = GetDefaultMeta(EntityType.Relation);
+	private static readonly Meta DefaultMetaField = GetDefaultMeta(EntityType.Field);
 
 	// entity type constants
 	private const byte TableId = (byte)EntityType.Table;
@@ -230,7 +231,6 @@ internal readonly struct Meta : IEquatable<Meta>
 	internal static Field GetDefaultField(in Meta meta, FieldType fieldType) // Code size: 33 (0x21)
 		=> new(meta.Id, meta.Name, meta.Description, fieldType, 0, null, null, SearchableType.None, true, false, false, true, true);
 
-	internal static Meta Create(int id,in Meta meta) => new(id, meta.ObjectType, meta.ReferenceId, meta.DataType, meta.Flags, meta.Name, meta.Description, meta.Value, meta.Active);
 	internal static Meta Create(string name) => new(default, default, default, default, default, name, null, null, true);
 	internal static char GetIndexColumnDelimiter() => IndexColumnDelimiter; // Code size: 3 (0x3)
 	internal EntityType GetEntityType() => ((int)ObjectType).ToEntityType(); // Code size: 12 (0xc)
@@ -330,7 +330,7 @@ internal readonly struct Meta : IEquatable<Meta>
 		if (IsTable)
 		{
 			var tableType = DataType.ToTableType();
-			var fields = GetFieldArray(tableItems);
+			var fields = GetFieldArray(tableItems, tableType);
 			var relations = GetRelationArray(tableItems);
 			var indexes = GetIndexes(tableItems);
 			var (colCount, physRelationCount) = GetColumnCount(fields, tableItems, ddlBuilder);
@@ -501,12 +501,13 @@ internal readonly struct Meta : IEquatable<Meta>
 		return result.ToArray(); // sorted by Id later !!!
 	}
 
-	private static Field[] GetFieldArray(ReadOnlySpan<Meta> items)
+	private static Field[] GetFieldArray(ReadOnlySpan<Meta> items, TableType tableType)
 	{
-		// Code size: 218 (0xda)
-		// count element
+		// Code size: 236 (0xec)
 		int fieldCount = 0;
-		var primaryKey = FieldExtensions.GetDefaultPrimaryKey(null, FieldType.Int);
+		// no default primary keys for non-business tables, use built-in field instead!
+		var primaryKey = tableType != TableType.Business ? GetDefaultField(DefaultMetaField, FieldType.Undefined) : FieldExtensions.GetDefaultPrimaryKey(null, FieldType.Int);
+
 		foreach (ref readonly Meta item in items)
 		{
 			if (item.IsField)

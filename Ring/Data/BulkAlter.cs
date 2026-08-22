@@ -121,7 +121,8 @@ internal sealed class BulkAlter : IEquatable<BulkAlter>
 				int oi = 0;
 				++oi;
 			}
-			else ThrowUnsuportedAlterQueryType(query.Type);
+			else
+				ThrowUnsuportedAlterQueryType(query.Type);
 			// add sql log if subscription
 		}
 	}
@@ -165,6 +166,9 @@ internal sealed class BulkAlter : IEquatable<BulkAlter>
 				break;
 			case AlterQueryType.CreateTableComment:
 				_queries.Add(new AlterQuery(table.Id, table, type, null, null, null, null));
+				break;
+			case AlterQueryType.CreateColumnComment:
+				_queries.Add(new AlterQuery(table.Id, table, type, column, null, null, null));
 				break;
 		}
 	}

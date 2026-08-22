@@ -9,7 +9,7 @@ internal sealed class NativeDocumentValidator : BaseDocumentValidator, IDocument
 {
 	private const int FileStreamBufferSize = 8192;
 	private const int CancellationCheckMask = 0xFF; // Check every 256 iterations
-	private Dictionary<string, int> _tableDictionary = [];
+	private Dictionary<string, int> _tableDictionary = new Dictionary<string, int>();
 
 	internal NativeDocumentValidator() : this(GetTemplate(DocumentType.XmlNative)) {}
 	internal NativeDocumentValidator(DocumentType documentType) : this(GetTemplate(documentType)) {}
@@ -34,7 +34,7 @@ internal sealed class NativeDocumentValidator : BaseDocumentValidator, IDocument
 
 		// initialize
 		ResetStats();
-		_tableDictionary = [];
+		_tableDictionary = new Dictionary<string, int>();
 		var extraFieldCount = 0;
 		var buffer = new string?[template.MaxDepth + 2];
 		var iterationCount = 0;

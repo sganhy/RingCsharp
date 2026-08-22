@@ -46,7 +46,7 @@ internal sealed class NativeMetaBuilder : BaseMetaBuilder, IMetaBuilder
 		if (LoadTemplateErrorCount > 0)
 		{
 			// log here !!!
-			return [];
+			return Array.Empty<Meta>();
 		}
 		buffer[0] = string.Empty;
 
@@ -65,7 +65,7 @@ internal sealed class NativeMetaBuilder : BaseMetaBuilder, IMetaBuilder
 				if (metaIndex >= count)
 				{
 					// log here !!! - wrong template defition
-					return [];
+					return Array.Empty<Meta>();
 				}
 
 				var currentDepth = xmlReader.Depth;
@@ -140,7 +140,7 @@ internal sealed class NativeMetaBuilder : BaseMetaBuilder, IMetaBuilder
 							var comment = xmlReader.ReadString();
 							if (!string.IsNullOrWhiteSpace(comment) && metaIndex > 0)
 							{
-								ref Meta meta = ref result[metaIndex - 1];
+								Meta meta = result[metaIndex - 1];
 								if (meta.ObjectType != SearchableColumnId) result[metaIndex - 1] = SetDescription(ref meta, comment);
 								else if (metaIndex > 1) result[metaIndex - 2] = SetDescription(ref result[metaIndex - 2], comment);
 							}

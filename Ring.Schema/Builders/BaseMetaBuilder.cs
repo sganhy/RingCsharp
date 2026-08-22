@@ -21,7 +21,7 @@ internal abstract class BaseMetaBuilder
 	protected readonly static string AllParent= @"*";
 
 	// templates
-	protected readonly static SchemaTemplate DefaultTemplate = new(string.Empty, DocumentType.Undefined, [], 0);
+	protected readonly static SchemaTemplate DefaultTemplate = new(string.Empty, DocumentType.Undefined, Array.Empty<SchemaTemplateItem>(), 0);
 	protected readonly static Meta DefaultMetaField = new(0,FieldId,0,0,0L,string.Empty,null,null,true);
 	protected readonly Dictionary<string, SchemaTemplateItem> TagDictionary;
 	protected readonly SchemaTemplate Template;

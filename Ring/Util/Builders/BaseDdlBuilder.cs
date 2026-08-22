@@ -191,14 +191,15 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	}
 	public string GetPhysicalName(Index index, Table table)
 	{
-		// Code size: 139 (0x8b)
+		// Code size: 154 (0x9a)
 		var result = new StringBuilder(33); 
+		var indexId = index.Id.ToString(CultureInfo.InvariantCulture).PadLeft(3, '0');
 		switch (table.Type)
 		{
 			//name:  idx_{table_id}_{index_id}
 			case TableType.Business:
 				result.Append(DefaultIndexPrefix).Append(table.Id).Append('_')
-					.Append(index.Id.ToString("X2", CultureInfo.InvariantCulture));
+					.Append(indexId);
 				break;
 			//name:  idx_{from_table_id}_{to_table_id}_{from_relation_id}
 			case TableType.Mtm:
@@ -210,7 +211,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 					.Append(DefaultIndexPrefix)
 					.Append(table.Name)
 					.Append('_')
-					.Append(index.Id)
+					.Append(indexId)
 					.Append(EndPhysicalNameDelimiter);
 				break;
 		}
@@ -398,10 +399,10 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 
 	public Constraint[] GetConstraints(Table table) 
 	{
-		// Code size: 1134 (0x46e) - too big  
+		// Code size: 1155 (0x483) - too big  
 		var result = new List<Constraint>();
 		var keyCount = table.GetPrimaryKey().Count;
-		if (keyCount > 0) result.Add(new(ConstraintType.PrimaryKey, table, GetPhysicalName(ConstraintType.PrimaryKey, table, -1), keyCount));
+		if (keyCount > 0) result.Add(new(ConstraintType.PrimaryKey, table, GetPhysicalName(ConstraintType.PrimaryKey, table, -1), new Column[keyCount]));
 		var fieldCount = table.Fields.Length;
 		TableBuilder? tblBuilder = table.Type == TableType.Meta || table.Type == TableType.MetaId ? new TableBuilder() : null; // avoid TableBuilder instance by default.
 		var objectTypeMeta = tblBuilder?.GetObjectTypeMeta();
@@ -421,7 +422,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 				if (column.PhysicalName.Equals(objectTypeCol?.PhysicalName, StringComparison.OrdinalIgnoreCase))
 				{
 					(var min , var max) = EntityType.Field.GetRange();
-					var constraint = new Constraint(ConstraintType.Check, table, GetPhysicalName(ConstraintType.Check, table, column.Id), 1, min, max);
+					var constraint = new Constraint(ConstraintType.Check, table, GetPhysicalName(ConstraintType.Check, table, column.Id), new Column[1], min, max);
 					constraint.Columns[0] = column;
 					result.Add(constraint);
 				}
@@ -430,7 +431,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 					column.PhysicalName.Equals(referenceIdCol?.PhysicalName, StringComparison.OrdinalIgnoreCase) ||
 					column.PhysicalName.Equals(idCol?.PhysicalName, StringComparison.OrdinalIgnoreCase))
 				{
-					var constraint = new Constraint(ConstraintType.Check, table, GetPhysicalName(ConstraintType.Check, table, column.Id), 1, 0, null);
+					var constraint = new Constraint(ConstraintType.Check, table, GetPhysicalName(ConstraintType.Check, table, column.Id), new Column[1], 0, null);
 					constraint.Columns[0] = column;
 					result.Add(constraint);
 				}
@@ -445,14 +446,14 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 			if ((column.Type == EntityType.Field && table.Fields[column.RecordIndex].NotNull) ||
 				(column.Type == EntityType.Relation && table.Relations[column.RecordIndex - fieldCount].NotNull))
 			{
-				var newConstraint = new Constraint(ConstraintType.NotNull, table, string.Empty, 1);
+				var newConstraint = new Constraint(ConstraintType.NotNull, table, string.Empty, new Column[1]);
 				newConstraint.Columns[0] = column;
 				result.Add(newConstraint);
 			}
 			// default constraints
 			if (column.Type == EntityType.Field && table.Fields[column.RecordIndex].DefaultValue is not null && table.Type != TableType.Business)
 			{
-				var newConstraint = new Constraint(ConstraintType.Default, table, string.Empty, 1);
+				var newConstraint = new Constraint(ConstraintType.Default, table, string.Empty, new Column[1]);
 				newConstraint.Columns[0] = column;
 				result.Add(newConstraint);
 			}

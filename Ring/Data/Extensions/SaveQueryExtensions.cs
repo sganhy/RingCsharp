@@ -35,14 +35,4 @@ internal static class SaveQueryExtensions
             .Append(saveQuery.Offset).ToString();
 	}
 
-	internal static string? ToSql(this SaveQuery query)
-	{
-		var builder = query.Builder;
-		switch (query.Type)
-		{
-			case SaveQueryType.InsertRecord: return builder.Insert(query.Table);
-		}
-		return null;
-	}
-
 }

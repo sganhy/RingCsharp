@@ -5,12 +5,12 @@ namespace Ring.Schema.Extensions;
 
 internal static class SchemaTemplateExtensions
 {
-	private readonly static SchemaTemplateAttribute DefaultTemplateAttribute = new(string.Empty, SchemaTemplateAttributeType.Undefined, []);
+	private readonly static SchemaTemplateAttribute DefaultTemplateAttribute = new(string.Empty, SchemaTemplateAttributeType.Undefined, Array.Empty<SchemaTemplateAttributeValue>());
 
 	internal static Dictionary<string, SchemaTemplateItem> ToTagDictionary(this SchemaTemplate? template, StringComparer stringComparer)
 	{
 		// Code size: 108 (0x6c)
-		if (template is null) return [];
+		if (template is null) return new Dictionary<string, SchemaTemplateItem>();
 		var dict = new Dictionary<string, SchemaTemplateItem>(template.Items.Length*2, stringComparer);
 		var items = new ReadOnlySpan<SchemaTemplateItem>(template.Items);
 		foreach (var item in items) if (!string.IsNullOrWhiteSpace(item.Tag) && !dict.ContainsKey(item.Tag))  dict.Add(item.Tag, item);

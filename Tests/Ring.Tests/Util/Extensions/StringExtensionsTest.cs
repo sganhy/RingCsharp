@@ -234,4 +234,21 @@ public class StringExtensionsTest : BaseTest
 		Assert.Equal("0", connectionLifetime);
 	}
 
+	[Theory]
+	[InlineData("hello world", 'l', 2, 3)]
+	[InlineData("hello world", 'l', 4, -1)]
+	[InlineData("hello world", 'o', -10, -1)]
+	[InlineData("hello world", 'o', 2, 7)]
+	[InlineData("hello world", 'd', 0, -1)]
+	[InlineData("hello world", 'd', 1, 10)]
+	public void IndexOfOccurrence_SpecifiedCharacter_OccurrenceIndex(string value, char separator, int occurrence, int expectedIndex)
+	{
+		// arrange 
+		// act 
+		var actualIndex = StringExtensions.IndexOfOccurrence(value, separator, occurrence);
+
+		// assert
+		Assert.Equal(expectedIndex, actualIndex);
+	}
+
 }

@@ -27,7 +27,22 @@ public sealed class ResourceHelperTest : BaseTest
 		Assert.Equal(expectedMessage, result);
 	}
 
-    [Fact]
+	[Theory]
+	[InlineData(ResourceType.MetaFieldsDescription, 2, "Identifier of the associated schema.")]
+	[InlineData(ResourceType.MetaFieldsDescription, 5, "Type-specific numeric value.")]
+	[InlineData(ResourceType.MetaFieldsDescription, 1, "Unique identifier within its metadata scope.")]
+	[InlineData(ResourceType.MetaFieldsDescription, 10, "Indicates whether the metadata object is active.")]
+	internal void GetMessage_ResourceType_Item(ResourceType resourceType, int itemIndex, string expectedMessage)
+	{
+		// arrange 
+		// act 
+		var result = ResourceHelper.GetMessage(resourceType, itemIndex, '|');
+
+		// assert
+		Assert.Equal(expectedMessage, result);
+	}
+
+	[Fact]
     public void GetParameter_MinPoolSize_ParameterObject()
     {
         // arrange 

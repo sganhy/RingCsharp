@@ -19,7 +19,7 @@ internal abstract class BaseDocumentValidator
 	protected int LineCount;
 
 	// template 
-	protected readonly static SchemaTemplate DefaultTemplate = new(string.Empty, DocumentType.Undefined, [], 0);
+	protected readonly static SchemaTemplate DefaultTemplate = new(string.Empty, DocumentType.Undefined, Array.Empty<SchemaTemplateItem>(), 0);
 	protected readonly Dictionary<string, SchemaTemplateItem> TagDictionary;
 	protected readonly SchemaTemplate Template;
 	protected readonly DocumentType DocumentType;

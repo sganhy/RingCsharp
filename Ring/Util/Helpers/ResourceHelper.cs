@@ -3,6 +3,7 @@ using Ring.Schema.Enums;
 using Ring.Schema.Models;
 using Ring.Util.Enums;
 using Ring.Util.Extensions;
+using System.ComponentModel.Design.Serialization;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 
@@ -48,6 +49,21 @@ internal sealed class ResourceHelper
 		if (_logMessages.TryGetValue(resourceTypeId, out var message)) return message;
 		return string.Empty;
 	}
+	internal static string? GetMessage(ResourceType resourceType, int itemId, char separator)
+	{
+		// Code size: 107 (0x6b)
+		var resourceTypeId = (int)resourceType;
+		if (_logMessages.TryGetValue(resourceTypeId, out var message)) 
+		{ 
+			var endIndex = message.IndexOfOccurrence(separator, itemId);
+			var startIndex = message.IndexOfOccurrence(separator, itemId-1);
+			if (endIndex >= 0 && startIndex >= 0) return message.Substring(startIndex + 1, endIndex - startIndex - 1);
+			if (endIndex >= 0 && startIndex < 0) return message.Substring(0, endIndex);
+			if (endIndex < 0 && startIndex >= 0) return message.Substring(startIndex + 1, message.Length - startIndex - 1);
+		}
+		return null;
+	}
+
 	internal static string? GetDescription(ResourceType resourceType)
 	{
 		// Code size: 21 (0x15)

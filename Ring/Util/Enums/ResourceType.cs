@@ -82,15 +82,16 @@ internal enum ResourceType : short
 	ConnectionAlreadyOpen=504,
 
 	/// <summary>
-	/// Meta schema tables description
+	/// Meta schema tables /fields  description
 	/// </summary>
 	MetaTableDescription = 1013,
 	MetaIdTableDescription = 1014,
 	MetaAuditTableDescription = 1017,
+	MetaFieldsDescription = 1113,
 
 	/// <summary>
 	/// Reserved for unit tests
 	/// </summary>
-	UnitTest = 350
+	UnitTest = 2350
 
 }

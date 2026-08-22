@@ -11,11 +11,11 @@ internal sealed class Constraint
 	internal readonly int? MinValue;
 	internal readonly int? MaxValue;
 
-	internal Constraint(ConstraintType type, Table table, string physicalName, int columnCount, int? minValue=null, int? maxValue=null)
+	internal Constraint(ConstraintType type, Table table, string physicalName, Column[] columns, int? minValue=null, int? maxValue=null)
 	{
 		Type = type;
 		ToTable = table;
-		Columns = columnCount <= 0 ? Array.Empty<Column>() : new Column[columnCount];
+		Columns = columns;
 		PhysicalName = physicalName;
 		MinValue = minValue;
 		MaxValue = maxValue;

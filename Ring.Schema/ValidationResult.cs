@@ -20,7 +20,7 @@ public sealed class ValidationResult
 	/// </summary>
 	public ValidationResult()
 	{
-        _items = [];
+        _items = new List<ValidationItem>();
 		_errorCount = 0;
 		_criticalCount = 0;
 		_warningCount = 0;

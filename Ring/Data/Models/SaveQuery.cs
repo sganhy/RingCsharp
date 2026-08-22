@@ -13,7 +13,6 @@ public readonly struct SaveQuery
     // 40 bytes
     internal readonly Table Table;
     internal readonly SaveQueryType Type;
-    internal readonly IDmlBuilder Builder;
     internal readonly string?[] Data;
     internal readonly int Offset;
 
@@ -24,20 +23,17 @@ public readonly struct SaveQuery
     {
         Table = Meta.GetDefaultTable(new Meta());
         Type = SaveQueryType.Undefined;
-        Builder = new Util.Builders.PostgreSQL.DmlBuilder();
         Data = Array.Empty<string?>();
         Offset =-1;
     }
 
-    internal SaveQuery(Table table, SaveQueryType type, IDmlBuilder builder, string?[] data, int offset)
+    internal SaveQuery(Table table, SaveQueryType type, string?[] data, int offset)
     {
         Table = table;
         Type = type;
-        Builder = builder;
         Data = data;
         Offset = offset;
     }
-
 
 #if DEBUG
     public override string ToString() => $"{Table.Name} - {Type}; Offset: {Offset}";

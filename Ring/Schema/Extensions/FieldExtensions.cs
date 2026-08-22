@@ -20,11 +20,9 @@ internal static class FieldExtensions
 #pragma warning restore RCS1187
 
 	internal static bool IsValid(this Field field) => IsPrimaryKey(field) || field.Id > 0; 
-	internal static bool IsDateTime(this Field field) => field.Type == FieldType.DateTime ||
-		field.Type == FieldType.Date || field.Type == FieldType.DateTimeOffset;
+	internal static bool IsDateTime(this Field field) => field.Type == FieldType.DateTime || field.Type == FieldType.Date || field.Type == FieldType.DateTimeOffset;
 	internal static bool IsNumeric(this Field field) => field.Type == FieldType.Long || field.Type == FieldType.Int ||
-		field.Type == FieldType.Short || field.Type == FieldType.Byte || field.Type == FieldType.Float ||
-		field.Type == FieldType.Double;
+		field.Type == FieldType.Short || field.Type == FieldType.Byte || field.Type == FieldType.Float || field.Type == FieldType.Double;
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static bool IsPrimaryKey(this Field field) =>

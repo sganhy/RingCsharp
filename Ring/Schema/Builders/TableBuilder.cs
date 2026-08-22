@@ -32,8 +32,13 @@ internal sealed class TableBuilder
 	private readonly string FieldLineNumber = "line_number";
 	private readonly string FieldMessage = "message";
 
+	private TableType _currentTableType = TableType.Undefined;
+	private int _currentFieldId;
+	private int _currentIndexId;
+
 	internal Table GetMeta(string schemaName, DatabaseProvider provider) {
-		// Code size: 337 (0x151)
+		// Code size: 327 (0x147)
+		var metaTable = GetTable((int)TableType.Meta, TableType.Meta.GetLogicalName(), TableType.Meta);
 		var metaArr = new[] {
 			GetField(FieldId, FieldType.Int),
 			GetField(FieldSchemaId, FieldType.Int), 
@@ -47,27 +52,27 @@ internal sealed class TableBuilder
 			GetField(FieldActive, FieldType.Boolean,0,true,SearchableType.None,true.ToString(DefaultCulture)),
 			GetIndex(true, new [] { FieldId, FieldSchemaId, FieldObjectType, FieldReferenceId }) // memory actually gets duplicated with [] Meta.
 		};
-		var metaTable = GetTable((int)TableType.Meta, TableType.Meta.GetLogicalName(), TableType.Meta);
 		return GetTable(schemaName, provider, metaArr, metaTable);
 	}
 
 	internal Table GetMetaId(string schemaName, DatabaseProvider provider) 
 	{
-		// Code size: 167 (0xa7)
+		var metaTable = GetTable((int)TableType.MetaId, TableType.MetaId.GetLogicalName(), TableType.MetaId);
+		// Code size: 175 (0xaf)
 		var metaArr = new[] {
 			GetField(FieldId, FieldType.Int),
 			GetField(FieldSchemaId, FieldType.Int),
 			GetField(FieldObjectType, FieldType.Byte),
-			GetField(FieldValue, FieldType.Long),
+			GetField(FieldValue, FieldType.Long,0,true,SearchableType.None,FieldType.Long.GetDefaultValue()),
 			GetIndex(true, new[] { FieldId, FieldSchemaId, FieldObjectType })
 		};
-		var metaTable = GetTable((int)TableType.MetaId, TableType.MetaId.GetLogicalName(), TableType.MetaId);
 		return GetTable(schemaName, provider, metaArr, metaTable);
 	}
 
 	internal Table GetLog(string schemaName, DatabaseProvider provider) 
 	{
 		// Code size: 316 (0x13c)
+		var metaTable = GetTable((int)TableType.Log, TableType.Log.GetLogicalName(), TableType.Log);
 		var metaList = new[] {
 			GetField(FieldId, FieldType.Long),
 			GetField(FieldEntryTime, FieldType.DateTime),
@@ -82,7 +87,6 @@ internal sealed class TableBuilder
 			GetField(FieldDescription, FieldType.LongString,false),
 			GetIndex(false, new[] { FieldEntryTime })
 		};
-		var metaTable = GetTable((int)TableType.Log, TableType.Log.GetLogicalName(), TableType.Log);
 		return GetTable(schemaName, provider, metaList, metaTable);
 	}
 
@@ -140,22 +144,23 @@ internal sealed class TableBuilder
 
 	private static Table GetTable(string schemaName, DatabaseProvider provider, Meta[] metaArray, Meta metaTable, PhysicalType? physicalType=null)
 	{
-		// Code size: 127 (0x7f)
+		// Code size: 102 (0x66)
 		var ddlBuilder = provider.GetDdlBuilder();
 		var emptyTable = Meta.GetDefaultTable(metaTable);
 		var emptySchema = Meta.GetDefaultSchema(GetSchema(0, schemaName), provider);
 		var physicalName = ddlBuilder.GetPhysicalName(emptyTable, emptySchema);
 		var tableType = metaTable.DataType.ToTableType();
 		var spanMeta = metaArray.AsSpan();
-		for (var i=0; i< spanMeta.Length; ++i) spanMeta[i] = Meta.Create(i,spanMeta[i]);
-		return metaTable.ToTable(new ReadOnlySpan<Meta>(metaArray, 0, metaArray.Length), 
-			physicalType ?? PhysicalType.Table, ddlBuilder, physicalName, tableType.GetObjectIndex()) ?? emptyTable;
+		return metaTable.ToTable(new ReadOnlySpan<Meta>(metaArray, 0, metaArray.Length), physicalType ?? PhysicalType.Table, ddlBuilder, physicalName, tableType.GetObjectIndex()) ?? emptyTable;
 	}
 
-	private static Meta GetTable(int id, string name, TableType tableType) 
+	private Meta GetTable(int id, string name, TableType tableType) 
 	{
-		// Code size: 101 (0x65)
+		// Code size: 115 (0x73)
 		var flags = 0L;
+		_currentTableType = tableType;
+		_currentFieldId = 0;
+		_currentIndexId = 0;
 		flags = Meta.SetEntityBaseline(flags, true);
         flags = Meta.SetTableReadonly(flags, true);
         flags = Meta.SetTableAllowAttributeExtension(flags, false); // no flexible attributes!
@@ -171,15 +176,15 @@ internal sealed class TableBuilder
                 flags = Meta.SetPreparedStatement(flags, true);
                 break;
         }
-        return new(id, (byte)EntityType.Table, 0, (int)tableType, flags, name, tableType.GetDescription(), null, true);
+        return new(id, (byte)EntityType.Table, 0, (int)tableType, flags, name, tableType.GetTableDescription(), null, true);
 	}
 	private static Meta GetSchema(int id, string name) => new(id, (byte)EntityType.Schema, 0, 0, 0L, name, null, null, true);
-	private static Meta GetField(string name, FieldType fieldType, bool notNull) => GetField(name, fieldType, 0, notNull, SearchableType.None); // Code size: 11 (0xb)
-	private static Meta GetField(string name, FieldType fieldType, int fieldSize) => GetField(name, fieldType, fieldSize, true, SearchableType.None); // Code size: 11 (0xb)
-	private static Meta GetField(string name, FieldType fieldType) => GetField(name, fieldType, 0, true,SearchableType.None); // Code size: 11 (0xb)
-	private static Meta GetField(string name, FieldType fieldType, int fieldSize, bool notNull, SearchableType searchableType, string? defaultValue = null)
+	private Meta GetField(string name, FieldType fieldType, bool notNull) => GetField(name, fieldType, 0, notNull, SearchableType.None); // Code size: 11 (0xb)
+	private Meta GetField(string name, FieldType fieldType, int fieldSize) => GetField(name, fieldType, fieldSize, true, SearchableType.None); // Code size: 11 (0xb)
+	private Meta GetField(string name, FieldType fieldType) => GetField(name, fieldType, 0, true,SearchableType.None); // Code size: 11 (0xb)
+	private Meta GetField(string name, FieldType fieldType, int fieldSize, bool notNull, SearchableType searchableType, string? defaultValue = null)
 	{
-		// Code size: 67 (0x43)
+		// Code size: 100 (0x64) - no virtual calls
 		var flags = 0L;
 		var dataType = 0;
 		flags = Meta.SetFieldNotNull(flags, notNull);
@@ -187,14 +192,16 @@ internal sealed class TableBuilder
 		if (fieldType == FieldType.String) flags = Meta.SetSearchableType(flags, searchableType);
 		flags = Meta.SetEntityBaseline(flags, true);
 		dataType = Meta.SetFieldType(dataType, fieldType);
-		return new (0, (byte)EntityType.Field, 0, dataType, flags, name, null, defaultValue, true);
+		return new (++_currentFieldId, (byte)EntityType.Field, 0, dataType, flags, name, _currentTableType.GetFieldDescription(_currentFieldId), defaultValue, true);
 	}
-	private static Meta GetIndex(bool unique, params string[] fieldNames)
+	private Meta GetIndex(bool unique, params string[] fieldNames)
 	{
+		// Code size: 62 (0x3e)
 		var flags = 0L;
+		++_currentIndexId;
 		flags = Meta.SetEntityBaseline(flags, true);
 		flags = Meta.SetIndexUnique(flags, unique);
-		return new(0, (byte)EntityType.Index, 0, 0, flags, string.Empty, null, Meta.GetColumnList(fieldNames), true);
+		return new(_currentIndexId, (byte)EntityType.Index, 0, 0, flags, string.Empty, null, Meta.GetColumnList(fieldNames), true);
 	}
 
 	#endregion
