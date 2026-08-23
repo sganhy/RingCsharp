@@ -1,4 +1,5 @@
-﻿using Ring.Schema.Models;
+﻿using Ring.Schema.Enums;
+using Ring.Schema.Models;
 using Ring.Util.Extensions;
 
 namespace Ring.Schema.Extensions;
@@ -13,7 +14,6 @@ internal static class ConstraintExtensions
 	{
 		// Code size: 116 (0x74)
 		if (!constraint.BaseEntityEquals(other)) return false;
-		if (!ReferenceEquals(constraint.ToTable, other?.ToTable)) return false;
 		// other cannot be null here 
 		return constraint.Type == other!.Type;
 	}
@@ -25,4 +25,13 @@ internal static class ConstraintExtensions
 		hash.AddConstraint(constraint);
 		return hash.ToHashCode();
 	}
+
+	internal static Meta ToMeta(this Constraint constraint, int tableId, FieldType? newFieldType = null)
+	{
+		// Code size: 148 (0x94)
+		var flags = 0L;
+		flags = Meta.SetEntityBaseline(flags, constraint.Baseline);
+		return new(constraint.Id, (byte)EntityType.Constraint, tableId, (int)constraint.Type, flags, constraint.Name, constraint.Description, null, constraint.Active);
+	}
+
 }

@@ -58,7 +58,7 @@ internal sealed class ResourceHelper
 			var endIndex = message.IndexOfOccurrence(separator, itemId);
 			var startIndex = message.IndexOfOccurrence(separator, itemId-1);
 			if (endIndex >= 0 && startIndex >= 0) return message.Substring(startIndex + 1, endIndex - startIndex - 1);
-			if (endIndex >= 0 && startIndex < 0) return message.Substring(0, endIndex);
+			if (endIndex >= 0 && startIndex < 0) return message[..endIndex];
 			if (endIndex < 0 && startIndex >= 0) return message.Substring(startIndex + 1, message.Length - startIndex - 1);
 		}
 		return null;

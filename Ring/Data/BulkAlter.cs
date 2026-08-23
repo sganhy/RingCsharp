@@ -33,7 +33,7 @@ internal sealed class BulkAlter : IEquatable<BulkAlter>
 		// Code size: 223 (0xdf)
 		AppendDdlCommand(AlterQueryType.CreateTable, table);
 		// create constraints 
-		foreach(var constraint in _schema.DdlBuilder.GetConstraints(table).AsSpan()) AppendDdlCommand(AlterQueryType.CreateTable, constraint);
+		foreach(var constraint in _schema.DdlBuilder.GetConstraints(table).AsSpan()) AppendDdlCommand(AlterQueryType.CreateTable, constraint, table);
 		// create comments
 		if (createComment)
 		{
@@ -138,10 +138,9 @@ internal sealed class BulkAlter : IEquatable<BulkAlter>
 
 	#region private methods
 
-	private void AppendDdlCommand(AlterQueryType type, Constraint constraint)
+	private void AppendDdlCommand(AlterQueryType type, Constraint constraint, Table table)
 	{
 		// Code size: 166 (0xa6)
-		var table = constraint.ToTable;
 		if (type == AlterQueryType.CreateTable)
 			switch (constraint.Type)
 			{

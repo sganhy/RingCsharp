@@ -107,7 +107,21 @@ public sealed class IntExtensionsTest : BaseTest
         }
     }
 
-    [Fact]
+	[Fact]
+	public void ToConstraintType_AllExistingEnumId_Enum()
+	{
+		// arrange 
+		var constraintTypes = Enum.GetValues<ConstraintType>();
+		foreach (var constraintType in constraintTypes )
+		{
+			// act 
+			var constraintTypeResult = IntExtensions.ToConstraintType((int)constraintType);
+			// assert 
+			Assert.Equal(constraintType, constraintTypeResult);
+		}
+	}
+
+	[Fact]
     public void ToEntityType_125_Undefined()
     {
         // arrange 

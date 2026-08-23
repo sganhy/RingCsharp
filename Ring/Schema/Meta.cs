@@ -40,6 +40,8 @@ internal readonly struct Meta : IEquatable<Meta>
 	private const byte SearchableColumnId = (byte)EntityType.SearchableColumn;
 	private const byte TimeZoneColumnId = (byte)EntityType.TimeZoneColumn;
 	private const char IndexColumnDelimiter = ';';
+	private const char ConstraintColumnDelimiter = IndexColumnDelimiter;
+
 
 	// flags bit positions
 	private const byte BitPositionFieldSearchableType = 5; // bits 4-9  (6 bits, positions 4..9)
@@ -171,7 +173,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	internal bool IsIndexUnique() => (Flags & (long)MetaFlag.IndexUnique) != 0; // Code size: 18 (0x12)
 
 	// index values
-	internal Column[] GetIndexedColumns() => Value is not null ? new Column[Value.CharCount(IndexColumnDelimiter)+1] : Array.Empty<Column>(); // fill array later - Code size: 35 (0x23)
+	internal Column[] GetIndexedColumns() => Value is not null ? new Column[Value.GetCharCount(IndexColumnDelimiter)+1] : Array.Empty<Column>(); // fill array later - Code size: 35 (0x23)
 	internal static string GetColumnList(string[] columns) => string.Join(IndexColumnDelimiter, columns);
 	
 	// index flags 
@@ -198,6 +200,10 @@ internal readonly struct Meta : IEquatable<Meta>
 	internal ParameterType GetParameterType() => Id.ToParameterType(); // Code size: 12 (0xc)
 	internal string GetParameterValue() => Value ?? string.Empty;
 	internal static int SetParameterValueType(int dataType, FieldType valueType) => (dataType & unchecked((int)0xFFFFFF80)) + ((int)valueType & 127); // Code size: 10 (0xa)
+	#endregion
+
+	#region constraint methods
+	internal ConstraintType GetConstraintType() => DataType.ToConstraintType(); // Code size: 12 (0xc)
 	#endregion
 
 	#region tablespace methods
@@ -266,6 +272,19 @@ internal readonly struct Meta : IEquatable<Meta>
 		return null;
 	}
 
+	internal Constraint? ToConstraint()
+	{
+		// Code size: 123 (0x7b)
+		if (IsConstraint)
+		{
+			var columnCount = Math.Max(0,Value.GetCharCount(ConstraintColumnDelimiter)-1); // min columnCount=0
+			var minValue = GetLongValue(Value, 1, ConstraintColumnDelimiter);
+			var maxValue = GetLongValue(Value, 2, ConstraintColumnDelimiter);
+			return new Constraint(Id, Name, Description, IsEntityBaseline(), Active, GetConstraintType(), columnCount <=0 ? Array.Empty<Column>() : new Column[columnCount], minValue, maxValue);
+		}
+		return null;
+	}
+
 	/// <summary>
 	///		The static method orchestrates the complex process of building a complete database schema object.
 	/// </summary>
@@ -328,28 +347,29 @@ internal readonly struct Meta : IEquatable<Meta>
 	/// </summary>
 	internal Table? ToTable(ReadOnlySpan<Meta> tableItems, PhysicalType physicalType, IDdlBuilder ddlBuilder, string physicalName, int objectIndex)
 	{
-		// Code size: 289 (0x121)
+		// Code size: 314 (0x13a)
 		if (IsTable)
 		{
 			var tableType = DataType.ToTableType();
 			var fields = GetFieldArray(tableItems, tableType);
 			var relations = GetRelationArray(tableItems);
 			var indexes = GetIndexes(tableItems);
-			var (colCount, physRelationCount) = GetColumnCount(fields, tableItems, ddlBuilder);
+			var (colCount, physRelationCount, constraintCount) = GetCount(fields, tableItems, ddlBuilder);
 			var recordSize = physRelationCount + fields.Length + 1;
 
 			// sort arrays (warn: relations not yet loaded here)
 			fields.AsSpan().Sort((x, y) => string.CompareOrdinal(x.Name, y.Name));
 			indexes.AsSpan().Sort((x, y) => string.CompareOrdinal(x.Name, y.Name));
 			
-			var table = new Table(Id, Name, Description, Value, physicalName, tableType, relations, fields, new Column[colCount], indexes, Array.Empty<Constraint>(), ReferenceId, physicalType, 
-				objectIndex, recordSize, GetCacheId(tableType), IsEntityBaseline(), Active, IsTableCached(), IsPhysicalDeletion(), IsTableReadonly(), 
+			var table = new Table(Id, Name, Description, Value, physicalName, tableType, relations, fields, new Column[colCount], indexes, new Constraint[constraintCount], 
+				ReferenceId, physicalType, objectIndex, recordSize, GetCacheId(tableType), IsEntityBaseline(), Active, IsTableCached(), IsPhysicalDeletion(), IsTableReadonly(), 
 				HasPreparedStatement(), IsTableAllowAttributeExtension());
 
 			// load relations later, we need full schema to create relations
 			// load columns
 			LoadColumns(table, tableItems, physRelationCount, ddlBuilder);
 			LoadIndexColumns(table, tableItems, physRelationCount);
+			LoadConstraints(table, tableItems,	constraintCount);
 
 			return table;
 		}
@@ -606,11 +626,12 @@ internal readonly struct Meta : IEquatable<Meta>
 		return string.CompareOrdinal(meta1.Name, meta2.Name);
 	}
 
-	private static (int colCount, int relationCount) GetColumnCount(ReadOnlySpan<Field> fields, ReadOnlySpan<Meta> tableItems, IDdlBuilder ddlBuilder)
+	private static (int colCount, int relationCount, int constraintCount) GetCount(ReadOnlySpan<Field> fields, ReadOnlySpan<Meta> tableItems, IDdlBuilder ddlBuilder)
 	{
 		// Code size: 170 (0xaa)
 		var count = fields.Length;
 		var relationCount = 0;
+		var constraintCount = 0;
 		var hasTimeZoneOffsetColumn = ddlBuilder.HasTimeZoneOffsetColumn;
 		
 		// count fields 
@@ -634,9 +655,11 @@ internal readonly struct Meta : IEquatable<Meta>
 					++relationCount;
 				}
 			}
+			if (item.IsConstraint) ++constraintCount;
 		}
-		return (count, relationCount);
+		return (count, relationCount, constraintCount);
 	}
+
 
 	/// <summary>
 	/// 	Load Table.RecordIndexes[] & Table.Columns[]
@@ -755,6 +778,11 @@ internal readonly struct Meta : IEquatable<Meta>
 				}
 			}
 		}
+	}
+
+	private static void LoadConstraints(Table table, ReadOnlySpan<Meta> tableItems, int constraintCount)
+	{ 
+										
 	}
 
 	/// <summary>
@@ -910,6 +938,23 @@ internal readonly struct Meta : IEquatable<Meta>
 		// define rank for entityType
 		return w1.CompareTo(w2);
 	}
+
+	private static long? GetLongValue(string? value, int index, char separator) 
+	{
+		// Code size: 135 (0x87)
+		if (value is not null)
+		{
+			var endIndex = value.IndexOfOccurrence(separator, index);
+			var startIndex = value.IndexOfOccurrence(separator, index - 1);
+			string subResult= string.Empty; 
+			if (endIndex >= 0 && startIndex >= 0) subResult = value.Substring(startIndex + 1, endIndex - startIndex - 1);
+			if (endIndex >= 0 && startIndex < 0) subResult = value[..endIndex];
+			if (endIndex < 0 && startIndex >= 0) subResult = value.Substring(startIndex + 1, value.Length - startIndex - 1);
+			if (endIndex < 0 && startIndex < 0) subResult = value;
+			if (long.TryParse(subResult, out long result)) return result;
+		}
+		return null;
+	} 
 
 	private static Table GetMtm(Table partialTable, IDdlBuilder ddlBuilder, string physicalName, int objectIndex, Relation relation1, Relation relation2)
 	{

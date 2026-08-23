@@ -15,7 +15,7 @@ internal interface IDdlBuilder : ISqlBuilder
 	string Create(TableSpace tablespace);
 	string Create(Table table, TableSpace? tablespace = null);
 	string Create(Index index, Table table, TableSpace? tablespace = null);
-	string Create(Constraint constraint, TableSpace? tablespace = null);
+	string Create(Constraint constraint, Table table, TableSpace? tablespace = null);
 	string Drop(Table table);
 	string GetPhysicalName(Table table, DbSchema schema);
 	string GetPhysicalName(Index index, Table table);

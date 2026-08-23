@@ -55,14 +55,14 @@ public class StringExtensionsTest : BaseTest
 
 
     [Fact]
-    public void CharCount_EmptyString_0()
+    public void GetCharCount_EmptyString_0()
     {
         // arrange 
         var input = string.Empty;
 
         // act 
         LogAct("result <-- StringExtensions.Truncate(input, 3)");
-        var result = StringExtensions.CharCount(input, '$');
+        var result = StringExtensions.GetCharCount(input, '$');
 
         // assert
         Assert.Equal(0, result);
@@ -70,13 +70,13 @@ public class StringExtensionsTest : BaseTest
 
 
     [Fact]
-    public void CharCount_DefinedString_3()
+    public void GetCharCount_DefinedString_3()
     {
         // arrange 
         var input = "element/div/env/01";
 
         // act 
-        var result = StringExtensions.CharCount(input, '/');
+        var result = StringExtensions.GetCharCount(input, '/');
 
         // assert
         Assert.Equal(3, result);

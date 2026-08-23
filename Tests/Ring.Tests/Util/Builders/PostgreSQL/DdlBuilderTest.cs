@@ -326,7 +326,7 @@ public sealed class DdlBuilderTest : BaseBuilderTest
         var expectedSql = "ALTER TABLE \"@test\".\"@meta\" ADD CONSTRAINT \"pk_@meta\" PRIMARY KEY (id,schema_id,object_type,reference_id)";
 
         // act 
-        var dql = _sut.Create(pk);
+        var dql = _sut.Create(pk, table);
 
         // assert
         Assert.Equal(expectedSql, dql);
@@ -346,7 +346,7 @@ public sealed class DdlBuilderTest : BaseBuilderTest
 		var expectedSql = "ALTER TABLE \"@test\".\"@meta\" ALTER COLUMN id SET NOT NULL";
 
 		// act 
-		var dql = _sut.Create(notNull);
+		var dql = _sut.Create(notNull, table);
 
 		// assert
 		Assert.Equal(expectedSql, dql);
@@ -366,7 +366,7 @@ public sealed class DdlBuilderTest : BaseBuilderTest
 		var expectedSql = "ALTER TABLE \"@test\".\"@meta\" ALTER COLUMN active SET DEFAULT 'True'";
 
 		// act 
-		var dql = _sut.Create(defaultConstraint);
+		var dql = _sut.Create(defaultConstraint, table);
 
 		// assert
 		Assert.Equal(expectedSql, dql);
@@ -389,7 +389,7 @@ public sealed class DdlBuilderTest : BaseBuilderTest
 		var expectedSql = $"ALTER TABLE \"@test\".\"@meta\" ADD CONSTRAINT \"ck_@meta_003\" CHECK (object_type>={check.MinValue} AND object_type<={check.MaxValue})";
 
 		// act 
-		var dql = _sut.Create(check);
+		var dql = _sut.Create(check, table);
 
 		// assert
 		Assert.Equal(expectedSql, dql);
@@ -409,7 +409,7 @@ public sealed class DdlBuilderTest : BaseBuilderTest
         var expectedSql = "ALTER TABLE \"@test\".\"@meta_id\" ADD CONSTRAINT \"pk_@meta_id\" PRIMARY KEY (id,schema_id,object_type)";
 
         // act 
-        var dql = _sut.Create(pk);
+        var dql = _sut.Create(pk, table);
 
         // assert
         Assert.Equal(expectedSql, dql);
@@ -579,7 +579,7 @@ public sealed class DdlBuilderTest : BaseBuilderTest
         var constraintPk = ddlBuilder.GetConstraints(table).First(p => p.Type == ConstraintType.PrimaryKey);
 
         // assert
-        Assert.Equal(expectedResult, constraintPk.PhysicalName);
+        Assert.Equal(expectedResult, constraintPk.Name);
     }
 
     [Fact]

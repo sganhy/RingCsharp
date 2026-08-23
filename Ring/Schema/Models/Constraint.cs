@@ -6,19 +6,15 @@ namespace Ring.Schema.Models;
 internal sealed class Constraint : BaseEntity, IEquatable<Constraint>
 {
 	internal readonly ConstraintType Type;
-	internal readonly Table ToTable;
 	internal readonly Column[] Columns;
-	internal readonly string PhysicalName;
-	internal readonly int? MinValue;
-	internal readonly int? MaxValue;
+	internal readonly long? MinValue;
+	internal readonly long? MaxValue;
 
-	internal Constraint(int id, string name,string? description, bool baseline, bool enabled, ConstraintType type, Table table, 
-		string physicalName, Column[] columns, int? minValue=null, int? maxValue=null) : base(id, name, description, baseline, enabled)
+	internal Constraint(int id, string name,string? description, bool baseline, bool enabled, ConstraintType type, 
+		Column[] columns, long? minValue=null, long? maxValue=null) : base(id, name, description, baseline, enabled)
 	{
 		Type = type;
-		ToTable = table;
 		Columns = columns;
-		PhysicalName = physicalName;
 		MinValue = minValue;
 		MaxValue = maxValue;
 	}
@@ -30,7 +26,7 @@ internal sealed class Constraint : BaseEntity, IEquatable<Constraint>
 	public override int GetHashCode() => this.Hash();
 
 #if DEBUG
-	public override string ToString() => $"{Type} - {ToTable.Name}";
+	public override string ToString() => $"{Type}";
 #endif
 
 }

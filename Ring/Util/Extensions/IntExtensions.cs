@@ -78,6 +78,14 @@ internal static class IntExtensions
 	private const int ProviderSqlLiteId = (int)DatabaseProvider.SqlLite;
 	private const int ProviderMariaDbId = (int)DatabaseProvider.MariaDb;
 
+	// constraint type
+	private const int PrimaryKeyConstraintTypeId = (int)ConstraintType.PrimaryKey;
+	private const int UniqueKeyConstraintTypeId = (int)ConstraintType.UniqueKey;
+	private const int CheckConstraintTypeId = (int)ConstraintType.Check;
+	private const int NotNullConstraintTypeId = (int)ConstraintType.NotNull;
+	private const int ForeignKeyConstraintTypeId = (int)ConstraintType.ForeignKey;
+	private const int DefaultConstraintTypeId = (int)ConstraintType.Default;
+
 	// parameter type
 	private const int SchemaVersionId = (int)ParameterType.SchemaVersion;
 	private const int SchemaCreationTimeId = (int)ParameterType.SchemaCreationTime;
@@ -205,6 +213,21 @@ internal static class IntExtensions
 			case DbConnectionTypeId: return ParameterType.DbConnectionType;
 		}
 		return ParameterType.Undefined;
+	}
+
+	internal static ConstraintType ToConstraintType(this int constraintTypeId)
+	{
+		// Code size: 67 (0x43)
+		switch (constraintTypeId)
+		{
+			case PrimaryKeyConstraintTypeId: return ConstraintType.PrimaryKey;
+			case UniqueKeyConstraintTypeId: return ConstraintType.UniqueKey;
+			case CheckConstraintTypeId: return ConstraintType.Check;
+			case NotNullConstraintTypeId: return ConstraintType.NotNull;
+			case ForeignKeyConstraintTypeId: return ConstraintType.ForeignKey;
+			case DefaultConstraintTypeId: return ConstraintType.Default;
+		}
+		return ConstraintType.Undefined;
 	}
 
 	internal static EntityType ToEntityType(this int entityType) 

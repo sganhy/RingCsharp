@@ -1,6 +1,4 @@
-﻿using Ring.Data;
-using Ring.Data.Enums;
-using Ring.Data.Models;
+﻿using Ring.Data.Models;
 using Ring.Schema.Models;
 using System.Runtime.CompilerServices;
 using Index = Ring.Schema.Models.Index;
@@ -13,13 +11,12 @@ internal static class HashCodeExtensions
 	{
 		// Code size: 85 (0x55) 
 		/*
-		internal readonly string? DefaultValue;
-		internal readonly int Size;
-		internal readonly FieldType Type;
-		internal readonly SearchableType SearchableType;
-		internal readonly bool Multilingual;
-		internal readonly bool NotNull;
-		internal readonly bool AllowTruncation; 
+			int Size;
+			FieldType Type;
+			SearchableType SearchableType;
+			bool Multilingual;
+			bool NotNull;
+			bool AllowTruncation; 
 		*/
 		AddBaseEntity(ref hashCode, field);
 		// Field-specific properties
@@ -34,13 +31,18 @@ internal static class HashCodeExtensions
 
 	internal static void AddConstraint(this ref HashCode hashCode, Constraint constraint)
 	{
+		// Code size: 97 (0x61)
+		/*
+			ConstraintType Type;
+			Column[] Columns;
+			int? MinValue;
+			int? MaxValue;
+		*/
+		AddBaseEntity(ref hashCode, constraint);
 		hashCode.Add((int)constraint.Type);
-		hashCode.Add(constraint.ToTable.Id);
-		hashCode.Add(constraint.ToTable.SchemaId);
-		hashCode.Add(constraint.Name, StringComparer.Ordinal);
-		hashCode.Add(constraint.PhysicalName, StringComparer.Ordinal);
-		hashCode.Add(constraint.MinValue);
-		hashCode.Add(constraint.MaxValue);
+		if (constraint.MinValue.HasValue) hashCode.Add(constraint.MinValue.Value);
+		if (constraint.MaxValue.HasValue) hashCode.Add(constraint.MaxValue.Value);
+		AddColumns(ref hashCode, constraint.Columns);
 	}
 
 	internal static void AddIndex(this ref HashCode hashCode, Index index)
@@ -83,13 +85,22 @@ internal static class HashCodeExtensions
 	}
 
 	internal static void AddColumn(this ref HashCode hashCode, Column column)
-	{
+	{   
+		// Code size: 73 (0x49)
+		/*
+			int Id;
+			int RecordIndex;
+			EntityType Type; // enum EntityType : byte
+			FieldType FieldType; // enum FieldType : byte
+			SearchableType SearchableType; // enum SearchableType : byte
+			string PhysicalName;
+		*/
 		hashCode.Add(column.Id);
+		hashCode.Add(column.RecordIndex);
 		hashCode.Add((int)column.Type);
 		hashCode.Add((int)column.FieldType);
 		hashCode.Add((int)column.SearchableType);
 		hashCode.Add(column.PhysicalName);
-		hashCode.Add(column.RecordIndex);
 	}
 
     internal static void AddAlterQuery(this ref HashCode hashCode, AlterQuery alterQuery)
@@ -204,6 +215,12 @@ internal static class HashCodeExtensions
 	{
 		// Code size: 38 (0x26)
 		foreach (var index in indexes) AddIndex(ref hashCode, index);
+	}
+
+	private static void AddColumns(ref HashCode hashCode, ReadOnlySpan<Column> columns)
+	{
+		// Code size: 38 (0x26)
+		foreach (var column in columns) AddColumn(ref hashCode, column);
 	}
 
 	#endregion

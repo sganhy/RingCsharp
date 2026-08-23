@@ -4,6 +4,7 @@ using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using Ring.Util.Builders;
+using System.Data.Common;
 using System.Linq.Expressions;
 using System.Reflection;
 using PostGDdlBuilder = Ring.Util.Builders.PostgreSQL.DdlBuilder;
@@ -565,7 +566,44 @@ public sealed class MetaTest : BaseTest
         Assert.Equal(TableType.Mtm, table.Type);
     }
 
-    [Fact]
+	[Fact]
+	internal void ToConstraint_Meta_1_4_ConstraintObject()
+	{
+        // arrange 
+        var value1 = "1;15;column1_;column2_";
+		var value2 = "77";
+		var value4 = ";;column1_;column2_";
+		var meta1 = new Meta(4, (byte)EntityType.Constraint, 0, (int)ConstraintType.NotNull, 286720L, "@pk_test", _faker.Random.String(), value1, true);
+		var meta2 = new Meta(_faker.Random.Int(), (byte)EntityType.Constraint, 0, (int)ConstraintType.Check, _faker.Random.Long(), "@pk_test", _faker.Random.String(), value2, true);
+		var meta3 = new Meta(_faker.Random.Int(), (byte)EntityType.Constraint, 0, (int)ConstraintType.Check, _faker.Random.Long(), "@pk_test", _faker.Random.String(), null, true);
+		var meta4 = new Meta(_faker.Random.Int(), (byte)EntityType.Constraint, 0, (int)ConstraintType.Check, _faker.Random.Long(), "@pk_test", _faker.Random.String(), value4, true);
+
+		// act 
+		var constraint1 = meta1.ToConstraint();
+		var constraint2 = meta2.ToConstraint();
+		var constraint3 = meta3.ToConstraint();
+		var constraint4 = meta4.ToConstraint();
+
+		// assert
+		Assert.NotNull(constraint1);
+		Assert.NotNull(constraint2);
+		Assert.NotNull(constraint3);
+		Assert.NotNull(constraint4);
+		Assert.Equal(ConstraintType.NotNull, constraint1.Type);
+		Assert.Equal(1, constraint1.MinValue);
+		Assert.Equal(15, constraint1.MaxValue);
+		Assert.Equal(2, constraint1.Columns.Length);
+		Assert.Equal(77, constraint2.MinValue);
+		Assert.Equal(0, constraint2.Columns?.Length);
+		Assert.Equal(ConstraintType.Check, constraint2.Type);
+		Assert.Null(constraint3.MinValue);
+		Assert.Null(constraint3.MaxValue);
+		Assert.Equal(2, constraint4.Columns.Length);
+		Assert.Null(constraint4.MinValue);
+		Assert.Null(constraint4.MaxValue);
+	}
+
+	[Fact]
     internal void ToSchema_Schema1_SchemaObject()
     {
         // arrange 

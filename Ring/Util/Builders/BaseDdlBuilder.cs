@@ -282,25 +282,25 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 		}
 		return result.ToString();
 	}
-	public string Create(Constraint constraint, TableSpace? tablespace = null)
+	public string Create(Constraint constraint, Table table, TableSpace? tablespace = null)
 	{
-		// Code size: 777 (0x309)
+		// Code size: 763 (0x2fb)
 		var skipTableSpace = true;
 		var result = new StringBuilder();
 		result.Append(DdlAlter)
 					.Append(DdlTable)
-					.Append(constraint.ToTable.PhysicalName)
+					.Append(table.PhysicalName)
 					.Append(SqlSpace);
 		switch (constraint.Type)
 		{
 			 case ConstraintType.PrimaryKey:
 				result.Append(DdlAdd)
 					.Append(DdlConstraint)
-					.Append(constraint.PhysicalName)
+					.Append(GetPhysicalName(constraint))
 					.Append(SqlSpace)
 					.Append(DdlPrimaryKey)
 					.Append('(')
-					.Append(string.Join(',', constraint.ToTable.GetPrimaryKey().ConvertAll(delegate (Column column)
+					.Append(string.Join(',', table.GetPrimaryKey().ConvertAll(delegate (Column column)
 					{
 						return column.PhysicalName;
 					})
@@ -318,13 +318,13 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 				//eg. alter table public."@meta" alter column active SET DEFAULT 'True'
 				result.Append(AlterColumnStatment).Append(SqlSpace).Append(constraint.Columns[0].PhysicalName).Append(SqlSpace);
 				if (Provider == DatabaseProvider.PostgreSql) result.Append(DdlSet);
-				result.Append(DdlDefault).Append(GetDefaultValue(constraint.ToTable.Fields[constraint.Columns[0].RecordIndex]));
+				result.Append(DdlDefault).Append(GetDefaultValue(table.Fields[constraint.Columns[0].RecordIndex]));
 				break;
 			case ConstraintType.Check:
 				//eg. alter table public."@meta" ADD CONSTRAINT "ck_@meta_002" CHECK (object_type>=0 and object_type<=124);
 				result.Append(DdlAdd)
 						.Append(DdlConstraint)
-						.Append(constraint.PhysicalName)
+						.Append(GetPhysicalName(constraint))
 						.Append(SqlSpace)
 						.Append(DdlCheck)
 						.Append('(');
@@ -556,6 +556,10 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 			return GetPhysicalName(provider, TablePrefix + name);
 		}
 	}
+	private static string GetPhysicalName(Constraint constraint)
+	{
+		return constraint.Name;
+	}
 
 	private static string GetDefaultValue(Field field)
 	{
@@ -564,7 +568,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 
 	protected static Constraint GetConstraint(ConstraintType type, Table table, string physicalName, Column[] columns, int? minValue = null, int? maxValue = null)
 	{ 
-		return new Constraint(0, string.Empty, null,true, true,type, table, physicalName, columns, minValue, maxValue);
+		return new Constraint(0, string.Empty, null,true, true,type, columns, minValue, maxValue);
 	}
 
 

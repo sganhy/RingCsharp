@@ -21,7 +21,7 @@ internal static class StringExtensions
 	/// </summary>
 	internal static string? Truncate(this string? source, int length) => source?.Length >= length ? source[..length] : source; // Code size: 23 (0x17)
 
-	internal static int CharCount(this string? source, char chr) 
+	internal static int GetCharCount(this string? source, char chr) 
 	{
 		// Code size: 50 (0x32)
 		if (source is not null)
