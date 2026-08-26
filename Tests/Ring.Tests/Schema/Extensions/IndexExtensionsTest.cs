@@ -25,7 +25,7 @@ public sealed class IndexExtensionsTest : BaseTest
         // act 
         Assert.NotNull(index1);
         Assert.NotNull(table);
-        var meta = IndexExtensions.ToMeta(index1, table.Id);
+        var meta = IndexExtensions.ToMeta(index1, table);
 
         // assert
         Assert.Equal(1, meta.Id);
@@ -50,7 +50,7 @@ public sealed class IndexExtensionsTest : BaseTest
         // act 
         Assert.NotNull(index2);
         Assert.NotNull(table);
-        var meta = IndexExtensions.ToMeta(index2, table.Id);
+        var meta = IndexExtensions.ToMeta(index2, table);
 
         // assert
         Assert.Equal(4, meta.Id);
@@ -72,9 +72,9 @@ public sealed class IndexExtensionsTest : BaseTest
         var description = _faker.Random.String();
         var columnCount = 5;
         var columns = new List<Column>(columnCount);
-        for (var i = 0; i < columnCount; ++i) columns.Add(GetAnonymousColumn());
-        var index1 = new Index(id, name, description, columns.ToArray(), _faker.Random.String(), true, false, true, false);
-        var index2 = new Index(id, name, description, columns.ToArray(), index1.ColumnList, true, false, true, false);
+        for (var i = 0; i < columnCount; i++) columns.Add(GetAnonymousColumn());
+        var index1 = new Index(id, name, description, columns.ToArray(), true, false, true, false);
+        var index2 = new Index(id, name, description, columns.ToArray(), true, false, true, false);
 
         // act 
         var hash1 = IndexExtensions.Hash(index1);
@@ -91,17 +91,15 @@ public sealed class IndexExtensionsTest : BaseTest
         var id = _faker.Random.Number(int.MinValue, int.MaxValue);
         var name = _faker.Random.String();
         var description = _faker.Random.String();
-        var columnList1 = _faker.Random.String(8);
-        var columnList2 = _faker.Random.String(9);
         var colCount1 = 5;
         var colCount2 = 7;
         var columns = new List<Column>(colCount1);
         for (var i = 0; i < colCount1; ++i) columns.Add(GetAnonymousColumn());
         var columns2 = new List<Column>(colCount2);
         for (var i = 0; i < colCount2; ++i) columns2.Add(GetAnonymousColumn());
-        var index1 = new Index(id, name, description, columns.ToArray(), columnList1, true, false, true, false);
-        var index2 = new Index(id, name, description, columns2.ToArray(), columnList2, true, false, true, false);
-        var index3 = new Index(id, name, description, columns.ToArray(), columnList1, true, false, true, true);
+        var index1 = new Index(id, name, description, columns.ToArray(), true, false, true, false);
+        var index2 = new Index(id, name, description, columns2.ToArray(),true, false, true, false);
+        var index3 = new Index(id, name, description, columns.ToArray(), true, false, true, true);
 
         // act 
         var hash1 = IndexExtensions.Hash(index1);
@@ -121,18 +119,17 @@ public sealed class IndexExtensionsTest : BaseTest
         var id = _faker.Random.Number(int.MinValue, int.MaxValue);
         var name = _faker.Random.String();
         var description = _faker.Random.String();
-        var columnList1 = _faker.Random.String(8);
-        var columnList2 = _faker.Random.String(9);
+        
         var colCount1 = 5;
         var colCount2 = 7;
         var columns = new List<Column>(colCount1);
         for (var i = 0; i < colCount1; ++i) columns.Add(GetAnonymousColumn());
         var columns2 = new List<Column>(colCount2);
         for (var i = 0; i < colCount2; ++i) columns2.Add(GetAnonymousColumn());
-        var index1 = new Index(id, name, description, columns.ToArray(), columnList1, true, false, true, false);
-        var index2 = new Index(id, name, description, columns2.ToArray(), columnList2, true, false, true, false);
-        var index3 = new Index(id, name, description, columns.ToArray(), columnList1, true, false, true, true);
-        var index4 = new Index(id, name, description, columns2.ToArray(), columnList2, true, false, true, false);
+        var index1 = new Index(id, name, description, columns.ToArray(), true, false, true, false);
+        var index2 = new Index(id, name, description, columns2.ToArray(),true, false, true, false);
+        var index3 = new Index(id, name, description, columns.ToArray(), true, false, true, true);
+        var index4 = new Index(id, name, description, columns2.ToArray(),true, false, true, false);
 
         // act 
         var result1 = index1 == index2;

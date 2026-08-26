@@ -56,6 +56,4 @@ internal sealed class DdlBuilder : BaseDdlBuilder
 		throw new NotImplementedException();
 	}
 
-	protected override Constraint? HasCheckConstraint(Table table, Column column) => null;
-
 }

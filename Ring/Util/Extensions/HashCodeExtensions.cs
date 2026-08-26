@@ -52,7 +52,7 @@ internal static class HashCodeExtensions
 		// Index-specific properties
 		hashCode.Add(index.Unique.ToInt());
 		hashCode.Add(index.Bitmap.ToInt());
-		hashCode.Add(index.ColumnList, StringComparer.Ordinal);
+		AddColumns(ref hashCode, index.Columns);
 	}
 
 	internal static void AddRelation(this ref HashCode hashCode, Relation relation)

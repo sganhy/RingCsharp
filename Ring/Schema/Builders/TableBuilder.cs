@@ -54,6 +54,7 @@ internal sealed class TableBuilder
 			GetField(FieldActive, FieldType.Boolean,0,true,SearchableType.None,true.ToString(DefaultCulture)),
 			GetIndex(true, new [] { FieldId, FieldSchemaId, FieldObjectType, FieldReferenceId }) // memory actually gets duplicated with [] Meta.
 		};
+		Console.WriteLine(metaTable.ToCsv());
 		return GetTable(schemaName, provider, metaArr, metaTable);
 	}
 
@@ -153,7 +154,8 @@ internal sealed class TableBuilder
 		var physicalName = ddlBuilder.GetPhysicalName(emptyTable, emptySchema);
 		var tableType = metaTable.DataType.ToTableType();
 		var spanMeta = metaArray.AsSpan();
-		return metaTable.ToTable(new ReadOnlySpan<Meta>(metaArray, 0, metaArray.Length), physicalType ?? PhysicalType.Table, ddlBuilder, physicalName, tableType.GetObjectIndex()) ?? emptyTable;
+		var table = metaTable.ToTable(new ReadOnlySpan<Meta>(metaArray, 0, metaArray.Length), physicalType ?? PhysicalType.Table, ddlBuilder, physicalName, tableType.GetObjectIndex()) ?? emptyTable;
+		return table;
 	}
 
 	private Meta GetTable(int id, string name, TableType tableType) 
@@ -195,7 +197,7 @@ internal sealed class TableBuilder
 		if (fieldType == FieldType.String) flags = Meta.SetSearchableType(flags, searchableType);
 		flags = Meta.SetEntityBaseline(flags, true);
 		dataType = Meta.SetFieldType(dataType, fieldType);
-		return new (++_currentFieldId, (byte)EntityType.Field, 0, dataType, flags, name, _currentTableType.GetFieldDescription(_currentFieldId), defaultValue, true);
+		return new (++_currentFieldId, (byte)EntityType.Field, 0, dataType, flags, name, null, defaultValue, true);
 	}
 	private Meta GetIndex(bool unique, params string[] fieldNames)
 	{

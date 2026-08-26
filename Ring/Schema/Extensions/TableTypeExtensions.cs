@@ -57,17 +57,6 @@ internal static class TableTypeExtensions
 		return null;
 	}
 
-	internal static string? GetFieldDescription(this TableType tableType, int fieldId)
-	{
-		const char separator = '|';
-		// Code size: 23 (0x17)
-		switch (tableType)
-		{
-			case TableType.Meta: return ResourceHelper.GetMessage(ResourceType.MetaFieldsDescription, fieldId, separator);
-		}
-		return null;
-	}
-
 	internal static PhysicalType ToPhysicalType(this TableType tableType) =>
 		tableType.IsCatalog() ? PhysicalType.View : PhysicalType.Table;
 

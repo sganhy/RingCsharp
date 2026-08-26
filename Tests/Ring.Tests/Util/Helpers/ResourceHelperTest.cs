@@ -27,21 +27,6 @@ public sealed class ResourceHelperTest : BaseTest
 		Assert.Equal(expectedMessage, result);
 	}
 
-	[Theory]
-	[InlineData(ResourceType.MetaFieldsDescription, 2, "Identifier of the associated schema.")]
-	[InlineData(ResourceType.MetaFieldsDescription, 5, "Type-specific numeric value.")]
-	[InlineData(ResourceType.MetaFieldsDescription, 1, "Unique identifier within its metadata scope.")]
-	[InlineData(ResourceType.MetaFieldsDescription, 10, "Indicates whether the metadata object is active.")]
-	internal void GetMessage_ResourceType_Item(ResourceType resourceType, int itemIndex, string expectedMessage)
-	{
-		// arrange 
-		// act 
-		var result = ResourceHelper.GetMessage(resourceType, itemIndex, '|');
-
-		// assert
-		Assert.Equal(expectedMessage, result);
-	}
-
 	[Fact]
     public void GetParameter_MinPoolSize_ParameterObject()
     {
@@ -71,6 +56,20 @@ public sealed class ResourceHelperTest : BaseTest
         // assert
         Assert.Equal("Unsupported parameter type : Undefined.", ex.Message);
     }
+
+
+	[Fact]
+	public void GetMetaRows_PostgreSql_MetaTable_MetaArray()
+	{
+		// arrange 
+
+		// act 
+		var metas = ResourceHelper.GetMetaRows(DatabaseProvider.PostgreSql,TableType.Meta);
+
+		// assert
+		int oi = 0;
+		++oi;
+	}
 
 	[Fact]
 	public void GetParameter_RingVersion_ParameterObject()

@@ -1,9 +1,9 @@
 ﻿using Ring.Logging;
+using Ring.Schema;
 using Ring.Schema.Enums;
 using Ring.Schema.Models;
 using Ring.Util.Enums;
 using Ring.Util.Extensions;
-using System.ComponentModel.Design.Serialization;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 
@@ -22,16 +22,20 @@ internal sealed class ResourceHelper
 	private static readonly object SyncRoot = new();
 	private static readonly string CompressedResourceSuffix = @".gz";
 	private static readonly string ResourceNameSpace = @"Ring.Util.Resources.";
+	private static readonly string ResourceMetaFile = @"Meta";
 	private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
 	private static readonly string ResourceEof = @"|||";
 	private const char ResourceEndOfLine = '\n';
 	private static bool _resourcesLoaded;
 	private static bool _parameterLoaded;
 	private static bool _methodInfoLoaded;
+	private static bool _metaLoaded;
 	private static Dictionary<int, string> _logMessages = new();
 	private static Dictionary<int, string> _logDescriptions = new();
 	private static Dictionary<int, string> _methodInfos = new();
 	private static Dictionary<int, Parameter> _parameters = new();
+	private static Dictionary<int, Meta[]> _metas = new(); // <tableTypeId, Meta[] >
+
 	private static readonly Logger _logger = Global.LoggerFactory.CreateLogger<ResourceHelper>();
 
 	static ResourceHelper()
@@ -40,6 +44,7 @@ internal sealed class ResourceHelper
 		LoadResources(); // load _logMessages & _logDescriptions
 		LoadParameters(); // _parameters
 		LoadMethodInfos(); // _methodInfos
+		LoadMetas(); // _metas
 	}
 
 	internal static string GetMessage(ResourceType resourceType, bool noLogs=false)
@@ -48,20 +53,6 @@ internal sealed class ResourceHelper
 		var resourceTypeId = (int)resourceType;
 		if (_logMessages.TryGetValue(resourceTypeId, out var message)) return message;
 		return string.Empty;
-	}
-	internal static string? GetMessage(ResourceType resourceType, int itemId, char separator)
-	{
-		// Code size: 107 (0x6b)
-		var resourceTypeId = (int)resourceType;
-		if (_logMessages.TryGetValue(resourceTypeId, out var message)) 
-		{ 
-			var endIndex = message.IndexOfOccurrence(separator, itemId);
-			var startIndex = message.IndexOfOccurrence(separator, itemId-1);
-			if (endIndex >= 0 && startIndex >= 0) return message.Substring(startIndex + 1, endIndex - startIndex - 1);
-			if (endIndex >= 0 && startIndex < 0) return message[..endIndex];
-			if (endIndex < 0 && startIndex >= 0) return message.Substring(startIndex + 1, message.Length - startIndex - 1);
-		}
-		return null;
 	}
 
 	internal static string? GetDescription(ResourceType resourceType)
@@ -103,6 +94,21 @@ internal sealed class ResourceHelper
 		var result = new HashSet<string>(reservedWords.Count * 2, StringComparer.OrdinalIgnoreCase);
 		foreach (var reservedWord in reservedWords) if (reservedWord is not null && !result.Contains(reservedWord)) result.Add(reservedWord);
 		return result;
+	}
+
+	internal static Meta[] GetMetaRows(DatabaseProvider databaseProvider, TableType tableType)
+	{
+		var refId = (int)tableType;
+		using var csv = new CsvHelper(ResourceNameSpace, ResourceMetaFile + CompressedResourceSuffix, 9);
+		var rows = new List<string?[]>();
+		foreach (var row in csv)
+		{
+			if (!int.TryParse(row[2], NumberStyles.None, DefaultCulture, out var rowRefId)) continue;
+			if (!int.TryParse(row[0], NumberStyles.None, DefaultCulture, out var rowId)) continue;
+
+			if (rowRefId == refId || (rowRefId == 0 && rowId == refId)) rows.Add(row);
+		}
+		return null;
 	}
 
 	#region private methods
@@ -180,6 +186,28 @@ internal sealed class ResourceHelper
 				foreach (var method in methodInfos) _methodInfos.TryAdd(method.Item1, method.Item2 ?? string.Empty);
 			}
 			_methodInfoLoaded = true;
+		}
+	}
+
+	private static void LoadMetas()
+	{
+		// Code size: 274 (0x112)
+		lock (SyncRoot)
+		{
+			if (!_metaLoaded)
+			{
+				var metaList = new List<(int, Meta)>();
+				using var csv = new CsvHelper(ResourceNameSpace, ResourceMetaFile + CompressedResourceSuffix, 9);
+				foreach (var meta in csv)
+				{
+					//TODO add warning here!
+					if (!int.TryParse(meta[0], NumberStyles.None, CultureInfo.InvariantCulture, out var id)) continue;
+					//metaList.Add((id, meta[1]));
+				}
+				_metas = new Dictionary<int, Meta[]>(metaList.Count * 2); // reserve bucket
+				//foreach (var method in methodInfos) _methodInfos.TryAdd(method.Item1, method.Item2 ?? string.Empty);
+			}
+			_metaLoaded = true;
 		}
 	}
 

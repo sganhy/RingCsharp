@@ -64,7 +64,6 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	protected abstract string AlterColumnStatment { get; }
 	protected abstract string? TimeZoneOffsetPrefix { get; }
 	protected abstract string GetCatalogPhysicalName(TableType tableType);
-	protected abstract Constraint? HasCheckConstraint(Table table, Column column);
 	protected abstract string GetSchemaPhysicalName(TableType tableType);
 	protected abstract string GetPhysicalName(TableType tableType, Field field); // get field physical name eg. "table_schema" or "table_name" for information_schema.tables
 	public bool HasTimeZoneOffsetColumn => TimeZoneOffsetPrefix is not null;
@@ -230,20 +229,6 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	public string GetPhysicalName(Field field, Table table) => GetPhysicalName(table.Type, field);
 	protected abstract string MtmPrefix { get; }
 
-	private string GetDataType(Table table, Column column, int? size)
-	{
-        // Code size: 125 (0x7d)
-        var fieldType = column.FieldType;
-		var result = new StringBuilder(DataType[fieldType]);
-		var collateInformation = StringCollateInformation;
-
-		if (fieldType == FieldType.String)
-            result.Append(GetSizeInfo(size ?? table.GetField(column.Id)?.Size ?? 0));
-        if ((fieldType == FieldType.String || fieldType == FieldType.LongString))
-			result.Append(SqlSpace).Append(collateInformation);
-		return result.ToString();
-	}
-	
 
 	public abstract string Create(TableSpace tablespace);
 	protected abstract Dictionary<FieldType, string> DataType { get; }
@@ -397,71 +382,20 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 		return result.ToString();
 	}
 
-	public Constraint[] GetConstraints(Table table) 
-	{
-		// Code size: 1155 (0x483) - too big  
-		var result = new List<Constraint>();
-		var keyCount = table.GetPrimaryKey().Count;
-		if (keyCount > 0) result.Add(GetConstraint(ConstraintType.PrimaryKey, table, GetPhysicalName(ConstraintType.PrimaryKey, table, -1), new Column[keyCount]));
-		var fieldCount = table.Fields.Length;
-		TableBuilder? tblBuilder = table.Type == TableType.Meta || table.Type == TableType.MetaId ? new TableBuilder() : null; // avoid TableBuilder instance by default.
-		var objectTypeMeta = tblBuilder?.GetObjectTypeMeta();
-		var schemaIdMeta = tblBuilder?.GetSchemaIdMeta();
-		var referenceIdMeta = tblBuilder?.GetReferenceIdMeta();
-		var IdMeta = tblBuilder?.GetIdMeta();
-		var objectTypeCol = objectTypeMeta?.ToColumn(0, GetPhysicalName(EntityType.Field, objectTypeMeta.Value.Name), 0);
-		var schemaIdCol = schemaIdMeta?.ToColumn(0, GetPhysicalName(EntityType.Field, schemaIdMeta.Value.Name), 0);
-		var referenceIdCol = referenceIdMeta?.ToColumn(0, GetPhysicalName(EntityType.Field, referenceIdMeta.Value.Name), 0);
-		var idCol = IdMeta?.ToColumn(0, GetPhysicalName(EntityType.Field, IdMeta.Value.Name), 0);
-
-		foreach (var column in table.Columns.AsSpan())
-		{
-			if (tblBuilder is not null)
-			{
-				// (1) - object_type 
-				if (column.PhysicalName.Equals(objectTypeCol?.PhysicalName, StringComparison.OrdinalIgnoreCase))
-				{
-					(var min , var max) = EntityType.Field.GetRange();
-					var constraint = GetConstraint(ConstraintType.Check, table, GetPhysicalName(ConstraintType.Check, table, column.Id), new Column[1], min, max);
-					constraint.Columns[0] = column;
-					result.Add(constraint);
-				}
-				// (2) - schema_id or reference_id or id
-				if (column.PhysicalName.Equals(schemaIdCol?.PhysicalName, StringComparison.OrdinalIgnoreCase) ||
-					column.PhysicalName.Equals(referenceIdCol?.PhysicalName, StringComparison.OrdinalIgnoreCase) ||
-					column.PhysicalName.Equals(idCol?.PhysicalName, StringComparison.OrdinalIgnoreCase))
-				{
-					var constraint = GetConstraint(ConstraintType.Check, table, GetPhysicalName(ConstraintType.Check, table, column.Id), new Column[1], 0, null);
-					constraint.Columns[0] = column;
-					result.Add(constraint);
-				}
-			}
-			else
-			{
-				var constraint = HasCheckConstraint(table, column);
-				if (constraint is not null) result.Add(constraint);
-			}
-			if (table.Type == TableType.Business) continue;
-			// not null constraints
-			if ((column.Type == EntityType.Field && table.Fields[column.RecordIndex].NotNull) ||
-				(column.Type == EntityType.Relation && table.Relations[column.RecordIndex - fieldCount].NotNull))
-			{
-				var newConstraint = GetConstraint(ConstraintType.NotNull, table, string.Empty, new Column[1]);
-				newConstraint.Columns[0] = column;
-				result.Add(newConstraint);
-			}
-			// default constraints
-			if (column.Type == EntityType.Field && table.Fields[column.RecordIndex].DefaultValue is not null && table.Type != TableType.Business)
-			{
-				var newConstraint = GetConstraint(ConstraintType.Default, table, string.Empty, new Column[1]);
-				newConstraint.Columns[0] = column;
-				result.Add(newConstraint);
-			}
-		}
-		return result.ToArray();
-	}
 
 	#region private methods 
+
+	private string GetDataType(Table table, Column column, int? size)
+	{
+		// Code size: 125 (0x7d)
+		var fieldType = column.FieldType;
+		var result = new StringBuilder(DataType[fieldType]);
+		var collateInformation = StringCollateInformation;
+		if (fieldType == FieldType.String) result.Append(GetSizeInfo(size ?? table.GetField(column.Id)?.Size ?? 0));
+		if (fieldType == FieldType.String || fieldType == FieldType.LongString) result.Append(SqlSpace).Append(collateInformation);
+		return result.ToString();
+	}
+
 	private static string GetSizeInfo(int size) => $"({size})";
 
 	private void Create(StringBuilder subResult, Table table, Column column, Field? field, Relation? relation)

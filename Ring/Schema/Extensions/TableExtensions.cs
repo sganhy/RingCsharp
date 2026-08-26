@@ -162,12 +162,12 @@ internal static class TableExtensions
 	/// 	Get column bye logical name - O(log N)
 	/// </summary>
 	/// <param name="table">table object</param>
-	/// <param name="name">Logical column name</param>
+	/// <param name="logicalName">Logical column name</param>
 	/// <returns>Column object</returns>
-	internal static Column? GetColumn(this Table table, string name)
+	internal static Column? GetColumn(this Table table, string logicalName)
 	{
 		// Code size: 75 (0x4b)
-		var field = table.GetField(name);
+		var field = table.GetField(logicalName);
 		var type = EntityType.Undefined;
 		var id=-1;
 		if (field is not null)
@@ -177,7 +177,7 @@ internal static class TableExtensions
 		}
 		else 
 		{ 
-			var relation = table.GetRelation(name);
+			var relation = table.GetRelation(logicalName);
 			if (relation is not null)
 			{
 				id = relation.Id;
@@ -192,6 +192,15 @@ internal static class TableExtensions
 		// Code size: 67 (0x43)
 		if (column.Type == EntityType.Relation) return table.Relations[column.RecordIndex-table.Fields.Length].Description;
 		else if (column.Type == EntityType.Field) return table.Fields[column.RecordIndex].Description;
+		// no descriptions for searchable fields 
+		return null;
+	}
+
+	internal static string? GetLogicalName(this Table table,in Column column)
+	{
+		// Code size: 67 (0x43)
+		if (column.Type == EntityType.Relation) return table.Relations[column.RecordIndex - table.Fields.Length].Name;
+		else if (column.Type == EntityType.Field || column.Type == EntityType.SearchableColumn) return table.Fields[column.RecordIndex].Name;
 		return null;
 	}
 
@@ -287,7 +296,7 @@ internal static class TableExtensions
 		int i;
 		for (i=0; i < table.Fields.Length; ++i) result.Add(table.Fields[i].ToMeta(table.Id));
 		for (i=0; i < table.Relations.Length; ++i) result.Add(table.Relations[i].ToMeta(table.Id));
-		for (i=0; i < table.Indexes.Length; ++i) result.Add(table.Indexes[i].ToMeta(table.Id));
+		for (i=0; i < table.Indexes.Length; ++i) result.Add(table.Indexes[i].ToMeta(table));
 		var flags = 0L;
 
 		// set Table Flags

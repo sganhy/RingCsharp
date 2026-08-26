@@ -11,15 +11,16 @@ namespace Ring.Schema.Extensions;
 internal static class IndexExtensions
 {
 
-	internal static Meta ToMeta(this Index index, int tableId)
+	internal static Meta ToMeta(this Index index, Table table)
 	{
+		// Code size: 95 (0x5f)
 		var flags = 0L;
 		flags = Meta.SetEntityBaseline(flags, index.Baseline);
 		flags = Meta.SetIndexUnique(flags, index.Unique);
 		flags = Meta.SetIndexBitmap(flags, index.Bitmap);
-		// int id, byte objectType, int referenceId, int dataType, long flags, string name, string? description, string? value, bool active
-		string? value = index.ColumnList;
-		var meta = new Meta(index.Id, (byte)EntityType.Index, tableId, 0, flags, index.Name, index.Description, value, index.Active);
+		string? value = Meta.GetColumnList(GetLogicalNames(index, table));
+		// compute ColumnList
+		var meta = new Meta(index.Id, (byte)EntityType.Index, table.Id, 0, flags, index.Name, index.Description, value, index.Active);
 		return meta;
 	}
 
@@ -47,16 +48,30 @@ internal static class IndexExtensions
 		return hash.ToHashCode();
 	}
 
-    /// <summary>
-    /// Determines if two Index instances have equivalent definitions,
-    /// regardless of whether they're the same object reference.
-    /// </summary>
-    internal static bool IsEquivalentTo(this Index index, Index? other)
+	/// <summary>
+	/// Determines if two Index instances have equivalent definitions,
+	/// regardless of whether they're the same object reference.
+	/// </summary>
+	internal static bool IsEquivalentTo(this Index index, Index? other)
 	{
 		// Code size: 105 (0x69)
 		if (!index.BaseEntityEquals(other)) return false;
 		// other cannot be null here 
-		return index.Unique == other!.Unique && index.Bitmap == other.Bitmap && string.Equals(index.ColumnList, other.ColumnList, StringComparison.Ordinal);
+		return index.Unique == other!.Unique && index.Bitmap == other.Bitmap && index.Columns.ArraysEqual(other.Columns);
 	}
 
+
+	#region private methods 
+
+	private static string[] GetLogicalNames(this Index index, Table table)
+	{
+		// Code size: 97 (0x61)
+		if (index.Columns.Length <= 0) return Array.Empty<string>();
+		var result = new string[index.Columns.Length];
+		var resultIndex = 0;
+		foreach (ref readonly var column in index.Columns.AsSpan()) result[resultIndex++] = table.GetLogicalName(column) ?? string.Empty;
+		return result;
+	}
+
+	#endregion
 }

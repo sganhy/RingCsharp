@@ -136,6 +136,41 @@ public sealed class MetaTest : BaseTest
 	}
 
 	[Fact]
+	internal void SetConstraintProvider_PostgreSql_Return2()
+	{
+		// arrange 
+		var flags = 3L;
+		flags = Meta.SetDatabaseProvider(flags, DatabaseProvider.PostgreSql);
+		var meta = new Meta(_faker.Random.Number(int.MinValue, int.MaxValue), (byte)EntityType.Schema,
+			_faker.Random.Number(int.MinValue, int.MaxValue), _faker.Random.Number(int.MinValue, int.MaxValue),
+			flags + 1000 + 0x100000000000000, _faker.Random.String(), _faker.Random.String(), _faker.Random.String(), false);
+
+		// act 
+		var result = meta.GetDatabaseProvider();
+		flags = Meta.SetDatabaseProvider(flags,0);
+
+		// assert
+		Assert.Equal(DatabaseProvider.PostgreSql, result);
+		Assert.Equal(3L, flags);
+	}
+
+	[Fact]
+	internal void GetDatabaseProvider_NotDefined_DataBaseProviderUndefined()
+	{
+		// arrange 
+		var flags = 8192L;
+		var meta = new Meta(_faker.Random.Number(int.MinValue, int.MaxValue), (byte)EntityType.Schema,
+			_faker.Random.Number(int.MinValue, int.MaxValue), _faker.Random.Number(int.MinValue, int.MaxValue),
+			flags + 1000 + 0x100000000000000, _faker.Random.String(), _faker.Random.String(), _faker.Random.String(), false);
+
+		// act 
+		var result = meta.GetDatabaseProvider();
+
+		// assert
+		Assert.Equal(DatabaseProvider.Undefined, result);
+	}
+
+	[Fact]
     internal void ToField_Meta1_FieldObject()
     {
         // arrange 
@@ -761,6 +796,20 @@ public sealed class MetaTest : BaseTest
         Assert.False(result2);
         Assert.True(result3);
     }
+
+    [Fact]
+    public void ToCsv_Meta1_CsvString()
+    {
+		// arrange 
+		var meta1 = new Meta(7777, 1, 0, 0, 888L, "???", string.Empty, string.Empty, true);
+        var expectedValue = "7777,1,0,0,888,\"???\",\"\",\"\",True";
+
+        // act 
+        var result = meta1.ToCsv();
+
+		// assert
+		Assert.Equal(expectedValue, result);
+	}
 
 	[Fact]
 	public void GetSearchableType_SearchableTypeIgnoreCase_IgnoreCase()

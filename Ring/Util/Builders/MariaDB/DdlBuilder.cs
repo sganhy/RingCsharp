@@ -34,6 +34,4 @@ internal sealed class DdlBuilder : BaseDdlBuilder
 	{
         return string.Empty;
 	}
-
-    protected override Constraint? HasCheckConstraint(Table table, Column column) => null;
 }

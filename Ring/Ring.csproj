@@ -44,11 +44,13 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <None Remove="Util\Resources\Meta.gz" />
 	  <None Remove="Util\Resources\MethodInfo.gz" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<EmbeddedResource Include="Util\Resources\LogMessage.gz" />
+		<EmbeddedResource Include="Util\Resources\Meta.gz" />
 		<EmbeddedResource Include="Util\Resources\MethodInfo.gz" />
 		<EmbeddedResource Include="Util\Resources\MySQLReservedKeyWord.gz" />
 		<EmbeddedResource Include="Util\Resources\OracleReservedKeyWord.gz" />

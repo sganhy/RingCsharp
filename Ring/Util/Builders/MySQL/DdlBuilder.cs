@@ -65,5 +65,4 @@ internal sealed class DdlBuilder : BaseDdlBuilder
 		return _pgDdlBuilder.GetPhysicalName(field, currentTable);  // use PostgreSQL DDL builder to get the physical name for catalogs
 	}
 
-    protected override Constraint? HasCheckConstraint(Table table, Column column) => null;
 }
