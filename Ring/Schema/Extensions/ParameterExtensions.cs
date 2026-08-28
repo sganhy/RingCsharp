@@ -11,12 +11,12 @@ internal static class ParameterExtensions
 
 	internal static Meta ToMeta(this Parameter parameter)
 	{
+		// Code size: 77 (0x4d)
 		var flags = 0L;
 		flags = Meta.SetEntityBaseline(flags, parameter.Baseline);
 		var dataType = 0;
 		dataType = Meta.SetParameterValueType(dataType, parameter.ValueType);
-		var meta = new Meta((int)parameter.Type, (byte)EntityType.Parameter, parameter.ReferenceId, dataType, flags, parameter.Name, parameter.Description,
-			parameter.Value, parameter.Active);
+		var meta = new Meta((int)parameter.Type, (byte)EntityType.Parameter, parameter.ReferenceId, dataType, flags, parameter.Name, parameter.Description,	parameter.Value, parameter.Active);
 		return meta;
 	}
 
