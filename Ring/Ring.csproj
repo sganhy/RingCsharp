@@ -7,8 +7,8 @@
  		<LangVersion>10.0</LangVersion>
 		<Platforms>x64</Platforms>
 		<AnalysisLevel>8.0-all</AnalysisLevel>
-		<AssemblyVersion>1.0.0.359</AssemblyVersion>
-		<FileVersion>1.0.0.359</FileVersion>
+		<AssemblyVersion>1.0.0.367</AssemblyVersion>
+		<FileVersion>1.0.0.367</FileVersion>
 		<RepositoryType>https://github.com/sganhy/RingCsharp.git</RepositoryType>
 		<RepositoryUrl>https://github.com/sganhy/RingCsharp</RepositoryUrl>
 		<Description>Ring Zero</Description>
@@ -54,7 +54,6 @@
 		<EmbeddedResource Include="Util\Resources\MethodInfo.gz" />
 		<EmbeddedResource Include="Util\Resources\MySQLReservedKeyWord.gz" />
 		<EmbeddedResource Include="Util\Resources\OracleReservedKeyWord.gz" />
-		<EmbeddedResource Include="Util\Resources\Parameter.gz" />
 		<EmbeddedResource Include="Util\Resources\PostgreSQLReservedKeyWord.gz" />
 		<EmbeddedResource Include="Util\Resources\SQLiteReservedKeyWord.gz" />
 		<EmbeddedResource Include="Util\Resources\SQLServerReservedKeyWord.gz" />

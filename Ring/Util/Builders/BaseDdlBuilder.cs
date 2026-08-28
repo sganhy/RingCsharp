@@ -1,5 +1,4 @@
-﻿using Ring.Schema.Builders;
-using Ring.Schema.Enums;
+﻿using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using System.Globalization;
@@ -269,7 +268,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	}
 	public string Create(Constraint constraint, Table table, TableSpace? tablespace = null)
 	{
-		// Code size: 763 (0x2fb)
+		// Code size: 723 (0x2d3)
 		var skipTableSpace = true;
 		var result = new StringBuilder();
 		result.Append(DdlAlter)
@@ -281,15 +280,11 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 			 case ConstraintType.PrimaryKey:
 				result.Append(DdlAdd)
 					.Append(DdlConstraint)
-					.Append(GetPhysicalName(constraint))
+					.Append(GetPhysicalName(EntityType.Constraint,constraint.Name))
 					.Append(SqlSpace)
 					.Append(DdlPrimaryKey)
 					.Append('(')
-					.Append(string.Join(',', table.GetPrimaryKey().ConvertAll(delegate (Column column)
-					{
-						return column.PhysicalName;
-					})
-					.ToArray()))
+					.Append(GetPrimaryKeyColName(constraint.Columns))
 					.Append(')');
 				skipTableSpace = false;
 				break; 
@@ -309,7 +304,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 				//eg. alter table public."@meta" ADD CONSTRAINT "ck_@meta_002" CHECK (object_type>=0 and object_type<=124);
 				result.Append(DdlAdd)
 						.Append(DdlConstraint)
-						.Append(GetPhysicalName(constraint))
+						.Append(GetPhysicalName(EntityType.Constraint, constraint.Name))
 						.Append(SqlSpace)
 						.Append(DdlCheck)
 						.Append('(');
@@ -490,24 +485,23 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 			return GetPhysicalName(provider, TablePrefix + name);
 		}
 	}
-	private static string GetPhysicalName(Constraint constraint)
-	{
-		return constraint.Name;
-	}
 
 	private static string GetDefaultValue(Field field)
 	{
 		return field.Type == FieldType.String || field.Type == FieldType.Boolean ? '\'' +  field.DefaultValue + '\'' : field.DefaultValue;
 	}
 
-	protected static Constraint GetConstraint(ConstraintType type, Table table, string physicalName, Column[] columns, int? minValue = null, int? maxValue = null)
-	{ 
-		return new Constraint(0, string.Empty, null,true, true,type, columns, minValue, maxValue);
+	private static string GetPrimaryKeyColName(ReadOnlySpan<Column> columns)
+	{
+		// Code size: 97 (0x61)
+		if (columns.Length <= 0) return string.Empty;
+		var result = new StringBuilder();
+		foreach (var col in columns) 
+			result.Append(col.PhysicalName).Append(',');
+		result.Length = result.Length - 1;
+		return result.ToString();
 	}
-
 
 	#endregion
 
 }
-
-

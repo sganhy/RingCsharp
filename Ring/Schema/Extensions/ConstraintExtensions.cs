@@ -42,8 +42,7 @@ internal static class ConstraintExtensions
 
 	private static string[] GetLogicalNames(this Constraint constaint, Table table)
 	{
-		// Code size: 198 (0xc6)
-		if (constaint.Columns.Length <= 0) return Array.Empty<string>();
+		// Code size: 183 (0xb7)
 		var result = new string[constaint.Columns.Length + 2];
 		var resultIndex = 2;
 		result[0] = constaint.MinValue.HasValue ? constaint.MinValue.Value.ToString(DefaultCulture) : string.Empty;

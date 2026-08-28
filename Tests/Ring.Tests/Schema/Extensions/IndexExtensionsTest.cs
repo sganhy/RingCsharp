@@ -143,24 +143,4 @@ public sealed class IndexExtensionsTest : BaseTest
         Assert.False(result3);
         Assert.False(result4);
     }
-
-    [Fact]
-    internal void IsPrimaryKey_MetaTablesFirstIndex_True()
-    {
-        // arrange 
-        var builder = new TableBuilder();
-        var schemaName = _faker.Random.String(10);
-        var metaTable = builder.GetMeta(schemaName, DatabaseProvider.PostgreSql);
-        var metaIdTable = builder.GetMetaId(schemaName, DatabaseProvider.MySql);
-        var firstIndex1 = metaTable.Indexes.First();
-        var firstIndex2 = metaIdTable.Indexes.First();
-
-        // act 
-        var result1 = firstIndex1.IsPrimaryKey(metaTable);
-        var result2 = firstIndex2.IsPrimaryKey(metaIdTable);
-
-        // assert
-        Assert.True(result1);
-        Assert.True(result2);
-    }
 }

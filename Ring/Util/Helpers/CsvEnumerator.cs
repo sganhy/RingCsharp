@@ -27,11 +27,10 @@ internal sealed class CsvEnumerator : IEnumerator<string?[]>
 	/// </summary>
 	/// <remarks>Elements may be null to represent missing fields. The array is produced by parsing the current line when available.</remarks>
 	public string?[] Current => _currentLine != null ? ParseLine(_currentLine) : Array.Empty<string?>();
-
     object IEnumerator.Current => Current;
-
     public CsvEnumerator(Assembly assembly, string resourceNameSpace, string resourceFile, int columnCount, bool compressed)
 	{
+		// Code size: 144 (0x90)
 		var resource = resourceNameSpace + resourceFile;
 		ArgumentNullException.ThrowIfNull(assembly);
 		var stream = assembly?.GetManifestResourceStream(resource);
@@ -52,16 +51,29 @@ internal sealed class CsvEnumerator : IEnumerator<string?[]>
 		_disposed = false;
 	}
 
+
+	/// <summary>
+	/// Advances the enumerator to the next CSV record.
+	/// </summary>
+	/// <returns>
+	/// <c>true</c> if a record was found; otherwise, <c>false</c> when the end of the stream is reached.
+	/// </returns>
 	public bool MoveNext()
 	{
+		// Code size: 27 (0x1b)
 		_currentLine = _reader.ReadLine();
 		return _currentLine != null;
 	}
 
-	public void Reset() => throw new NotSupportedException();
+	/// <remarks>
+	/// The underlying resource stream must support seeking. For compressed resources, the decompression stream and reader are recreated because
+	/// a <see cref="GZipStream"/> cannot be repositioned. Reset() method is disabled.
+	/// </remarks>
+	public void Reset() => throw new NotSupportedException(); 
 
 	public void Dispose()
 	{
+		// Code size: 55 (0x37)
 		if (!_disposed)
 		{
 			_reader.Dispose();

@@ -434,7 +434,7 @@ public class TableExtensionsTest : BaseTest
         var result = metaTable.GetPrimaryKey();
 
         // assert
-        Assert.Equal(3, result.Count);
+        Assert.Equal(3, result.Length);
         Assert.Equal("id", result[0].PhysicalName);
         Assert.Equal("schema_id", result[1].PhysicalName);
         Assert.Equal("object_type", result[2].PhysicalName);

@@ -39,7 +39,11 @@ internal sealed class SchemaBuilder
 			_tableBuilder.GetMeta(configuration.DefaultSchema, provider),
 			_tableBuilder.GetMetaId(configuration.DefaultSchema, provider),
 			_tableBuilder.GetLog(configuration.DefaultSchema, provider),
-			_tableBuilder.GetTest(configuration.DefaultSchema, provider),
+			#if DEBUG
+			_tableBuilder.GetTest(configuration.DefaultSchema, provider, PhysicalType.Table),
+			#else
+			_tableBuilder.GetTest(configuration.DefaultSchema, provider, PhysicalType.Logical),
+			#endif
 			_tableBuilder.GetCatalog(EntityType.Table, provider),
 			_tableBuilder.GetCatalog(EntityType.Tablespace, provider),
 			_tableBuilder.GetCatalog(EntityType.Schema, provider)

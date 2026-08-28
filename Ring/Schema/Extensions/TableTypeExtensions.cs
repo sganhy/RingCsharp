@@ -45,18 +45,6 @@ internal static class TableTypeExtensions
 		}
 	}
 
-	internal static string? GetTableDescription(this TableType tableType)
-	{
-		// Code size: 69 (0x45)
-		switch (tableType)
-		{
-			case TableType.MetaId: return ResourceHelper.GetMessage(ResourceType.MetaIdTableDescription);
-			case TableType.Meta: return ResourceHelper.GetMessage(ResourceType.MetaTableDescription);
-			case TableType.Log: return ResourceHelper.GetMessage(ResourceType.MetaAuditTableDescription);
-		}
-		return null;
-	}
-
 	internal static PhysicalType ToPhysicalType(this TableType tableType) =>
 		tableType.IsCatalog() ? PhysicalType.View : PhysicalType.Table;
 

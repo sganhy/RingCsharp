@@ -57,20 +57,6 @@ public sealed class ResourceHelperTest : BaseTest
         Assert.Equal("Unsupported parameter type : Undefined.", ex.Message);
     }
 
-
-	[Fact]
-	public void GetMetaRows_PostgreSql_MetaTable_MetaArray()
-	{
-		// arrange 
-
-		// act 
-		var metas = ResourceHelper.GetMetaRows(DatabaseProvider.PostgreSql,TableType.Meta);
-
-		// assert
-		int oi = 0;
-		++oi;
-	}
-
 	[Fact]
 	public void GetParameter_RingVersion_ParameterObject()
 	{

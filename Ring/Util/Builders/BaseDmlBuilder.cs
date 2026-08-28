@@ -118,8 +118,8 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 		{
 			var variableIndex = 1;
 			var pk = table.GetPrimaryKey(); // cannot be null here 
-			if (pk.Count<=0) throw new NotImplementedException();
-			var keyCount = pk.Count;
+			if (pk.Length<=0) throw new NotImplementedException();
+			var keyCount = pk.Length;
 			for (var i=0; i<keyCount; ++i, ++variableIndex)
 			{
 				result.Append(pk[i].PhysicalName);
@@ -152,7 +152,7 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 		{ 
 			var variableIndex = 1;
 			var pk = table.GetPrimaryKey(); // cannot be null here 
-			var keyCount = pk.Count;
+			var keyCount = pk.Length;
 			for (var i = 0; i < keyCount; ++i, ++variableIndex)
 			{
 				var column = pk[i];

@@ -3,9 +3,9 @@ using Ring.Schema;
 using Ring.Schema.Enums;
 using Ring.Schema.Models;
 using Ring.Util.Enums;
-using Ring.Util.Extensions;
 using System.Globalization;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Ring.Util.Helpers;
 
@@ -27,13 +27,11 @@ internal sealed class ResourceHelper
 	private static readonly string ResourceEof = @"|||";
 	private const char ResourceEndOfLine = '\n';
 	private static bool _resourcesLoaded;
-	private static bool _parameterLoaded;
 	private static bool _methodInfoLoaded;
 	private static bool _metaLoaded;
 	private static Dictionary<int, string> _logMessages = new();
 	private static Dictionary<int, string> _logDescriptions = new();
 	private static Dictionary<int, string> _methodInfos = new();
-	private static Dictionary<int, Parameter> _parameters = new();
 	private static Dictionary<int, Meta[]> _metas = new(); // <tableTypeId, Meta[] >
 
 	private static readonly Logger _logger = Global.LoggerFactory.CreateLogger<ResourceHelper>();
@@ -42,7 +40,6 @@ internal sealed class ResourceHelper
 	{
 		RuntimeHelpers.RunClassConstructor(typeof(Global).TypeHandle);
 		LoadResources(); // load _logMessages & _logDescriptions
-		LoadParameters(); // _parameters
 		LoadMethodInfos(); // _methodInfos
 		LoadMetas(); // _metas
 	}
@@ -71,10 +68,12 @@ internal sealed class ResourceHelper
 	}
 	internal static Parameter GetParameter(ParameterType parameterType)
 	{
-		// Code size: 59 (0x3b)
-		var parameterTypeId = (int)parameterType;
-		if (_parameters.TryGetValue(parameterTypeId, out var parameter)) return parameter;
-		throw new ArgumentException(string.Format(DefaultCulture, GetMessage(ResourceType.WrongParameterType), parameterType.ToString()));
+		switch (parameterType)
+		{
+			case ParameterType.MinPoolSize:
+				return new Parameter(1, "minpool", null, parameterType, FieldType.Int, "1", "1", 0, EntityType.Parameter, true, true);
+		}
+		return new Parameter(1, string.Empty, null, parameterType, FieldType.Int, "1", "1", 0, EntityType.Parameter, true, true);
 	}
 	internal static HashSet<string> GetReservedWords(DatabaseProvider databaseProvider)
 	{
@@ -96,18 +95,19 @@ internal sealed class ResourceHelper
 		return result;
 	}
 
-	internal static Meta[] GetMetaRows(DatabaseProvider databaseProvider, TableType tableType)
+	internal static Meta[] GetMetaRows(TableType tableType)
 	{
+		// Code size: 25 (0x19)
 		var refId = (int)tableType;
-		using var csv = new CsvHelper(ResourceNameSpace, ResourceMetaFile + CompressedResourceSuffix, 9);
-		var rows = new List<string?[]>();
-		foreach (var row in csv)
-		{
-			if (!int.TryParse(row[2], NumberStyles.None, DefaultCulture, out var rowRefId)) continue;
-			if (!int.TryParse(row[0], NumberStyles.None, DefaultCulture, out var rowId)) continue;
+		return _metas.TryGetValue(refId, out var metas) ? metas : Array.Empty<Meta>();
+	}
 
-			if (rowRefId == refId || (rowRefId == 0 && rowId == refId)) rows.Add(row);
-		}
+	internal static Meta? GetMetaTable(TableType tableType)
+	{
+		// Code size: 92 (0x5c)
+		var refId = (int)tableType;
+		var metaSpan = new ReadOnlySpan<Meta>(_metas.TryGetValue(refId, out var metas) ? metas : Array.Empty<Meta>());
+		foreach (ref readonly var meta in metaSpan)	if (meta.IsTable) return meta;
 		return null;
 	}
 
@@ -143,31 +143,6 @@ internal sealed class ResourceHelper
 		}
 	}
 
-	private static void LoadParameters()
-	{
-		// Code size: 354 (0x162)
-		lock (SyncRoot)
-		{
-			if (!_parameterLoaded)
-			{
-				var parameters = new List<Parameter>();
-				using var csv = new CsvHelper(ResourceNameSpace, EntityType.Parameter.ToString() + CompressedResourceSuffix, 7);
-				foreach (var param in csv)
-				{
-					if (!int.TryParse(param[0], NumberStyles.None, CultureInfo.InvariantCulture, out var id)) continue;
-					var paramType = id.ToParameterType();
-					if (paramType == ParameterType.Undefined)  continue;
-					// default value = null if empty or whitespace, otherwise the value in the resource file
-					parameters.Add(new Parameter(id, param[1] ?? string.Empty, param[2], paramType, param[3].ToFieldType(), param[6] ?? string.Empty, 
-						string.IsNullOrWhiteSpace(param[5]) ? null: param[5], 0, param[4].ToEntityType(), true, true));
-				}
-				_parameters = new Dictionary<int, Parameter>(parameters.Count*2);
-				foreach (var param in parameters) _parameters.TryAdd((int)param.Type, param);
-				_parameterLoaded = true;
-			}
-		}
-	}
-
 	private static void LoadMethodInfos()
 	{
 		// Code size: 274 (0x112)
@@ -191,21 +166,44 @@ internal sealed class ResourceHelper
 
 	private static void LoadMetas()
 	{
-		// Code size: 274 (0x112)
+		// Code size: 607 (0x25f)
 		lock (SyncRoot)
 		{
 			if (!_metaLoaded)
 			{
-				var metaList = new List<(int, Meta)>();
+				var parsedRows = new List<Meta>();
 				using var csv = new CsvHelper(ResourceNameSpace, ResourceMetaFile + CompressedResourceSuffix, 9);
-				foreach (var meta in csv)
+				foreach (var row in csv)
 				{
-					//TODO add warning here!
-					if (!int.TryParse(meta[0], NumberStyles.None, CultureInfo.InvariantCulture, out var id)) continue;
-					//metaList.Add((id, meta[1]));
+					// row is a string?[]: every cell can be null (short line, empty field), so every
+					// numeric column goes through TryParse rather than Parse - a null or malformed
+					// cell is logged and the row is skipped instead of throwing and aborting the load.
+					if (!int.TryParse(row[0], NumberStyles.None, CultureInfo.InvariantCulture, out var id)) continue;
+					if (!byte.TryParse(row[1], NumberStyles.None, CultureInfo.InvariantCulture, out var objectType)) continue;
+					if (!int.TryParse(row[2], NumberStyles.None, CultureInfo.InvariantCulture, out var refId)) continue;
+					if (!int.TryParse(row[3], NumberStyles.None, CultureInfo.InvariantCulture, out var dataType)) continue;
+					if (!long.TryParse(row[4], NumberStyles.None, CultureInfo.InvariantCulture, out var flags)) continue;
+					var newMeta = new Meta(id, objectType, refId, dataType, flags, row[5] ?? string.Empty, row[6], row[7], true);
+					parsedRows.Add(newMeta);
 				}
-				_metas = new Dictionary<int, Meta[]>(metaList.Count * 2); // reserve bucket
-				//foreach (var method in methodInfos) _methodInfos.TryAdd(method.Item1, method.Item2 ?? string.Empty);
+				ReadOnlySpan<Meta> span = CollectionsMarshal.AsSpan(parsedRows);
+
+				// pass 1: count metas per tableTypeId so every array can be allocated once, at its final size
+				var counts = new Dictionary<int, int>(parsedRows.Count * 2);
+				foreach (var meta in span) counts[meta.ReferenceId] = counts.TryGetValue(meta.ReferenceId, out var count) ? count + 1 : 1;
+
+				var result = new Dictionary<int, Meta[]>(counts.Count * 2);
+				foreach (var kvp in counts) result[kvp.Key] = new Meta[kvp.Value];
+
+				// pass 2: fill the pre-sized arrays via a per-key write cursor
+				var cursor = new Dictionary<int, int>(counts.Count);
+				foreach (var meta in span)
+				{
+					var index = cursor.TryGetValue(meta.ReferenceId, out var i) ? i : 0;
+					result[meta.ReferenceId][index] = meta;
+					cursor[meta.ReferenceId] = index + 1;
+				}
+				_metas = result;
 			}
 			_metaLoaded = true;
 		}

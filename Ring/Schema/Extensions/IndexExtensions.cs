@@ -24,22 +24,6 @@ internal static class IndexExtensions
 		return meta;
 	}
 
-	internal static bool IsPrimaryKey(this Index index, Table table)
-	{
-		// Code size: 104 (0x68) - remove memory allocation here!
-		if (index.Unique)
-		{
-			var pk = new ReadOnlySpan<Column>(table.GetPrimaryKey().ToArray());
-			var indexCol = new ReadOnlySpan<Column>(index.Columns);
-			if (pk.Length == indexCol.Length)
-			{
-				for (var i = 0; i < pk.Length; ++i) if (pk[i] != indexCol[i]) return false;
-				return true;
-			}
-		}
-		return false;
-	}
-
 	internal static int Hash(this Index index)
 	{
 		// Code size: 24 (0x18)

@@ -1,10 +1,10 @@
 ﻿namespace Ring.Schema.Enums;
 
+#pragma warning disable CA1069 // Enums values should not be duplicated
+
 [Flags]
 internal enum MetaFlag : long
 {
-#pragma warning disable CA1069 // Enums values should not be duplicated
-
 	None = 0,
 	FieldNotNull = 1L << 2,                // bit 3
 	FieldMultilingual = 1L << 3,           // bit 4
@@ -21,7 +21,7 @@ internal enum MetaFlag : long
 	TableAttributeExtension = 1L << 12,    // bit 13
 	FieldAllowTruncation = 1L << 13,       // bit 14
 	EntityBaseline = 1L << 13,             // bit 14
+}
 
 #pragma warning restore CA1069
-}
 

@@ -343,12 +343,11 @@ public sealed class DdlBuilderTest : BaseBuilderTest
 		var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
 		var table = schema.GetTable("@meta");
 		Assert.NotNull(table);
-		//var notNull = schema.DdlBuilder.GetConstraints(table).First(p => p.Type == ConstraintType.NotNull);
+		var notNull = table.Constraints.First(p => p.Type == ConstraintType.NotNull);
 		var expectedSql = "ALTER TABLE \"@test\".\"@meta\" ALTER COLUMN id SET NOT NULL";
 
         // act 
-        //var dql = _sut.Create(notNull, table);
-        var dql = string.Empty;
+        var dql = _sut.Create(notNull, table);
 
 		// assert
 		Assert.Equal(expectedSql, dql);
@@ -364,13 +363,11 @@ public sealed class DdlBuilderTest : BaseBuilderTest
 		var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
 		var table = schema.GetTable("@meta");
 		Assert.NotNull(table);
-		//var defaultConstraint = schema.DdlBuilder.GetConstraints(table).Last(p => p.Type == ConstraintType.Default);
+		var defaultConstraint = table.Constraints.Last(p => p.Type == ConstraintType.Default);
 		var expectedSql = "ALTER TABLE \"@test\".\"@meta\" ALTER COLUMN active SET DEFAULT 'True'";
 
 		// act 
-		//var dql = _sut.Create(defaultConstraint, table);
-		var dql = string.Empty;
-
+		var dql = _sut.Create(defaultConstraint, table);
 
 		// assert
 		Assert.Equal(expectedSql, dql);
@@ -386,17 +383,14 @@ public sealed class DdlBuilderTest : BaseBuilderTest
 		var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
 		var table = schema.GetTable("@meta");
 		Assert.NotNull(table);
-		//var checks = schema.DdlBuilder.GetConstraints(table).Where(p => p.Type == ConstraintType.Check).ToArray();
-		//Assert.Equal(4, checks.Length);
-		//var check = checks[2];
+		var checks = table.Constraints.Where(p => p.Type == ConstraintType.Check).ToArray();
+		Assert.Equal(4, checks.Length);
+		var check = checks[2];
 		//eg. ALTER TABLE public."@meta" ADD CONSTRAINT "ck_@meta_002" CHECK (object_type between 0 and 124);
-		//var expectedSql = $"ALTER TABLE \"@test\".\"@meta\" ADD CONSTRAINT \"ck_@meta_003\" CHECK (object_type>={check.MinValue} AND object_type<={check.MaxValue})";
-		var expectedSql = $"ALTER TABLE ...";
+		var expectedSql = $"ALTER TABLE \"@test\".\"@meta\" ADD CONSTRAINT \"ck_@meta_003\" CHECK (object_type>={check.MinValue} AND object_type<={check.MaxValue})";
 
 		// act 
-		//var dql = _sut.Create(check, table);
-		var dql = string.Empty;
-
+		var dql = _sut.Create(check, table);
 		// assert
 		Assert.Equal(expectedSql, dql);
 	}
@@ -411,13 +405,12 @@ public sealed class DdlBuilderTest : BaseBuilderTest
         var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
         var table = schema.GetTable("@meta_id");
         Assert.NotNull(table);
-        //var pk = schema.DdlBuilder.GetConstraints(table).First(p => p.Type == ConstraintType.PrimaryKey);
+        var pk = table.Constraints.First(p => p.Type == ConstraintType.PrimaryKey);
         var expectedSql = "ALTER TABLE \"@test\".\"@meta_id\" ADD CONSTRAINT \"pk_@meta_id\" PRIMARY KEY (id,schema_id,object_type)";
 
 		// act 
-		//var dql = _sut.Create(pk, table);
-		var dql = string.Empty;
-
+		var dql = _sut.Create(pk, table);
+		
 		// assert
 		Assert.Equal(expectedSql, dql);
     }

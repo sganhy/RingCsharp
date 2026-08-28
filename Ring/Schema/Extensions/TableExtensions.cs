@@ -9,7 +9,6 @@ namespace Ring.Schema.Extensions;
 internal static class TableExtensions
 {
 	// Rider check 2025-07-23
-	private static readonly List<Column> EmptyColumnList = new(0);
 
 	/// <summary>
 	/// 	Get field by name, case-sensitive search ==> O(log n) complexity
@@ -279,14 +278,16 @@ internal static class TableExtensions
 		return null;
 	}
 
-	internal static List<Column> GetPrimaryKey(this Table table)
+	internal static Column[] GetPrimaryKey(this Table table)
 	{
-		// Code size: 68 (0x44)
-		if (table.Type == TableType.Business || table.Type == TableType.Lexicon) 
-			return new List<Column>(1) { table.Columns[0] };
-
-		var index = table.GetFirstUniqueIndex();
-		return index is not null ? new List<Column>(index.Columns) : EmptyColumnList;
+		// Code size: 46 (0x2e)
+		var i = 0;
+		while (i < table.Constraints.Length)
+		{ 
+			var constraint = table.Constraints[i];
+			if (constraint.Type == ConstraintType.PrimaryKey) return constraint.Columns;
+		}
+		return Array.Empty<Column>();
 	}
 
 	internal static Meta[] ToMeta(this Table table, int schemaId) 

@@ -2,7 +2,9 @@
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using Ring.Util.Extensions;
+using Ring.Util.Helpers;
 using System.Globalization;
+using System.Reflection;
 
 namespace Ring.Schema.Builders;
 
@@ -13,15 +15,9 @@ internal sealed class TableBuilder
 	private readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
 	private readonly string FieldId = "id";
 	private readonly string FieldSchemaId = "schema_id";
-	private readonly string FieldObjectType = "object_type";
-	private readonly string FieldValue = "value";
-	private readonly string FieldReferenceId = "reference_id";
-	private readonly string FieldDataType = "data_type";
-	private readonly string FieldFlags = "flags";
 	private readonly string FieldName = "name";
 	private readonly string FieldSchemaName = "schema_name";
 	private readonly string FieldTestPrefix = "test_";
-	private readonly string FieldActive = "active";
 	private readonly string FieldDescription = "description";
 	private readonly string FieldLevelId = "level_id";
 	private readonly string FieldEntryTime = "entry_time";
@@ -32,45 +28,16 @@ internal sealed class TableBuilder
 	private readonly string FieldLineNumber = "line_number";
 	private readonly string FieldMessage = "message";
 
-	private TableType _currentTableType = TableType.Undefined;
 	private int _currentFieldId;
 	private int _currentIndexId;
 	private string _currentTableName= string.Empty;
 
+	internal Table GetMeta(string schemaName, DatabaseProvider provider) // Code size: 57 (0x39)
+		=> GetTable(schemaName, provider, ResourceHelper.GetMetaRows(TableType.Meta), ResourceHelper.GetMetaTable(TableType.Meta) ?? Meta.GetDefaultMeta(EntityType.Table));
 
-	internal Table GetMeta(string schemaName, DatabaseProvider provider) {
-		// Code size: 327 (0x147)
-		var metaTable = GetTable((int)TableType.Meta, TableType.Meta.GetLogicalName(), TableType.Meta);
-		var metaArr = new[] {
-			GetField(FieldId, FieldType.Int),
-			GetField(FieldSchemaId, FieldType.Int), 
-			GetField(FieldObjectType, FieldType.Byte),
-			GetField(FieldReferenceId, FieldType.Int),
-			GetField(FieldDataType, FieldType.Int),
-			GetField(FieldFlags, FieldType.Long,0,true,SearchableType.None,FieldType.Long.GetDefaultValue()),
-			GetField(FieldName, FieldType.String,60),
-			GetField(FieldDescription, FieldType.LongString,false),
-			GetField(FieldValue, FieldType.LongString,false),
-			GetField(FieldActive, FieldType.Boolean,0,true,SearchableType.None,true.ToString(DefaultCulture)),
-			GetIndex(true, new [] { FieldId, FieldSchemaId, FieldObjectType, FieldReferenceId }) // memory actually gets duplicated with [] Meta.
-		};
-		Console.WriteLine(metaTable.ToCsv());
-		return GetTable(schemaName, provider, metaArr, metaTable);
-	}
+	internal Table GetMetaId(string schemaName, DatabaseProvider provider) // Code size: 57 (0x39)
+		=> GetTable(schemaName, provider, ResourceHelper.GetMetaRows(TableType.MetaId), ResourceHelper.GetMetaTable(TableType.MetaId) ?? Meta.GetDefaultMeta(EntityType.Table));
 
-	internal Table GetMetaId(string schemaName, DatabaseProvider provider) 
-	{
-		var metaTable = GetTable((int)TableType.MetaId, TableType.MetaId.GetLogicalName(), TableType.MetaId);
-		// Code size: 175 (0xaf)
-		var metaArr = new[] {
-			GetField(FieldId, FieldType.Int),
-			GetField(FieldSchemaId, FieldType.Int),
-			GetField(FieldObjectType, FieldType.Byte),
-			GetField(FieldValue, FieldType.Long,0,true,SearchableType.None,FieldType.Long.GetDefaultValue()),
-			GetIndex(true, new[] { FieldId, FieldSchemaId, FieldObjectType })
-		};
-		return GetTable(schemaName, provider, metaArr, metaTable);
-	}
 
 	internal Table GetLog(string schemaName, DatabaseProvider provider) 
 	{
@@ -93,9 +60,9 @@ internal sealed class TableBuilder
 		return GetTable(schemaName, provider, metaList, metaTable);
 	}
 
-	internal Table GetTest(string schemaName, DatabaseProvider provider)
+	internal Table GetTest(string schemaName, DatabaseProvider provider, PhysicalType physicalType)
 	{
-		// Code size: 277 (0x115)
+		// Code size: 279 (0x117)
 		var metaList = new List<Meta>();
 		var values = Enum.GetValues<FieldType>();
 		var i = 0;
@@ -113,11 +80,6 @@ internal sealed class TableBuilder
 			else metaList.Add(GetField(FieldTestPrefix + i++, fieldType, false));
 		}
 		var metaTest = GetTable((int)TableType.Test, TableType.Test.GetLogicalName(), TableType.Test);
-#if DEBUG
-		var physicalType = PhysicalType.Table;
-#else
-		var physicalType = PhysicalType.Logical;
-#endif
 		return GetTable(schemaName, provider, metaList.ToArray(), metaTest, physicalType);
 	}
 
@@ -138,22 +100,18 @@ internal sealed class TableBuilder
 		return tableObject;
 	}
 
-	internal Meta GetObjectTypeMeta() => GetField(FieldObjectType, FieldType.Byte); // Code size: 13 (0xd)
-	internal Meta GetSchemaIdMeta() => GetField(FieldSchemaId, FieldType.Int); // Code size: 13 (0xd)
-	internal Meta GetReferenceIdMeta() => GetField(FieldReferenceId, FieldType.Int); // Code size: 13 (0xd)
-	internal Meta GetIdMeta() => GetField(FieldId, FieldType.Int); // Code size: 13 (0xd)
-
 	#region private methods 
 
-	private static Table GetTable(string schemaName, DatabaseProvider provider, Meta[] metaArray, Meta metaTable, PhysicalType? physicalType=null)
+#pragma warning disable CA1822 // Mark members as static
+	private Table GetTable(string schemaName, DatabaseProvider provider, Meta[] metaArray, Meta metaTable, PhysicalType? physicalType=null)
 	{
-		// Code size: 102 (0x66)
+#pragma warning restore CA1822
+		// Code size: 96 (0x60)
 		var ddlBuilder = provider.GetDdlBuilder();
 		var emptyTable = Meta.GetDefaultTable(metaTable);
 		var emptySchema = Meta.GetDefaultSchema(GetSchema(0, schemaName), provider);
 		var physicalName = ddlBuilder.GetPhysicalName(emptyTable, emptySchema);
 		var tableType = metaTable.DataType.ToTableType();
-		var spanMeta = metaArray.AsSpan();
 		var table = metaTable.ToTable(new ReadOnlySpan<Meta>(metaArray, 0, metaArray.Length), physicalType ?? PhysicalType.Table, ddlBuilder, physicalName, tableType.GetObjectIndex()) ?? emptyTable;
 		return table;
 	}
@@ -162,7 +120,6 @@ internal sealed class TableBuilder
 	{
 		// Code size: 115 (0x73)
 		var flags = 0L;
-		_currentTableType = tableType;
 		_currentFieldId = 0;
 		_currentIndexId = 0;
 		_currentTableName = name;
@@ -181,11 +138,10 @@ internal sealed class TableBuilder
                 flags = Meta.SetPreparedStatement(flags, true);
                 break;
         }
-        return new(id, (byte)EntityType.Table, 0, (int)tableType, flags, name, tableType.GetTableDescription(), null, true);
+        return new(id, (byte)EntityType.Table, 0, (int)tableType, flags, name, null, null, true);
 	}
 	private static Meta GetSchema(int id, string name) => new(id, (byte)EntityType.Schema, 0, 0, 0L, name, null, null, true);
 	private Meta GetField(string name, FieldType fieldType, bool notNull) => GetField(name, fieldType, 0, notNull, SearchableType.None); // Code size: 11 (0xb)
-	private Meta GetField(string name, FieldType fieldType, int fieldSize) => GetField(name, fieldType, fieldSize, true, SearchableType.None); // Code size: 11 (0xb)
 	private Meta GetField(string name, FieldType fieldType) => GetField(name, fieldType, 0, true,SearchableType.None); // Code size: 11 (0xb)
 	private Meta GetField(string name, FieldType fieldType, int fieldSize, bool notNull, SearchableType searchableType, string? defaultValue = null)
 	{

@@ -140,6 +140,11 @@ public sealed class MetaTest : BaseTest
 	{
 		// arrange 
 		var flags = 3L;
+		/*
+		vr flags2 = 0L;
+		flags2 = Meta.SetEntityBaseline(flags2, true);
+		flags2 = Meta.SetDatabaseProvider(flags2, DatabaseProvider.PostgreSql);
+        */
 		flags = Meta.SetDatabaseProvider(flags, DatabaseProvider.PostgreSql);
 		var meta = new Meta(_faker.Random.Number(int.MinValue, int.MaxValue), (byte)EntityType.Schema,
 			_faker.Random.Number(int.MinValue, int.MaxValue), _faker.Random.Number(int.MinValue, int.MaxValue),

@@ -648,7 +648,7 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	private static (int colCount, int relationCount, int constraintCount) GetCount(ReadOnlySpan<Field> fields, ReadOnlySpan<Meta> tableItems, IDdlBuilder ddlBuilder)
 	{
-		// Code size: 170 (0xaa)
+		// Code size: 220 (0xdc)
 		var count = fields.Length;
 		var relationCount = 0;
 		var constraintCount = 0;
@@ -678,8 +678,10 @@ internal readonly struct Meta : IEquatable<Meta>
 			}
 			if (item.IsConstraint)
 			{
+				var itemProvider = item.GetDatabaseProvider();
 				// test databaseProvider ?
-				++constraintCount;
+				if (itemProvider == DatabaseProvider.Undefined || itemProvider == databaseProvider) 
+					++constraintCount; // constraint specific to a DB provider.
 			}
 		}
 		return (count, relationCount, constraintCount);
@@ -814,7 +816,7 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	private static void LoadConstraints(Table table, ReadOnlySpan<Meta> tableItems, int constraintCount, DatabaseProvider databaseProvider)
 	{
-		// Code size: 190 (0xbe)
+		// Code size: 241 (0xf1)
 		if (constraintCount <= 0) return;
 		var defaultCol = new Column(EntityType.Undefined, FieldType.Undefined, string.Empty, SearchableType.None, 0, 0);
 		var constraintIndex = 0;
@@ -822,11 +824,16 @@ internal readonly struct Meta : IEquatable<Meta>
 		{
 			if (meta.IsConstraint) 
 			{
+				var metaProvider = meta.GetDatabaseProvider();
+				if (metaProvider != DatabaseProvider.Undefined && metaProvider!= databaseProvider) continue;
 				var constraint = meta.ToConstraint();
 				if (constraint is null) continue;
-				table.Constraints[constraintIndex] = constraint;
+				// load columns
+				table.Constraints[constraintIndex++] = constraint;
+				var colCount = constraint.Columns.Length;
 				var arr = meta.Value?.Split(ConstraintColumnDelimiter) ?? Array.Empty<string>();
-				for (var j=2; j < arr.Length; ++j) constraint.Columns[constraintIndex++] = table.GetColumn(arr[j]) ?? defaultCol;
+				var columnIndex=0;
+				for (var j=2; j < arr.Length; ++j) if (columnIndex < colCount) constraint.Columns[columnIndex++] = table.GetColumn(arr[j]) ?? defaultCol;
 			}
 		}
 	}

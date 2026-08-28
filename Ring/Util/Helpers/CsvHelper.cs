@@ -16,6 +16,7 @@ internal sealed class CsvHelper : IEnumerable<string?[]>, IDisposable
 	public CsvHelper(string resourceNameSpace, string resourceFile, int columnCount, bool compressed = true) : this(Assembly.GetExecutingAssembly(), resourceNameSpace, resourceFile, columnCount, compressed) {}
 	public CsvHelper(Assembly assembly, string resourceNameSpace, string resourceFile, int columnCount, bool compressed = true)
 	{
+		// Code size: 51 (0x33)
 		_columnCount = columnCount;
 		_resourceNameSpace = resourceNameSpace;
 		_resourceFile = resourceFile;

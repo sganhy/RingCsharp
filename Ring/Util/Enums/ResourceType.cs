@@ -80,15 +80,7 @@ internal enum ResourceType : short
 	ConnectionClosedByServer = 502,
 	InvalidMessageLengthFromServer = 503,
 	ConnectionAlreadyOpen=504,
-
-	/// <summary>
-	/// Meta schema tables /fields  description
-	/// </summary>
-	MetaTableDescription = 1013,
-	MetaIdTableDescription = 1014,
-	MetaAuditTableDescription = 1017,
-	MetaFieldsDescription = 1113,
-
+	
 	/// <summary>
 	/// Reserved for unit tests
 	/// </summary>
