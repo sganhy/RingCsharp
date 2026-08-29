@@ -280,14 +280,11 @@ internal static class TableExtensions
 
 	internal static Column[] GetPrimaryKey(this Table table)
 	{
-		// Code size: 46 (0x2e)
-		var i = 0;
-		while (i < table.Constraints.Length)
-		{ 
-			var constraint = table.Constraints[i];
-			if (constraint.Type == ConstraintType.PrimaryKey) return constraint.Columns;
-		}
-		return Array.Empty<Column>();
+		// Code size: 68 (0x44) - cannot use the Table.Constraints[], may be not loaded
+		if (table.Type == TableType.Business || table.Type == TableType.Lexicon) return new [] { table.Columns[0] };
+		// table without pk ?
+		var index = table.GetFirstUniqueIndex();
+		return index is not null ? index.Columns : Array.Empty<Column>();
 	}
 
 	internal static Meta[] ToMeta(this Table table, int schemaId) 

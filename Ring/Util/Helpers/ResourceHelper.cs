@@ -66,14 +66,9 @@ internal sealed class ResourceHelper
 		if (_methodInfos.TryGetValue(resourceTypeId, out var methodInfo)) return methodInfo;
 		return null;
 	}
-	internal static Parameter GetParameter(ParameterType parameterType)
+	internal static Meta GetParameter(ParameterType parameterType)
 	{
-		switch (parameterType)
-		{
-			case ParameterType.MinPoolSize:
-				return new Parameter(1, "minpool", null, parameterType, FieldType.Int, "1", "1", 0, EntityType.Parameter, true, true);
-		}
-		return new Parameter(1, string.Empty, null, parameterType, FieldType.Int, "1", "1", 0, EntityType.Parameter, true, true);
+		return Meta.GetDefaultMeta(EntityType.Parameter);
 	}
 	internal static HashSet<string> GetReservedWords(DatabaseProvider databaseProvider)
 	{

@@ -29,6 +29,22 @@ internal static class HashCodeExtensions
 		hashCode.Add(field.Multilingual.ToInt());
 	}
 
+	internal static void AddParameter(this ref HashCode hashCode, Parameter parameter)
+	{
+		// Code size: 61 (0x3d)
+		/*
+			string Value;
+			FieldType ValueType;
+			ParameterType Type;
+			EntityType ReferenceType;
+		*/
+		AddBaseEntity(ref hashCode, parameter);
+		hashCode.Add(parameter.Value, StringComparer.Ordinal);
+		hashCode.Add((int)parameter.ValueType);
+		hashCode.Add((int)parameter.Type);
+		hashCode.Add((int)parameter.ReferenceType);
+	}
+
 	internal static void AddConstraint(this ref HashCode hashCode, Constraint constraint)
 	{
 		// Code size: 97 (0x61)

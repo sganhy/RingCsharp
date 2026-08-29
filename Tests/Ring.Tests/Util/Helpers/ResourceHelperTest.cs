@@ -30,16 +30,16 @@ public sealed class ResourceHelperTest : BaseTest
 	[Fact]
     public void GetParameter_MinPoolSize_ParameterObject()
     {
-        // arrange 
-        // act 
-        var result = ResourceHelper.GetParameter(ParameterType.MinPoolSize);
+		// arrange 
+		// act 
+		var result = ResourceHelper.GetParameter(ParameterType.MinPoolSize).ToParameter();
 
-        // assert
+		// assert
+		Assert.NotNull(result);
         Assert.Equal((int)ParameterType.MinPoolSize, result.Id);
         Assert.Equal(ParameterType.MinPoolSize, result.Type);
         Assert.Equal("@minConnPoolSize", result.Name);
         Assert.Equal("Mininimum database connection pool", result.Description);
-        Assert.Equal("1", result.DefaultValue);
         Assert.Equal(EntityType.Schema, result.ReferenceType);
     }
 
@@ -62,14 +62,14 @@ public sealed class ResourceHelperTest : BaseTest
 	{
 		// arrange 
 		// act 
-		var result = ResourceHelper.GetParameter(ParameterType.Ring0Version);
+		var result = ResourceHelper.GetParameter(ParameterType.Ring0Version).ToParameter();
 
 		// assert
-		Assert.Equal((int)ParameterType.Ring0Version, result.Id);
+		Assert.NotNull(result);
+		Assert.Equal((int)ParameterType.Ring0Version, result.Id); 
 		Assert.Equal(ParameterType.Ring0Version, result.Type);
 		Assert.Equal("@RingVersion", result.Name);
 		Assert.Equal("Ring 0 version", result.Description);
-		Assert.Null(result.DefaultValue);
 		Assert.Equal("1", result.Value);
 		Assert.True(result.Baseline);
 	}

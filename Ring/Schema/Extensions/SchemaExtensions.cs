@@ -1,4 +1,5 @@
-﻿using Ring.Schema.Models;
+﻿using Ring.Schema.Enums;
+using Ring.Schema.Models;
 using System.Runtime.CompilerServices;
 using DbSchema = Ring.Schema.Models.Schema;
 
@@ -45,6 +46,12 @@ internal static class SchemaExtensions
 		}
 		return null;
 	}
+
+	/// <summary>
+	/// 	Get parameter by ParameterType --> O(log n)
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal static Parameter? GetParameter(this DbSchema schema, ParameterType parameterType) => schema.Parameters.GetParameter(parameterType); // Code size: 13 (0xd)
 
 	/// <summary>
 	/// 	Get table object by name (case sensitive) --> O(log n)

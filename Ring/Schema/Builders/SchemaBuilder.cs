@@ -1,8 +1,7 @@
 ﻿using Ring.Data;
 using Ring.Schema.Enums;
-using Ring.Schema.Extensions;
 using Ring.Schema.Models;
-using System.Globalization;
+using Ring.Util.Helpers;
 using DbSchema = Ring.Schema.Models.Schema;
 
 namespace Ring.Schema.Builders;
@@ -10,7 +9,6 @@ namespace Ring.Schema.Builders;
 internal sealed class SchemaBuilder
 {
 	private readonly TableBuilder _tableBuilder = new();
-	private readonly ParameterBuilder _parameterBuilder = new();
 
 	internal DbSchema GetMeta(DatabaseProvider provider, IConfiguration configuration)
 	{
@@ -26,9 +24,9 @@ internal sealed class SchemaBuilder
 		// get parameters - metaArray
 		var metaArray = new Meta[] {
 			schemaInfo,
-			_parameterBuilder.GetParameter(ParameterType.MinPoolSize, minConnectionPoolSize.ToString(CultureInfo.InvariantCulture), 0).ToMeta(),
-			_parameterBuilder.GetParameter(ParameterType.MaxPoolSize, maxConnectionPoolSize.ToString(CultureInfo.InvariantCulture),0).ToMeta(),
-			_parameterBuilder.GetParameter(ParameterType.DbConnectionString, configuration.ConnectionString, 0).ToMeta(),
+			GetParameter(ParameterType.MinPoolSize),
+			GetParameter(ParameterType.MaxPoolSize),
+			GetParameter(ParameterType.DbConnectionString),
 			!string.IsNullOrWhiteSpace(configuration.DefaultTableStorage)? GetStorage(configuration.DefaultTableStorage, false, true) : Meta.GetDefaultMeta(EntityType.Undefined),
 			!string.IsNullOrWhiteSpace(configuration.DefaultIndexStorage)? GetStorage(configuration.DefaultIndexStorage, true, false) : Meta.GetDefaultMeta(EntityType.Undefined)
 		};
@@ -74,5 +72,8 @@ internal sealed class SchemaBuilder
 		flags = Meta.SetTablespaceTable(flags, table);
 		return new(table?1:2, (byte)EntityType.Tablespace, 0, 0, flags, name, null, null, true);
 	}
+
+	private static Meta GetParameter(ParameterType parameterType) => ResourceHelper.GetParameter(parameterType);
+
 
 }
