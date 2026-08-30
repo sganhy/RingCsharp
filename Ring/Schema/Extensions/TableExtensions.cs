@@ -204,6 +204,18 @@ internal static class TableExtensions
 	}
 
 	/// <summary>
+	/// 	Get the first constraint object by ConstraintType ==> O(n) complexity
+	/// </summary>
+	/// <returns>Constraint object</returns>
+	internal static Constraint GetFirstConstraint(this Table table, ConstraintType constraintType)
+	{
+		// Code size: 54 (0x36)
+		foreach (var constraint in new ReadOnlySpan<Constraint>(table.Constraints)) 
+			if (constraint.Type == constraintType) return constraint;
+		return null;
+	}
+
+	/// <summary>
 	/// 	Get column bye id - O(log N)
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -280,11 +292,12 @@ internal static class TableExtensions
 
 	internal static Column[] GetPrimaryKey(this Table table)
 	{
-		// Code size: 68 (0x44) - cannot use the Table.Constraints[], may be not loaded
+		//TODO improve performance !!! no need allocations here!
+		// Code size: 69 (0x45) - the Table.Constraints[] for schema.Id = 0; is always loaded!
 		if (table.Type == TableType.Business || table.Type == TableType.Lexicon) return new [] { table.Columns[0] };
 		// table without pk ?
-		var index = table.GetFirstUniqueIndex();
-		return index is not null ? index.Columns : Array.Empty<Column>();
+		var constraint = GetFirstConstraint(table, ConstraintType.PrimaryKey);
+		return constraint is not null ? constraint.Columns : Array.Empty<Column>();
 	}
 
 	internal static Meta[] ToMeta(this Table table, int schemaId) 
@@ -363,20 +376,5 @@ internal static class TableExtensions
 			table.Readonly == other.Readonly && table.UsePreparedStatement == other.UsePreparedStatement && table.AllowAttributeExtension == other.AllowAttributeExtension &&
 			table.Fields.ArraysEqual(other.Fields) && table.Relations.ArraysEqual(other.Relations) && table.Indexes.ArraysEqual(other.Indexes);
 	}
-
-	#region private methods 
-
-	/// <summary>
-	/// 	Get first unique index
-	/// </summary>
-	private static Index? GetFirstUniqueIndex(this Table table)
-	{
-		// Code size: 52 (0x34)
-		var span = new ReadOnlySpan<Index>(table.Indexes);
-		foreach (var index in span) if (index.Unique) return index;
-		return null;
-	}
-
-	#endregion
 
 }

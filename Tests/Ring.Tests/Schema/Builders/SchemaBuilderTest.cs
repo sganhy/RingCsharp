@@ -19,7 +19,7 @@ public sealed class SchemaBuilderTest
     {
         // arrange 
         var schemaName = "Test";
-        var maxPoolSize = 20;
+        var maxPoolSize = 2;
         var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 20 };
 
         // act 

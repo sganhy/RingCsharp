@@ -24,9 +24,13 @@ internal sealed class SchemaBuilder
 		// get parameters - metaArray
 		var metaArray = new Meta[] {
 			schemaInfo,
+			GetParameter(ParameterType.SchemaVersion),
+			GetParameter(ParameterType.SchemaCreationTime),
+			GetParameter(ParameterType.SchemaLastUpgrade),
+			GetParameter(ParameterType.Language),
+			GetParameter(ParameterType.BinaryVersion),
 			GetParameter(ParameterType.MinPoolSize),
 			GetParameter(ParameterType.MaxPoolSize),
-			GetParameter(ParameterType.DbConnectionString),
 			!string.IsNullOrWhiteSpace(configuration.DefaultTableStorage)? GetStorage(configuration.DefaultTableStorage, false, true) : Meta.GetDefaultMeta(EntityType.Undefined),
 			!string.IsNullOrWhiteSpace(configuration.DefaultIndexStorage)? GetStorage(configuration.DefaultIndexStorage, true, false) : Meta.GetDefaultMeta(EntityType.Undefined)
 		};

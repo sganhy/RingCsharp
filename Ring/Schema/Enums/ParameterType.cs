@@ -5,7 +5,7 @@ internal enum ParameterType
 {
 	SchemaVersion = 1,
 	SchemaCreationTime = 2,
-	LastUpgrade = 3,
+	SchemaLastUpgrade = 3,
 	Language = 4,
 	BinaryVersion = 5,
 	MinPoolSize = 15,

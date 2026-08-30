@@ -89,7 +89,7 @@ internal static class IntExtensions
 	// parameter type
 	private const int SchemaVersionId = (int)ParameterType.SchemaVersion;
 	private const int SchemaCreationTimeId = (int)ParameterType.SchemaCreationTime;
-	private const int SchemaLastUpgradeId = (int)ParameterType.LastUpgrade;
+	private const int SchemaLastUpgradeId = (int)ParameterType.SchemaLastUpgrade;
 	private const int DefaultLanguageId = (int)ParameterType.Language;
 	private const int MinPoolSizeId = (int)ParameterType.MinPoolSize;
 	private const int MaxPoolSizeId = (int)ParameterType.MaxPoolSize;
@@ -204,7 +204,7 @@ internal static class IntExtensions
 		{
 			case SchemaVersionId:  return ParameterType.SchemaVersion;
 			case SchemaCreationTimeId: return ParameterType.SchemaCreationTime;
-			case SchemaLastUpgradeId: return ParameterType.LastUpgrade;
+			case SchemaLastUpgradeId: return ParameterType.SchemaLastUpgrade;
 			case DefaultLanguageId: return ParameterType.Language;
 			case MinPoolSizeId: return ParameterType.MinPoolSize;
 			case MaxPoolSizeId: return ParameterType.MaxPoolSize;

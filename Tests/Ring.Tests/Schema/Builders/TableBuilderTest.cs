@@ -163,7 +163,7 @@ public class TableBuilderTest
         Assert.NotNull(logTable.GetField("line_number"));
         Assert.NotNull(logTable.GetField("message"));
         Assert.NotNull(logTable.GetField("description"));
-        Assert.Equal("Serves as the operational audit trail.", logTable.Description);
+        Assert.Equal("Provides the operational audit trail for all schemas managed by the @meta table.", logTable.Description);
 		Assert.Equal("id", logTable.Fields[logTable.Columns[0].RecordIndex].Name);
         Assert.Equal("entry_time", logTable.Fields[logTable.Columns[1].RecordIndex].Name);
         Assert.Equal("level_id", logTable.Fields[logTable.Columns[2].RecordIndex].Name);
