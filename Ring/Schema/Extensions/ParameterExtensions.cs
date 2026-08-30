@@ -10,12 +10,12 @@ internal static class ParameterExtensions
 {
 	private readonly static string DefaultConnPoolSize = "1";
 
-	internal static Meta ToMeta(this Parameter parameter, int refId)
+	internal static Meta ToMeta(this Parameter parameter)
 	{
 		// Code size: 67 (0x43)
 		var flags = 0L;
 		flags = Meta.SetEntityBaseline(flags, parameter.Baseline);
-		var meta = new Meta((int)parameter.Type, (byte)EntityType.Parameter, refId, (int)parameter.ValueType, flags, parameter.Name, parameter.Description,	parameter.Value, parameter.Active);
+		var meta = new Meta((int)parameter.Type, (byte)EntityType.Parameter, parameter.ReferenceId, (int)parameter.ValueType, flags, parameter.Name, parameter.Description,	parameter.Value, parameter.Active);
 		return meta;
 	}
 

@@ -73,7 +73,6 @@ internal sealed class SchemaBuilder
 		return new(table?1:2, (byte)EntityType.Tablespace, 0, 0, flags, name, null, null, true);
 	}
 
-	private static Meta GetParameter(ParameterType parameterType) => ResourceHelper.GetParameter(parameterType);
-
+	private static Meta GetParameter(ParameterType parameterType) => ResourceHelper.GetParameter(parameterType); // Code size: 30 (0x1e)
 
 }

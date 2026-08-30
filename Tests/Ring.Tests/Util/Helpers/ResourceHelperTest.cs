@@ -38,11 +38,28 @@ public sealed class ResourceHelperTest : BaseTest
 		Assert.NotNull(result);
         Assert.Equal((int)ParameterType.MinPoolSize, result.Id);
         Assert.Equal(ParameterType.MinPoolSize, result.Type);
-        Assert.Equal("@minConnPoolSize", result.Name);
-        Assert.Equal("Mininimum database connection pool", result.Description);
-        Assert.Equal(EntityType.Schema, result.ReferenceType);
+        Assert.Equal("@MinConnPoolSize", result.Name);
+        Assert.Equal("Minimum number of connections in the database pool.", result.Description);
+		Assert.Equal("1", result.Value);
+		Assert.Equal(EntityType.Schema, result.ReferenceType);
     }
 
+	[Fact]
+	public void GetParameter_MaxPoolSize_ParameterObject()
+	{
+		// arrange 
+		// act 
+		var result = ResourceHelper.GetParameter(ParameterType.MaxPoolSize).ToParameter();
+
+		// assert
+		Assert.NotNull(result);
+		Assert.Equal((int)ParameterType.MaxPoolSize, result.Id);
+		Assert.Equal(ParameterType.MaxPoolSize, result.Type);
+		Assert.Equal("@MaxConnPoolSize", result.Name);
+		Assert.Equal("Maximum number of connections in the database pool.", result.Description);
+		Assert.Equal("2", result.Value);
+		Assert.Equal(EntityType.Schema, result.ReferenceType);
+	}
 
 	[Fact]
     public void GetParameter_Undefined_ThrowArgumentException()
@@ -54,26 +71,25 @@ public sealed class ResourceHelperTest : BaseTest
         });
 
         // assert
-        Assert.Equal("Unsupported parameter type : Undefined.", ex.Message);
+        Assert.Equal("Unsupported parameter type : 'Undefined'.", ex.Message);
     }
 
 	[Fact]
-	public void GetParameter_RingVersion_ParameterObject()
+	public void GetParameter_SchemaVersion_ParameterObject()
 	{
 		// arrange 
 		// act 
-		var result = ResourceHelper.GetParameter(ParameterType.Ring0Version).ToParameter();
+		var result = ResourceHelper.GetParameter(ParameterType.SchemaVersion).ToParameter();
 
 		// assert
 		Assert.NotNull(result);
-		Assert.Equal((int)ParameterType.Ring0Version, result.Id); 
-		Assert.Equal(ParameterType.Ring0Version, result.Type);
-		Assert.Equal("@RingVersion", result.Name);
-		Assert.Equal("Ring 0 version", result.Description);
-		Assert.Equal("1", result.Value);
-		Assert.True(result.Baseline);
+		Assert.Equal((int)ParameterType.SchemaVersion, result.Id);
+		Assert.Equal(ParameterType.SchemaVersion, result.Type);
+		Assert.Equal("@SchemaVersion", result.Name);
+		Assert.Equal("Database schema version.", result.Description);
+		Assert.Equal("1.01", result.Value);
+		Assert.Equal(EntityType.Schema, result.ReferenceType);
 	}
-
 
 	[Theory]
 	[InlineData(ResourceType.UnknownMessageResourceType, "GetMessage")]
@@ -85,6 +101,5 @@ public sealed class ResourceHelperTest : BaseTest
 		// assert
 		Assert.Equal(expectedMessage, result);
 	}
-
 
 }

@@ -59,6 +59,7 @@ internal enum ResourceType : short
 	FieldIsMandatory = 204,
 	WrongParameterType = 205,
 	UnknownMessageResourceType = 206,
+	UnsupportedParamType =207,
 
 	/// <summary>
 	/// Sql operations description

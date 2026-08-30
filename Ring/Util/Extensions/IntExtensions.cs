@@ -90,12 +90,12 @@ internal static class IntExtensions
 	private const int SchemaVersionId = (int)ParameterType.SchemaVersion;
 	private const int SchemaCreationTimeId = (int)ParameterType.SchemaCreationTime;
 	private const int SchemaLastUpgradeId = (int)ParameterType.LastUpgrade;
-	private const int DefaultLanguageId = (int)ParameterType.DefaultLanguage;
+	private const int DefaultLanguageId = (int)ParameterType.Language;
 	private const int MinPoolSizeId = (int)ParameterType.MinPoolSize;
 	private const int MaxPoolSizeId = (int)ParameterType.MaxPoolSize;
 	private const int DbConnectionStringId = (int)ParameterType.DbConnectionString;
 	private const int DbConnectionTypeId = (int)ParameterType.DbConnectionType;
-	private const int Ring0VersionId = (int)ParameterType.Ring0Version;
+	private const int Ring0VersionId = (int)ParameterType.BinaryVersion;
 
 	#endregion
 
@@ -205,11 +205,11 @@ internal static class IntExtensions
 			case SchemaVersionId:  return ParameterType.SchemaVersion;
 			case SchemaCreationTimeId: return ParameterType.SchemaCreationTime;
 			case SchemaLastUpgradeId: return ParameterType.LastUpgrade;
-			case DefaultLanguageId: return ParameterType.DefaultLanguage;
+			case DefaultLanguageId: return ParameterType.Language;
 			case MinPoolSizeId: return ParameterType.MinPoolSize;
 			case MaxPoolSizeId: return ParameterType.MaxPoolSize;
 			case DbConnectionStringId: return ParameterType.DbConnectionString;
-			case Ring0VersionId: return ParameterType.Ring0Version;
+			case Ring0VersionId: return ParameterType.BinaryVersion;
 			case DbConnectionTypeId: return ParameterType.DbConnectionType;
 		}
 		return ParameterType.Undefined;

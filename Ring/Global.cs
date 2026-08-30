@@ -36,7 +36,7 @@ internal static class Global
 		_currentMaxNumberOfSchema = configuration.MaxNumberOfSchema * 4;
 		if (_currentMaxNumberOfSchema > MaxSchemaBucketSize) _currentMaxNumberOfSchema = MaxSchemaBucketSize;
 		if (_currentMaxNumberOfSchema < MinSchemaBucketSize) _currentMaxNumberOfSchema = MinSchemaBucketSize;
-		var versionParameter = ResourceHelper.GetParameter(ParameterType.Ring0Version);
+		var versionParameter = ResourceHelper.GetParameter(ParameterType.BinaryVersion);
 		_schemas = new DbSchema[_currentMaxNumberOfSchema+1]; // @meta schema (Id=0)
 		//_version = versionParameter.GetVersion();
 		_initialized = true;

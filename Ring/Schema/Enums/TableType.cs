@@ -2,6 +2,7 @@
 
 internal enum TableType : byte
 {
+	// The value 0 is reserved for loading resources.
 	Business = 1,
 	BusinessLog = 2,
 	Meta = 13,

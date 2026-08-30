@@ -3,7 +3,6 @@ using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using Ring.Util.Builders;
 using Ring.Util.Extensions;
-using Ring.Util.Helpers;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -351,13 +350,8 @@ internal readonly struct Meta : IEquatable<Meta>
 	internal TableSpace? ToTableSpace(string physicalName) => IsTableSpace ? new TableSpace(Id, Name, physicalName, Description, 
 		IsTablespaceIndex(), IsTablespaceTable(), false, Array.Empty<string>(), Value ?? string.Empty, Active, IsEntityBaseline()) : null;
 
-	internal Parameter? ToParameter()
-	{
-		// Code size: 86 (0x56)
-		var parameterType = GetParameterType();
-		var paramTemplate = ResourceHelper.GetParameter(parameterType);
-		return IsParameter ? new Parameter(Id, Name, Description, parameterType, GetParameterValueType(), GetParameterValue(), EntityType.Schema, IsEntityBaseline(), Active) : null;
-	}
+	internal Parameter? ToParameter() // Code size: 71 (0x47)
+		=> IsParameter ? new Parameter(Id, Name, Description, GetParameterType(), GetParameterValueType(), GetParameterValue(), EntityType.Schema, ReferenceId, IsEntityBaseline(), Active) : null;
 
 	internal Index? ToIndex() //Code size: 79 (0x4f)
 		=> IsIndex ? new Index(Id, Name, Description, GetIndexedColumns(), IsIndexUnique(), IsIndexBitmap(), Active, IsEntityBaseline()) : null;

@@ -3,21 +3,28 @@ using Ring.Schema.Extensions;
 
 namespace Ring.Schema.Models;
 
+/// <summary>
+/// 	Logical parameter
+/// </summary>
 internal sealed class Parameter : BaseEntity, IEquatable<Parameter>
 {
-	// 20 → rounded to 24 bytes. - 4 bytes padding
 	internal readonly string Value;
 	internal readonly FieldType ValueType;
 	internal readonly ParameterType Type;
 	internal readonly EntityType ReferenceType;
+	internal readonly int ReferenceId; // Stores all parameters for each entity type in the schema object.
 
-	internal Parameter(int id, string name, string? description, ParameterType type, FieldType valueType, string value, EntityType referenceType, bool baseline, bool active)
+	/// <summary>
+	/// 	Ctor
+	/// </summary>
+	internal Parameter(int id, string name, string? description, ParameterType type, FieldType valueType, string value, EntityType referenceType, int referenceId, bool baseline, bool active)
 		: base(id, name, description, baseline, active)
 	{
 		Value = value;
 		ValueType = valueType;
 		Type = type;
 		ReferenceType = referenceType;
+		ReferenceId = referenceId;
 	}
 
 	public static bool operator ==(Parameter left, Parameter right) => left.Equals(right);
@@ -27,7 +34,7 @@ internal sealed class Parameter : BaseEntity, IEquatable<Parameter>
 	public override int GetHashCode() => this.Hash();
 
 #if DEBUG
-	public sealed override string ToString() => $"{Id} - {Name} - {Value} ({DefaultValue})";
+	public sealed override string ToString() => $"{Id} - {Name} - {Value}";
 #endif
 
 }

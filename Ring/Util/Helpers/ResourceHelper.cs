@@ -1,7 +1,6 @@
 ﻿using Ring.Logging;
 using Ring.Schema;
 using Ring.Schema.Enums;
-using Ring.Schema.Models;
 using Ring.Util.Enums;
 using System.Globalization;
 using System.Runtime.CompilerServices;
@@ -23,7 +22,6 @@ internal sealed class ResourceHelper
 	private static readonly string CompressedResourceSuffix = @".gz";
 	private static readonly string ResourceNameSpace = @"Ring.Util.Resources.";
 	private static readonly string ResourceMetaFile = @"Meta";
-	private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
 	private static readonly string ResourceEof = @"|||";
 	private const char ResourceEndOfLine = '\n';
 	private static bool _resourcesLoaded;
@@ -33,6 +31,7 @@ internal sealed class ResourceHelper
 	private static Dictionary<int, string> _logDescriptions = new();
 	private static Dictionary<int, string> _methodInfos = new();
 	private static Dictionary<int, Meta[]> _metas = new(); // <tableTypeId, Meta[] >
+	private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
 
 	private static readonly Logger _logger = Global.LoggerFactory.CreateLogger<ResourceHelper>();
 
@@ -66,10 +65,23 @@ internal sealed class ResourceHelper
 		if (_methodInfos.TryGetValue(resourceTypeId, out var methodInfo)) return methodInfo;
 		return null;
 	}
+
+	/// <summary>
+	/// 	Get parameter by id ==> O(n) complexityO(n) complexity
+	/// </summary>
 	internal static Meta GetParameter(ParameterType parameterType)
 	{
-		return Meta.GetDefaultMeta(EntityType.Parameter);
+		// Code size: 97 (0x61)
+		if (_metas.TryGetValue(0, out var parameters))
+		{
+			var parameterTypeId = (int)parameterType;
+			var span = new ReadOnlySpan<Meta>(parameters);
+			var spanCount = span.Length;
+			for (var i=0; i < spanCount; ++i) if (span[i].Id == parameterTypeId) return span[i];
+		}
+		throw new ArgumentException(string.Format(DefaultCulture, GetMessage(ResourceType.UnsupportedParamType), parameterType.ToString()));
 	}
+
 	internal static HashSet<string> GetReservedWords(DatabaseProvider databaseProvider)
 	{
 		// Code size: 332 (0x14c)
@@ -92,9 +104,10 @@ internal sealed class ResourceHelper
 
 	internal static Meta[] GetMetaRows(TableType tableType)
 	{
-		// Code size: 25 (0x19)
-		var refId = (int)tableType;
-		return _metas.TryGetValue(refId, out var metas) ? metas : Array.Empty<Meta>();
+		// Code size: 34 (0x22)
+		var refId = (int)tableType; 
+		if (refId==0) return Array.Empty<Meta>(); // refId ==> 0 is reservice
+		return _metas.TryGetValue(refId, out var metas)  ? metas : Array.Empty<Meta>();
 	}
 
 	internal static Meta? GetMetaTable(TableType tableType)
@@ -107,6 +120,10 @@ internal sealed class ResourceHelper
 	}
 
 	#region private methods
+
+	// exceptions 
+
+		
 
 	private static void LoadResources()
 	{
@@ -191,7 +208,7 @@ internal sealed class ResourceHelper
 				foreach (var kvp in counts) result[kvp.Key] = new Meta[kvp.Value];
 
 				// pass 2: fill the pre-sized arrays via a per-key write cursor
-				var cursor = new Dictionary<int, int>(counts.Count);
+				var cursor = new Dictionary<int, int>(counts.Count * 2);
 				foreach (var meta in span)
 				{
 					var index = cursor.TryGetValue(meta.ReferenceId, out var i) ? i : 0;
