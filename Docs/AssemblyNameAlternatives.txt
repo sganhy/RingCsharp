@@ -30,3 +30,45 @@ Velum * 		A thin membranous covering layer — precise, anatomical, unusual
 
 
 * doesn't exist
+
+
+
+Alchemy, with real semantic fit:
+
+Amalgam * — an alloy formed by fusing distinct elements into one; a schema framework that unifies tables, fields, relations, indexes, and constraints into one coherent structure is literally an amalgam. Strong, plain-English-adjacent (not too obscure), short.
+Alkahest * — the legendary universal solvent, alchemy's answer to "dissolves anything." A nice metaphor for a driver meant to be a universal, dependency-free conduit to the database. More obscure, harder to say at first glance, but distinctive and unlikely to collide with anything.
+Athanor — the alchemist's furnace, used for slow transformation over sustained heat. Fits the "built from scratch over a long-running project" story, if you want the name to reference the effort rather than the artifact.
+
+
+Geology, with real semantic fit:
+
+Strata * — layered structure, directly mirroring the meta-model you've actually built (Table → Field/Relation/Index/View, Schema above them). Probably the single most literal match to what the code does.
+Aquifer — an underground layer that stores and transmits water. Good driver metaphor (stores and moves data), reads as deliberate rather than decorative.
+Karst — a landscape carved by dissolution into underground channels and caverns; nice metaphor for connection pooling/routing, more obscure and distinctive, less immediately legible to someone with no geology background.
+
+
+Geology — same vein as before, further from the well-picked-over words:
+
+Xenolith — a fragment of foreign rock embedded inside another rock. Genuinely literal fit: this project embeds foreign resource data inside the assembly via GetManifestResourceStream.
+Breccia — rock made of broken fragments cemented into one mass by a fine matrix. Fits a schema built from many small pieces (tables, fields, relations) bound into a whole.
+Gossan — weathered, oxidized rock at the surface that signals an ore deposit below. Fits a metadata layer that points to the real data underneath it.
+Saprolite — rock chemically weathered in place, still preserving the original rock's structure. Fits a layer that wraps Postgres while preserving its underlying shape.
+
+Alchemy — rarer than Alembic/Alkahest/Athanor:
+5. Cucurbit — the gourd-shaped vessel forming the body of an alembic still. Alchemy-rooted, without Alembic's exact-name collision.
+6. Menstruum — a dissolving/extracting solvent, alkahest's lesser-known cousin. Same "universal connector" metaphor.
+7. Calx — the ash residue left after calcination. Short and punchy, closer to "Ring"'s length than most of these.
+8. Spagyric — an alchemical method of separating a substance into parts and recombining them. Fits "decompose into schema/meta, recombine into a working whole" well.
+
+A different well entirely — structural/architectural terms, since "schema" itself means a structural framework:
+9. Trestle — a framework of beams supporting a structure from below. Literal "framework," and outside the two domains you'd already mined.
+10. Fascia — a band or layer that binds and supports what's beneath it (architecture and anatomy both use the word). Distinct sound, layered-support metaphor.
+
+
+
+Name	Why it fits	Availability
+Nexum	Latin for "link/bond" — what an ORM does: binds objects to the DB. Clean, short, memorable.
+Velum	A thin, precise covering layer — the ORM/schema layer sitting over your raw database. Anatomically exact metaphor.
+Continuo	The always-present harmonic foundation — the persistent schema runtime underlying your application.
+Athanor	A self-sustaining furnace — a runtime that keeps schemas live indefinitely with zero downtime.
+Cambium	The living generative layer in a tree — continuously produces new structure, maps to schema evolution.

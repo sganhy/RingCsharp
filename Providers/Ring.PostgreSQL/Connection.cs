@@ -98,7 +98,7 @@ public sealed class Connection : IConnection
 
 		try
 		{
-			_stream.SendQuery("BEGIN".AsSpan(), _encoding.GetByteCount("BEGIN"), _encoding, _sqlSendBuffer, 16);
+			_stream.SendQuery("BEGIN".AsSpan(), _encoding.GetByteCount("BEGIN"), _encoding, _sqlSendBuffer);
 			_stream.DrainToReadyForQuery(ref _transactionStatus);
 		}
 		catch (PgOperationalError)
@@ -128,6 +128,14 @@ public sealed class Connection : IConnection
 		catch (ObjectDisposedException) { return false; }
 	}
 
+	public void Open()
+	{
+		// Code size: 41 (0x29)
+		if ((_state & ConnectionState.Open) == ConnectionState.Open) ThrowConnectionAlreadyOpen();
+		// Delegate to the async implementation and block.
+		OpenAsyncImpl(CancellationToken.None).GetAwaiter().GetResult();
+	}
+	public Task OpenAsync(CancellationToken cancellationToken) => OpenAsyncImpl(cancellationToken);
 	public void Close()
 	{
 		// If not open, nothing to do beyond releasing any lingering resources
@@ -171,8 +179,6 @@ public sealed class Connection : IConnection
 			throw;
 		}
 	}
-
-	public Task OpenAsync(CancellationToken cancellationToken) => OpenAsyncImpl(cancellationToken);
 	public Task CloseAsync(CancellationToken cancellationToken = default) => CloseAsyncImpl(cancellationToken);
 
 	/// <summary>
@@ -193,7 +199,7 @@ public sealed class Connection : IConnection
 
 		try
 		{
-			_stream.SendQuery("COMMIT".AsSpan(), _encoding.GetByteCount("COMMIT"), _encoding, _sqlSendBuffer, 16);
+			_stream.SendQuery("COMMIT".AsSpan(), _encoding.GetByteCount("COMMIT"), _encoding, _sqlSendBuffer);
 			_stream.DrainToReadyForQuery(ref _transactionStatus);
 		}
 		catch (PgOperationalError)
@@ -233,12 +239,12 @@ public sealed class Connection : IConnection
 
 		try
 		{
-			
+
 			//var sql = "SELECT schemaname, tablename, tableowner, hasindexes FROM pg_catalog.pg_tables";
 
 			// fire-and-forget, no Describe/RowDescription needed for generic parsing; 
 			// keep it synchronous to avoid async overhead for a single round trip
-			_stream.SendQuery(sql, _encoding.GetByteCount(sql), _encoding, _sqlSendBuffer, 128);
+			_stream.SendQuery(sql, _encoding.GetByteCount(sql), _encoding, _sqlSendBuffer);
 
 			return _stream.ReadRetrieveRecords(ref _transactionStatus, _encoding, query.Table);
 		}
@@ -262,7 +268,7 @@ public sealed class Connection : IConnection
 	{
 		// Code size: 76 (0x4c) - no virtual call
 		_state = ConnectionState.Open | ConnectionState.Executing; // we checked already the connection state in AlterQuery.Execute().
-		_stream.SendQuery(sql, sqlByteCount, _encoding, _sqlSendBuffer,256);
+		_stream.SendQuery(sql, sqlByteCount, _encoding, _sqlSendBuffer);
 		var returnValue = _stream.DrainToReadyForQuery(ref _transactionStatus);
 		returnValue?.Set(query, _ddlBuilder);
 		_state = ConnectionState.Open;
@@ -271,7 +277,7 @@ public sealed class Connection : IConnection
 	public async ValueTask<OperationalError?> ExecuteAsync(AlterQuery query, string sql, int sqlByteCount, CancellationToken cancellationToken = default)
 	{
 		// Code size: 88 (0x58) - no virtual call
-		_stream.SendQuery(sql, sqlByteCount, _encoding, _sqlSendBuffer,256);
+		_stream.SendQuery(sql, sqlByteCount, _encoding, _sqlSendBuffer);
 		(var returnValue, var drainedBody) = await _stream.DrainToReadyForQueryAsync(cancellationToken).ConfigureAwait(false);
 		if (returnValue is not null)
 		{
@@ -285,7 +291,7 @@ public sealed class Connection : IConnection
 	{
 		throw new NotImplementedException();
 	}
-		
+
 	public int ProviderId() => (int)_parameters.DatabaseProvider;
 
 	public void Rollback()
@@ -295,7 +301,7 @@ public sealed class Connection : IConnection
 
 		try
 		{
-			_stream.SendQuery("ROLLBACK".AsSpan(), _encoding.GetByteCount("ROLLBACK"), _encoding, _sqlSendBuffer, 16);
+			_stream.SendQuery("ROLLBACK".AsSpan(), _encoding.GetByteCount("ROLLBACK"), _encoding, _sqlSendBuffer);
 			_stream.DrainToReadyForQuery(ref _transactionStatus);
 		}
 		catch (PgOperationalError)
@@ -311,6 +317,7 @@ public sealed class Connection : IConnection
 			throw;
 		}
 	}
+
 
 	#region private methods
 
@@ -339,59 +346,49 @@ public sealed class Connection : IConnection
 		if (!ReferenceEquals(stream, ClosedStream))
 			await stream.DisposeAsync().ConfigureAwait(false);
 	}
-
-	public void Open()
+	
+	// Genuinely async - no outer Task.Run. An async Task method still never
+	// throws synchronously to the caller (even for the ThrowConnectionAlreadyOpen
+	// check before the first await), so OpenAsync()'s contract is unchanged.
+	// Only the actual blocking call (ConnectSocket) gets offloaded; SendStartupAsync
+	// and HandleAuthenticationAsync are already async and are awaited directly -
+	// wrapping an already-async call in Task.Run just queues an extra work item,
+	// it doesn't move any work off-thread.
+	private async Task OpenAsyncImpl(CancellationToken cancellationToken)
 	{
-		// Code size: 41 (0x29)
 		if ((_state & ConnectionState.Open) == ConnectionState.Open) ThrowConnectionAlreadyOpen();
-		// Delegate to the async implementation and block.
-		OpenAsyncImpl(CancellationToken.None).GetAwaiter().GetResult();
-	}
-
-	private Task OpenAsyncImpl(CancellationToken cancellationToken)
-	{
-		return Task.Run(async () =>
+		_state = ConnectionState.Connecting;
+		try
 		{
-			if ((_state & ConnectionState.Open) == ConnectionState.Open) ThrowConnectionAlreadyOpen();
-			_state = ConnectionState.Connecting;
-			try
-			{
-				// Run the synchronous connect on the threadpool to avoid blocking the caller
-				var socket = await Task.Run(() => SocketHelper.ConnectSocket(_host, _port, _timeout), cancellationToken).ConfigureAwait(false);
-				socket.NoDelay = true;
+			// The only genuinely blocking call in this method - offload it, but only once.
+			var socket = await Task.Run(() => SocketHelper.ConnectSocket(_host, _port, _timeout), cancellationToken).ConfigureAwait(false);
+			socket.NoDelay = true;
 
-				_stream = new NetworkStream(socket, ownsSocket: true)
-				{
-					WriteTimeout = _timeout,
-					ReadTimeout = _timeout
-				};
-				_socket = socket;
-
-				// Startup and authentication may perform network I/O; run on threadpool to avoid blocking
-				await _stream.SendStartupAsync(_parameters, cancellationToken).ConfigureAwait(false);
-
-				var (pid, secret) = await Task.Run(() => AuthenticationHelper.HandleAuthenticationAsync(_stream, _parameters.UserName, _parameters.Password), cancellationToken).ConfigureAwait(false);
-				_backendPid = pid ?? 0;
-				_backendSecret = secret ?? 0;
-				_state = ConnectionState.Open;
-			}
-			catch (OperationCanceledException)
+			_stream = new NetworkStream(socket, ownsSocket: true)
 			{
-				_stream.Dispose(); // also disposes underlying socket
-				_stream = ClosedStream;
-				_socket = null;
-				_state = ConnectionState.None;
-				throw;
-			}
-			catch
-			{
-				_stream.Dispose(); // also disposes underlying socket
-				_stream = ClosedStream;
-				_socket = null;
-				_state = ConnectionState.None;
-				throw;
-			}
-		}, cancellationToken);
+				WriteTimeout = _timeout,
+				ReadTimeout = _timeout
+			};
+			_socket = socket;
+
+			await _stream.SendStartupAsync(_parameters, cancellationToken).ConfigureAwait(false);
+			var (pid, secret) = await AuthenticationHelper.HandleAuthenticationAsync(_stream, _parameters.UserName, _parameters.Password, cancellationToken).ConfigureAwait(false);
+
+			_backendPid = pid ?? 0;
+			_backendSecret = secret ?? 0;
+			_state = ConnectionState.Open;
+		}
+		catch
+		{
+			// Cancellation and any other failure need identical cleanup, so one
+			// catch-all covers both (the OperationCanceledException-specific
+			// catch previously here had the same body as this one).
+			_stream.Dispose(); // also disposes underlying socket
+			_stream = ClosedStream;
+			_socket = null;
+			_state = ConnectionState.None;
+			throw;
+		}
 	}
 
 	private async Task CloseAsyncImpl(CancellationToken cancellationToken)
@@ -451,7 +448,7 @@ public sealed class Connection : IConnection
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
-	private static void ThrowConnectionAlreadyOpen() =>	throw new InvalidOperationException(ResourceHelper.GetMessage(ResourceType.ConnectionAlreadyOpen));
+	private static void ThrowConnectionAlreadyOpen() => throw new InvalidOperationException(ResourceHelper.GetMessage(ResourceType.ConnectionAlreadyOpen));
 
 	#endregion
 

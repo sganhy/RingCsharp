@@ -16,7 +16,8 @@ internal sealed class ConnectionParameters
 	internal readonly int TimeOut;
 	internal readonly int SqlSendBufferSize;
 
-	internal ConnectionParameters(DatabaseProvider databaseProvider, string host, string databaseName, int port, string userName, string password, int timeOut, string applicationName, string clientEncoding, int sqlSendBufferSize)
+	internal ConnectionParameters(DatabaseProvider databaseProvider, string host, string databaseName, int port, string userName, string password, int timeOut, string applicationName, string clientEncoding, 
+		int sqlSendBufferSize)
 	{
 		Host = host;
 		Port = port;

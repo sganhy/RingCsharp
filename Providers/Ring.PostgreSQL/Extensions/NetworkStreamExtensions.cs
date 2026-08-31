@@ -21,6 +21,7 @@ internal static class NetworkStreamExtensions
 {
 	private const int InitialRowCapacityHint = 16;
 	private const int SkipBodyChunkSize = 128;
+	private const int SmallMessageStackAllocThreshold = 125;
 	private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
 	private static readonly string BooleanTrue = true.ToString(DefaultCulture);
 	private static readonly string BooleanFalse = false.ToString(DefaultCulture);
@@ -331,24 +332,148 @@ internal static class NetworkStreamExtensions
 	}
 
 	/// <summary>
-	///     Sends a frontend Simple Query ('Q') message: Int32 length (self-
-	///     inclusive) followed by the null-terminated query string. The server
-	///     always replies using the text wire format for this message type,
-	///     regardless of column type, which is what makes flattening every
+	///     Sends the Extended Query subprotocol for a parameterized statement:
+	///     Parse ('P') + Bind ('B') + Execute ('E') + Sync ('S'), pipelined
+	///     into a single buffer and a single Write so the round-trip cost
+	///     matches the Simple Query path in <see cref="SendQuery"/>.
+	///
+	///     No Describe message is sent - callers already know the shape of
+	///     the result set from the client-side <see cref="Table"/>/<see
+	///     cref="Column"/> metadata (see ReadRetrieveRecordsPooled), so
+	///     RowDescription/NoData/ParameterDescription are never expected
+	///     back; the read path already tolerates them defensively for
+	///     exactly this reason.
+	///
+	///     Both statement and portal are unnamed (""), so this is a one-shot
+	///     parameterized query: the server discards them at the next unnamed
+	///     Parse/Bind, and no explicit Close message is needed. If you later
+	///     want prepared-statement reuse across calls, that needs a named
+	///     statement and an explicit Close - out of scope here.
+	///
+	///     All parameter and result format codes are text (0), matching how
+	///     every read path in this file expects text-format wire data.
+	///     Parameter type OIDs are left unspecified (numParamTypes = 0), so
+	///     Postgres infers parameter types from query context - this is fine
+	///     for ordinary INSERT/UPDATE/WHERE-clause parameters bound against a
+	///     known column, but a query with no inferable context for a given
+	///     $n (e.g. a bare `SELECT $1`) would need an explicit cast in the
+	///     SQL text itself (`SELECT $1::text`), since there's no client-side
+	///     FieldType-to-OID map here to fall back on.
+	///
+	///     <paramref name="values"/> and <paramref name="columns"/> must be
+	///     the same length and in $1.. order - one Column per bind parameter,
+	///     not the full table schema (unlike AppendRecordData, this does not
+	///     skip SearchableColumn/TimeZoneColumn entries; filter those out
+	///     before calling if your columns array can include them).
+	///
+	///     Depends on FrontendMessageCode having Parse ('P'), Bind ('B'),
+	///     Execute ('E') and Sync ('S') members alongside the existing Query.
+	/// </summary>
+	[SkipLocalsInit]
+	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
+	internal static void SendExtendedQuery(this NetworkStream stream, ReadOnlySpan<char> sql, int sqlByteCount, Encoding encoding, byte[] sqlSendBuffer, string?[] values, Column[] columns)
+	{
+		// values.Length && columns.Length should be equal!
+		// Pass 1: figure out the wire byte length of each parameter value up
+		// front, so the total message length (and therefore which buffer
+		// tier to use below) is known before anything is written.
+		// ByteArray columns hold Base64 text client-side (see
+		// AppendRecordData/ParseByteaHexToBase64) but go over the wire as
+		// Postgres bytea hex text ('\x' + 2 hex chars/byte), so those get
+		// decoded once here and the raw bytes kept for the write pass below,
+		// rather than decoding twice.
+		var paramLengths = ArrayPool<int>.Shared.Rent(values.Length);
+		byte[]?[]? byteaBytes = null; // lazily allocated only if a ByteArray parameter is present
+		try
+		{
+			for (var i = 0; i < values.Length; i++)
+			{
+				var value = values[i];
+				if (value is null) { paramLengths[i] = -1; continue; }
+
+				if (columns[i].FieldType == FieldType.ByteArray)
+				{
+					byteaBytes ??= new byte[values.Length][];
+					var raw = Convert.FromBase64String(value);
+					byteaBytes[i] = raw;
+					paramLengths[i] = 2 + raw.Length * 2; // '\x' + 2 hex chars per byte
+				}
+				else
+				{
+					// Postgres's boolean/date/etc. text-input parsers accept the same
+					// invariant-culture strings Record already stores fields as (e.g.
+					// "True"/"False" is a valid case-insensitive boolean literal), so
+					// every non-bytea FieldType is passed through verbatim as text.
+					paramLengths[i] = encoding.GetByteCount(value);
+				}
+			}
+
+			const int emptyCStringLength = 1; // just the NUL terminator, for the unnamed statement/portal
+			const int executeLength = 4 + emptyCStringLength + 4; // length field + unnamed portal + maxRows
+			const int syncLength = 4; // length field only, no body
+
+			var parseLength = 4 + emptyCStringLength + sqlByteCount + 1 + 2; // length field + stmt NUL + query + query NUL + numParamTypes(0)
+
+			var bindParamsLength = 0;
+			for (var i = 0; i < values.Length; i++)	bindParamsLength += 4 + (paramLengths[i] > 0 ? paramLengths[i] : 0);
+			var bindLength = 4 + emptyCStringLength + emptyCStringLength + 2 + 2 + 2 + bindParamsLength + 2 + 2;
+
+			var totalLength = 1 + parseLength + 1 + bindLength + 1 + executeLength + 1 + syncLength;
+
+			if (totalLength <= SmallMessageStackAllocThreshold)
+			{
+				Span<byte> buffer = stackalloc byte[totalLength];
+				WriteExtendedQueryMessages(buffer, sql, sqlByteCount, encoding, values, columns, paramLengths, byteaBytes, parseLength, bindLength);
+				stream.Write(buffer);
+			}
+			else if (totalLength <= sqlSendBuffer.Length)
+			{
+				var buf = sqlSendBuffer.AsSpan(0, totalLength);
+				WriteExtendedQueryMessages(buf, sql, sqlByteCount, encoding, values, columns, paramLengths, byteaBytes, parseLength, bindLength);
+				stream.Write(buf);
+			}
+			else
+			{
+				var rented = ArrayPool<byte>.Shared.Rent(totalLength);
+				try
+				{
+					var buf = rented.AsSpan(0, totalLength);
+					WriteExtendedQueryMessages(buf, sql, sqlByteCount, encoding, values, columns, paramLengths, byteaBytes, parseLength, bindLength);
+					stream.Write(buf);
+				}
+				finally
+				{
+					ArrayPool<byte>.Shared.Return(rented);
+				}
+			}
+			stream.Flush();
+		}
+		finally
+		{
+			ArrayPool<int>.Shared.Return(paramLengths);
+		}
+	}
+
+
+	/// <summary>
+	///     Sends a frontend Simple Query ('Q') message: Int32 length (self-inclusive) followed by the null-terminated query string. 
+	///     The server always replies using the text wire format for this message type, regardless of column type, which is what makes flattening every
 	///     value straight to string safe here.
 	/// </summary>
 	[SkipLocalsInit]
 	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
-	internal static void SendQuery(this NetworkStream stream, ReadOnlySpan<char> sql, int sqlByteCount, Encoding encoding, byte[] sqlSendBuffer, int stackallocSize)
+	internal static void SendQuery(this NetworkStream stream, ReadOnlySpan<char> sql, int sqlByteCount, Encoding encoding, byte[] sqlSendBuffer)
 	{
-		// Code size: 299 (0x12b) - no allocations
+		// Code size: 307 (0x133) - no allocations
 		// Exact byte count either way - see GetSqlByteCount.
 		// type + length + encoding.GetByteCount(sql) + null terminator
 		var messageLength = 1 + 4 + sqlByteCount + 1;
 
-		if (messageLength <= 128)
+		if (messageLength <= SmallMessageStackAllocThreshold)
 		{
-			// case 1: very short query, small enough to fit on the stack.
+			// ── Case 1: very short query, small enough to fit on the stack.
+			// stackalloc is bounded by a constant known at JIT time, so the stack frame is never unbounded. SkipLocalsInit means we don't zero the whole buffer before filling it,
+			// saving ~15 ns on a 120-byte alloc. Every byte is explicitly written before use.
 			Span<byte> buffer = stackalloc byte[messageLength];
 			buffer[0] = (byte)FrontendMessageCode.Query;
 			BinaryPrimitives.WriteInt32BigEndian(buffer.Slice(1, 4), messageLength - 1);
@@ -358,26 +483,34 @@ internal static class NetworkStreamExtensions
 		}
 		else if (messageLength <= sqlSendBuffer.Length)
 		{
-			// case 2: query fits in the preallocated send buffer.
-			var buffer = sqlSendBuffer.AsSpan(0, messageLength);
-			BinaryPrimitives.WriteInt32BigEndian(buffer.Slice(1, 4), messageLength - 1);
-			encoding.GetBytes(sql, buffer[5..^1]);
-			buffer[^1] = 0; // null terminator
-			stream.Write(buffer);
+			// ── Case 2: per-connection preallocated heap buffer
+			// One allocation at connection open time; reused for every query that fits. Always write the type byte - it is NOT guaranteed to
+			// be present from a previous call (bug fix: previous version only set it in the constructor).
+			var buf = sqlSendBuffer.AsSpan(0, messageLength);
+			buf[0] = (byte)FrontendMessageCode.Query;
+			BinaryPrimitives.WriteInt32BigEndian(buf.Slice(1, 4), messageLength - 1);
+			encoding.GetBytes(sql, buf.Slice(5, sqlByteCount));
+			buf[messageLength - 1] = 0; // NUL terminator
+			stream.Write(buf);
 		}
 		else
 		{
-			// case 3: query is too large for the preallocated send buffer.
-			// Not pooled: in practice ~99.99% of queries never reach this
-			// branch at all, and of those that do, almost none cross the LOH
-			// threshold (~85,000 bytes) where pooling would actually avoid
-			// heap fragmentation. `new` also zero-inits for free, which Rent()
-			// doesn't - not worth trading that away for a case this rare.
-			var buffer = new byte[messageLength];
-			buffer[0] = (byte)FrontendMessageCode.Query;
-			BinaryPrimitives.WriteInt32BigEndian(buffer.AsSpan(1, 4), messageLength - 1);
-			encoding.GetBytes(sql, buffer.AsSpan(5..^1));
-			stream.Write(buffer);
+			// ── Case 3: ArrayPool rent for oversized queries
+			// Pooled instead of `new byte[]` to avoid LOH fragmentation on queries large enough to escape the preallocated buffer (rare in practice, but important for correctness when they do occur).
+			// ArrayPool.Rent may return a larger array than requested; pass an explicit slice to Write so we never send trailing garbage bytes.
+			var rented = ArrayPool<byte>.Shared.Rent(messageLength);
+			try
+			{
+				rented[0] = (byte)FrontendMessageCode.Query;
+				BinaryPrimitives.WriteInt32BigEndian(rented.AsSpan(1, 4), messageLength - 1);
+				encoding.GetBytes(sql, rented.AsSpan(5, sqlByteCount));
+				rented[messageLength - 1] = 0; // NUL terminator
+				stream.Write(rented.AsSpan(0, messageLength));
+			}
+			finally
+			{
+				ArrayPool<byte>.Shared.Return(rented);
+			}
 		}
 		stream.Flush();
 	}
@@ -413,6 +546,94 @@ internal static class NetworkStreamExtensions
 	}
 
 	#region private methods
+
+	// Writes Parse+Bind+Execute+Sync into destination, which must be exactly
+	// (1 + parseLength) + (1 + bindLength) + (1 + executeLength) + (1 + syncLength)
+	// bytes long - the three call sites in SendExtendedQuery size it that way
+	// regardless of which buffer tier they picked, so this method itself
+	// doesn't care whether destination came from the stack, the per-connection
+	// buffer, or ArrayPool.
+	private static void WriteExtendedQueryMessages(Span<byte> destination, ReadOnlySpan<char> sql, int sqlByteCount, Encoding encoding, string?[] values, Column[] columns, ReadOnlySpan<int> paramLengths, byte[]?[]? byteaBytes, int parseLength, int bindLength)
+	{
+		var offset = 0;
+
+		// ---- Parse ----
+		destination[offset++] = (byte)FrontendMessageCode.Parse;
+		BinaryPrimitives.WriteInt32BigEndian(destination.Slice(offset, 4), parseLength);
+		offset += 4;
+		destination[offset++] = 0; // unnamed statement
+		offset += encoding.GetBytes(sql, destination.Slice(offset, sqlByteCount));
+		destination[offset++] = 0; // query NUL terminator
+		BinaryPrimitives.WriteInt16BigEndian(destination.Slice(offset, 2), 0); // numParamTypes = 0, server infers types
+		offset += 2;
+
+		// ---- Bind ----
+		destination[offset++] = (byte)FrontendMessageCode.Bind;
+		BinaryPrimitives.WriteInt32BigEndian(destination.Slice(offset, 4), bindLength);
+		offset += 4;
+		destination[offset++] = 0; // unnamed portal
+		destination[offset++] = 0; // unnamed statement - must match the Parse above
+		BinaryPrimitives.WriteInt16BigEndian(destination.Slice(offset, 2), 1); // one format code, applies to all params
+		offset += 2;
+		BinaryPrimitives.WriteInt16BigEndian(destination.Slice(offset, 2), 0); // text
+		offset += 2;
+		BinaryPrimitives.WriteInt16BigEndian(destination.Slice(offset, 2), (short)values.Length);
+		offset += 2;
+
+		for (var i = 0; i < values.Length; i++)
+		{
+			var len = paramLengths[i];
+			BinaryPrimitives.WriteInt32BigEndian(destination.Slice(offset, 4), len);
+			offset += 4;
+			if (len <= 0) continue; // NULL (-1) or empty string (0): no value bytes follow either way
+
+			if (columns[i].FieldType == FieldType.ByteArray)
+				WriteByteaHex(byteaBytes![i]!, destination.Slice(offset, len));
+			else
+				encoding.GetBytes(values[i]!, destination.Slice(offset, len));
+			offset += len;
+		}
+
+		BinaryPrimitives.WriteInt16BigEndian(destination.Slice(offset, 2), 1); // one result format code, applies to all columns
+		offset += 2;
+		BinaryPrimitives.WriteInt16BigEndian(destination.Slice(offset, 2), 0); // text - matches every read path in this file
+		offset += 2;
+
+		// ---- Execute ----
+		destination[offset++] = (byte)FrontendMessageCode.Execute;
+		BinaryPrimitives.WriteInt32BigEndian(destination.Slice(offset, 4), 9); // length field + unnamed portal + maxRows
+		offset += 4;
+		destination[offset++] = 0; // unnamed portal
+		BinaryPrimitives.WriteInt32BigEndian(destination.Slice(offset, 4), 0); // maxRows = 0: no limit
+		offset += 4;
+
+		// ---- Sync ----
+		destination[offset++] = (byte)FrontendMessageCode.Sync;
+		BinaryPrimitives.WriteInt32BigEndian(destination.Slice(offset, 4), 4);
+	}
+
+	// Mirror image of the read-side ParseByteaHexToBase64: Record stores
+	// byte[] fields as Base64 text, so a ByteArray bind parameter needs
+	// decoding from Base64 (done once in SendExtendedQuery's pass 1) and
+	// re-encoding to Postgres's bytea hex text format here, not a plain
+	// UTF8 GetBytes of the original Base64 string.
+	private static void WriteByteaHex(ReadOnlySpan<byte> raw, Span<byte> destination)
+	{
+		destination[0] = (byte)'\\';
+		destination[1] = (byte)'x';
+		var offset = 2;
+		foreach (var b in raw)
+		{
+			destination[offset++] = HexNibbles[b >> 4];
+			destination[offset++] = HexNibbles[b & 0x0F];
+		}
+	}
+
+	private static readonly byte[] HexNibbles =
+	{
+		(byte)'0', (byte)'1', (byte)'2', (byte)'3', (byte)'4', (byte)'5', (byte)'6', (byte)'7',
+		(byte)'8', (byte)'9', (byte)'a', (byte)'b', (byte)'c', (byte)'d', (byte)'e', (byte)'f'
+	};
 
 	// Consumes and discards bodyLength bytes from the socket without allocating
 	// a buffer sized to the message - needed so ReadMessage(errorOnly: true)

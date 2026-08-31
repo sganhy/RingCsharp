@@ -24,10 +24,12 @@ internal static class StringExtensions
 		var timeOut = 30000; // 30 seconds
 		var applicationName = "Ring"; // 30 seconds
 		var clientEncodingParam = "UTF-8"; // default client encoding
+		var buffSizeValue = 0;
+		var sqlSendBufferSize = Math.Max(buffSizeValue, 1024);
 		dico.TryGetValue("DATABASE", out var databaseName);
 		//if (!string.IsNullOrEmpty(clientEncoding)) clientEncodingParam = clientEncoding;
 		var result = new ConnectionParameters(DatabaseProvider.PostgreSql, host ?? string.Empty, databaseName ?? string.Empty, 
-			port, userName ?? string.Empty, password ?? string.Empty, timeOut, applicationName, clientEncodingParam, 0);
+			port, userName ?? string.Empty, password ?? string.Empty, timeOut, applicationName, clientEncodingParam, sqlSendBufferSize);
 		return result;
 	}
 	

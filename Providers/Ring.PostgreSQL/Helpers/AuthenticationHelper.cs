@@ -54,7 +54,6 @@ internal static class AuthenticationHelper
 		}
 	}
 
-
 	private static async Task<(int? BackendPid, int? BackendSecret)> AuthenticateSASLAsync(NetworkStream stream, byte[] mechanismsPayload, string password, System.Threading.CancellationToken cancellationToken = default)
 	{
 		var mechanisms = ParseNullTerminatedList(mechanismsPayload);
