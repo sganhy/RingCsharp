@@ -1,14 +1,10 @@
-﻿using Ring.Data.Enums;
-using Ring.Data.Models;
-using Ring.Util.Helpers;
-using System.Text;
+﻿using Ring.Data.Models;
+using Ring.Util.Extensions;
 
 namespace Ring.Data.Extensions;
 
 internal static class SaveQueryExtensions
 {
-	private const char HashCodeSeparator = (char)4444;
-
 	internal static int GetHashCode(this SaveQuery saveQuery)
 	{
 		// Code size: 15 (0xf)
@@ -16,23 +12,17 @@ internal static class SaveQueryExtensions
 		return hash;
 	}
 
-	internal static string GetStringCode(this SaveQuery saveQuery)
+	internal static int Hash(this in SaveQuery saveQuery)
 	{
-        // Code size: 83 (0x53)
-        /*
-		*	readonly Table Table
-		*	readonly SaveQueryType Type
-		*	readonly IDmlBuilder Builder
-		*	readonly string?[] Data
-		*	readonly int Offset
-		*/
-        return new StringBuilder()
-			.Append(saveQuery.Table.PhysicalName)
-            .Append(HashCodeSeparator)
-            .Append(saveQuery.Type.ToString())
-            // ignore Builder
-            .Append(HashCodeSeparator)
-            .Append(saveQuery.Offset).ToString();
+		// // Code size: 24 (0x18)
+		var hash = new HashCode();
+		hash.AddSaveQuery(saveQuery);
+		return hash.ToHashCode();
+	}
+
+	internal static bool IsEquivalentTo(this in SaveQuery alterQuery, SaveQuery? other)
+	{
+		return true;
 	}
 
 }

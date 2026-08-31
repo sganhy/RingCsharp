@@ -26,7 +26,7 @@ internal static class AlterQueryExtensions
 
 	internal static int Hash(this in AlterQuery alterQuery)
 	{
-		// // Code size: 24 (0x18)
+		// Code size: 24 (0x18)
 		var hash = new HashCode();
 		hash.AddAlterQuery(alterQuery);
 		return hash.ToHashCode();
@@ -39,6 +39,7 @@ internal static class AlterQueryExtensions
 	/// </summary>
 	internal static bool IsEquivalentTo(this in AlterQuery alterQuery, AlterQuery? other)
 	{
+		// Code size: 85 (0x55)
 		if (!other.HasValue) return false;
 		var otherValue = other.Value;
         if (alterQuery.Type != otherValue.Type || alterQuery.Table.Id != otherValue.Table.Id || alterQuery.Table.SchemaId == otherValue.Table.SchemaId) return false;

@@ -31,7 +31,7 @@ public readonly struct AlterQuery : IEquatable<AlterQuery>
 
 	public static bool operator ==(AlterQuery left, AlterQuery right) => left.Equals(right);
 	public static bool operator !=(AlterQuery left, AlterQuery right) => !left.Equals(right);
-	public override readonly bool Equals(object? obj) => obj is AlterQuery field && Equals(field);
+	public override readonly bool Equals(object? obj) => obj is AlterQuery alterQuery && Equals(alterQuery);
 	public readonly bool Equals(AlterQuery other) => this.IsEquivalentTo(other);
 	public override readonly int GetHashCode() => this.Hash();
 

@@ -1,9 +1,10 @@
 ﻿using Ring.Data.Enums;
+using Ring.Data.Extensions;
 using Ring.Schema.Models;
 
 namespace Ring.Data.Models;
 
-public readonly struct SaveQuery
+public readonly struct SaveQuery : IEquatable<SaveQuery>
 {
     // 40 bytes
     internal readonly Table Table;
@@ -22,8 +23,14 @@ public readonly struct SaveQuery
         Offset = offset;
     }
 
+	public static bool operator ==(SaveQuery left, SaveQuery right) => left.Equals(right);
+	public static bool operator !=(SaveQuery left, SaveQuery right) => !left.Equals(right);
+	public override readonly bool Equals(object? obj) => obj is SaveQuery saveQuery && Equals(saveQuery);
+	public readonly bool Equals(SaveQuery other) => this.IsEquivalentTo(other);
+	public override readonly int GetHashCode() => this.Hash();
+
 #if DEBUG
-    public override string ToString() => $"{Table.Name} - {Type}; Offset: {Offset}";
+	public override string ToString() => $"{Table.Name} - {Type}; Offset: {Offset}";
 #endif
 
 }

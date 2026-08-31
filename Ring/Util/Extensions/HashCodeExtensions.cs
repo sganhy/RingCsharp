@@ -1,4 +1,5 @@
-﻿using Ring.Data.Models;
+﻿using Ring.Data.Enums;
+using Ring.Data.Models;
 using Ring.Schema.Models;
 using System.Runtime.CompilerServices;
 using Index = Ring.Schema.Models.Index;
@@ -119,7 +120,23 @@ internal static class HashCodeExtensions
 		hashCode.Add(column.PhysicalName);
 	}
 
-    internal static void AddAlterQuery(this ref HashCode hashCode, AlterQuery alterQuery)
+	internal static void AddSaveQuery(this ref HashCode hashCode, SaveQuery saveQuery)
+	{
+		// Code size: 76 (0x4c)
+		/*
+			Table Table;
+			SaveQueryType Type;
+			string?[] Data;
+			int Offset;
+		*/
+		hashCode.Add(saveQuery.Table.Id);
+		hashCode.Add(saveQuery.Table.SchemaId);
+		hashCode.Add((int)saveQuery.Type);
+		AddStrings(ref hashCode, saveQuery.Data);
+		hashCode.Add(saveQuery.Offset);
+	}
+
+	internal static void AddAlterQuery(this ref HashCode hashCode, AlterQuery alterQuery)
     {
         /*
 			int Id;
@@ -237,6 +254,12 @@ internal static class HashCodeExtensions
 	{
 		// Code size: 38 (0x26)
 		foreach (var column in columns) AddColumn(ref hashCode, column);
+	}
+
+	private static void AddStrings(ref HashCode hashCode, ReadOnlySpan<String?> strings)
+	{
+		// Code size: 50 (0x32)
+		foreach (var str in strings) if (str is null) hashCode.Add(0); else hashCode.Add(str);
 	}
 
 	#endregion
