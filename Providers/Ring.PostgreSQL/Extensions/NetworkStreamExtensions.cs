@@ -891,5 +891,6 @@ internal static class NetworkStreamExtensions
 	private static void ThrowInvalidMessageLength() => // Code size: 17 (0x11)
 		throw new InvalidOperationException(ResourceHelper.GetMessage(ResourceType.InvalidMessageLengthFromServer));
 	
+
 	#endregion
 }

@@ -61,11 +61,12 @@ public sealed class Connection : IConnection
 	private Socket? _socket;
 	private int _backendPid;
 	private int _backendSecret;
-
+	private bool _disposed = false;
 	public long Id => _id;
 	public DateTime CreationTime => _creationTime;
 	public DateTime? LastConnectionTime => _lastConnectionTime;
 	public Encoding ClientEncoding => _encoding;
+	
 	public ConnectionState State => _state;
 
 	// build ConnectionParameters from connection string
@@ -218,11 +219,31 @@ public sealed class Connection : IConnection
 
 	public IConnection CreateInstance(int id, int sqlSendBufferSize) => new Connection(_parameters.Set(id, sqlSendBufferSize));
 
+	/// <summary>
+	///     Releases all resources held by this connection. Safe to call multiple times — subsequent calls are no-ops.
+	///     Sends the Postgres Terminate message if the connection is open, then disposes the underlying socket. Any I/O errors during teardown
+	///     are swallowed (Dispose must never throw per IDisposable contract).
+	/// </summary>
 	public void Dispose()
 	{
-		throw new NotImplementedException();
-	}
+		if (_disposed) return;
+		_disposed = true;
 
+		// If Close() fails for any reason we still fall through to DisposeStream()
+		// so the socket is always released. We never throw from Dispose.
+		if (_state == ConnectionState.Open || _state == ConnectionState.Connecting)
+		{
+#pragma warning disable CA1031 // Do not catch general exception types
+			try { Close(); }
+			catch { /* swallow — Dispose must not throw */ }
+#pragma warning restore CA1031
+		}
+
+		// DisposeStream is idempotent (guards against ClosedStream) so calling it
+		// here is safe even if Close() already ran it successfully.
+		DisposeStream();
+		GC.SuppressFinalize(this);
+	}
 
 	public string?[] Execute(in RetrieveQuery query, ReadOnlySpan<char> sql, int sqlByteCount)
 	{
