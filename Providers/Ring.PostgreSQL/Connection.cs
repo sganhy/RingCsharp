@@ -5,6 +5,8 @@ using Ring.PostgreSQL.Enums;
 using Ring.PostgreSQL.Exceptions;
 using Ring.PostgreSQL.Extensions;
 using Ring.PostgreSQL.Helpers;
+using Ring.Schema.Enums;
+using Ring.Schema.Models;
 using Ring.Util.Builders.PostgreSQL;
 using Ring.Util.Enums;
 using Ring.Util.Helpers;
@@ -61,7 +63,7 @@ public sealed class Connection : IConnection
 	private Socket? _socket;
 	private int _backendPid;
 	private int _backendSecret;
-	private bool _disposed = false;
+	private bool _disposed;
 	public long Id => _id;
 	public DateTime CreationTime => _creationTime;
 	public DateTime? LastConnectionTime => _lastConnectionTime;
@@ -74,6 +76,7 @@ public sealed class Connection : IConnection
 	internal Connection(ConnectionParameters parameters)
 	{
 		_parameters = parameters;
+		_disposed = false;
 		_id = this.GetId(parameters.GetHashCode());
 		_creationTime = DateTime.Now;
 		_state = ConnectionState.None;
@@ -153,6 +156,7 @@ public sealed class Connection : IConnection
 		{
 			if (_stream.CanWrite)
 			{
+#pragma warning disable CA1031 // Do not catch general exception types
 				try
 				{
 					_stream.Write(TerminateMessage);
@@ -162,6 +166,7 @@ public sealed class Connection : IConnection
 				{
 					// Ignore write failures during close; proceed to dispose
 				}
+#pragma warning restore CA1031
 			}
 			DisposeStream();
 			_backendPid = 0;
@@ -308,9 +313,32 @@ public sealed class Connection : IConnection
 		return returnValue;
 	}
 
-	public long Execute(in SaveQuery query)
+	public OperationalError? Execute(in SaveQuery query, ReadOnlySpan<char> sql, int sqlByteCount)
 	{
-		throw new NotImplementedException();
+		_state = ConnectionState.Open | ConnectionState.Executing; // we checked already the connection state in SaveQuery.Execute().
+		var (values, columns) = BuildBindParameters(query);
+		try
+		{
+			_stream.SendExtendedQuery(sql, sqlByteCount, _encoding, _sqlSendBuffer, values, columns);
+			var returnValue = _stream.DrainToReadyForQuery(ref _transactionStatus);
+			// AlterQuery's Execute enriches its error via returnValue?.Set(query, _ddlBuilder).
+			// If you have an equivalent builder for Save-related errors, wire it in the same way here.
+			_state = ConnectionState.Open;
+			return returnValue;
+		}
+		catch (PgOperationalError)
+		{
+			// Server-side error (constraint violation, etc.); the connection itself is still usable.
+			_state = ConnectionState.Open;
+			throw;
+		}
+		catch
+		{
+			// I/O failure or protocol desync leaves the stream in an
+			// unknown state - don't let the connection be reused as-is.
+			_state = ConnectionState.Broken;
+			throw;
+		}
 	}
 
 	public int ProviderId() => (int)_parameters.DatabaseProvider;
@@ -465,6 +493,26 @@ public sealed class Connection : IConnection
 		_state = ConnectionState.Closed;
 
 		if (canceled) throw new OperationCanceledException(cancellationToken);
+	}
+
+	private static (string?[] Values, Column[] Columns) BuildBindParameters(in SaveQuery query)
+	{
+		var tableColumns = query.Table.Columns;
+		var count = 0;
+		foreach (var column in tableColumns)
+			if (column.Type != EntityType.SearchableColumn) count++;
+
+		var values = new string?[count];
+		var columns = new Column[count];
+		var index = 0;
+		foreach (var column in tableColumns)
+		{
+			if (column.Type == EntityType.SearchableColumn) continue;
+			values[index] = query.Data[column.RecordIndex + query.Offset];
+			columns[index] = column;
+			index++;
+		}
+		return (values, columns);
 	}
 
 	[MethodImpl(MethodImplOptions.NoInlining)]

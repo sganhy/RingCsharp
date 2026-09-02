@@ -9,7 +9,7 @@ internal static class AlterQueryExtensions
 {
 	internal static string? ToSql(this in AlterQuery query, IDdlBuilder builder)
 	{
-		// Code size: 175 (0xaf)
+		// Code size: 181 (0xb5)
 		switch (query.Type)
 		{
 			case AlterQueryType.CreateTable: return builder.Create(query.Table, query.TableSpace);

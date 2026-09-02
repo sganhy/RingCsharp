@@ -56,6 +56,11 @@ internal class ConnectionMock : IConnection
 		throw new NotImplementedException();
 	}
 
+	public OperationalError? Execute(in SaveQuery query, ReadOnlySpan<char> sql, int sqlByteCount)
+	{
+		throw new NotImplementedException();
+	}
+
 	public ValueTask<OperationalError?> ExecuteAsync(AlterQuery query, string sql, int sqlByteCount, CancellationToken cancellationToken = default)
 	{
         throw new NotImplementedException();

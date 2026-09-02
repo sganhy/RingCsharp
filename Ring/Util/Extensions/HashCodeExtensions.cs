@@ -25,9 +25,9 @@ internal static class HashCodeExtensions
 		hashCode.Add(field.Size);
 		hashCode.Add(field.DefaultValue, StringComparer.Ordinal);
 		hashCode.Add((int)field.SearchableType);
-		hashCode.Add(field.AllowTruncation.ToInt());
-		hashCode.Add(field.NotNull.ToInt());
-		hashCode.Add(field.Multilingual.ToInt());
+		hashCode.Add(field.AllowTruncation);
+		hashCode.Add(field.NotNull);
+		hashCode.Add(field.Multilingual);
 	}
 
 	internal static void AddParameter(this ref HashCode hashCode, Parameter parameter)
@@ -67,8 +67,8 @@ internal static class HashCodeExtensions
 		// Code size: 59 (0x3b)
 		AddBaseEntity(ref hashCode, index);
 		// Index-specific properties
-		hashCode.Add(index.Unique.ToInt());
-		hashCode.Add(index.Bitmap.ToInt());
+		hashCode.Add(index.Unique);
+		hashCode.Add(index.Bitmap);
 		AddColumns(ref hashCode, index.Columns);
 	}
 
@@ -77,8 +77,8 @@ internal static class HashCodeExtensions
 		// Code size: 170 (0xaa)
 		AddBaseEntity(ref hashCode, relation);
 		// Relation-specific properties
-		hashCode.Add(relation.HasConstraint.ToInt());
-		hashCode.Add(relation.NotNull.ToInt());
+		hashCode.Add(relation.HasConstraint);
+		hashCode.Add(relation.NotNull);
 		hashCode.Add(relation.ToTable.Id); // pair of identification for a table
 		hashCode.Add(relation.ToTable.SchemaId);
 		hashCode.Add((int)relation.Type);
@@ -138,21 +138,20 @@ internal static class HashCodeExtensions
 
 	internal static void AddAlterQuery(this ref HashCode hashCode, AlterQuery alterQuery)
     {
-        /*
+		// Code size: 111 (0x6f)
+		/*
 			int Id;
 			Table Table;
 			AlterQueryType Type;
-			IDdlBuilder Builder;
 			Column? Column;
 			Constraint? Constraint;
 			Index? Index;
 			TableSpace? TableSpace;
 		*/
-        //hashCode.Add(alterQuery.Id); // ==> nok
-        hashCode.Add(alterQuery.Table.Id); // pair of identification for a table
+		hashCode.Add(alterQuery.Id);
+		hashCode.Add(alterQuery.Table.Id); // pair of identification for a table
         hashCode.Add(alterQuery.Table.SchemaId);
         hashCode.Add((int)alterQuery.Type);
-		//hashCode.Add(alterQuery.Builder); // ==> nok
 		if (alterQuery.Column.HasValue) AddColumn(ref hashCode, alterQuery.Column.Value);
 		if (alterQuery.Index is not null) AddIndex(ref hashCode, alterQuery.Index);
     }
@@ -178,7 +177,7 @@ internal static class HashCodeExtensions
 
 	internal static void AddTable(this ref HashCode hashCode, Table table)
 	{
-		// Code size: 192 (0xc0)
+		// Code size: 167 (0xa7)
 		/* table definition: 
 			int ObjectIndex;
 			bool Cached;
@@ -201,7 +200,7 @@ internal static class HashCodeExtensions
 		AddBaseEntity(ref hashCode, table);
 		// Table-specific properties
 		//hashCode.Add(table.ObjectIndex); // position of table in the schema, not connected to the identity of table ==> nok
-		hashCode.Add(table.Cached.ToInt()); // ok 
+		hashCode.Add(table.Cached); // ok 
 		AddFields(ref hashCode, table.Fields); // check fields => ok
 		AddRelations(ref hashCode, table.Relations); // check relations => ok
 		AddIndexes(ref hashCode, table.Indexes); // check indexes => ok
@@ -213,10 +212,10 @@ internal static class HashCodeExtensions
 		hashCode.Add((int)table.Type); // ok 
 		// hashCode.Add((int)table.CacheId); // nok 
 		// hashCode.Add((int)table.PhysicalName); // computed => nok
-		hashCode.Add(table.AllowHardDeletion.ToInt()); // ok 
-		hashCode.Add(table.Readonly.ToInt()); // ok 
-		hashCode.Add(table.UsePreparedStatement.ToInt()); // ok 
-		hashCode.Add(table.AllowAttributeExtension.ToInt()); // ok 
+		hashCode.Add(table.AllowHardDeletion); // ok 
+		hashCode.Add(table.Readonly); // ok 
+		hashCode.Add(table.UsePreparedStatement); // ok 
+		hashCode.Add(table.AllowAttributeExtension); // ok 
 	}
 
 	#region private methods 

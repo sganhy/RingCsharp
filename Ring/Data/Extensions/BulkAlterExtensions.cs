@@ -9,5 +9,4 @@ internal static class BulkAlterExtensions
 		foreach (var query in span) hash.Add(query.GetHashCode());
 		return hash.ToHashCode();
 	}
-
 }

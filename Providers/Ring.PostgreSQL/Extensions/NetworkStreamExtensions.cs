@@ -555,6 +555,7 @@ internal static class NetworkStreamExtensions
 	// buffer, or ArrayPool.
 	private static void WriteExtendedQueryMessages(Span<byte> destination, ReadOnlySpan<char> sql, int sqlByteCount, Encoding encoding, string?[] values, Column[] columns, ReadOnlySpan<int> paramLengths, byte[]?[]? byteaBytes, int parseLength, int bindLength)
 	{
+		// Code size: 483 (0x1e3)
 		var offset = 0;
 
 		// ---- Parse ----
