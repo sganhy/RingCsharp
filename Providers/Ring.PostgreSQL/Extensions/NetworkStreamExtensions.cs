@@ -254,7 +254,7 @@ internal static class NetworkStreamExtensions
 		=> rowCount > 0
 			? ReadRetrieveRecordsExact(stream, ref transactionStatus, encoding, table, rowCount)
 			: ReadRetrieveRecordsPooled(stream, ref transactionStatus, encoding, table);
-				
+
 	/// <summary>
 	///     Reads backend messages until ReadyForQuery, updating
 	///     <see cref="_transactionStatus"/> from its status byte
@@ -273,19 +273,16 @@ internal static class NetworkStreamExtensions
 		{
 			var (code, body) = stream.ReadMessage(true);
 
-			if (code == (byte)BackendMessageCode.ReadyForQuery)	return operationalError;
+			if (code == (byte)BackendMessageCode.ReadyForQuery) return operationalError;
 			if (code == (byte)BackendMessageCode.ErrorResponse)
 			{
-				//var error = AuthenticationHelper.ParseErrorResponse(body);
-				// Drain remaining messages so the connection is left in a
-				// clean, known state (ReadyForQuery) before surfacing the error.
 				byte drainCode;
 				byte[] drainBody;
-				
+
 				operationalError = body.ParseErrorFields();
 
 				do
-					(drainCode, drainBody) = stream.ReadMessage(false); 
+					(drainCode, drainBody) = stream.ReadMessage(false);
 				while (drainCode != (byte)BackendMessageCode.ReadyForQuery);
 
 				transactionStatus = drainBody.Length > 0 ? drainBody[0] : (byte)'I';
@@ -371,41 +368,45 @@ internal static class NetworkStreamExtensions
 	/// </summary>
 	[SkipLocalsInit]
 	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
-	internal static void SendExtendedQuery(this NetworkStream stream, ReadOnlySpan<char> sql, int sqlByteCount, Encoding encoding, byte[] sqlSendBuffer, string?[] values, Column[] columns)
+	internal static void SendExtendedQuery(this NetworkStream stream, ReadOnlySpan<char> sql, int sqlByteCount, Encoding encoding, byte[] sqlSendBuffer, in SaveQuery query)
 	{
-		// values.Length && columns.Length should be equal!
-		// Pass 1: figure out the wire byte length of each parameter value up
-		// front, so the total message length (and therefore which buffer
-		// tier to use below) is known before anything is written.
-		// ByteArray columns hold Base64 text client-side (see
-		// AppendRecordData/ParseByteaHexToBase64) but go over the wire as
-		// Postgres bytea hex text ('\x' + 2 hex chars/byte), so those get
-		// decoded once here and the raw bytes kept for the write pass below,
-		// rather than decoding twice.
-		var paramLengths = ArrayPool<int>.Shared.Rent(values.Length);
+		// Pass 1: iterate table columns once to compute per-parameter byte lengths.
+		// SearchableColumn entries are skipped (same rule as AppendRecordData on the read path).
+		//
+		// Numeric types (Long/Int/Short/Byte/Float/Double) and Boolean are sent in
+		// binary format (Bind format code = 1): fixed-width big-endian, no text parsing
+		// on the server side. Every other type is sent as UTF-8 text (format code = 0).
+		//
+		// ByteArray columns hold Base64 text client-side but go over the wire as raw
+		// bytes in binary format — decoded once here and kept for the write pass below.
+		var tableColumns = query.Table.Columns;
+		var paramCount = 0;
+		foreach (var col in tableColumns)
+			if (col.Type != EntityType.SearchableColumn) paramCount++;
+
+		var paramLengths = ArrayPool<int>.Shared.Rent(paramCount);
 		byte[]?[]? byteaBytes = null; // lazily allocated only if a ByteArray parameter is present
 		try
 		{
-			for (var i = 0; i < values.Length; i++)
+			var pi = 0;
+			foreach (var col in tableColumns)
 			{
-				var value = values[i];
-				if (value is null) { paramLengths[i] = -1; continue; }
+				if (col.Type == EntityType.SearchableColumn) continue;
+				var value = query.Data[col.RecordIndex + query.Offset];
+				if (value is null) { paramLengths[pi] = -1; pi++; continue; }
 
-				if (columns[i].FieldType == FieldType.ByteArray)
+				if (col.FieldType == FieldType.ByteArray)
 				{
-					byteaBytes ??= new byte[values.Length][];
+					byteaBytes ??= new byte[paramCount][];
 					var raw = Convert.FromBase64String(value);
-					byteaBytes[i] = raw;
-					paramLengths[i] = 2 + raw.Length * 2; // '\x' + 2 hex chars per byte
+					byteaBytes[pi] = raw;
+					paramLengths[pi] = raw.Length; // binary: raw bytes, no hex encoding
 				}
 				else
 				{
-					// Postgres's boolean/date/etc. text-input parsers accept the same
-					// invariant-culture strings Record already stores fields as (e.g.
-					// "True"/"False" is a valid case-insensitive boolean literal), so
-					// every non-bytea FieldType is passed through verbatim as text.
-					paramLengths[i] = encoding.GetByteCount(value);
+					paramLengths[pi] = GetBinaryParamLength(col.FieldType, value, encoding);
 				}
+				pi++;
 			}
 
 			const int emptyCStringLength = 1; // just the NUL terminator, for the unnamed statement/portal
@@ -415,21 +416,31 @@ internal static class NetworkStreamExtensions
 			var parseLength = 4 + emptyCStringLength + sqlByteCount + 1 + 2; // length field + stmt NUL + query + query NUL + numParamTypes(0)
 
 			var bindParamsLength = 0;
-			for (var i = 0; i < values.Length; i++)	bindParamsLength += 4 + (paramLengths[i] > 0 ? paramLengths[i] : 0);
-			var bindLength = 4 + emptyCStringLength + emptyCStringLength + 2 + 2 + 2 + bindParamsLength + 2 + 2;
+			for (var i = 0; i < paramCount; i++) bindParamsLength += 4 + (paramLengths[i] > 0 ? paramLengths[i] : 0);
+
+			// Per-parameter format codes: 2 bytes each (one short per param) instead of
+			// a single global code — allows mixing binary (1) and text (0) in one Bind.
+			// bindLength layout: 4(len) + 1(portal NUL) + 1(stmt NUL)
+			//   + 2(numFormatCodes) + paramCount*2(format codes)
+			//   + 2(numParams) + bindParamsLength
+			//   + 2(numResultCodes) + 2(result format code)
+			var bindLength = 4 + emptyCStringLength + emptyCStringLength
+				+ 2 + paramCount * 2   // per-param format codes
+				+ 2 + bindParamsLength // param values
+				+ 2 + 2;               // result format codes (one global text)
 
 			var totalLength = 1 + parseLength + 1 + bindLength + 1 + executeLength + 1 + syncLength;
 
 			if (totalLength <= SmallMessageStackAllocThreshold)
 			{
 				Span<byte> buffer = stackalloc byte[totalLength];
-				WriteExtendedQueryMessages(buffer, sql, sqlByteCount, encoding, values, columns, paramLengths, byteaBytes, parseLength, bindLength);
+				WriteExtendedQueryMessages(buffer, sql, sqlByteCount, encoding, query, tableColumns, paramLengths.AsSpan(0, paramCount), byteaBytes, parseLength, bindLength);
 				stream.Write(buffer);
 			}
 			else if (totalLength <= sqlSendBuffer.Length)
 			{
 				var buf = sqlSendBuffer.AsSpan(0, totalLength);
-				WriteExtendedQueryMessages(buf, sql, sqlByteCount, encoding, values, columns, paramLengths, byteaBytes, parseLength, bindLength);
+				WriteExtendedQueryMessages(buf, sql, sqlByteCount, encoding, query, tableColumns, paramLengths.AsSpan(0, paramCount), byteaBytes, parseLength, bindLength);
 				stream.Write(buf);
 			}
 			else
@@ -438,7 +449,7 @@ internal static class NetworkStreamExtensions
 				try
 				{
 					var buf = rented.AsSpan(0, totalLength);
-					WriteExtendedQueryMessages(buf, sql, sqlByteCount, encoding, values, columns, paramLengths, byteaBytes, parseLength, bindLength);
+					WriteExtendedQueryMessages(buf, sql, sqlByteCount, encoding, query, tableColumns, paramLengths.AsSpan(0, paramCount), byteaBytes, parseLength, bindLength);
 					stream.Write(buf);
 				}
 				finally
@@ -537,8 +548,7 @@ internal static class NetworkStreamExtensions
 				case BackendMessageCode.ReadyForQuery:
 					return (pid, secret);
 				case BackendMessageCode.ErrorResponse:
-					//throw ParseErrorResponse(body);
-					break;
+					throw body.ParseErrorFields().ToPgOperationalError();
 				default:
 					break;
 			}
@@ -553,9 +563,8 @@ internal static class NetworkStreamExtensions
 	// regardless of which buffer tier they picked, so this method itself
 	// doesn't care whether destination came from the stack, the per-connection
 	// buffer, or ArrayPool.
-	private static void WriteExtendedQueryMessages(Span<byte> destination, ReadOnlySpan<char> sql, int sqlByteCount, Encoding encoding, string?[] values, Column[] columns, ReadOnlySpan<int> paramLengths, byte[]?[]? byteaBytes, int parseLength, int bindLength)
+	private static void WriteExtendedQueryMessages(Span<byte> destination, ReadOnlySpan<char> sql, int sqlByteCount, Encoding encoding, in SaveQuery query, ReadOnlySpan<Column> tableColumns, ReadOnlySpan<int> paramLengths, byte[]?[]? byteaBytes, int parseLength, int bindLength)
 	{
-		// Code size: 483 (0x1e3)
 		var offset = 0;
 
 		// ---- Parse ----
@@ -573,31 +582,62 @@ internal static class NetworkStreamExtensions
 		BinaryPrimitives.WriteInt32BigEndian(destination.Slice(offset, 4), bindLength);
 		offset += 4;
 		destination[offset++] = 0; // unnamed portal
-		destination[offset++] = 0; // unnamed statement - must match the Parse above
-		BinaryPrimitives.WriteInt16BigEndian(destination.Slice(offset, 2), 1); // one format code, applies to all params
-		offset += 2;
-		BinaryPrimitives.WriteInt16BigEndian(destination.Slice(offset, 2), 0); // text
-		offset += 2;
-		BinaryPrimitives.WriteInt16BigEndian(destination.Slice(offset, 2), (short)values.Length);
-		offset += 2;
+		destination[offset++] = 0; // unnamed statement
 
-		for (var i = 0; i < values.Length; i++)
+		// Per-parameter format codes: one short per parameter.
+		// Binary (1) for numeric types and ByteArray; text (0) for everything else.
+		//
+		// paramLengths.Length must be the real parameter count, not a rented
+		// array's capacity - ArrayPool<T>.Rent(n) can return an array bigger
+		// than n, so callers must pass paramLengths.AsSpan(0, realCount), not
+		// the raw rented array (see the three call sites in SendExtendedQuery).
+		var paramCount = paramLengths.Length;
+		BinaryPrimitives.WriteInt16BigEndian(destination.Slice(offset, 2), (short)paramCount);
+		offset += 2;
+		foreach (var col in tableColumns)
 		{
-			var len = paramLengths[i];
-			BinaryPrimitives.WriteInt32BigEndian(destination.Slice(offset, 4), len);
-			offset += 4;
-			if (len <= 0) continue; // NULL (-1) or empty string (0): no value bytes follow either way
-
-			if (columns[i].FieldType == FieldType.ByteArray)
-				WriteByteaHex(byteaBytes![i]!, destination.Slice(offset, len));
-			else
-				encoding.GetBytes(values[i]!, destination.Slice(offset, len));
-			offset += len;
+			if (col.Type == EntityType.SearchableColumn) continue;
+			BinaryPrimitives.WriteInt16BigEndian(destination.Slice(offset, 2), IsBinaryType(col.FieldType) ? (short)1 : (short)0);
+			offset += 2;
 		}
 
-		BinaryPrimitives.WriteInt16BigEndian(destination.Slice(offset, 2), 1); // one result format code, applies to all columns
+		// Parameter values
+		BinaryPrimitives.WriteInt16BigEndian(destination.Slice(offset, 2), (short)paramCount);
 		offset += 2;
-		BinaryPrimitives.WriteInt16BigEndian(destination.Slice(offset, 2), 0); // text - matches every read path in this file
+
+		var pi = 0;
+		foreach (var col in tableColumns)
+		{
+			if (col.Type == EntityType.SearchableColumn) continue;
+			var len = paramLengths[pi];
+			BinaryPrimitives.WriteInt32BigEndian(destination.Slice(offset, 4), len);
+			offset += 4;
+
+			if (len > 0)
+			{
+				if (col.FieldType == FieldType.ByteArray)
+				{
+					// Binary format: raw bytes, no hex encoding needed
+					byteaBytes![pi]!.CopyTo(destination.Slice(offset, len));
+				}
+				else if (IsBinaryType(col.FieldType))
+				{
+					WriteBinaryParam(col.FieldType, query.Data[col.RecordIndex + query.Offset]!, destination.Slice(offset, len));
+				}
+				else
+				{
+					encoding.GetBytes(query.Data[col.RecordIndex + query.Offset]!, destination.Slice(offset, len));
+				}
+				offset += len;
+			}
+			// len == -1 (NULL) or len == 0 (empty string): no value bytes follow
+			pi++;
+		}
+
+		// One global result format code: text (0) — matches every read path in this file
+		BinaryPrimitives.WriteInt16BigEndian(destination.Slice(offset, 2), 1);
+		offset += 2;
+		BinaryPrimitives.WriteInt16BigEndian(destination.Slice(offset, 2), 0);
 		offset += 2;
 
 		// ---- Execute ----
@@ -613,28 +653,71 @@ internal static class NetworkStreamExtensions
 		BinaryPrimitives.WriteInt32BigEndian(destination.Slice(offset, 4), 4);
 	}
 
-	// Mirror image of the read-side ParseByteaHexToBase64: Record stores
-	// byte[] fields as Base64 text, so a ByteArray bind parameter needs
-	// decoding from Base64 (done once in SendExtendedQuery's pass 1) and
-	// re-encoding to Postgres's bytea hex text format here, not a plain
-	// UTF8 GetBytes of the original Base64 string.
-	private static void WriteByteaHex(ReadOnlySpan<byte> raw, Span<byte> destination)
-	{
-		destination[0] = (byte)'\\';
-		destination[1] = (byte)'x';
-		var offset = 2;
-		foreach (var b in raw)
+	/// <summary>
+	///     Returns the wire byte length for a parameter value given its <see cref="FieldType"/>.
+	///     Numeric types use fixed binary sizes; everything else uses UTF-8 byte count.
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static int GetBinaryParamLength(FieldType fieldType, string value, Encoding encoding) =>
+		fieldType switch
 		{
-			destination[offset++] = HexNibbles[b >> 4];
-			destination[offset++] = HexNibbles[b & 0x0F];
+			FieldType.Long => 8,
+			FieldType.Int => 4,
+			FieldType.Short => 2,
+			FieldType.Byte => 2,
+			FieldType.Double => 8,
+			FieldType.Float => 4,
+			FieldType.Boolean => 1,
+			_ => encoding.GetByteCount(value)
+		};
+
+	/// <summary>
+	///     Returns true for <see cref="FieldType"/> values that are encoded as binary
+	///     (format code 1) in the Bind message. Must stay in sync with every case
+	///     <see cref="GetBinaryParamLength"/> treats as fixed-width - a type present
+	///     in one but not the other sizes the parameter for binary but writes it as
+	///     text (or vice versa), corrupting the message. ByteArray is handled
+	///     separately via <paramref name="byteaBytes"/> so is not included here.
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static bool IsBinaryType(FieldType fieldType) =>
+		fieldType is FieldType.Long or FieldType.Int or FieldType.Short or FieldType.Byte or FieldType.Double or FieldType.Float or FieldType.Boolean;
+
+	/// <summary>
+	///     Serialises a numeric or boolean field value stored as an invariant-culture
+	///     string into its fixed-width big-endian binary representation.
+	///     <paramref name="destination"/> must be exactly <see cref="GetBinaryParamLength"/> bytes.
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static void WriteBinaryParam(FieldType fieldType, string value, Span<byte> destination)
+	{
+		switch (fieldType)
+		{
+			case FieldType.Long:
+				BinaryPrimitives.WriteInt64BigEndian(destination, long.Parse(value, CultureInfo.InvariantCulture));
+				break;
+			case FieldType.Int:
+				BinaryPrimitives.WriteInt32BigEndian(destination, int.Parse(value, CultureInfo.InvariantCulture));
+				break;
+			case FieldType.Short:
+				BinaryPrimitives.WriteInt16BigEndian(destination, short.Parse(value, CultureInfo.InvariantCulture));
+				break;
+			case FieldType.Byte:
+				// 2 bytes (int2), not 1 - matches GetBinaryParamLength's Byte => 2 and
+				// the confirmed physical width (e.g. Meta.ObjectType/byte -> Postgres int2).
+				BinaryPrimitives.WriteInt16BigEndian(destination, sbyte.Parse(value, CultureInfo.InvariantCulture));
+				break;
+			case FieldType.Double:
+				BinaryPrimitives.WriteInt64BigEndian(destination, BitConverter.DoubleToInt64Bits(double.Parse(value, CultureInfo.InvariantCulture)));
+				break;
+			case FieldType.Float:
+				BinaryPrimitives.WriteInt32BigEndian(destination, BitConverter.SingleToInt32Bits(float.Parse(value, CultureInfo.InvariantCulture)));
+				break;
+			case FieldType.Boolean:
+				destination[0] = string.Equals(value, "True", StringComparison.Ordinal) ? (byte)1 : (byte)0;
+				break;
 		}
 	}
-
-	private static readonly byte[] HexNibbles =
-	{
-		(byte)'0', (byte)'1', (byte)'2', (byte)'3', (byte)'4', (byte)'5', (byte)'6', (byte)'7',
-		(byte)'8', (byte)'9', (byte)'a', (byte)'b', (byte)'c', (byte)'d', (byte)'e', (byte)'f'
-	};
 
 	// Consumes and discards bodyLength bytes from the socket without allocating
 	// a buffer sized to the message - needed so ReadMessage(errorOnly: true)
@@ -677,7 +760,7 @@ internal static class NetworkStreamExtensions
 			{
 				case (byte)BackendMessageCode.DataRow:
 					AppendRecordData(body, encoding, null, table, ref results, count);
-					count+= table.RecordSize; // items per row, including tracker slot
+					count += table.RecordSize; // items per row, including tracker slot
 					break;
 				case (byte)BackendMessageCode.ReadyForQuery:
 					transactionStatus = body.Length > 0 ? body[0] : (byte)TransactionStatus.Idle;
@@ -687,19 +770,18 @@ internal static class NetworkStreamExtensions
 					return results;
 				case (byte)BackendMessageCode.ErrorResponse:
 					{
-						//var error = AuthenticationHelper.ParseErrorResponse(body);
 						// Drain remaining messages so the connection is left in a
 						// clean, known state (ReadyForQuery) before surfacing the error.
 						byte drainCode;
 						byte[] drainBody;
+						var error = body.ParseErrorFields();
 						do
 						{
 							(drainCode, drainBody) = stream.ReadMessage(false);
 						} while (drainCode != (byte)BackendMessageCode.ReadyForQuery);
 						transactionStatus = drainBody.Length > 0 ? drainBody[0] : (byte)TransactionStatus.Idle;
-						//throw error;
+						throw error.ToPgOperationalError();
 					}
-					break;
 				// Informational / already-implied-by-DataRow messages; nothing to do.
 				// ParseComplete/BindComplete/NoData/ParameterDescription only ever
 				// appear on the Extended Query path (SendExtendedQuery), since we
@@ -751,19 +833,18 @@ internal static class NetworkStreamExtensions
 						}
 					case (byte)BackendMessageCode.ErrorResponse:
 						{
-							//var error = AuthenticationHelper.ParseErrorResponse(body);
 							// Drain remaining messages so the connection is left in a
 							// clean, known state (ReadyForQuery) before surfacing the error.
 							byte drainCode;
 							byte[] drainBody;
+							var error = body.ParseErrorFields();
 							do
 							{
 								(drainCode, drainBody) = stream.ReadMessage(false);
 							} while (drainCode != (byte)BackendMessageCode.ReadyForQuery);
 							transactionStatus = drainBody.Length > 0 ? drainBody[0] : (byte)TransactionStatus.Idle;
-							//throw error;
+							throw error.ToPgOperationalError();
 						}
-						break;
 					// Informational / already-implied-by-DataRow messages; nothing to do.
 					// ParseComplete/BindComplete/NoData/ParameterDescription only ever
 					// appear on the Extended Query path (SendExtendedQuery), since we
@@ -891,7 +972,7 @@ internal static class NetworkStreamExtensions
 	[DoesNotReturn]
 	private static void ThrowInvalidMessageLength() => // Code size: 17 (0x11)
 		throw new InvalidOperationException(ResourceHelper.GetMessage(ResourceType.InvalidMessageLengthFromServer));
-	
+
 
 	#endregion
 }

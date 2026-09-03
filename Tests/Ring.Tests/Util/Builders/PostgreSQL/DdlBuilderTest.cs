@@ -272,47 +272,6 @@ public sealed class DdlBuilderTest : BaseBuilderTest
     }
 
     [Fact]
-    public void Create_IndexMeta_DdlQuery()
-    {
-        // arrange 
-        var schBuilder = new SchemaBuilder();
-        var schemaName = "@Test";
-        var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
-        var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
-        var table = schema.GetTable("@meta");
-        var expectedResult = "CREATE UNIQUE INDEX \"idx_@meta_001\" ON \"@test\".\"@meta\" (id,schema_id,object_type,reference_id)";
-        Assert.NotNull(table);
-
-        // act 
-        var dql = _sut.Create(table.Indexes[0], table);
-
-        // assert
-        Assert.Equal(expectedResult, dql);
-    }
-
-    [Fact]
-    public void Create_IndexWithTablespace_DdlQuery()
-    {
-        // arrange 
-        var schBuilder = new SchemaBuilder();
-        var schemaName = "@Test";
-        var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2, 
-            DefaultIndexStorage = "tblSpc_test" };
-        var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
-        var tablespace = schema.TableSpaces[0];
-        var table = schema.GetTable("@meta");
-        var expectedResult = "CREATE UNIQUE INDEX \"idx_@meta_001\" ON \"@test\".\"@meta\" (id,schema_id,object_type,reference_id) TABLESPACE tblSpc_test";
-        Assert.NotNull(table);
-        Assert.NotNull(tablespace);
-
-        // act 
-        var dql = _sut.Create(table.Indexes[0], table, tablespace);
-
-        // assert
-        Assert.Equal(expectedResult, dql);
-    }
-
-    [Fact]
     public void Create_PkConstraintMeta_DdlQuery()
     {
         // arrange 

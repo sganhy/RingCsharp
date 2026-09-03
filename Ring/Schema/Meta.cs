@@ -601,10 +601,9 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	private static Table[] GetTables(Meta[] schema, IDdlBuilder ddlBuilder, in Meta metaSchema, DatabaseProvider provider,	int mtmCount, int tableCount)
 	{
-		// Code size: 384 (0x180)
+		// Code size: 393 (0x189)
 		// bug : pass 1 : Incorrect segment start index — High Severity
-		var dicoSize = tableCount * 2;
-		var dico = new Dictionary<int, (int, int)>(dicoSize); // table_id, (start index, count)
+		var dico = new Dictionary<int, (int, int)>(tableCount * 2); // table_id, (start index, count)
 		var emptySchema = GetDefaultSchema(metaSchema, provider);
 		var schemaSpan = new ReadOnlySpan<Meta>(schema);
 		var i = 0;
@@ -612,7 +611,7 @@ internal readonly struct Meta : IEquatable<Meta>
 		// pass 1: build dico
 		foreach (ref readonly Meta meta in schemaSpan)
 		{
-			if (meta.IsField || meta.IsRelation || meta.IsIndex || meta.IsSearchableColumn || meta.IsTimeZoneColumn)
+			if (meta.IsField || meta.IsRelation || meta.IsIndex || meta.IsSearchableColumn || meta.IsTimeZoneColumn || meta.IsConstraint)
 			{
 				if (dico.TryGetValue(meta.ReferenceId, out var existing))
 					dico[meta.ReferenceId] = (existing.Item1, existing.Item2 + 1);

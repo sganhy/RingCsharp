@@ -1,4 +1,5 @@
-﻿using Ring.PostgreSQL.Enums;
+﻿using Ring.Data;
+using Ring.PostgreSQL.Enums;
 using Ring.PostgreSQL.Exceptions;
 using Ring.PostgreSQL.Extensions;
 using System.Buffers.Binary;
@@ -20,8 +21,7 @@ internal static class AuthenticationHelper
 			switch ((BackendMessageCode)code)
 			{
 				case BackendMessageCode.ErrorResponse:
-					//throw ParseErrorResponse(body);
-					break;
+					throw body.ParseErrorFields().ToPgOperationalError();
 				case BackendMessageCode.NoticeResponse:
 					continue;
 				case BackendMessageCode.AuthenticationRequest:
@@ -54,7 +54,7 @@ internal static class AuthenticationHelper
 		}
 	}
 
-	private static async Task<(int? BackendPid, int? BackendSecret)> AuthenticateSASLAsync(NetworkStream stream, byte[] mechanismsPayload, string password, System.Threading.CancellationToken cancellationToken = default)
+	private static async Task<(int? BackendPid, int? BackendSecret)> AuthenticateSASLAsync(NetworkStream stream, byte[] mechanismsPayload, string password, CancellationToken cancellationToken = default)
 	{
 		var mechanisms = ParseNullTerminatedList(mechanismsPayload);
 		if (!mechanisms.Contains("SCRAM-SHA-256"))
@@ -100,8 +100,6 @@ internal static class AuthenticationHelper
 		return await stream.WaitUntilReadyAsync(cancellationToken).ConfigureAwait(false);
 	}
 
-
-
 	private static int ReadInt32BE(byte[] data, int offset) => BinaryPrimitives.ReadInt32BigEndian(data.AsSpan(offset));
 	private static AuthenticationType GetAuthenticationType(byte[] data, int offset) => ReadInt32BE(data, offset).ToAuthenticationType();
 
@@ -122,17 +120,8 @@ internal static class AuthenticationHelper
 		var values = new List<string>();
 		var offset = 0;
 		while (offset < body.Length && body[offset] != 0)
-			values.Add(ReadCString(body, ref offset));
+			values.Add(ArrayExtensions.ReadCString(body, ref offset));
 		return values;
-	}
-
-	private static string ReadCString(byte[] data, ref int offset)
-	{
-		var start = offset;
-		while (data[offset] != 0) offset++;
-		var value = Encoding.UTF8.GetString(data, start, offset - start);
-		offset++; // skip null terminator
-		return value;
 	}
 
 	private static string GetNonce()
@@ -145,27 +134,7 @@ internal static class AuthenticationHelper
 	private static void ThrowIfError(byte code, byte[] body)
 	{
 		if (code == (byte)BackendMessageCode.ErrorResponse)
-			throw ParseErrorResponse(body);
-	}
-
-	internal static PgOperationalError ParseErrorResponse(byte[] body)
-	{
-		string? severity = null, sqlState = null, message = null, detail = null, hint = null;
-		var offset = 0;
-		while (offset < body.Length && body[offset] != 0)
-		{
-			var field = (char)body[offset++];
-			var value = ReadCString(body, ref offset);
-			switch (field)
-			{
-				case 'S': severity = value; break;
-				case 'C': sqlState = value; break;
-				case 'M': message = value; break;
-				case 'D': detail = value; break;
-				case 'H': hint = value; break;
-			}
-		}
-		return new PgOperationalError(message ?? "An error was returned by the server.", sqlState ?? "58000", severity ?? "ERROR", detail ?? "", hint ?? "");
+			throw body.ParseErrorFields().ToPgOperationalError();
 	}
 
 	private static (string Nonce, byte[] Salt, int Iterations) ParseServerFirstMessage(string message)
@@ -194,5 +163,4 @@ internal static class AuthenticationHelper
 
 	private static InvalidOperationException UnexpectedMessage(byte code, string expected) =>
 		new($"Unexpected message '{(char)code}' from server; expected {expected}.");
-
 }

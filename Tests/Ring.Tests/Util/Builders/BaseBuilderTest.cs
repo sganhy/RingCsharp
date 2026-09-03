@@ -112,7 +112,7 @@ public class BaseBuilderTest
 #pragma warning disable CS8600 
 #pragma warning disable CS8604 
         using (Stream stream = assembly.GetManifestResourceStream(resourceName))
-        using (StreamReader reader = new StreamReader(stream))
+        using (StreamReader reader = new(stream))
         {
             var metaList = reader.ReadToEnd().Split("\n");
             foreach (var metaLine in metaList)

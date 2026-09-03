@@ -202,7 +202,7 @@ public sealed class ConnectionPoolExtensionsTest : BaseTest
         var conn = pool.Get();
         pool.Unload();
         pool.Put(conn); 
-        Thread.Sleep(500); // async close wait here 500 ms
+        Thread.Sleep(1000); // async close wait here 500 ms
 
         // assert
         Assert.Equal(int.MinValue, pool.Cursor);

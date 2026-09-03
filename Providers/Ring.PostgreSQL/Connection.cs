@@ -5,7 +5,6 @@ using Ring.PostgreSQL.Enums;
 using Ring.PostgreSQL.Exceptions;
 using Ring.PostgreSQL.Extensions;
 using Ring.PostgreSQL.Helpers;
-using Ring.Schema.Enums;
 using Ring.Schema.Models;
 using Ring.Util.Builders.PostgreSQL;
 using Ring.Util.Enums;
@@ -316,10 +315,9 @@ public sealed class Connection : IConnection
 	public OperationalError? Execute(in SaveQuery query, ReadOnlySpan<char> sql, int sqlByteCount)
 	{
 		_state = ConnectionState.Open | ConnectionState.Executing; // we checked already the connection state in SaveQuery.Execute().
-		var (values, columns) = BuildBindParameters(query);
 		try
 		{
-			_stream.SendExtendedQuery(sql, sqlByteCount, _encoding, _sqlSendBuffer, values, columns);
+			_stream.SendExtendedQuery(sql, sqlByteCount, _encoding, _sqlSendBuffer, query);
 			var returnValue = _stream.DrainToReadyForQuery(ref _transactionStatus);
 			// AlterQuery's Execute enriches its error via returnValue?.Set(query, _ddlBuilder).
 			// If you have an equivalent builder for Save-related errors, wire it in the same way here.
@@ -493,26 +491,6 @@ public sealed class Connection : IConnection
 		_state = ConnectionState.Closed;
 
 		if (canceled) throw new OperationCanceledException(cancellationToken);
-	}
-
-	private static (string?[] Values, Column[] Columns) BuildBindParameters(in SaveQuery query)
-	{
-		var tableColumns = query.Table.Columns;
-		var count = 0;
-		foreach (var column in tableColumns)
-			if (column.Type != EntityType.SearchableColumn) count++;
-
-		var values = new string?[count];
-		var columns = new Column[count];
-		var index = 0;
-		foreach (var column in tableColumns)
-		{
-			if (column.Type == EntityType.SearchableColumn) continue;
-			values[index] = query.Data[column.RecordIndex + query.Offset];
-			columns[index] = column;
-			index++;
-		}
-		return (values, columns);
 	}
 
 	[MethodImpl(MethodImplOptions.NoInlining)]

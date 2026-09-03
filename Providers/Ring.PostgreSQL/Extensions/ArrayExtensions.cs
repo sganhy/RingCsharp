@@ -88,7 +88,7 @@ internal static class ArrayExtensions
 
 	#region private methods 
 
-	private static string ReadCString(byte[] data, ref int offset)
+	internal static string ReadCString(byte[] data, ref int offset)
 	{
 		// Code size: 47 (0x2f)
 		var start = offset;
