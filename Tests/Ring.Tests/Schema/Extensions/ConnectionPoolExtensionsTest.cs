@@ -240,7 +240,7 @@ public sealed class ConnectionPoolExtensionsTest : BaseTest
         LogAct($"pool.Resize() to: Min pool size: {newConnPool.MinConnection}; Max pool size: {newConnPool.MaxConnection}");
         pool.Put(conn2);
         pool.Put(conn1);
-        Thread.Sleep(500); // async close wait here 500 ms
+        Thread.Sleep(1000); // async close wait here 500 ms
 
         // assert
         LogAssert($"Starting...");

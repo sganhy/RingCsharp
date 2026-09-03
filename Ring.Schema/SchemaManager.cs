@@ -45,7 +45,7 @@ public sealed class SchemaManager
 		foreach (var param in initialSchema.Parameters)
 		{
 			var meta= param.ToMeta();
-			var record = ToRecord(meta, initialSchema.GetTable("@meta"), initialSchema.Id);
+			var record = meta.ToRecord(initialSchema.GetTable("@meta") ?? Meta.GetDefaultTable(meta));
 			bulkSave.ForceInsert(record);
 		}
 		bulkSave.Save(_connection,true);

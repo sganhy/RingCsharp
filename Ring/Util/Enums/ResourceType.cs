@@ -57,9 +57,9 @@ internal enum ResourceType : short
 	NotSupportedInputDateTime = 202,
 	InvalidBase64String = 203,
 	FieldIsMandatory = 204,
-	WrongParameterType = 205,
+	UnsupportedParamType = 205,
 	UnknownMessageResourceType = 206,
-	UnsupportedParamType =207,
+	UnexpectedTableType = 207,
 
 	/// <summary>
 	/// Sql operations description

@@ -116,7 +116,8 @@ internal static class ArrayExtensions
 	private static int HexNibble(byte c) =>	c is >= (byte)'0' and <= (byte)'9' ? c - '0' : ((c | 0x20) - 'a') + 10; // Code size: 26 (0x1a)
 
 	/// <summary>
-	///     Throws an exception indicating the connection was closed by the server.
+	///     Throws an 
+	///     indicating the connection was closed by the server.
 	/// </summary>
 	// TODO: route through ResourceHelper/ResourceType like the other Throw*
 	// helpers in this file once a matching resource entry exists - left as a

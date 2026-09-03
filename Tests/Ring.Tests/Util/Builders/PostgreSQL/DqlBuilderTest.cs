@@ -210,7 +210,7 @@ public sealed class DqlBuilderTest : BaseBuilderTest
 		var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
 		var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
 		var testTable = schema.GetTable("@test");
-		var expectedResult = "SELECT test_0,test_1,test_2,test_3,test_4,test_5,test_6,test_7,test_8,to_char(test_9,'yyyy-mm-dd'),to_char(test_10,'yyyy-mm-dd HH24:MI:SS.US'),test_11,\"@tz_offset_11\",test_12,test_13,test_14 FROM \"@test2\".\"@test\"";
+		var expectedResult = "SELECT test_1,test_2,test_3,test_4,test_5,test_6,test_7,test_8,test_9,to_char(test_10,'yyyy-mm-dd'),to_char(test_11,'yyyy-mm-dd HH24:MI:SS.US'),test_12,\"@tz_offset_12\",test_13,test_14,test_15 FROM \"@test2\".\"@test\"";
 
 		// act 
 		Assert.NotNull(schema);

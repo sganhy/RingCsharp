@@ -85,6 +85,7 @@
 1034,0,0,1,1,8736,domain,Domains,,true
 4,0,3,1034,0,8192,divine,,divine,true
 1041,0,0,1,1,8192,feat,Feats connected to a role playing game,,true
+1,0,19,1041,1,8192,pk_feat,description,;;id,true
 1,0,2,1041,1021,786456,feat2book,,book2feat,true
 2,0,1,1051,16,10493996,name,,,true
 2,0,3,1053,0,8736,name,,name,true

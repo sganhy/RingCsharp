@@ -221,12 +221,12 @@ public sealed class DdlBuilderTest : BaseBuilderTest
         Assert.NotNull(testTable);
         var index = testTable.GetFieldIndex("test_11");
         testTable.Fields[index] = testTable.Fields[index].SetNotNull(true);
-        var expectedSql = $"CREATE TABLE test.\"@test\" (\n" + "\ttest_0 int8,\n" +
-                "\ttest_1 int4,\n" + "\ttest_2 int2,\n" + "\ttest_3 int2,\n" +
-                "\ttest_4 float4,\n" + "\ttest_5 float8,\n" + "\ttest_6 varchar(16) COLLATE \"C\",\n" + "\ttest_7 varchar(512) COLLATE \"C\",\n" +
-                "\ts_test_7 varchar(512) COLLATE \"C\",\n" + "\ttest_8 varchar(64) COLLATE \"C\",\n" + "\ts_test_8 varchar(64) COLLATE \"C\",\n" +
-                "\ttest_9 date,\n" + "\ttest_10 timestamp without time zone,\n\ttest_11 timestamp without time zone,\n" +
-                "\t\"@tz_offset_11\" int2,\n" + "\ttest_12 bytea,\n" + "\ttest_13 bool,\n\ttest_14 text COLLATE \"C\")" +
+        var expectedSql = $"CREATE TABLE test.\"@test\" (\n" + "\ttest_1 int8,\n" +
+                "\ttest_2 int4,\n" + "\ttest_3 int2,\n" + "\ttest_4 int2,\n" +
+                "\ttest_5 float4,\n" + "\ttest_6 float8,\n" + "\ttest_7 varchar(16) COLLATE \"C\",\n" + "\ttest_8 varchar(512) COLLATE \"C\",\n" +
+                "\ts_test_8 varchar(512) COLLATE \"C\",\n" + "\ttest_9 varchar(64) COLLATE \"C\",\n" + "\ts_test_9 varchar(64) COLLATE \"C\",\n" +
+                "\ttest_10 date,\n" + "\ttest_11 timestamp without time zone,\n\ttest_12 timestamp without time zone,\n" +
+                "\t\"@tz_offset_12\" int2,\n" + "\ttest_13 bytea,\n" + "\ttest_14 bool,\n\ttest_15 text COLLATE \"C\")" +
                 $" TABLESPACE {tablespaceName}";
 
         // act 
@@ -322,13 +322,13 @@ public sealed class DdlBuilderTest : BaseBuilderTest
         var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
         var table = schema.GetTable("@meta");
         Assert.NotNull(table);
-        //var pk = schema.DdlBuilder.GetConstraints(table).First(p => p.Type == ConstraintType.PrimaryKey);
-        var expectedSql = "ALTER TABLE \"@test\".\"@meta\" ADD CONSTRAINT \"pk_@meta\" PRIMARY KEY (id,schema_id,object_type,reference_id)";
+        var pk = table.Constraints.First(p => p.Type == ConstraintType.PrimaryKey);
+		Assert.NotNull(pk);
+		var expectedSql = "ALTER TABLE \"@test\".\"@meta\" ADD CONSTRAINT \"pk_@meta\" PRIMARY KEY (id,schema_id,object_type,reference_id)";
 
 		// act 
-		//var dql = _sut.Create(pk, table);
-		var dql = string.Empty;
-
+		var dql = _sut.Create(pk, table);
+		
 		// assert
 		Assert.Equal(expectedSql, dql);
     }
@@ -563,27 +563,6 @@ public sealed class DdlBuilderTest : BaseBuilderTest
         // assert
         Assert.Equal(expectedValue, physicalName);
     }
-
-    [Fact]
-    public void GetConstraints_PkConstraint1_ConstraintName()
-    {
-        // arrange 
-        var metaList = GetSchema1();
-        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
-        var table = schema?.GetTable("feat");
-        var ddlBuilder = DatabaseProvider.PostgreSql.GetDdlBuilder();
-        var expectedResult = "pk_feat";
-        Assert.NotNull(table);
-        
-        // act 
-        //var constraintPk = ddlBuilder.GetConstraints(table).First(p => p.Type == ConstraintType.PrimaryKey);
-		var dql = string.Empty;
-
-
-		// assert
-		//Assert.Equal(expectedResult, constraintPk.Name);
-		Assert.Equal(expectedResult, dql);
-	}
 
     [Fact]
     public void GetPhysicalName_Index0DeityTable_IndexName()

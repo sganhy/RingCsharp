@@ -1,14 +1,13 @@
-﻿using Bogus.DataSets;
-using Ring.Schema;
+﻿using Ring.Schema;
+using Ring.Schema.Builders;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
-using Ring.Schema.Models;
 using Ring.Util.Builders;
-using System.Data.Common;
+using System.ComponentModel.DataAnnotations;
 using System.Linq.Expressions;
 using System.Reflection;
 using PostGDdlBuilder = Ring.Util.Builders.PostgreSQL.DdlBuilder;
-
+using Record = Ring.Data.Record;
 
 namespace Ring.Tests.Schema;
 
@@ -814,6 +813,58 @@ public sealed class MetaTest : BaseTest
 
 		// assert
 		Assert.Equal(expectedValue, result);
+	}
+
+	[Fact]
+	public void ToRecord_Meta1_Record()
+	{
+		// arrange 
+		var builder =  new TableBuilder();
+        var metaTable = builder.GetMeta("Test",DatabaseProvider.PostgreSql);
+		var name = _faker.Random.String(40);
+		var description = _faker.Random.String();
+		var value = _faker.Random.String();
+		var meta1 = new Meta(7777, 1, 0, 0, 888L, name, description, value, true);
+        var rcd = new Record(metaTable);
+		rcd.SetField("id", meta1.Id);
+		rcd.SetField("schema_id", 0);
+		rcd.SetField("object_type", meta1.ObjectType);
+		rcd.SetField("reference_id", meta1.ReferenceId);
+		rcd.SetField("data_type", meta1.DataType);
+		rcd.SetField("flags", meta1.Flags);
+		rcd.SetField("name", meta1.Name);
+		rcd.SetField("description", meta1.Description);
+		rcd.SetField("value", meta1.Value);
+		rcd.SetField("active", meta1.Active);
+		var data = rcd.Data;
+        data[^1] = null;
+
+		// act 
+		var rcdResult = meta1.ToRecord(metaTable);
+        var dataResult = rcdResult.Data;
+
+		// assert
+		Assert.Equal(data.Length, dataResult.Length);
+		// --> both arrays should be equal.
+        foreach (var i in Enumerable.Range(0, data.Length)) Assert.Equal(data[i], dataResult[i]);
+	}
+
+	[Fact]
+	public void ToRecord_Meta1WrongTableType_ArgumentException()
+	{
+		// arrange 
+		var builder = new TableBuilder();
+		var metaIdTable = builder.GetMetaId("Test", DatabaseProvider.PostgreSql);
+		var name = _faker.Random.String(40);
+		var description = _faker.Random.String();
+		var value = _faker.Random.String();
+		var meta1 = new Meta(7777, 1, 0, 0, 888L, name, description, value, true);
+
+		// act 
+		var ex = Assert.Throws<ArgumentException>(() => meta1.ToRecord(metaIdTable));
+
+		// assert
+		Assert.Equal("Unexpected table type (Meta). Current table type is: 'MetaId'.", ex.Message);
 	}
 
 	[Fact]

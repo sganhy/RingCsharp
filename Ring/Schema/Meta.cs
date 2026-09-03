@@ -1,10 +1,12 @@
-﻿using Ring.Schema.Enums;
+﻿using Ring.Data;
+using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using Ring.Util.Builders;
+using Ring.Util.Enums;
 using Ring.Util.Extensions;
+using Ring.Util.Helpers;
 using System.Globalization;
-using System.Reflection.Metadata.Ecma335;
 using System.Runtime.CompilerServices;
 using System.Text;
 using DbSchema = Ring.Schema.Models.Schema;
@@ -62,6 +64,9 @@ internal readonly struct Meta : IEquatable<Meta>
 	private static readonly FieldType DefaultColumnFieldType = FieldType.Long;
 	private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
 	private static readonly CacheId DefaultCacheId = new(-1L,long.MinValue,0);
+	private static readonly string BooleanTrue = true.ToString(DefaultCulture);
+	private static readonly string BooleanFalse = false.ToString(DefaultCulture);
+	private static readonly string MetaSchemaId = "0";
 	#endregion
 
 	// minimizing data padding by field reordering - total: ~46 bytes + heap allocations for strings
@@ -412,6 +417,11 @@ internal readonly struct Meta : IEquatable<Meta>
 		}
 		return new Column(EntityType.Undefined, FieldType.Undefined, string.Empty, SearchableType.None, 0, 0); // default column --> throw an exception instead
 	}
+
+	internal Record ToRecord(Table table) // Code size: 217 (0xd9) - TODO: throw an exception if tableType is not equal to TableType.Meta
+		=> table.Type == TableType.Meta ? new(table,new string?[] { Active? BooleanTrue : BooleanFalse, DataType.ToString(DefaultCulture), Description, Flags.ToString(DefaultCulture), Id.ToString(DefaultCulture), 
+			Name, ObjectType.ToString(DefaultCulture), ReferenceId.ToString(DefaultCulture), MetaSchemaId, Value, null },0) 
+			: throw new ArgumentException(string.Format(DefaultCulture,ResourceHelper.GetMessage(ResourceType.UnexpectedTableType), table.Type));
 
 	#endregion
 

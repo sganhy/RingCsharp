@@ -27,9 +27,9 @@
 202,The DateTime represented by the string '{0}' is not supported in calendar 'System.Globalization.GregorianCalendar'.
 203,The input is not a valid Base-64 string.
 204,Object type '{1}': '{0}' Field cannot be null!
-205,Unsupported parameter type : {0}.
+205,Unsupported parameter type : '{0}'.
 206,Unknown resource type : {0} ({1}).
-207,Unsupported parameter type : '{0}'.
+207,Unexpected table type (Meta). Current table type is: '{0}'.
 245,create table
 246,Table '{0}' created
 294,Operation {0}.{1} #{2} is not supported.
