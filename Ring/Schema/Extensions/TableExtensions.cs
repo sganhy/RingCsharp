@@ -293,8 +293,9 @@ internal static class TableExtensions
 	internal static Column[] GetPrimaryKey(this Table table)
 	{
 		//TODO improve performance !!! no need allocations here!
-		// Code size: 69 (0x45) - the Table.Constraints[] for schema.Id = 0; is always loaded!
+		// Code size: 86 (0x56) - the Table.Constraints[] for schema.Id = 0; is always loaded!
 		if (table.Type == TableType.Business || table.Type == TableType.Lexicon) return new [] { table.Columns[0] };
+		if (table.Type == TableType.Mtm) return table.Columns;
 		// table without pk ?
 		var constraint = GetFirstConstraint(table, ConstraintType.PrimaryKey);
 		return constraint is not null ? constraint.Columns : Array.Empty<Column>();

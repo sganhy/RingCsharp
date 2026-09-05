@@ -6,6 +6,7 @@ using Ring.Util.Builders;
 using Ring.Util.Enums;
 using Ring.Util.Extensions;
 using Ring.Util.Helpers;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -418,10 +419,13 @@ internal readonly struct Meta : IEquatable<Meta>
 		return new Column(EntityType.Undefined, FieldType.Undefined, string.Empty, SearchableType.None, 0, 0); // default column --> throw an exception instead
 	}
 
-	internal Record ToRecord(Table table) // Code size: 217 (0xd9) - TODO: throw an exception if tableType is not equal to TableType.Meta
-		=> table.Type == TableType.Meta ? new(table,new string?[] { Active? BooleanTrue : BooleanFalse, DataType.ToString(DefaultCulture), Description, Flags.ToString(DefaultCulture), Id.ToString(DefaultCulture), 
-			Name, ObjectType.ToString(DefaultCulture), ReferenceId.ToString(DefaultCulture), MetaSchemaId, Value, null },0) 
-			: throw new ArgumentException(string.Format(DefaultCulture,ResourceHelper.GetMessage(ResourceType.UnexpectedTableType), table.Type));
+	internal Record ToRecord(Table table) // Code size: 217 (0xd9) - no virtual call
+	{
+		// Code size: 185 (0xb9)
+		if (table.Type != TableType.Meta) ThrowUnexpectedTableType(table);
+		return new(table, new string?[] { Active? BooleanTrue : BooleanFalse, DataType.ToString(DefaultCulture), Description, Flags.ToString(DefaultCulture),
+			Id.ToString(DefaultCulture), Name, ObjectType.ToString(DefaultCulture), ReferenceId.ToString(DefaultCulture), MetaSchemaId, Value, null }, 0);
+	}
 
 	#endregion
 
@@ -475,6 +479,14 @@ internal readonly struct Meta : IEquatable<Meta>
 #endif
 
 	#region private methods 
+
+	// Exceptions 
+
+	[MethodImpl(MethodImplOptions.NoInlining)]
+	[DoesNotReturn]
+	private static void ThrowUnexpectedTableType(Table table) => // Code size: 38 (0x26)
+		throw new ArgumentException(string.Format(DefaultCulture, ResourceHelper.GetMessage(ResourceType.UnexpectedTableType), table.Type));
+
 	private static int GetTableCount(ReadOnlySpan<Meta> schema)
 	{
 		// Code size: 43 (0x2b)
