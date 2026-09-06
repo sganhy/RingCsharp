@@ -7,6 +7,7 @@ namespace Ring.Util.Builders;
 
 internal interface IDdlBuilder : ISqlBuilder
 {
+	int GetBinaryParamLength(FieldType fieldType);
 	string Comment(Table table);
 	string Comment(Table table, in Column column);
 	string AlterAddColumn(Table table, in Column column);

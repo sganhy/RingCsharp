@@ -40,6 +40,11 @@ internal sealed class DdlBuilder : BaseDdlBuilder
     protected sealed override string TablePrefix => DefaultTablePrefix;
     protected sealed override string AlterColumnStatment => string.Empty;
     protected sealed override string SearchableFieldPrefix => "s_";
+
+	public override int GetBinaryParamLength(FieldType fieldType)
+	{
+		return -1;
+	}
 	protected override string GetCatalogPhysicalName(TableType tableType)
 	{
 		throw new NotImplementedException();

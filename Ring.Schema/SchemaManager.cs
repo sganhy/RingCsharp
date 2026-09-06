@@ -4,6 +4,7 @@ using Ring.Schema.Extensions;
 using Ring.Schema.Helpers;
 using Ring.Schema.Models;
 using Ring.Util.Extensions;
+using System.Runtime.CompilerServices;
 
 namespace Ring.Schema;
 
@@ -34,6 +35,7 @@ public sealed class SchemaManager
 		var dbProvider = _connection.ProviderId().ToDatabaseProvider();
 		var initialSchema = schemaBuilder.GetMeta(dbProvider, GetInitSchemaConfiguration(physicalSchema, "meta_table", "meta_index"));
 		var bulkAlter =  new BulkAlter(initialSchema);
+		var size = Unsafe.SizeOf<Column>();
 		foreach (var table in initialSchema.TablesById)
 		{
 			if (table.PhysicalType == Enums.PhysicalType.Table) bulkAlter.CreateTable(table);

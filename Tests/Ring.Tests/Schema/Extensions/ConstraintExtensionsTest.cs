@@ -18,7 +18,7 @@ public sealed class ConstraintExtensionsTest : BaseTest
 		var meta = builder.GetMeta("@test",DatabaseProvider.PostgreSql);
 		var name = "name";
 		var description = "description";
-		var defaultCol = new Column(EntityType.Field, FieldType.Long, "???", SearchableType.None, 2, 7); ;
+		var defaultCol = new Column(EntityType.Field, FieldType.Long, "???", SearchableType.None, 2, 7, 20, true);
 		var col1 = meta.GetColumn("id") ?? defaultCol;
 		var col2 = meta.GetColumn("reference_id") ?? defaultCol;
 		// int id, string name,string? description, bool baseline, bool enabled, ConstraintType type,  Column[] columns, long? minValue = null, long? maxValue = null) : base(id, name, description, baseline, enabled

@@ -113,6 +113,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	#endregion
 
 	#region field methods
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal FieldType GetFieldType() => (DataType & 127).ToFieldType(); // Code size: 15 (0xf)
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -123,7 +124,11 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal bool IsFieldAllowTruncation() => (Flags & (long)MetaFlag.FieldAllowTruncation) != 0; // Code size: 18 (0x12)
+	
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal int GetFieldSize() => (int)((Flags >> BitShiftFieldSize) & ((1L << BitCountFieldSize) - 1L)); // Code size: 18 (0x12)
+	
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal SearchableType GetSearchableType() => ((int)((Flags >> BitPositionFieldSearchableType) & ((1L << BitCountFieldSearchableType) - 1L))).ToSearchableType(); // Code size: 19 (0x13)
 
 	internal static int SetFieldType(int dataType, FieldType fieldType)
@@ -216,6 +221,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	#region constraint methods
 	internal ConstraintType GetConstraintType() => DataType.ToConstraintType(); // Code size: 12 (0xc)
 	internal DatabaseProvider GetDatabaseProvider() => ((int)((Flags >> BitShiftConstraintProvider) & ((1L << BitCountConstraintProvider) - 1L))).ToDatabaseProvider(); // Code size: 23 (0x17)
+
 	internal static long SetDatabaseProvider(long flags, DatabaseProvider databaseProvider)
 	{
 		// Code size: 30 (0x1e)
@@ -264,6 +270,8 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	internal static Meta Create(string name) => new(default, default, default, default, default, name, null, null, true);
 	internal static char GetIndexColumnDelimiter() => IndexColumnDelimiter; // Code size: 3 (0x3)
+	
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal EntityType GetEntityType() => ((int)ObjectType).ToEntityType(); // Code size: 12 (0xc)
 
 	#region convertors 
@@ -397,29 +405,37 @@ internal readonly struct Meta : IEquatable<Meta>
 		return null;
 	}
 
-	internal Column ToColumn(int id, string physicalName, int recordIndex, SearchableType? searchableType= SearchableType.None)
+	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
+	internal Column ToColumn(int id, string physicalName, int recordIndex, IDdlBuilder ddlBuilder, SearchableType? searchableType= SearchableType.None)
 	{
-		// Code size: 148 (0x94)
+		// Code size: 201 (0xc9)
 		if (IsField)
 		{
 			// FieldType fieldType, EntityType type, string physicalName, SearchableType searchableType, int id, int recordIndex, int size
-			return new Column(SearchableType.None == searchableType ? EntityType.Field : EntityType.SearchableColumn, GetFieldType(), physicalName, searchableType ?? SearchableType.None, id, recordIndex);
+			var entityType = SearchableType.None == searchableType ? EntityType.Field : EntityType.SearchableColumn;
+			var fieldType = GetFieldType();
+			var binarySize = fieldType == FieldType.String? -1 :ddlBuilder.GetBinaryParamLength(fieldType);
+			var binaryType = binarySize> 0;
+			return new Column(entityType, fieldType, physicalName, searchableType ?? SearchableType.None, id, recordIndex, binarySize, binaryType);
 		} 
 		else if (IsRelation) {
-			return new Column(EntityType.Relation, DefaultColumnFieldType, physicalName, SearchableType.None, id, recordIndex);
+			return new Column(EntityType.Relation, DefaultColumnFieldType, physicalName, SearchableType.None, id, recordIndex,8,true);
 		}
 		else if (IsSearchableColumn)
 		{
-			return new Column(EntityType.SearchableColumn, FieldType.String, physicalName, GetSearchableType(), id, recordIndex);
+			return new Column(EntityType.SearchableColumn, FieldType.String, physicalName, GetSearchableType(), id, recordIndex,-1,false);
 		}
 		else if (IsTimeZoneColumn)
 		{
-			return new Column(EntityType.TimeZoneColumn, FieldType.Short, physicalName, SearchableType.None, id, recordIndex);
+			var binarySize = ddlBuilder.GetBinaryParamLength(FieldType.Short);
+			var binaryType = binarySize > 0;
+			return new Column(EntityType.TimeZoneColumn, FieldType.Short, physicalName, SearchableType.None, id, recordIndex, binarySize, binaryType);
 		}
-		return new Column(EntityType.Undefined, FieldType.Undefined, string.Empty, SearchableType.None, 0, 0); // default column --> throw an exception instead
+		return new Column(EntityType.Undefined, FieldType.Undefined, string.Empty, SearchableType.None, 0, 0,-1,false); // default column --> throw an exception instead
 	}
-
-	internal Record ToRecord(Table table) // Code size: 217 (0xd9) - no virtual call
+	
+	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
+	internal Record ToRecord(Table table) // Code size: 217 (0xd9) - no virtual callLoadColumns
 	{
 		// Code size: 185 (0xb9)
 		if (table.Type != TableType.Meta) ThrowUnexpectedTableType(table);
@@ -560,6 +576,7 @@ internal readonly struct Meta : IEquatable<Meta>
 		return result.ToArray(); // sorted by Id later !!!
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
 	private static Field[] GetFieldArray(ReadOnlySpan<Meta> items, TableType tableType)
 	{
 		// Code size: 236 (0xec)
@@ -588,6 +605,7 @@ internal readonly struct Meta : IEquatable<Meta>
 		return result;
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
 	private static Relation[] GetRelationArray(ReadOnlySpan<Meta> items)
 	{
 		// Code size: 58 (0x3a)
@@ -652,6 +670,7 @@ internal readonly struct Meta : IEquatable<Meta>
 		return result;
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
 	private static int MetaSchemaComparer(in Meta meta1,in Meta meta2)
 	{
 		// sort ASC by reference_id, name
@@ -660,6 +679,7 @@ internal readonly struct Meta : IEquatable<Meta>
 		return string.CompareOrdinal(meta1.Name, meta2.Name);
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
 	private static (int colCount, int relationCount, int constraintCount) GetCount(ReadOnlySpan<Field> fields, ReadOnlySpan<Meta> tableItems, IDdlBuilder ddlBuilder)
 	{
 		// Code size: 220 (0xdc)
@@ -745,16 +765,16 @@ internal readonly struct Meta : IEquatable<Meta>
 				var field = table.GetField(meta.Name);
 				var id = field?.Id ?? meta.Id;            // BUG 2 fix: use meta.Id instead of magic value 1
 				var recordIndex = table.GetFieldIndex(meta.Name);
-				table.Columns[columnIndex] = meta.ToColumn(id, ddlBuilder.GetPhysicalName(EntityType.Field, meta.Name), recordIndex);
+				table.Columns[columnIndex] = meta.ToColumn(id, ddlBuilder.GetPhysicalName(EntityType.Field, meta.Name), recordIndex, ddlBuilder);
 				++columnIndex;
 
 				// searchable field ?
 				if (field?.Type == FieldType.String && field.SearchableType != SearchableType.None)
 				{
 					if (extraFields.TryGetValue(field.Name, out var metaExtra))
-						table.Columns[columnIndex] = metaExtra.ToColumn(metaExtra.Id, ddlBuilder.GetPhysicalName(EntityType.SearchableColumn, meta.Name), recordIndex);
+						table.Columns[columnIndex] = metaExtra.ToColumn(metaExtra.Id, ddlBuilder.GetPhysicalName(EntityType.SearchableColumn, meta.Name), recordIndex, ddlBuilder);
 					else
-						table.Columns[columnIndex] = meta.ToColumn(id, ddlBuilder.GetPhysicalName(EntityType.SearchableColumn, meta.Name), recordIndex, field.SearchableType);
+						table.Columns[columnIndex] = meta.ToColumn(id, ddlBuilder.GetPhysicalName(EntityType.SearchableColumn, meta.Name), recordIndex, ddlBuilder, field.SearchableType);
 
 					++columnIndex;
 				}
@@ -764,10 +784,10 @@ internal readonly struct Meta : IEquatable<Meta>
 				{
 					if (extraFields.TryGetValue(field.Name, out var metaExtra))
 						table.Columns[columnIndex] = metaExtra.ToColumn(metaExtra.Id,  // BUG 3 fix: use metaExtra.Id, not meta.Id
-							ddlBuilder.GetPhysicalName(EntityType.TimeZoneColumn, meta.Id.ToString(DefaultCulture)), recordIndex);
+							ddlBuilder.GetPhysicalName(EntityType.TimeZoneColumn, meta.Id.ToString(DefaultCulture)), recordIndex, ddlBuilder);
 					else
 						table.Columns[columnIndex] = SetObjectType(meta, TimeZoneColumnId).ToColumn(id,
-							ddlBuilder.GetPhysicalName(EntityType.TimeZoneColumn, meta.Id.ToString(DefaultCulture)), recordIndex);
+							ddlBuilder.GetPhysicalName(EntityType.TimeZoneColumn, meta.Id.ToString(DefaultCulture)), recordIndex, ddlBuilder);
 					++columnIndex;
 				}
 			}
@@ -776,7 +796,7 @@ internal readonly struct Meta : IEquatable<Meta>
 				var recordIndex = relationId.GetIndex(meta.Id);
 				if (recordIndex >= 0)
 				{
-					table.Columns[columnIndex] = meta.ToColumn(meta.Id, ddlBuilder.GetPhysicalName(EntityType.Relation, meta.Name), recordIndex + fieldCount);
+					table.Columns[columnIndex] = meta.ToColumn(meta.Id, ddlBuilder.GetPhysicalName(EntityType.Relation, meta.Name), recordIndex + fieldCount, ddlBuilder);
 					++columnIndex;
 				}
 			}
@@ -789,7 +809,7 @@ internal readonly struct Meta : IEquatable<Meta>
 		// Code size: 355 (0x163)
 		if (table.Indexes.Length <= 0) return;
 		Dictionary<string, int>? relDico = null;
-		var defaultCol = new Column(EntityType.Undefined, FieldType.Undefined, string.Empty, SearchableType.None, 0, 0);
+		var defaultCol = new Column(EntityType.Undefined, FieldType.Undefined, string.Empty, SearchableType.None, 0, 0,-1, false);
 		if (physRelationCount > 0)
 		{
 			relDico = new Dictionary<string, int>(physRelationCount * 2); // <relation_logical_name, relation_id>
@@ -832,7 +852,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	{
 		// Code size: 241 (0xf1)
 		if (constraintCount <= 0) return;
-		var defaultCol = new Column(EntityType.Undefined, FieldType.Undefined, string.Empty, SearchableType.None, 0, 0);
+		var defaultCol = new Column(EntityType.Undefined, FieldType.Undefined, string.Empty, SearchableType.None, 0, 0,0,false);
 		var constraintIndex = 0;
 		foreach (var meta in tableItems)
 		{
@@ -946,9 +966,10 @@ internal readonly struct Meta : IEquatable<Meta>
 	{
 		// Code size: 45 (0x2d)
 		var spanTable = new Span<Table>(schema.TablesByName);
-		foreach (var table in spanTable) LoadTypeColumns(table);
+		var builder = schema.DdlBuilder;
+		foreach (var table in spanTable) LoadTypeColumns(table, builder);
 	}
-	private static void LoadTypeColumns(Table table)
+	private static void LoadTypeColumns(Table table, IDdlBuilder builder)
 	{
 		// Code size: 144 (0x90)
 		// BUG: Potential infinite recursion on cyclic MTM graphs → impossible due to mtm relation are created with type RelationType.Mto and not RelationType.Mtm
@@ -969,7 +990,7 @@ internal readonly struct Meta : IEquatable<Meta>
 			if (relation.Type == RelationType.Mtm)
 			{
 				// load mtm table columns
-				LoadTypeColumns(relation.ToTable);
+				LoadTypeColumns(relation.ToTable, builder);
 			}
 		}
 	}
@@ -994,6 +1015,7 @@ internal readonly struct Meta : IEquatable<Meta>
 		return tableType == TableType.Business? new CacheId() : DefaultCacheId;
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
 	private static int ColumnComparer(in Column col1, in Column col2)
 	{
 		// Code size: 56 (0x38)

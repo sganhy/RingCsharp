@@ -57,6 +57,12 @@ internal sealed class DdlBuilder : BaseDdlBuilder
 		}
         return string.Empty;
     }
+
+	public override int GetBinaryParamLength(FieldType fieldType)
+	{
+		return -1;
+	}
+
 	protected override string GetPhysicalName(TableType tableType, Field field)
 	{
 		// Code size: 42 (0x2a)

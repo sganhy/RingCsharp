@@ -74,7 +74,7 @@ public abstract class BaseTest
 
     internal Column GetAnonymousColumn() =>
         new(_faker.PickRandom<EntityType>(), _faker.PickRandom<FieldType>(), _faker.Random.String(), _faker.PickRandom<SearchableType>(), 
-            _faker.Random.Number(int.MinValue, int.MaxValue), _faker.Random.Number(int.MinValue, int.MaxValue));
+            _faker.Random.Number(int.MinValue, int.MaxValue), _faker.Random.Number(int.MinValue, int.MaxValue), _faker.Random.Number(-1, 8), _faker.Random.Bool());
 
     internal Relation GetAnonymousRelation(string? name = null, char minChar = char.MinValue, char maxChar = char.MaxValue)
     {

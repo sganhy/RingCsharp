@@ -102,8 +102,8 @@ internal static class HashCodeExtensions
 	}
 
 	internal static void AddColumn(this ref HashCode hashCode, Column column)
-	{   
-		// Code size: 73 (0x49)
+	{
+		// Code size: 97 (0x61)
 		/*
 			int Id;
 			int RecordIndex;
@@ -111,12 +111,16 @@ internal static class HashCodeExtensions
 			FieldType FieldType; // enum FieldType : byte
 			SearchableType SearchableType; // enum SearchableType : byte
 			string PhysicalName;
+			bool BinaryType;
+			int BinaryLength;
 		*/
 		hashCode.Add(column.Id);
 		hashCode.Add(column.RecordIndex);
 		hashCode.Add((int)column.Type);
 		hashCode.Add((int)column.FieldType);
 		hashCode.Add((int)column.SearchableType);
+		hashCode.Add(column.BinaryType);
+		hashCode.Add(column.BinaryLength);
 		hashCode.Add(column.PhysicalName);
 	}
 

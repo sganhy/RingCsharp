@@ -42,11 +42,14 @@ internal sealed class DdlBuilder : BaseDdlBuilder
     protected sealed override string TablePrefix => DefaultTablePrefix;
     protected sealed override string SearchableFieldPrefix => "s_";
 	protected sealed override string AlterColumnStatment => string.Empty;
+	public override int GetBinaryParamLength(FieldType fieldType)
+	{
+		return -1;
+	}
 	protected override string GetCatalogPhysicalName(TableType tableType)
 	{
 		throw new NotImplementedException();
 	}
-
 	protected override string GetSchemaPhysicalName(TableType tableType)
 	{
 		throw new NotImplementedException();
@@ -55,5 +58,4 @@ internal sealed class DdlBuilder : BaseDdlBuilder
 	{
 		throw new NotImplementedException();
 	}
-
 }

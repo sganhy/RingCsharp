@@ -71,6 +71,21 @@ internal sealed class DdlBuilder : BaseDdlBuilder
 		return "information_schema";
 	}
 
+	public override int GetBinaryParamLength(FieldType fieldType)
+	{
+		switch (fieldType)
+		{
+			case FieldType.Long: return 8;
+			case FieldType.Int: return 4;
+			case FieldType.Short: return 2;
+			case FieldType.Byte: return 2;
+			case FieldType.Double: return 8;
+			case FieldType.Float: return 4;
+			case FieldType.Boolean: return 1;
+		}
+		return -1;
+	}
+	
 	protected override string GetPhysicalName(TableType tableType, Field field)
 	{
 		switch (tableType)

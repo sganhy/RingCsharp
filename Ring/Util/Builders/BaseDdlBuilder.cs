@@ -58,6 +58,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 
 	// conventions
 	protected static readonly char LogSpecialEntityPrefix = TableTypeExtensions.SystemTablePrefix; // systeme table logical name prefix
+	public abstract	int GetBinaryParamLength(FieldType fieldType);
 	protected abstract char PhysSpecialEntityPrefix { get; }
 	protected abstract string SearchableFieldPrefix { get; }
 	protected abstract string AlterColumnStatment { get; }
