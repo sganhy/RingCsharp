@@ -984,7 +984,7 @@ internal readonly struct Meta : IEquatable<Meta>
 					var column = table.Columns[index];
 					// change if necessary
 					if (column.FieldType!= relation.FieldType) 
-						table.Columns[index] = column.SetFieldType(relation.FieldType);
+						table.Columns[index] = column.SetFieldType(relation.FieldType, builder);
 				}
 			}
 			if (relation.Type == RelationType.Mtm)

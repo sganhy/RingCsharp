@@ -560,4 +560,20 @@ public sealed class DdlBuilderTest : BaseBuilderTest
         Assert.Equal(expectedResult, physicalName);
     }
 
+	[Theory]
+	[InlineData(FieldType.Int, 4)]
+	[InlineData(FieldType.Long, 8)]
+	[InlineData(FieldType.Byte, 2)]
+	[InlineData(FieldType.Short, 2)]
+	[InlineData(FieldType.String, -1)]
+	internal void GetBinaryParamLength_FieldType_BinaryLength(FieldType fieldType, int expectedLength)
+	{
+		// arrange 
+		// act 
+		var result = _sut.GetBinaryParamLength(fieldType);
+
+		// assert
+		Assert.Equal(expectedLength, result);
+	}
+
 }

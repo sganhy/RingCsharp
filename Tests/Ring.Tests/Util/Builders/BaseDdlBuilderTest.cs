@@ -21,13 +21,14 @@ public sealed class BaseDdlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var table = GetAnonymousTable(_sut, 22, 2);
+
         var field = table.Fields[10];
         field = field.SetSize(80);
         field = field.SetType(FieldType.String);
         table.Fields[10] = field;
         var col = table.GetColumn(field.Id, EntityType.Field);
         Assert.NotNull(col);
-        col = col.Value.SetFieldType(FieldType.String);
+        col = col.Value.SetFieldType(FieldType.String, _sut);
         var expectedSql = $"ALTER TABLE {table.PhysicalName} ADD {col.Value.PhysicalName} varchar(80) COLLATE \"C\"";
 
         // act 
@@ -47,7 +48,7 @@ public sealed class BaseDdlBuilderTest : BaseBuilderTest
         table.Fields[11] = field;
         var col = table.GetColumn(field.Id, EntityType.Field);
         Assert.NotNull(col);
-        col = col.Value.SetFieldType(FieldType.DateTimeOffset);
+        col = col.Value.SetFieldType(FieldType.DateTimeOffset, _sut);
         var expectedSql = $"ALTER TABLE {table.PhysicalName} ADD {col.Value.PhysicalName} timestamp without time zone";
 
         // act 
@@ -67,15 +68,17 @@ public sealed class BaseDdlBuilderTest : BaseBuilderTest
         table.Fields[9] = field;
         var col = table.GetColumn(field.Id, EntityType.Field);
         Assert.NotNull(col);
-        col = col.Value.SetFieldType(FieldType.Byte);
+        col = col.Value.SetFieldType(FieldType.Byte, _sut);
         var expectedSql = $"ALTER TABLE {table.PhysicalName} ADD {col.Value.PhysicalName} int2";
 
         // act 
         var dql = _sut.AlterAddColumn(table, col.Value);
 
-        // assert
-        Assert.Equal(expectedSql, dql);
-    }
+		// assert
+		Assert.NotNull(col);
+		Assert.Equal(expectedSql, dql);
+		Assert.Equal(2, col.Value.BinaryLength);
+	}
 
     [Fact]
     public void AlterAddColumn_Relation1_DdlQuery()
@@ -85,18 +88,20 @@ public sealed class BaseDdlBuilderTest : BaseBuilderTest
         var relation = table.Relations[10];
         var col = table.GetColumn(relation.Id, EntityType.Relation);
         Assert.NotNull(col);
-        col = col.Value.SetFieldType(FieldType.Int);
+        col = col.Value.SetFieldType(FieldType.Int, _sut);
         table.Columns[table.GetColumnIndex(relation.Id, EntityType.Relation)] = col.Value;
         var expectedSql = $"ALTER TABLE {table.PhysicalName} ADD {col.Value.PhysicalName} int4";
 
         // act 
         var dql = _sut.AlterAddColumn(table, col.Value);
 
-        // assert
-        Assert.Equal(expectedSql, dql);
-    }
+		// assert
+		Assert.NotNull(col);
+		Assert.Equal(expectedSql, dql);
+		Assert.Equal(4, col.Value.BinaryLength);
+	}
 
-    [Fact]
+	[Fact]
     public void AlterDropColumn_Field1_DdlQuery()
     {
         // arrange 

@@ -404,7 +404,7 @@ internal static class NetworkStreamExtensions
 				}
 				else
 				{
-					paramLengths[pi] = col.FieldType.GetBinaryParamLength(value, encoding);
+					paramLengths[pi] = col.BinaryLength;
 				}
 				pi++;
 			}
@@ -597,7 +597,7 @@ internal static class NetworkStreamExtensions
 		foreach (var col in tableColumns)
 		{
 			if (col.Type == EntityType.SearchableColumn) continue;
-			BinaryPrimitives.WriteInt16BigEndian(destination.Slice(offset, 2), col.FieldType.IsBinaryType() ? (short)1 : (short)0);
+			BinaryPrimitives.WriteInt16BigEndian(destination.Slice(offset, 2), col.BinaryType ? (short)1 : (short)0);
 			offset += 2;
 		}
 
@@ -620,7 +620,7 @@ internal static class NetworkStreamExtensions
 					// Binary format: raw bytes, no hex encoding needed
 					byteaBytes![pi]!.CopyTo(destination.Slice(offset, len));
 				}
-				else if (col.FieldType.IsBinaryType())
+				else if (col.BinaryType)
 				{
 					WriteBinaryParam(col.FieldType, query.Data[col.RecordIndex + query.Offset]!, destination.Slice(offset, len));
 				}
