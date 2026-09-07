@@ -9,6 +9,7 @@ using Ring.Util.Helpers;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 using DbSchema = Ring.Schema.Models.Schema;
 using Index = Ring.Schema.Models.Index;
@@ -18,6 +19,7 @@ namespace Ring.Schema;
 /// <summary>
 /// 	The Meta struct is a compact, memory-optimized data structure that serves as a universal container for database logical schema metadata. 
 /// </summary>
+[StructLayout(LayoutKind.Sequential)]
 internal readonly struct Meta : IEquatable<Meta>
 {
 
@@ -64,23 +66,26 @@ internal readonly struct Meta : IEquatable<Meta>
 	private const long MaskRelationType = 127L << BitPositionFirstPositionRelType;
 	private static readonly FieldType DefaultColumnFieldType = FieldType.Long;
 	private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
-	private static readonly CacheId DefaultCacheId = new(-1L,long.MinValue,0);
+	private static readonly CacheId DefaultCacheId = new(-1L, long.MinValue, 0);
 	private static readonly string BooleanTrue = true.ToString(DefaultCulture);
 	private static readonly string BooleanFalse = false.ToString(DefaultCulture);
 	private static readonly string MetaSchemaId = "0";
 	#endregion
 
 	// minimizing data padding by field reordering - total: ~46 bytes + heap allocations for strings
-	internal readonly long Flags;			// 8 bytes (offset 0) --> 
+	internal readonly long Flags;           // 8 bytes (offset 0) --> 
 	internal readonly string Name;
 	internal readonly string? Description;
 	internal readonly string? Value;
-	internal readonly int Id;				// 4 bytes (offset 32) -->
+	internal readonly int Id;               // 4 bytes (offset 32) -->
 	internal readonly int ReferenceId;
 	internal readonly int DataType;
-	internal readonly byte ObjectType;		// 1 byte  (offset 44) -->
+	internal readonly byte ObjectType;      // 1 byte  (offset 44) -->
 	internal readonly bool Active;
 
+	/// <summary>
+	/// 	Ctor
+	/// </summary>
 	internal Meta(int id, byte objectType, int referenceId, int dataType, long flags, string name, string? description, string? value, bool active)
 	{
 		Id = id;
@@ -89,7 +94,7 @@ internal readonly struct Meta : IEquatable<Meta>
 		DataType = dataType;
 		Flags = flags;
 		Name = name;
-		Description = description;	// late loading 
+		Description = description;  // late loading 
 		Value = value;
 		Active = active;
 	}
@@ -108,7 +113,7 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	#region entity methods 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	internal bool IsEntityBaseline() => (Flags & (long)MetaFlag.EntityBaseline)!=0; // Code size: 18 (0x12)
+	internal bool IsEntityBaseline() => (Flags & (long)MetaFlag.EntityBaseline) != 0; // Code size: 18 (0x12)
 	internal static long SetEntityBaseline(long flags, bool value) => WriteFlag(flags, MetaFlag.EntityBaseline, value); // Code size: 12 (0xc)
 	#endregion
 
@@ -117,17 +122,17 @@ internal readonly struct Meta : IEquatable<Meta>
 	internal FieldType GetFieldType() => (DataType & 127).ToFieldType(); // Code size: 15 (0xf)
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	internal bool IsFieldNotNull() => (Flags & (long)MetaFlag.FieldNotNull)!=0; // Code size: 14 (0xe)
+	internal bool IsFieldNotNull() => (Flags & (long)MetaFlag.FieldNotNull) != 0; // Code size: 14 (0xe)
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	internal bool IsFieldMultilingual() => (Flags & (long)MetaFlag.FieldMultilingual)!=0; // Code size: 14 (0xe)
+	internal bool IsFieldMultilingual() => (Flags & (long)MetaFlag.FieldMultilingual) != 0; // Code size: 14 (0xe)
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal bool IsFieldAllowTruncation() => (Flags & (long)MetaFlag.FieldAllowTruncation) != 0; // Code size: 18 (0x12)
-	
+
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal int GetFieldSize() => (int)((Flags >> BitShiftFieldSize) & ((1L << BitCountFieldSize) - 1L)); // Code size: 18 (0x12)
-	
+
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal SearchableType GetSearchableType() => ((int)((Flags >> BitPositionFieldSearchableType) & ((1L << BitCountFieldSearchableType) - 1L))).ToSearchableType(); // Code size: 19 (0x13)
 
@@ -150,7 +155,8 @@ internal readonly struct Meta : IEquatable<Meta>
 		flags |= clampedSize << BitShiftFieldSize; // write new value
 		return flags;
 	}
-	internal static long SetSearchableType(long flags, SearchableType searchableType) {
+	internal static long SetSearchableType(long flags, SearchableType searchableType)
+	{
 		// Code size: 24 (0x18)
 		flags &= ~MaskSearchableType;                                              // clear existing bits
 		flags |= ((long)searchableType & ((1L << BitCountFieldSearchableType) - 1L)) << BitPositionFieldSearchableType; // write new value
@@ -160,7 +166,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	#endregion
 
 	#region relation methods
-	
+
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal bool IsRelationNotNull() => (Flags & (long)MetaFlag.RelationNotNull) != 0; // Code size: 15 (0xf)
 
@@ -168,7 +174,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	internal bool HasRelationConstraint() => (Flags & (long)MetaFlag.RelationConstraint) != 0; // Code size: 15 (0xf)
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	internal RelationType GetRelationType() => ((int)((Flags>>BitPositionFirstPositionRelType) & 127)).ToRelationType(); // Code size: 20 (0x14)
+	internal RelationType GetRelationType() => ((int)((Flags >> BitPositionFirstPositionRelType) & 127)).ToRelationType(); // Code size: 20 (0x14)
 
 	internal static long SetRelationNotNull(long flags, bool value) => WriteFlag(flags, MetaFlag.RelationNotNull, value); // Code size: 10 (0xa)
 	internal static long SetRelationConstraint(long flags, bool value) => WriteFlag(flags, MetaFlag.RelationConstraint, value); // Code size: 11 (0xb) 
@@ -190,7 +196,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	internal bool IsIndexUnique() => (Flags & (long)MetaFlag.IndexUnique) != 0; // Code size: 18 (0x12)
 
 	// index values
-	internal Column[] GetIndexedColumns() => Value is not null ? new Column[Value.GetCharCount(IndexColumnDelimiter)+1] : Array.Empty<Column>(); // fill array later - Code size: 35 (0x23)
+	internal Column[] GetIndexedColumns() => Value is not null ? new Column[Value.GetCharCount(IndexColumnDelimiter) + 1] : Array.Empty<Column>(); // fill array later - Code size: 35 (0x23)
 	internal static string GetColumnList(string[] columns) => string.Join(IndexColumnDelimiter, columns);
 
 	// index flags 
@@ -241,8 +247,8 @@ internal readonly struct Meta : IEquatable<Meta>
 	#endregion
 
 	internal static DbSchema GetDefaultSchema(in Meta meta, DatabaseProvider provider) // Code size: 90 (0x5a)
-		=> new(meta.Id, meta.Name, provider.GetDdlBuilder().GetPhysicalName(EntityType.Schema,meta.Name), meta.Description, 
-			Array.Empty<Parameter>(), Array.Empty<Lexicon>(), SchemaLoadType.Full, SchemaType.Undefined, Array.Empty<Sequence>(), 
+		=> new(meta.Id, meta.Name, provider.GetDdlBuilder().GetPhysicalName(EntityType.Schema, meta.Name), meta.Description,
+			Array.Empty<Parameter>(), Array.Empty<Lexicon>(), SchemaLoadType.Full, SchemaType.Undefined, Array.Empty<Sequence>(),
 			Array.Empty<Table>(), Array.Empty<Table>(), Array.Empty<TableSpace>(), provider, 0, meta.Active, meta.IsEntityBaseline());
 
 	internal static Table GetDefaultTable(in Meta meta) // Code size: 103 (0x67)
@@ -254,23 +260,23 @@ internal readonly struct Meta : IEquatable<Meta>
 		=> new(meta.Id, meta.Name, meta.Description, meta.IsEntityBaseline(), meta.Active, constraintType, Array.Empty<Column>(), null, null);
 
 	internal static Index GetDefaultIndex(in Meta meta) // Code size: 64 (0x40)
-		=> new(meta.Id, meta.Name, meta.Description, meta.GetIndexedColumns(), meta.IsIndexUnique(), 
+		=> new(meta.Id, meta.Name, meta.Description, meta.GetIndexedColumns(), meta.IsIndexUnique(),
 			meta.IsIndexBitmap(), meta.Active, meta.IsEntityBaseline());
 
 	internal static Relation GetDefaultRelation(in Meta meta, RelationType relationType, TableType toTableType) // Code size: 56 (0x38)
 		=> new(meta.Id, meta.Name, meta.Description, relationType,
 			GetDefaultTable(new Meta(0, (byte)EntityType.Table, 0, (int)toTableType, 0L,
-			meta.Name,null, null, false)), FieldType.Undefined, false, false, true, true);
+			meta.Name, null, null, false)), FieldType.Undefined, false, false, true, true);
 
-	internal static Meta GetDefaultMeta(EntityType  entityType) // Code size: 20 (0x14)
-		=> new (0, (byte)entityType, 0, 0, 0L,	string.Empty, null, null, false);
+	internal static Meta GetDefaultMeta(EntityType entityType) // Code size: 20 (0x14)
+		=> new(0, (byte)entityType, 0, 0, 0L, string.Empty, null, null, false);
 
 	internal static Field GetDefaultField(in Meta meta, FieldType fieldType) // Code size: 33 (0x21)
 		=> new(meta.Id, meta.Name, meta.Description, fieldType, 0, null, null, SearchableType.None, true, false, false, true, true);
 
 	internal static Meta Create(string name) => new(default, default, default, default, default, name, null, null, true);
 	internal static char GetIndexColumnDelimiter() => IndexColumnDelimiter; // Code size: 3 (0x3)
-	
+
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal EntityType GetEntityType() => ((int)ObjectType).ToEntityType(); // Code size: 12 (0xc)
 
@@ -290,7 +296,7 @@ internal readonly struct Meta : IEquatable<Meta>
 			var fieldType = FieldType.Undefined;
 			if (to.Type == TableType.Business || to.Type == TableType.Lexicon)
 				fieldType = to.Fields[to.Columns[0].RecordIndex].Type;
-			return new Relation(Id, Name, Description, GetRelationType(), to, fieldType,IsRelationNotNull(), HasRelationConstraint(), IsEntityBaseline(), Active);
+			return new Relation(Id, Name, Description, GetRelationType(), to, fieldType, IsRelationNotNull(), HasRelationConstraint(), IsEntityBaseline(), Active);
 		}
 		return null;
 	}
@@ -313,10 +319,10 @@ internal readonly struct Meta : IEquatable<Meta>
 		// Code size: 123 (0x7b)
 		if (IsConstraint)
 		{
-			var columnCount = Math.Max(0,Value.GetCharCount(ConstraintColumnDelimiter)-1); // min columnCount=0
+			var columnCount = Math.Max(0, Value.GetCharCount(ConstraintColumnDelimiter) - 1); // min columnCount=0
 			var minValue = GetLongValue(Value, 1, ConstraintColumnDelimiter);
 			var maxValue = GetLongValue(Value, 2, ConstraintColumnDelimiter);
-			return new Constraint(Id, Name, Description, IsEntityBaseline(), Active, GetConstraintType(), columnCount <=0 ? Array.Empty<Column>() : new Column[columnCount], minValue, maxValue);
+			return new Constraint(Id, Name, Description, IsEntityBaseline(), Active, GetConstraintType(), columnCount <= 0 ? Array.Empty<Column>() : new Column[columnCount], minValue, maxValue);
 		}
 		return null;
 	}
@@ -336,13 +342,13 @@ internal readonly struct Meta : IEquatable<Meta>
 			var metaValue = meta.Value;
 			var ddlBuilder = provider.GetDdlBuilder();
 			var mtmCount = GetMtmCount(schema);
-			var tableCount = prebuiltTables is null ? GetTableCount(schema) : prebuiltTables.Length; 
+			var tableCount = prebuiltTables is null ? GetTableCount(schema) : prebuiltTables.Length;
 			var parameters = GetParameters(schema);
 			var lexicons = GetLexicons(schema);
 			var sequences = GetSequences(schema);
 			var tableByName = prebuiltTables ?? GetTables(schema, ddlBuilder, metaValue, provider, mtmCount, tableCount);
 			var tableById = new Table[tableByName.Length];
-			tableByName.CopyTo(tableById,0);
+			tableByName.CopyTo(tableById, 0);
 			var tableSpaces = GetTableSpaces(schema, ddlBuilder);
 
 			// sort arrays - already pre-sorted by name
@@ -351,8 +357,8 @@ internal readonly struct Meta : IEquatable<Meta>
 
 			// build schema to result - 
 			// ObjectCount <-- table count + mtm count + view count
-			var result = new DbSchema(meta.Value.Id, metaValue.Name, ddlBuilder.GetPhysicalName(EntityType.Schema, metaValue.Name), 
-				metaValue.Description, parameters, lexicons, loadType, type, sequences, tableById, tableByName, 
+			var result = new DbSchema(meta.Value.Id, metaValue.Name, ddlBuilder.GetPhysicalName(EntityType.Schema, metaValue.Name),
+				metaValue.Description, parameters, lexicons, loadType, type, sequences, tableById, tableByName,
 				tableSpaces, provider, tableCount + mtmCount, metaValue.Active, metaValue.IsEntityBaseline());
 
 			LoadRelations(result, schema, mtmCount);
@@ -362,7 +368,7 @@ internal readonly struct Meta : IEquatable<Meta>
 		return null;
 	}
 
-	internal TableSpace? ToTableSpace(string physicalName) => IsTableSpace ? new TableSpace(Id, Name, physicalName, Description, 
+	internal TableSpace? ToTableSpace(string physicalName) => IsTableSpace ? new TableSpace(Id, Name, physicalName, Description,
 		IsTablespaceIndex(), IsTablespaceTable(), false, Array.Empty<string>(), Value ?? string.Empty, Active, IsEntityBaseline()) : null;
 
 	internal Parameter? ToParameter() // Code size: 71 (0x47)
@@ -389,16 +395,16 @@ internal readonly struct Meta : IEquatable<Meta>
 			// sort arrays (warn: relations not yet loaded here)
 			fields.AsSpan().Sort((x, y) => string.CompareOrdinal(x.Name, y.Name));
 			indexes.AsSpan().Sort((x, y) => string.CompareOrdinal(x.Name, y.Name));
-			
-			var table = new Table(Id, Name, Description, Value, physicalName, tableType, relations, fields, new Column[colCount], indexes, new Constraint[constraintCount], 
-				ReferenceId, physicalType, objectIndex, recordSize, GetCacheId(tableType), IsEntityBaseline(), Active, IsTableCached(), IsPhysicalDeletion(), IsTableReadonly(), 
+
+			var table = new Table(Id, Name, Description, Value, physicalName, tableType, relations, fields, new Column[colCount], indexes, new Constraint[constraintCount],
+				ReferenceId, physicalType, objectIndex, recordSize, GetCacheId(tableType), IsEntityBaseline(), Active, IsTableCached(), IsPhysicalDeletion(), IsTableReadonly(),
 				HasPreparedStatement(), IsTableAllowAttributeExtension());
 
 			// load relations later, we need full schema to create relations
 			// load columns
 			LoadColumns(table, tableItems, physRelationCount, ddlBuilder);
 			LoadItemColumns(table, tableItems, physRelationCount); // load indexes & constraints columns
-			LoadConstraints(table, tableItems,	constraintCount, ddlBuilder.Provider);
+			LoadConstraints(table, tableItems, constraintCount, ddlBuilder.Provider);
 
 			return table;
 		}
@@ -406,7 +412,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
-	internal Column ToColumn(int id, string physicalName, int recordIndex, IDdlBuilder ddlBuilder, SearchableType? searchableType= SearchableType.None)
+	internal Column ToColumn(int id, string physicalName, int recordIndex, IDdlBuilder ddlBuilder, SearchableType? searchableType = SearchableType.None)
 	{
 		// Code size: 201 (0xc9)
 		if (IsField)
@@ -414,16 +420,17 @@ internal readonly struct Meta : IEquatable<Meta>
 			// FieldType fieldType, EntityType type, string physicalName, SearchableType searchableType, int id, int recordIndex, int size
 			var entityType = SearchableType.None == searchableType ? EntityType.Field : EntityType.SearchableColumn;
 			var fieldType = GetFieldType();
-			var binarySize = fieldType == FieldType.String? -1 :ddlBuilder.GetBinaryParamLength(fieldType);
-			var binaryType = binarySize> 0;
+			var binarySize = fieldType == FieldType.String ? -1 : ddlBuilder.GetBinaryParamLength(fieldType);
+			var binaryType = binarySize > 0;
 			return new Column(entityType, fieldType, physicalName, searchableType ?? SearchableType.None, id, recordIndex, binarySize, binaryType);
-		} 
-		else if (IsRelation) {
-			return new Column(EntityType.Relation, DefaultColumnFieldType, physicalName, SearchableType.None, id, recordIndex,8,true);
+		}
+		else if (IsRelation)
+		{
+			return new Column(EntityType.Relation, DefaultColumnFieldType, physicalName, SearchableType.None, id, recordIndex, 8, true);
 		}
 		else if (IsSearchableColumn)
 		{
-			return new Column(EntityType.SearchableColumn, FieldType.String, physicalName, GetSearchableType(), id, recordIndex,-1,false);
+			return new Column(EntityType.SearchableColumn, FieldType.String, physicalName, GetSearchableType(), id, recordIndex, -1, false);
 		}
 		else if (IsTimeZoneColumn)
 		{
@@ -431,9 +438,9 @@ internal readonly struct Meta : IEquatable<Meta>
 			var binaryType = binarySize > 0;
 			return new Column(EntityType.TimeZoneColumn, FieldType.Short, physicalName, SearchableType.None, id, recordIndex, binarySize, binaryType);
 		}
-		return new Column(EntityType.Undefined, FieldType.Undefined, string.Empty, SearchableType.None, 0, 0,-1,false); // default column --> throw an exception instead
+		return new Column(EntityType.Undefined, FieldType.Undefined, string.Empty, SearchableType.None, 0, 0, -1, false); // default column --> throw an exception instead
 	}
-	
+
 	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
 	internal Record ToRecord(Table table) // Code size: 217 (0xd9) - no virtual callLoadColumns
 	{
@@ -457,7 +464,7 @@ internal readonly struct Meta : IEquatable<Meta>
 		string.Equals(Description, other.Description, StringComparison.Ordinal) &&
 		string.Equals(Value, other.Value, StringComparison.Ordinal) &&
 		Active == other.Active;
-	
+
 	public override readonly bool Equals(object? obj) => obj is Meta record && Equals(record); // Code size: 25 (0x19) - unbox.any present!!
 
 	public override int GetHashCode()
@@ -473,7 +480,7 @@ internal readonly struct Meta : IEquatable<Meta>
 		hashCode.Add(Description);
 		hashCode.Add(Value);
 		hashCode.Add(Active); //9
-		return hashCode.ToHashCode();	
+		return hashCode.ToHashCode();
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -503,6 +510,11 @@ internal readonly struct Meta : IEquatable<Meta>
 	private static void ThrowUnexpectedTableType(Table table) => // Code size: 38 (0x26)
 		throw new ArgumentException(string.Format(DefaultCulture, ResourceHelper.GetMessage(ResourceType.UnexpectedTableType), table.Type));
 
+	[MethodImpl(MethodImplOptions.NoInlining)]
+	[DoesNotReturn]
+	private static void ThrowMissingInverseRelation(Relation relation, Table table) => // Code size: 39 (0x27)
+		throw new InvalidOperationException(string.Format(DefaultCulture, ResourceHelper.GetMessage(ResourceType.MissingInverseRelation), relation.Name, table.Name));
+
 	private static int GetTableCount(ReadOnlySpan<Meta> schema)
 	{
 		// Code size: 43 (0x2b)
@@ -515,7 +527,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	{
 		// Code size: 56 (0x38)
 		var result = 0;
-		foreach (ref readonly Meta meta in schema) if (meta.IsRelation && meta.GetRelationType()==RelationType.Mtm) ++result;
+		foreach (ref readonly Meta meta in schema) if (meta.IsRelation && meta.GetRelationType() == RelationType.Mtm) ++result;
 		return result >> 1; // divided by 2
 	}
 
@@ -544,17 +556,22 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	private static TableSpace[] GetTableSpaces(ReadOnlySpan<Meta> schema, IDdlBuilder ddlBuilder)
 	{
-		// Code size: 84 (0x54)
-		var result = new List<TableSpace>();
+		// Code size: 141 (0x8d)
+		var tableSpaceCount = 0;
+		foreach (ref readonly Meta meta in schema) if (meta.IsTableSpace) ++tableSpaceCount;
+		if (tableSpaceCount <= 0) return Array.Empty<TableSpace>();
+		var result = new TableSpace[tableSpaceCount];
+		var i = 0;
 		foreach (ref readonly Meta meta in schema)
 		{
 			if (meta.IsTableSpace)
 			{
-				var tablespace = meta.ToTableSpace(ddlBuilder.GetPhysicalName(EntityType.Tablespace, meta.Name));
-				if (tablespace is not null) result.Add(tablespace);
+				// ToTableSpace() only returns null when IsTableSpace is false, already excluded by the check above.
+				result[i] = meta.ToTableSpace(ddlBuilder.GetPhysicalName(EntityType.Tablespace, meta.Name))!;
+				++i;
 			}
 		}
-		return result.ToArray();
+		return result;
 	}
 
 	private static Sequence[] GetSequences(ReadOnlySpan<Meta> schema) => Array.Empty<Sequence>();
@@ -562,18 +579,21 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	private static Parameter[] GetParameters(ReadOnlySpan<Meta> schema)
 	{
-		// Code size: 70 (0x46)
-		var result = new List<Parameter>();
-		foreach (ref readonly Meta meta in schema) 
+		var parameterCount = 0;
+		foreach (ref readonly Meta meta in schema) if (meta.IsParameter) ++parameterCount;
+		if (parameterCount <= 0) return Array.Empty<Parameter>();
+		var result = new Parameter[parameterCount];
+		var i = 0;
+		foreach (ref readonly Meta meta in schema)
 		{
 			if (meta.IsParameter)
 			{
-				var parameter = meta.ToParameter();
-				if (parameter is not null) result.Add(parameter);
+				// ToParameter() only returns null when IsParameter is false, already excluded by the check above.
+				result[i] = meta.ToParameter()!;
+				++i;
 			}
 		}
-
-		return result.ToArray(); // sorted by Id later !!!
+		return result; // sorted by Id later !!!
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
@@ -589,7 +609,7 @@ internal readonly struct Meta : IEquatable<Meta>
 			if (item.IsField)
 			{
 				++fieldCount;
-				if (string.Equals(primaryKey?.Name, item.Name, StringComparison.OrdinalIgnoreCase))	primaryKey = primaryKey.GetDefaultPrimaryKey(item.GetFieldType());
+				if (string.Equals(primaryKey?.Name, item.Name, StringComparison.OrdinalIgnoreCase)) primaryKey = primaryKey.GetDefaultPrimaryKey(item.GetFieldType());
 			}
 		}
 		var result = new Field[fieldCount]; // allow once
@@ -621,7 +641,7 @@ internal readonly struct Meta : IEquatable<Meta>
 		// Code size: 82 (0x52)
 		var i = 0;
 		var count = schema.Length;
-		while (i<count)
+		while (i < count)
 		{
 			if (schema[i].IsSchema) return schema[i];
 			++i;
@@ -629,7 +649,7 @@ internal readonly struct Meta : IEquatable<Meta>
 		return null;
 	}
 
-	private static Table[] GetTables(Meta[] schema, IDdlBuilder ddlBuilder, in Meta metaSchema, DatabaseProvider provider,	int mtmCount, int tableCount)
+	private static Table[] GetTables(Meta[] schema, IDdlBuilder ddlBuilder, in Meta metaSchema, DatabaseProvider provider, int mtmCount, int tableCount)
 	{
 		// Code size: 393 (0x189)
 		// bug : pass 1 : Incorrect segment start index — High Severity
@@ -646,7 +666,7 @@ internal readonly struct Meta : IEquatable<Meta>
 				if (dico.TryGetValue(meta.ReferenceId, out var existing))
 					dico[meta.ReferenceId] = (existing.Item1, existing.Item2 + 1);
 				else
-					dico[meta.ReferenceId] = (i, 1); // record first child index, not outer counter
+					dico[meta.ReferenceId] = (i, 1);
 			}
 			++i;
 		}
@@ -671,7 +691,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
-	private static int MetaSchemaComparer(in Meta meta1,in Meta meta2)
+	private static int MetaSchemaComparer(in Meta meta1, in Meta meta2)
 	{
 		// sort ASC by reference_id, name
 		var result = meta1.ReferenceId.CompareTo(meta2.ReferenceId);
@@ -690,7 +710,7 @@ internal readonly struct Meta : IEquatable<Meta>
 		var databaseProvider = ddlBuilder.Provider;
 
 		// count fields 
-		for (var i=0; i < fields.Length; ++i)
+		for (var i = 0; i < fields.Length; ++i)
 		{
 			var field = fields[i];
 			// searchable field ? 
@@ -714,7 +734,7 @@ internal readonly struct Meta : IEquatable<Meta>
 			{
 				var itemProvider = item.GetDatabaseProvider();
 				// test databaseProvider ?
-				if (itemProvider == DatabaseProvider.Undefined || itemProvider == databaseProvider) 
+				if (itemProvider == DatabaseProvider.Undefined || itemProvider == databaseProvider)
 					++constraintCount; // constraint specific to a DB provider.
 			}
 		}
@@ -728,7 +748,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	[SkipLocalsInit]
 	private static void LoadColumns(Table table, ReadOnlySpan<Meta> tableItems, int physRelationCount, IDdlBuilder ddlBuilder)
 	{
-		// Code size: 848 (0x350)
+		// Code size: 857 (0x359)
 		// relation are not yet loaded here !!!!
 		// BUG : pass 2: Wrong id fallback — Medium Severity (not really a bug)
 		// relation are not yet loaded here !!!!
@@ -809,7 +829,7 @@ internal readonly struct Meta : IEquatable<Meta>
 		// Code size: 355 (0x163)
 		if (table.Indexes.Length <= 0) return;
 		Dictionary<string, int>? relDico = null;
-		var defaultCol = new Column(EntityType.Undefined, FieldType.Undefined, string.Empty, SearchableType.None, 0, 0,-1, false);
+		var defaultCol = new Column(EntityType.Undefined, FieldType.Undefined, string.Empty, SearchableType.None, 0, 0, -1, false);
 		if (physRelationCount > 0)
 		{
 			relDico = new Dictionary<string, int>(physRelationCount * 2); // <relation_logical_name, relation_id>
@@ -852,22 +872,22 @@ internal readonly struct Meta : IEquatable<Meta>
 	{
 		// Code size: 241 (0xf1)
 		if (constraintCount <= 0) return;
-		var defaultCol = new Column(EntityType.Undefined, FieldType.Undefined, string.Empty, SearchableType.None, 0, 0,0,false);
+		var defaultCol = new Column(EntityType.Undefined, FieldType.Undefined, string.Empty, SearchableType.None, 0, 0, 0, false);
 		var constraintIndex = 0;
 		foreach (var meta in tableItems)
 		{
-			if (meta.IsConstraint) 
+			if (meta.IsConstraint)
 			{
 				var metaProvider = meta.GetDatabaseProvider();
-				if (metaProvider != DatabaseProvider.Undefined && metaProvider!= databaseProvider) continue;
+				if (metaProvider != DatabaseProvider.Undefined && metaProvider != databaseProvider) continue;
 				var constraint = meta.ToConstraint();
 				if (constraint is null) continue;
 				// load columns
 				table.Constraints[constraintIndex++] = constraint;
 				var colCount = constraint.Columns.Length;
 				var arr = meta.Value?.Split(ConstraintColumnDelimiter) ?? Array.Empty<string>();
-				var columnIndex=0;
-				for (var j=2; j < arr.Length; ++j) if (columnIndex < colCount) constraint.Columns[columnIndex++] = table.GetColumn(arr[j]) ?? defaultCol;
+				var columnIndex = 0;
+				for (var j = 2; j < arr.Length; ++j) if (columnIndex < colCount) constraint.Columns[columnIndex++] = table.GetColumn(arr[j]) ?? defaultCol;
 			}
 		}
 	}
@@ -893,7 +913,7 @@ internal readonly struct Meta : IEquatable<Meta>
 				if (toTable is not null && fromTable is not null)
 				{
 					var relation = meta.ToRelation(toTable);
-					fromTable.Relations[relationDicoIndex[fromTable.Id]] = relation ?? GetDefaultRelation(meta,RelationType.Undefined,TableType.Undefined);
+					fromTable.Relations[relationDicoIndex[fromTable.Id]] = relation ?? GetDefaultRelation(meta, RelationType.Undefined, TableType.Undefined);
 					++relationDicoIndex[fromTable.Id];
 				}
 			}
@@ -927,8 +947,7 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	private static void LoadMtm(DbSchema schema, int mtmCount)
 	{
-		// Code size: 350 (0x15e) - boxing removed
-		// BUG — inverseRelation dereferenced without null check
+		// Code size: 365 (0x16d) - boxing removed
 		var ddlBuilder = schema.Provider.GetDdlBuilder();
 		var span = new Span<Table>(schema.TablesById);
 		var mtm = new Dictionary<string, Table>(mtmCount * 2); // store mtm physical name
@@ -943,14 +962,18 @@ internal readonly struct Meta : IEquatable<Meta>
 					var metaTable = new Meta(0, (byte)EntityType.Relation, 0, (int)TableType.Mtm, 0L, TableType.Mtm.GetLogicalName(relation.GetMtmName()), null, null, true);
 					var emptyTable = GetDefaultTable(metaTable);
 					var physicalName = ddlBuilder.GetPhysicalName(emptyTable, schema);
-					Relation inverseRelation = relation.InverseRelation;
+					var inverseRelation = relation.InverseRelation;
+					// InverseRelation defaults to a self-reference (see Relation ctor) and SetInverseRelation only
+					// overwrites it once; if LoadInverseRelations never resolved it, it's still self-referencing here —
+					// it is never null, so that's the failure this must detect.
+					if (ReferenceEquals(inverseRelation, relation)) ThrowMissingInverseRelation(relation, table);
 
 					if (!mtm.TryGetValue(physicalName, out var mtmTable))
 					{
 						var compareLessThan0 = string.CompareOrdinal(relation.Name, inverseRelation.Name) < 0;
 						mtmTable = GetMtm(emptyTable, ddlBuilder, physicalName, mtm.Count,
-							compareLessThan0 ? relation.SetTypeAndId(RelationType.Mto,1, true) : inverseRelation.SetTypeAndId(RelationType.Mto,1, true),
-							compareLessThan0 ? inverseRelation.SetTypeAndId(RelationType.Mto,2, true) : relation.SetTypeAndId(RelationType.Mto, 2, true));
+							compareLessThan0 ? relation.SetTypeAndId(RelationType.Mto, 1, true) : inverseRelation.SetTypeAndId(RelationType.Mto, 1, true),
+							compareLessThan0 ? inverseRelation.SetTypeAndId(RelationType.Mto, 2, true) : relation.SetTypeAndId(RelationType.Mto, 2, true));
 						mtm.Add(physicalName, mtmTable);
 					}
 
@@ -983,7 +1006,7 @@ internal readonly struct Meta : IEquatable<Meta>
 				{
 					var column = table.Columns[index];
 					// change if necessary
-					if (column.FieldType!= relation.FieldType) 
+					if (column.FieldType != relation.FieldType)
 						table.Columns[index] = column.SetFieldType(relation.FieldType, builder);
 				}
 			}
@@ -996,13 +1019,13 @@ internal readonly struct Meta : IEquatable<Meta>
 	}
 
 	private static Meta SetObjectType(in Meta meta, byte objectType) => // Code size: 55 (0x37)
-		new (meta.Id, objectType, meta.ReferenceId, meta.DataType, meta.Flags, meta.Name, meta.Description, meta.Value, meta.Active);
+		new(meta.Id, objectType, meta.ReferenceId, meta.DataType, meta.Flags, meta.Name, meta.Description, meta.Value, meta.Active);
 
 	private static Relation CreateMtmRelation(Relation relation, Table mtmTable)
 	{
 		// Code size: 44 (0x2c)
 		var meta = relation.ToMeta(0);
-		return meta.ToRelation(mtmTable) ?? GetDefaultRelation(DefaultMetaRelation, RelationType.Undefined,TableType.Undefined);
+		return meta.ToRelation(mtmTable) ?? GetDefaultRelation(DefaultMetaRelation, RelationType.Undefined, TableType.Undefined);
 	}
 
 	/// <summary>
@@ -1012,7 +1035,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	private static CacheId GetCacheId(TableType tableType)
 	{
 		// Code size: 16 (0x10)
-		return tableType == TableType.Business? new CacheId() : DefaultCacheId;
+		return tableType == TableType.Business ? new CacheId() : DefaultCacheId;
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
@@ -1028,22 +1051,18 @@ internal readonly struct Meta : IEquatable<Meta>
 		return w1.CompareTo(w2);
 	}
 
-	private static long? GetLongValue(string? value, int index, char separator) 
+	private static long? GetLongValue(string? value, int index, char separator)
 	{
-		// Code size: 135 (0x87)
-		if (value is not null)
-		{
-			var endIndex = value.IndexOfOccurrence(separator, index);
-			var startIndex = value.IndexOfOccurrence(separator, index - 1);
-			string subResult= string.Empty; 
-			if (endIndex >= 0 && startIndex >= 0) subResult = value.Substring(startIndex + 1, endIndex - startIndex - 1);
-			if (endIndex >= 0 && startIndex < 0) subResult = value[..endIndex];
-			if (endIndex < 0 && startIndex >= 0) subResult = value.Substring(startIndex + 1, value.Length - startIndex - 1);
-			if (endIndex < 0 && startIndex < 0) subResult = value;
-			if (long.TryParse(subResult, out long result)) return result;
-		}
-		return null;
-	} 
+		if (value is null) return null;
+		var endIndex = value.IndexOfOccurrence(separator, index);
+		var startIndex = value.IndexOfOccurrence(separator, index - 1);
+		// startIndex < 0 while index > 1 means fewer than (index-1) separators exist,
+		// i.e. field `index` isn't present at all — must not fall back to the whole value.
+		if (index > 1 && startIndex < 0) return null;
+		var span = value.AsSpan(startIndex + 1);
+		var slice = endIndex >= 0 ? span[..(endIndex - startIndex - 1)] : span;
+		return long.TryParse(slice, out var result) ? result : null;
+	}
 
 	private static Table GetMtm(Table partialTable, IDdlBuilder ddlBuilder, string physicalName, int objectIndex, Relation relation1, Relation relation2)
 	{

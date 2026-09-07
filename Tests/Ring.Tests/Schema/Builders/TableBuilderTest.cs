@@ -47,7 +47,9 @@ public class TableBuilderTest
         Assert.NotNull(metaTablePostGre.GetColumn("id"));
         Assert.NotNull(metaTablePostGre.GetColumn("schema_id"));
         Assert.NotNull(metaTablePostGre.GetColumn("object_type"));
-        Assert.Equal("id", metaTablePostGre.Fields[metaTablePostGre.Columns[0].RecordIndex].Name);
+		Assert.Equal(-1,metaTablePostGre.GetColumn("name")?.BinaryLength);
+		Assert.False(metaTablePostGre.GetColumn("name")?.BinaryType);
+		Assert.Equal("id", metaTablePostGre.Fields[metaTablePostGre.Columns[0].RecordIndex].Name);
 		Assert.Equal(1, metaTablePostGre.Fields[metaTablePostGre.Columns[0].RecordIndex].Id);
 		Assert.Equal("schema_id", metaTablePostGre.Fields[metaTablePostGre.Columns[1].RecordIndex].Name);
         Assert.Equal("object_type", metaTablePostGre.Fields[metaTablePostGre.Columns[2].RecordIndex].Name);

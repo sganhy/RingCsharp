@@ -60,6 +60,7 @@ internal enum ResourceType : short
 	UnsupportedParamType = 205,
 	UnknownMessageResourceType = 206,
 	UnexpectedTableType = 207,
+	MissingInverseRelation = 208,
 
 	/// <summary>
 	/// Sql operations description

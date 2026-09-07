@@ -30,6 +30,7 @@
 205,Unsupported parameter type : '{0}'.
 206,Unknown resource type : {0} ({1}).
 207,Unexpected table type (Meta). Current table type is: '{0}'.
+208,"Relation '{0}' on table '{1}' is typed as Mtm but has no inverse relation (LoadInverseRelations did not resolve it)."
 245,create table
 246,Table '{0}' created
 294,Operation {0}.{1} #{2} is not supported.
