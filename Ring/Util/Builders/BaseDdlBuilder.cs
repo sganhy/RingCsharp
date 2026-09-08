@@ -1,6 +1,7 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
+using System.Data.Common;
 using System.Globalization;
 using System.Text;
 using DbSchema = Ring.Schema.Models.Schema;
@@ -337,12 +338,11 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	}
 	public string Create(Table table, TableSpace? tablespace = null)
 	{
-		// Code size: 272 (0x110)
-		var i = 0;
-		var columnCount = table.Columns.Length;
+		// Code size: 291 (0x123)
 		var result = new StringBuilder();
 		var fieldInfoDico = GetFieldInfoDico(table);
 		var relationInfoDico = GetRelationInfoDico(table);
+		var columns = new ReadOnlySpan<Column>(table.Columns);
 
 		result.Append(DdlCreate)
 			.Append(DdlTable)
@@ -351,23 +351,24 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 			.Append('(')
 			.Append(SqlLineFeed);
 
-		while (i < columnCount)
+		foreach (ref readonly Column column in columns)
 		{
-			var column = table.Columns[i];
-			if (column.Type == EntityType.Field || column.Type == EntityType.SearchableColumn || column.Type == EntityType.TimeZoneColumn)
+			switch (column.Type)
 			{
-				var field = fieldInfoDico[column.RecordIndex];
-				Create(result, table, column, field, null);
+				case EntityType.Field:
+				case EntityType.SearchableColumn:
+				case EntityType.TimeZoneColumn:
+					var field = fieldInfoDico[column.RecordIndex];
+					Create(result, table, column, field, null);
+					break;
+				case EntityType.Relation:
+					var relation = relationInfoDico[column.RecordIndex];
+					Create(result, table, column, null, relation);
+					break;
 			}
-			if (column.Type == EntityType.Relation)
-			{
-				var relation = relationInfoDico[column.RecordIndex];
-				Create(result, table, column, null, relation);
-			}
-			++i;
 		}
 
-		if (i > 0) result.Length -= 2;
+		if (columns.Length > 0) result.Length -= 2;
 		result.Append(')');
 		if (tablespace is not null)
 		{

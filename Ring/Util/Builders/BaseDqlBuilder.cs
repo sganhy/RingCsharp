@@ -28,15 +28,15 @@ internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
 
 	private string BuildSelect(Table table, bool includeRelations)
 	{
-		// Code size: 157 (0x9d) - drivers are built 
+		// Code size: 153 (0x99)
 		var result = new StringBuilder();
-		var columns = table.Columns.AsSpan();
+		var columns = new ReadOnlySpan<Column>(table.Columns);
 
 		//var includeSearchables = false; // exclude searchable columns for now, as they are not needed
 		result.Append(SqlSelect);
 
 		// select clause 
-		foreach (var column in columns) 
+		foreach (ref readonly Column column in columns) 
 		{
 			//before: (column.Type == EntityType.SearchableColumn && includeSearchables)
 			if (column.Type == EntityType.SearchableColumn) continue;

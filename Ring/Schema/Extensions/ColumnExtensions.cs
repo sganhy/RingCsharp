@@ -25,7 +25,7 @@ internal static class ColumnExtensions
 
 	internal static int Hash(this in Column column)
 	{
-		// // Code size: 24 (0x18)
+		// Code size: 29 (0x1d)
 		var hash = new HashCode();
 		hash.AddColumn(column);
 		return hash.ToHashCode();

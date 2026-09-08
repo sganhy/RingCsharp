@@ -370,6 +370,7 @@ internal static class NetworkStreamExtensions
 	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
 	internal static void SendExtendedQuery(this NetworkStream stream, ReadOnlySpan<char> sql, int sqlByteCount, Encoding encoding, byte[] sqlSendBuffer, in SaveQuery query)
 	{
+		// Code size: 546 (0x222)
 		// Pass 1: iterate table columns once to compute per-parameter byte lengths.
 		// SearchableColumn entries are skipped (same rule as AppendRecordData on the read path).
 		//
@@ -379,10 +380,8 @@ internal static class NetworkStreamExtensions
 		//
 		// ByteArray columns hold Base64 text client-side but go over the wire as raw
 		// bytes in binary format — decoded once here and kept for the write pass below.
-		var tableColumns = query.Table.Columns;
-		var paramCount = 0;
-		foreach (var col in tableColumns)
-			if (col.Type != EntityType.SearchableColumn) paramCount++;
+		var paramCount = query.Table.Columns.Length;
+		var tableColumns = new ReadOnlySpan<Column>(query.Table.Columns);
 
 		var paramLengths = ArrayPool<int>.Shared.Rent(paramCount);
 		byte[]?[]? byteaBytes = null; // lazily allocated only if a ByteArray parameter is present

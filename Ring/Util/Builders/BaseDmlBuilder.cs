@@ -79,26 +79,33 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 
 	private string BuildInsert(Table table)
 	{
-		// Code size: 258 (0x102)
+		// Code size: 242 (0xf2)
 		var columns = new StringBuilder();
+		var result = new StringBuilder();
 		var values = new StringBuilder();
 		var spanColumns = new ReadOnlySpan<Column>(table.Columns);
-		var columnCount = table.Columns.Length;
 		var variableId = 1;
 
-		for (var i = 0; i<columnCount; ++i, ++variableId)
+		foreach (ref readonly Column column in spanColumns)
 		{
-			var column = spanColumns[i];
 			columns.Append(column.PhysicalName);
 			columns.Append(ColumnDelimiter);
-			AppendVariable(values, VariableNameTemplate, variableId, true, column.FieldType);
+			AppendVariable(values, VariableNameTemplate, variableId++, true, column.FieldType);
 		}
 		if (variableId > 1)
 		{
 			--columns.Length;
 			--values.Length;
 		}
-		return $"{DmlInsert}{table.PhysicalName} {StartParenthesis}{columns}{DmlValues}{values}{EndParenthesis}";
+		result.Append(DmlInsert);
+		result.Append(table.PhysicalName);
+		result.Append(SqlSpace);
+		result.Append(StartParenthesis);
+		result.Append(columns);
+		result.Append(DmlValues);
+		result.Append(values);
+		result.Append(EndParenthesis);
+		return result.ToString();
 	}
 
 	private string BuildDelete(Table table)
