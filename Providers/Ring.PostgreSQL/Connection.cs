@@ -317,7 +317,7 @@ public sealed class Connection : IConnection
 		_state = ConnectionState.Open | ConnectionState.Executing; // we checked already the connection state in SaveQuery.Execute().
 		try
 		{
-			_stream.SendExtendedQuery(sql, sqlByteCount, _encoding, _sqlSendBuffer, query);
+			_stream.SendExtendedQuery(sql, sqlByteCount, _encoding, _sqlSendBuffer, new byte[0]);
 			var returnValue = _stream.DrainToReadyForQuery(ref _transactionStatus);
 			// AlterQuery's Execute enriches its error via returnValue?.Set(query, _ddlBuilder).
 			// If you have an equivalent builder for Save-related errors, wire it in the same way here.

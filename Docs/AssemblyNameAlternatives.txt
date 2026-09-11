@@ -67,8 +67,22 @@ A different well entirely — structural/architectural terms, since "schema" its
 
 
 Name	Why it fits	Availability
-Nexum	Latin for "link/bond" — what an ORM does: binds objects to the DB. Clean, short, memorable.
+Nexum * 	Latin for "link/bond" — what an ORM does: binds objects to the DB. Clean, short, memorable.
 Velum	A thin, precise covering layer — the ORM/schema layer sitting over your raw database. Anatomically exact metaphor.
 Continuo	The always-present harmonic foundation — the persistent schema runtime underlying your application.
 Athanor	A self-sustaining furnace — a runtime that keeps schemas live indefinitely with zero downtime.
-Cambium	The living generative layer in a tree — continuously produces new structure, maps to schema evolution.
+Cambium *	The living generative layer in a tree — continuously produces new structure, maps to schema evolution.
+
+Voici 10 propositions :
+
+Nom	Idée
+Nexus	Un point central qui relie schéma, configuration, déploiement et API.
+Forge	L'idée de fabriquer une base et ses services à partir d'une configuration.
+Atlas	Évoque une structure complète et une vision globale de l'architecture.
+Genesis	Le système est capable de créer une base et son environnement à partir de zéro.
+Helix !	Évoque une structure organisée, évolutive et continue.
+SchemaFlow	Très explicite : gestion et évolution du schéma comme un flux automatisé.
+DataForge !	Combine clairement les notions de données et de génération/construction.
+CoreDB	Positionne le projet comme le cœur de gestion de la base de données.
+Continuum	Fait référence à la continuité, au déploiement et au business continuity.
+Foundry	Une « fonderie » : un système qui produit et assemble automatiquement l'infrastructure.
