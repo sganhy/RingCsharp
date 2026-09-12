@@ -78,24 +78,26 @@ internal static class SchemaExtensions
 	/// </summary>
 	internal static Meta[] ToMeta(this DbSchema schema)
 	{
-		// Code size: 345 (0x159)
-		// Pre-calculate approximate capacity to avoid List resizes
-		var initialCapacity = 1 + schema.Parameters.Length + schema.TableSpaces.Length +
-							  schema.Lexicons.Length + schema.Sequences.Length;
+		// Code size: 366 (0x16e)
+		// 1. Calculate the exact length needed for the destination array
+		var totalLength = 1 + schema.Parameters.Length + schema.TableSpaces.Length +
+						  schema.Lexicons.Length + schema.Sequences.Length;
 
 		for (var i = 0; i < schema.TablesById.Length; ++i)
 		{
 			var table = schema.TablesById[i];
-			initialCapacity += table.Fields.Length + table.Relations.Length + table.Indexes.Length + 1;
+			totalLength += table.Fields.Length + table.Relations.Length + table.Indexes.Length + 1;
 		}
 
-		var result = new List<Meta>(initialCapacity);
+		// 2. Allocate the exact destination array
+		var result = new Meta[totalLength];
+		var index = 0;
 
-		// 1. Convert Schema entity flags & root metadata
+		// 3. Populate root Schema metadata
 		var flags = 0L;
 		flags = Meta.SetEntityBaseline(flags, schema.Baseline);
 
-		var schemaMeta = new Meta(
+		result[index++] = new Meta(
 			schema.Id,
 			(byte)EntityType.Schema,
 			0, // ReferenceId
@@ -106,39 +108,40 @@ internal static class SchemaExtensions
 			null, // Value
 			schema.Active
 		);
-		result.Add(schemaMeta);
 
-		// 2. Convert Parameters
+		// 4. Populate Parameters
 		for (var i = 0; i < schema.Parameters.Length; ++i)
 		{
-			result.Add(schema.Parameters[i].ToMeta());
+			result[index++] = schema.Parameters[i].ToMeta();
 		}
 
-		// 3. Convert TableSpaces
+		// 5. Populate TableSpaces
 		for (var i = 0; i < schema.TableSpaces.Length; ++i)
 		{
-			//result.Add(schema.TableSpaces[i].ToMeta());
+			//result[index++] = schema.TableSpaces[i].ToMeta();
 		}
 
-		// 4. Convert Lexicons
+		// 6. Populate Lexicons
 		for (var i = 0; i < schema.Lexicons.Length; ++i)
 		{
-			//result.Add(schema.Lexicons[i].ToMeta());
+			//result[index++] = schema.Lexicons[i].ToMeta();
 		}
 
-		// 5. Convert Sequences
+		// 7. Populate Sequences
 		for (var i = 0; i < schema.Sequences.Length; ++i)
 		{
-			//result.Add(schema.Sequences[i].ToMeta());
+			//result[index++] = schema.Sequences[i].ToMeta();
 		}
 
-		// 6. Convert Tables (and their child Fields, Relations, Indexes)
+		// 8. Populate Tables & children
 		for (var i = 0; i < schema.TablesById.Length; ++i)
 		{
-			result.AddRange(schema.TablesById[i].ToMeta(schema.Id));
+			var tableMetas = schema.TablesById[i].ToMeta(schema.Id);
+			Array.Copy(tableMetas, 0, result, index, tableMetas.Length);
+			index += tableMetas.Length;
 		}
 
-		return result.ToArray();
+		return result;
 	}
 
 }
