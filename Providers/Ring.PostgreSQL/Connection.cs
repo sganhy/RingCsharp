@@ -5,10 +5,10 @@ using Ring.PostgreSQL.Enums;
 using Ring.PostgreSQL.Exceptions;
 using Ring.PostgreSQL.Extensions;
 using Ring.PostgreSQL.Helpers;
-using Ring.Schema.Models;
 using Ring.Util.Builders.PostgreSQL;
 using Ring.Util.Enums;
 using Ring.Util.Helpers;
+using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
@@ -314,28 +314,43 @@ public sealed class Connection : IConnection
 
 	public OperationalError? Execute(in SaveQuery query, ReadOnlySpan<char> sql, int sqlByteCount)
 	{
-		_state = ConnectionState.Open | ConnectionState.Executing; // we checked already the connection state in SaveQuery.Execute().
+		// Code size: 158 (0x9e)
+		_state = ConnectionState.Open | ConnectionState.Executing;
+		byte[]? rentedPayload = null;
 		try
 		{
-			_stream.SendExtendedQuery(sql, sqlByteCount, _encoding, _sqlSendBuffer, new byte[0]);
-			var returnValue = _stream.DrainToReadyForQuery(ref _transactionStatus);
-			// AlterQuery's Execute enriches its error via returnValue?.Set(query, _ddlBuilder).
-			// If you have an equivalent builder for Save-related errors, wire it in the same way here.
+			var payloadSize = query.GetVariablesPayloadSize(_encoding);
+			rentedPayload = ArrayPool<byte>.Shared.Rent(payloadSize);
+
+			var actualPayloadSize = query.WriteVariablesPayload(rentedPayload, _encoding);
+
+			// Zero heap allocations:
+			// _sqlSendBuffer implicitly casts byte[] -> ReadOnlySpan<byte>
+			// rentedPayload is sliced into a ReadOnlySpan<byte>
+			_stream.SendExtendedQuery(
+				sql,
+				sqlByteCount,
+				_encoding,
+				_sqlSendBuffer,
+				rentedPayload.AsSpan(0, actualPayloadSize));
+
+			var returnValue = _stream.DrainToReadyForQuery(ref _transactionStatus); //[cite: 5]
 			_state = ConnectionState.Open;
 			return returnValue;
 		}
 		catch (PgOperationalError)
 		{
-			// Server-side error (constraint violation, etc.); the connection itself is still usable.
 			_state = ConnectionState.Open;
 			throw;
 		}
 		catch
 		{
-			// I/O failure or protocol desync leaves the stream in an
-			// unknown state - don't let the connection be reused as-is.
 			_state = ConnectionState.Broken;
 			throw;
+		}
+		finally
+		{
+			if (rentedPayload is not null) ArrayPool<byte>.Shared.Return(rentedPayload);
 		}
 	}
 

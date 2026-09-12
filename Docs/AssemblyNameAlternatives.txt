@@ -86,3 +86,41 @@ DataForge !	Combine clairement les notions de données et de génération/constr
 CoreDB	Positionne le projet comme le cœur de gestion de la base de données.
 Continuum	Fait référence à la continuité, au déploiement et au business continuity.
 Foundry	Une « fonderie » : un système qui produit et assemble automatiquement l'infrastructure.
+
+from Gemini ==> 
+
+1. Functional & Hybrid (ORM + API)
+
+These names directly highlight the dual nature of your framework—seamlessly bridging persistent data storage with active REST delivery.
+
+    DataBridge / DataBridge.NET: Clear and professional. Emphasizes bridging physical schema definition directly with active REST APIs.
+
+    AutoSchema: Highlights the dynamic, declarative nature of creating constraints, tables, views, and live endpoints on the fly.
+
+    SchemaRest: Simple, explicit, and descriptive. Directly communicates what the library does: turn schema configurations into REST resources.
+
+    OrmApi / RestOrm: Direct and no-nonsense. Leaves zero doubt about the library's scope and capabilities.
+
+2. Architectural & Dynamic (Hot-Swappable / Live)
+
+These options focus on the ability to dynamic-link REST endpoints and update schemas without interrupting existing APIs.
+
+    LiveSchema: Focuses on the real-time, non-blocking aspect of building tables and linking APIs without stopping running services.
+
+    FlexSchema: Emphasizes adaptability and fluid reconfiguration of endpoints and underlying ORM schemas.
+
+    Helix: Implies a continuous, connected structure—linking database models and REST endpoints seamlessly.
+
+    AdaptiData: Highlights how easily the library adapts to new configuration files and live endpoint additions.
+
+3. Abstract & Conceptual
+
+Shorter, memorable names that sound like modern developer tooling or open-source libraries.
+
+    Expanse: Suggests an expanding data layer where you can constantly add tables, views, and APIs on the fly.
+
+    Nexus: Represents a central connection point where configuration, ORM models, tables, and REST endpoints meet.
+
+    Conduit: Suggests a fluid pipeline flowing directly from database tables/views to external REST interfaces.
+
+    Synthetix / SynthData: Plays on the idea of dynamically "synthesizing" database schemas and API layers from a single configuration file.
