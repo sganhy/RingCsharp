@@ -34,6 +34,7 @@ public sealed class SchemaManager
 		var schemaBuilder = new SchemaBuilder();
 		var dbProvider = _connection.ProviderId().ToDatabaseProvider();
 		var initialSchema = schemaBuilder.GetMeta(dbProvider, GetInitSchemaConfiguration(physicalSchema, "meta_table", "meta_index"));
+		var initialMetaSchema = initialSchema.ToMeta();
 		var bulkAlter =  new BulkAlter(initialSchema);
 		var size = Unsafe.SizeOf<Column>();
 		foreach (var table in initialSchema.TablesById)
@@ -44,12 +45,14 @@ public sealed class SchemaManager
 
 
 		var bulkSave = new BulkSave(initialSchema);
-		foreach (var param in initialSchema.Parameters)
+		var startTime = DateTime.Now;
+		// insert initial schema into @meta table
+		foreach (var meta in initialMetaSchema)
 		{
-			var meta= param.ToMeta();
 			var record = meta.ToRecord(initialSchema.GetTable("@meta") ?? Meta.GetDefaultTable(meta));
 			bulkSave.ForceInsert(record);
 		}
+		Console.WriteLine($"BulkSave: {bulkSave.Queries.Count} queries, elapsed time: {(DateTime.Now - startTime).TotalMilliseconds} ms");
 		bulkSave.Save(_connection,true);
 
 

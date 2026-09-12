@@ -73,4 +73,72 @@ internal static class SchemaExtensions
 		return null;
 	}
 
+	/// <summary>
+	/// 	Convert DbSchema model and its contained schema objects into a Meta array representation.
+	/// </summary>
+	internal static Meta[] ToMeta(this DbSchema schema)
+	{
+		// Code size: 345 (0x159)
+		// Pre-calculate approximate capacity to avoid List resizes
+		var initialCapacity = 1 + schema.Parameters.Length + schema.TableSpaces.Length +
+							  schema.Lexicons.Length + schema.Sequences.Length;
+
+		for (var i = 0; i < schema.TablesById.Length; ++i)
+		{
+			var table = schema.TablesById[i];
+			initialCapacity += table.Fields.Length + table.Relations.Length + table.Indexes.Length + 1;
+		}
+
+		var result = new List<Meta>(initialCapacity);
+
+		// 1. Convert Schema entity flags & root metadata
+		var flags = 0L;
+		flags = Meta.SetEntityBaseline(flags, schema.Baseline);
+
+		var schemaMeta = new Meta(
+			schema.Id,
+			(byte)EntityType.Schema,
+			0, // ReferenceId
+			(int)schema.Type,
+			flags,
+			schema.Name,
+			schema.Description,
+			null, // Value
+			schema.Active
+		);
+		result.Add(schemaMeta);
+
+		// 2. Convert Parameters
+		for (var i = 0; i < schema.Parameters.Length; ++i)
+		{
+			result.Add(schema.Parameters[i].ToMeta());
+		}
+
+		// 3. Convert TableSpaces
+		for (var i = 0; i < schema.TableSpaces.Length; ++i)
+		{
+			//result.Add(schema.TableSpaces[i].ToMeta());
+		}
+
+		// 4. Convert Lexicons
+		for (var i = 0; i < schema.Lexicons.Length; ++i)
+		{
+			//result.Add(schema.Lexicons[i].ToMeta());
+		}
+
+		// 5. Convert Sequences
+		for (var i = 0; i < schema.Sequences.Length; ++i)
+		{
+			//result.Add(schema.Sequences[i].ToMeta());
+		}
+
+		// 6. Convert Tables (and their child Fields, Relations, Indexes)
+		for (var i = 0; i < schema.TablesById.Length; ++i)
+		{
+			result.AddRange(schema.TablesById[i].ToMeta(schema.Id));
+		}
+
+		return result.ToArray();
+	}
+
 }
