@@ -21,8 +21,6 @@ internal enum EntityType : byte
 	SearchableColumn = 71,
 	TimeZoneColumn = 72,
 	IndexColumn = 73,
-	// not stored in @meta table
-	Comment = 111,
 	// 125 & 126 reserved for unit tests
 	Undefined = 127
 }

@@ -329,49 +329,46 @@ internal static class NetworkStreamExtensions
 	}
 
 	/// <summary>
-	///		Sends the Extended Query subprotocol for a parameterized statement: a Parse ('P') message built here from <paramref name="sql"/> -
-	///		structured exactly like the Simple Query message in <see cref="SendQuery"/>, plus the two extra fixed fields Parse requires (unnamed statement,
-	///		numParamTypes) - immediately followed by <paramref name="variables"/>, a pre-built Bind ('B') + Execute ('E') + Sync ('S') sequence the
-	///		caller has already encoded to wire format. Both pieces are staged into one buffer and sent with a single Write, so the round-trip cost matches SendQuery.
+	///     Sends the Extended Query subprotocol for a parameterized statement using pre-encoded UTF-8 SQL bytes.
 	/// </summary>
 	[SkipLocalsInit]
 	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
-	internal static void SendExtendedQuery(this NetworkStream stream, ReadOnlySpan<char> sql, int sqlByteCount, Encoding encoding, byte[] sqlSendBuffer, ReadOnlySpan<byte> variables)
+	internal static void SendExtendedQuery(this NetworkStream stream, ReadOnlySpan<byte> sql, ReadOnlySpan<byte> variables, byte[] sqlSendBuffer)
 	{
-		// Code size: 325 (0x145)
-		var parseMessageLength = 1 + 4 + 1 + sqlByteCount + 1 + 2;
-		var messageLength = parseMessageLength + variables.Length;
+		// Code size: 348 (0x15c)
+		var parseMsgLength = 8 + sql.Length; // 1 ('P') + 4 (len) + 1 (stmt) + sql.Length + 1 (NUL) + 2 (paramTypes)
+		var msgLength = parseMsgLength + variables.Length;
 
 		// Branch 1 & 2: Fast paths without ArrayPool renting (no try/finally needed)
-		if (messageLength <= sqlSendBuffer.Length)
+		if (msgLength <= sqlSendBuffer.Length)
 		{
-			Span<byte> buffer = messageLength <= SmallMessageStackAllocThreshold
-				? stackalloc byte[messageLength]
-				: sqlSendBuffer.AsSpan(0, messageLength);
+			Span<byte> buffer = msgLength <= SmallMessageStackAllocThreshold ? stackalloc byte[msgLength] : sqlSendBuffer.AsSpan(0, msgLength);
 
 			buffer[0] = (byte)FrontendMessageCode.Parse;
-			BinaryPrimitives.WriteInt32BigEndian(buffer.Slice(1, 4), parseMessageLength - 1);
+			BinaryPrimitives.WriteInt32BigEndian(buffer.Slice(1, 4), parseMsgLength - 1);
 			buffer[5] = 0; // unnamed statement
-			encoding.GetBytes(sql, buffer.Slice(6, sqlByteCount));
-			buffer[6 + sqlByteCount] = 0; // query NUL terminator
-			BinaryPrimitives.WriteInt16BigEndian(buffer.Slice(7 + sqlByteCount, 2), 0); // numParamTypes = 0, server infers types
-			variables.CopyTo(buffer[parseMessageLength..]);
+			sql.CopyTo(buffer.Slice(6));
+			buffer[6 + sql.Length] = 0; // query NUL terminator
+			BinaryPrimitives.WriteInt16BigEndian(buffer.Slice(7 + sql.Length, 2), 0); // numParamTypes = 0
+			variables.CopyTo(buffer[parseMsgLength..]);
+
 			stream.Write(buffer);
 		}
 		// Branch 3: Slow path with ArrayPool allocation and try/finally
 		else
 		{
-			var rented = ArrayPool<byte>.Shared.Rent(messageLength);
+			var rented = ArrayPool<byte>.Shared.Rent(msgLength);
 			try
 			{
-				var buffer = rented.AsSpan(0, messageLength);
+				var buffer = rented.AsSpan(0, msgLength);
 				buffer[0] = (byte)FrontendMessageCode.Parse;
-				BinaryPrimitives.WriteInt32BigEndian(buffer.Slice(1, 4), parseMessageLength - 1);
+				BinaryPrimitives.WriteInt32BigEndian(buffer.Slice(1, 4), parseMsgLength - 1);
 				buffer[5] = 0; // unnamed statement
-				encoding.GetBytes(sql, buffer.Slice(6, sqlByteCount));
-				buffer[6 + sqlByteCount] = 0; // query NUL terminator
-				BinaryPrimitives.WriteInt16BigEndian(buffer.Slice(7 + sqlByteCount, 2), 0); // numParamTypes = 0, server infers types
-				variables.CopyTo(buffer[parseMessageLength..]);
+				sql.CopyTo(buffer.Slice(6));
+				buffer[6 + sql.Length] = 0; // query NUL terminator
+				BinaryPrimitives.WriteInt16BigEndian(buffer.Slice(7 + sql.Length, 2), 0); // numParamTypes = 0
+				variables.CopyTo(buffer[parseMsgLength..]);
+
 				stream.Write(buffer);
 			}
 			finally
@@ -382,39 +379,40 @@ internal static class NetworkStreamExtensions
 	}
 
 	/// <summary>
-	///     Sends a frontend Simple Query ('Q') message: Int32 length (self-inclusive) followed by the null-terminated query string. 
-	///     The server always replies using the text wire format for this message type, regardless of column type, which is what makes flattening every
-	///     value straight to string safe here.
+	///     Sends a frontend Simple Query ('Q') message using pre-encoded UTF-8 SQL bytes.
 	/// </summary>
 	[SkipLocalsInit]
 	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
-	internal static void SendQuery(this NetworkStream stream, ReadOnlySpan<char> sql, int sqlByteCount, Encoding encoding, byte[] sqlSendBuffer)
+	internal static void SendQuery(this NetworkStream stream, ReadOnlySpan<byte> sql, byte[] sqlSendBuffer)
 	{
-		// Code size: 238 (0xee)
-		var messageLength = 1 + 4 + sqlByteCount + 1;
-		var bufferSize = sqlSendBuffer.Length;
+		// Code size: 231 (0xe7)
+		var msgLength = 6 + sql.Length; // 1 ('Q') + 4 (len) + sql.Length + 1 (NUL)
 
 		// Branch 1 & 2: Fast paths without ArrayPool renting (no try/finally needed)
-		if (messageLength <= bufferSize)
+		if (msgLength <= sqlSendBuffer.Length)
 		{
-			Span<byte> buffer = messageLength <= SmallMessageStackAllocThreshold ? stackalloc byte[messageLength] : sqlSendBuffer.AsSpan(0, messageLength);
+			Span<byte> buffer = msgLength <= SmallMessageStackAllocThreshold
+				? stackalloc byte[msgLength]
+				: sqlSendBuffer.AsSpan(0, msgLength);
+
 			buffer[0] = (byte)FrontendMessageCode.Query;
-			BinaryPrimitives.WriteInt32BigEndian(buffer.Slice(1, 4), messageLength - 1);
-			encoding.GetBytes(sql, buffer.Slice(5, sqlByteCount));
-			buffer[messageLength - 1] = 0; // NUL terminator
+			BinaryPrimitives.WriteInt32BigEndian(buffer.Slice(1, 4), msgLength - 1);
+			sql.CopyTo(buffer.Slice(5));
+			buffer[msgLength - 1] = 0; // NUL terminator
+
 			stream.Write(buffer);
 		}
 		// Branch 3: Slow path with ArrayPool allocation and try/finally
 		else
 		{
-			var rented = ArrayPool<byte>.Shared.Rent(messageLength);
+			var rented = ArrayPool<byte>.Shared.Rent(msgLength);
 			try
 			{
-				var buffer = rented.AsSpan(0, messageLength);
+				var buffer = rented.AsSpan(0, msgLength);
 				buffer[0] = (byte)FrontendMessageCode.Query;
-				BinaryPrimitives.WriteInt32BigEndian(buffer.Slice(1, 4), messageLength - 1);
-				encoding.GetBytes(sql, buffer.Slice(5, sqlByteCount));
-				buffer[messageLength - 1] = 0; // NUL terminator
+				BinaryPrimitives.WriteInt32BigEndian(buffer.Slice(1, 4), msgLength - 1);
+				sql.CopyTo(buffer.Slice(5));
+				buffer[msgLength - 1] = 0; // NUL terminator
 
 				stream.Write(buffer);
 			}

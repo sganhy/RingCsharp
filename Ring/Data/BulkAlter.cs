@@ -28,12 +28,12 @@ internal sealed class BulkAlter : IEquatable<BulkAlter>
 		_tablespaces = GetTableSpaceDictionary(schema);
 	}
 
-	internal void CreateTable(Table table, bool createComment=true)
+	internal void CreateTable(Table table, bool createComment = true)
 	{
 		// Code size: 223 (0xdf)
 		AppendDdlCommand(AlterQueryType.CreateTable, table);
 		// create constraints 
-		foreach(var constraint in table.Constraints.AsSpan()) AppendDdlCommand(AlterQueryType.CreateTable, constraint, table);
+		foreach (var constraint in table.Constraints.AsSpan()) AppendDdlCommand(AlterQueryType.CreateTable, constraint, table);
 		// create comments
 		if (createComment)
 		{
@@ -75,28 +75,27 @@ internal sealed class BulkAlter : IEquatable<BulkAlter>
 
 	internal void Apply()
 	{
-        // Code size: 59 (0x3b)
-        if (_queries.Count == 0) return;
+		// Code size: 59 (0x3b)
+		if (_queries.Count == 0) return;
 #pragma warning disable CA2000 // Dispose objects before losing scope
 		var connection = _schema.Connections.Get();
 #pragma warning restore CA2000
 		try
-        {
-            Apply(connection);
-        }
-        finally
-        {
-            // return connection immediatly
-            _schema.Connections.Put(connection);
-        }
-    }
+		{
+			Apply(connection);
+		}
+		finally
+		{
+			// return connection immediatly
+			_schema.Connections.Put(connection);
+		}
+	}
 
-    internal void Apply(IConnection connection)
+	internal void Apply(IConnection connection)
 	{
 		// Code size: 157 (0x9d)
 		// sort by Type
-		if (connection.State != ConnectionState.Open)	throw new InvalidOperationException("The connection is not open.");
-		_queries.Sort(static delegate (AlterQuery q1,AlterQuery q2)
+		_queries.Sort(static delegate (AlterQuery q1, AlterQuery q2)
 		{
 			if (q1.Type == q2.Type) return q1.Id.CompareTo(q2.Id);
 			return q1.Type.CompareTo(q2.Type);
@@ -105,19 +104,13 @@ internal sealed class BulkAlter : IEquatable<BulkAlter>
 		var encoding = connection.ClientEncoding;
 		var builder = _schema.DdlBuilder;
 
-		foreach (var query in _queries) 
+		foreach (var query in _queries)
 		{
-			if (query.Type == AlterQueryType.CreateCheckConstraint)
-			{
-				int oi2 = 0;
-				++oi2;
-				// Handle specific constraint
-			}
 			var sql = query.ToSql(builder);
 			if (sql is not null)
 			{
-				var byteCount = encoding.GetByteCount(sql);
-				var error = connection.Execute(query, sql, byteCount);
+				var bytes = encoding.GetBytes(sql);
+				var error = connection.Execute(query, bytes);
 				int oi = 0;
 				++oi;
 			}
@@ -127,13 +120,13 @@ internal sealed class BulkAlter : IEquatable<BulkAlter>
 		}
 	}
 
-	public override int GetHashCode() => this.Hash();	
+	public override int GetHashCode() => this.Hash();
 	public static bool operator ==(BulkAlter left, BulkAlter right) => left.Equals(right);
 	public static bool operator !=(BulkAlter left, BulkAlter right) => !left.Equals(right);
 	public override bool Equals(object? obj) => obj is BulkAlter bulkAlter && Equals(bulkAlter);
-	public bool Equals(BulkAlter? other) => other is not null 
-		&& _schema.Id == other._schema.Id 
-		&& _queries.Count == other._queries.Count 
+	public bool Equals(BulkAlter? other) => other is not null
+		&& _schema.Id == other._schema.Id
+		&& _queries.Count == other._queries.Count
 		&& this.Hash() == other.Hash(); // Code size: 68 (0x44)
 
 	#region private methods
@@ -159,7 +152,7 @@ internal sealed class BulkAlter : IEquatable<BulkAlter>
 	{
 		switch (type)
 		{
-			
+
 			case AlterQueryType.CreateTable:
 				_queries.Add(new AlterQuery(table.Id, table, type, null, null, null, GetTableSpace(table, EntityType.Table)));
 				break;
@@ -177,11 +170,11 @@ internal sealed class BulkAlter : IEquatable<BulkAlter>
 		switch (type)
 		{
 			case AlterQueryType.CreateIndex:
-				_queries.Add(new AlterQuery(table.Id, table, type, null,null, index, GetTableSpace(table, EntityType.Index)));
+				_queries.Add(new AlterQuery(table.Id, table, type, null, null, index, GetTableSpace(table, EntityType.Index)));
 				break;
 		}
 	}
-		
+
 	private TableSpace? GetTableSpace(Table table, EntityType entityType)
 	{
 		if (_tablespaces.TryGetValue(entityType, out Dictionary<string, TableSpace>? subDico))

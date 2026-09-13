@@ -211,12 +211,12 @@ public sealed class BulkSave : IBulkSave
 			{
 				var byteCount = encoding.GetByteCount(sql);
 				//if (typeId < FirstCancelOperationId) connection.Execute(query); 
-				var error  = connection.Execute(query, sql, byteCount);
-				if (error is not null)
-				{
-					int oi = 0;
-					++oi;
-				}
+				//var error  = connection.Execute(query, sql, byteCount);
+				//if (error is not null)
+				//{
+				//	int oi = 0;
+				//	++oi;
+				//}
 			}
 		}
 	}

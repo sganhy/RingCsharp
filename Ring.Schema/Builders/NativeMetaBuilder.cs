@@ -135,17 +135,6 @@ internal sealed class NativeMetaBuilder : BaseMetaBuilder, IMetaBuilder
 							++metaIndex;
 						}
 						break;
-					case EntityType.Comment:
-						{
-							var comment = xmlReader.ReadString();
-							if (!string.IsNullOrWhiteSpace(comment) && metaIndex > 0)
-							{
-								Meta meta = result[metaIndex - 1];
-								if (meta.ObjectType != SearchableColumnId) result[metaIndex - 1] = SetDescription(ref meta, comment);
-								else if (metaIndex > 1) result[metaIndex - 2] = SetDescription(ref result[metaIndex - 2], comment);
-							}
-						}
-;						break;
 				}
 			}
 		}

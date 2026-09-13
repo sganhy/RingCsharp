@@ -1,6 +1,6 @@
-1,23,0,14,8192,"@SchemaVersion","Database schema version.","1.01"
-2,23,0,18,8192,"@SchemaCreationTime","Timestamp indicating when the schema was created (IS0-8601).","[CURRENT_TIMESTAMP]"
-3,23,0,18,8192,"@SchemaLastUpgrade","Timestamp of the last schema upgrade (IS0-8601).","2026-08-30T17:50:00Z"
+1,23,0,14,8192,"@Version","Database schema version.","1.01"
+2,23,0,18,8192,"@CreationTime","Timestamp indicating when the schema was created (IS0-8601).","[CURRENT_TIMESTAMP]"
+3,23,0,18,8192,"@LastUpgrade","Timestamp of the last schema upgrade (IS0-8601).","2026-08-30T17:50:00Z"
 4,23,0,16,8192,"@Language","Language used by the schema.","en-US"
 5,23,0,16,8192,"@BinaryVersion","Binary version associated with the current schema.","1.0.0.367"
 15,23,0,1,8192,"@MinConnPoolSize","Minimum number of connections in the database pool.","1"
@@ -35,7 +35,7 @@
 1,1,14,1,8196,"id","Unique identifier within its metadata scope.",
 2,1,14,1,8196,"schema_id","Identifier of the associated schema.",
 3,1,14,3,8196,"object_type","Type of the metadata object.",
-4,1,14,0,8196,"value","","0"
+4,1,14,0,8196,"value","Current sequence value for the specified metadata object.","0"
 1,19,14,1,8192,"pk_@meta_id",,";;id;schema_id;object_type"
 2,19,14,8,8192,"NotNull",,";;id"
 3,19,14,8,8192,"NotNull",,";;schema_id"

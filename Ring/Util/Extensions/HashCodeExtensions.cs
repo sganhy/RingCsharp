@@ -1,6 +1,7 @@
 ﻿using Ring.Data.Enums;
 using Ring.Data.Models;
 using Ring.Schema.Models;
+using System.Data.Common;
 using System.Runtime.CompilerServices;
 using Index = Ring.Schema.Models.Index;
 
@@ -60,6 +61,26 @@ internal static class HashCodeExtensions
 		if (constraint.MinValue.HasValue) hashCode.Add(constraint.MinValue.Value);
 		if (constraint.MaxValue.HasValue) hashCode.Add(constraint.MaxValue.Value);
 		AddColumns(ref hashCode, constraint.Columns);
+	}
+
+	internal static void AddTableSpace(this ref HashCode hashCode, TableSpace tableSpace)
+	{
+		// Code size: 85 (0x55)
+		/*
+		internal readonly string FileName;
+		internal readonly string[] TableName;
+		internal readonly bool Index;
+		internal readonly bool Table;
+		internal readonly bool Constraint;
+		internal readonly string PhysicalName;
+		*/
+		AddBaseEntity(ref hashCode, tableSpace);
+		hashCode.Add(tableSpace.FileName);
+		AddStrings(ref hashCode, tableSpace.TableName);
+		hashCode.Add(tableSpace.Index);
+		hashCode.Add(tableSpace.Table);
+		hashCode.Add(tableSpace.Constraint);
+		hashCode.Add(tableSpace.PhysicalName);
 	}
 
 	internal static void AddIndex(this ref HashCode hashCode, Index index)

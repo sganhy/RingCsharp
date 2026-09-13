@@ -57,7 +57,7 @@ public sealed class BulkRetrieve
 			var sql = query.ToSql(builder);
 			var byteCount = encoding.GetByteCount(sql);
 			// get readonly connection 
-			var result = connection.Execute(query, sql, byteCount);
+			//var result = connection.Execute(query, sql, byteCount);
 		}
 	}
 

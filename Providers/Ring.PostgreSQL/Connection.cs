@@ -101,7 +101,7 @@ public sealed class Connection : IConnection
 
 		try
 		{
-			_stream.SendQuery("BEGIN".AsSpan(), _encoding.GetByteCount("BEGIN"), _encoding, _sqlSendBuffer);
+			//_stream.SendQuery("BEGIN".AsSpan(), _encoding.GetByteCount("BEGIN"), _encoding, _sqlSendBuffer);
 			_stream.DrainToReadyForQuery(ref _transactionStatus);
 		}
 		catch (PgOperationalError)
@@ -204,7 +204,7 @@ public sealed class Connection : IConnection
 
 		try
 		{
-			_stream.SendQuery("COMMIT".AsSpan(), _encoding.GetByteCount("COMMIT"), _encoding, _sqlSendBuffer);
+			//_stream.SendQuery("COMMIT".AsSpan(), _encoding.GetByteCount("COMMIT"), _encoding, _sqlSendBuffer);
 			_stream.DrainToReadyForQuery(ref _transactionStatus);
 		}
 		catch (PgOperationalError)
@@ -249,7 +249,7 @@ public sealed class Connection : IConnection
 		GC.SuppressFinalize(this);
 	}
 
-	public string?[] Execute(in RetrieveQuery query, ReadOnlySpan<char> sql, int sqlByteCount)
+	public string?[] Execute(in RetrieveQuery query, ReadOnlySpan<byte> sql)
 	{
 		// Filters/sorting/paging need RetrieveFilter/RetrieveSort/PageInfo -> SQL
 		// translation that isn't wired up yet. Fail loudly instead of silently
@@ -269,8 +269,7 @@ public sealed class Connection : IConnection
 
 			// fire-and-forget, no Describe/RowDescription needed for generic parsing; 
 			// keep it synchronous to avoid async overhead for a single round trip
-			_stream.SendQuery(sql, _encoding.GetByteCount(sql), _encoding, _sqlSendBuffer);
-
+			_stream.SendQuery(sql, _sqlSendBuffer);
 			return _stream.ReadRetrieveRecords(ref _transactionStatus, _encoding, query.Table);
 		}
 		catch (PgOperationalError)
@@ -289,20 +288,20 @@ public sealed class Connection : IConnection
 	}
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
-	public OperationalError? Execute(in AlterQuery query, ReadOnlySpan<char> sql, int sqlByteCount)
+	public OperationalError? Execute(in AlterQuery query, ReadOnlySpan<byte> sql)
 	{
 		// Code size: 76 (0x4c) - no virtual call
 		_state = ConnectionState.Open | ConnectionState.Executing; // we checked already the connection state in AlterQuery.Execute().
-		_stream.SendQuery(sql, sqlByteCount, _encoding, _sqlSendBuffer);
+		_stream.SendQuery(sql, _sqlSendBuffer);
 		var returnValue = _stream.DrainToReadyForQuery(ref _transactionStatus);
 		returnValue?.Set(query, _ddlBuilder);
 		_state = ConnectionState.Open;
 		return returnValue;
 	}
-	public async ValueTask<OperationalError?> ExecuteAsync(AlterQuery query, string sql, int sqlByteCount, CancellationToken cancellationToken = default)
+	public async ValueTask<OperationalError?> ExecuteAsync(AlterQuery query, ReadOnlyMemory<byte> sql, CancellationToken cancellationToken = default)
 	{
 		// Code size: 88 (0x58) - no virtual call
-		_stream.SendQuery(sql, sqlByteCount, _encoding, _sqlSendBuffer);
+		_stream.SendQuery(sql.Span, _sqlSendBuffer);
 		(var returnValue, var drainedBody) = await _stream.DrainToReadyForQueryAsync(cancellationToken).ConfigureAwait(false);
 		if (returnValue is not null)
 		{
@@ -312,9 +311,8 @@ public sealed class Connection : IConnection
 		return returnValue;
 	}
 
-	public OperationalError? Execute(in SaveQuery query, ReadOnlySpan<char> sql, int sqlByteCount)
+	public OperationalError? Execute(in SaveQuery query, ReadOnlySpan<byte> sql)
 	{
-		// Code size: 158 (0x9e)
 		_state = ConnectionState.Open | ConnectionState.Executing;
 		byte[]? rentedPayload = null;
 		try
@@ -327,14 +325,9 @@ public sealed class Connection : IConnection
 			// Zero heap allocations:
 			// _sqlSendBuffer implicitly casts byte[] -> ReadOnlySpan<byte>
 			// rentedPayload is sliced into a ReadOnlySpan<byte>
-			_stream.SendExtendedQuery(
-				sql,
-				sqlByteCount,
-				_encoding,
-				_sqlSendBuffer,
-				rentedPayload.AsSpan(0, actualPayloadSize));
+			_stream.SendExtendedQuery(sql, rentedPayload.AsSpan(0, actualPayloadSize), _sqlSendBuffer);
 
-			var returnValue = _stream.DrainToReadyForQuery(ref _transactionStatus); //[cite: 5]
+			var returnValue = _stream.DrainToReadyForQuery(ref _transactionStatus);
 			_state = ConnectionState.Open;
 			return returnValue;
 		}
@@ -363,7 +356,7 @@ public sealed class Connection : IConnection
 
 		try
 		{
-			_stream.SendQuery("ROLLBACK".AsSpan(), _encoding.GetByteCount("ROLLBACK"), _encoding, _sqlSendBuffer);
+			//_stream.SendQuery("ROLLBACK"u8, _sqlSendBuffer);
 			_stream.DrainToReadyForQuery(ref _transactionStatus);
 		}
 		catch (PgOperationalError)
