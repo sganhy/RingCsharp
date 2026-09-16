@@ -85,7 +85,7 @@ public sealed class ResourceHelperTest : BaseTest
 		Assert.NotNull(result);
 		Assert.Equal((int)ParameterType.SchemaVersion, result.Id);
 		Assert.Equal(ParameterType.SchemaVersion, result.Type);
-		Assert.Equal("@SchemaVersion", result.Name);
+		Assert.Equal("@Version", result.Name);
 		Assert.Equal("Database schema version.", result.Description);
 		Assert.Equal("1.01", result.Value);
 		Assert.Equal(EntityType.Schema, result.ReferenceType);
