@@ -13,15 +13,15 @@ internal static class SaveQueryExtensions
 {
 	private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
 	private static readonly string BooleanTrue = true.ToString(DefaultCulture);
-	private static readonly string PostGreTrue = "t";
+
 
 	/// <summary>
 	/// Calculates the exact byte size required for the Bind ('B') + Execute ('E') + Sync ('S') payload.
-	/// Direct iteration with minimal IL overhead.
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
 	internal static int GetVariablesPayloadSize(this in SaveQuery query, Encoding encoding)
 	{
-		// Code size: 228 (0xe4)
+		// Code size: 208 (0xd0)
 		ReadOnlySpan<Column> columns = query.Table.Columns;
 		var data = query.Data;
 		var offset = query.Offset;
@@ -37,7 +37,9 @@ internal static class SaveQueryExtensions
 				var len = rawValue.Length;
 				if (len > 0)
 				{
-					var padding = rawValue[^1] == '=' ? (len > 1 && rawValue[^2] == '=' ? 2 : 1) : 0;
+					var padding = rawValue.EndsWith("==", StringComparison.Ordinal) ? 2
+								: rawValue.EndsWith('=') ? 1
+								: 0;
 					totalSize += (len * 3 / 4) - padding;
 				}
 			}
@@ -56,12 +58,11 @@ internal static class SaveQueryExtensions
 
 	/// <summary>
 	/// Writes the combined Bind ('B') + Execute ('E') + Sync ('S') payload directly to a destination memory span.
-	/// Inlines binary value writing using direct Span parsing for minimal IL code size and execution complexity.
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
 	internal static int WriteVariablesPayload(this in SaveQuery query, Span<byte> span, Encoding encoding)
 	{
-		// Code size: 842 (0x34a) - removed boxing
+		// Code size: 816 (0x330)
 		ReadOnlySpan<Column> columns = query.Table.Columns;
 		var data = query.Data;
 		var offset = query.Offset;
@@ -112,7 +113,7 @@ internal static class SaveQueryExtensions
 			else if (col.BinaryType)
 			{
 				var dest = span.Slice(writeOffset, col.BinaryLength);
-				var valSpan = rawValue.AsSpan();
+				ReadOnlySpan<char> valSpan = rawValue.AsSpan();
 
 				switch (col.FieldType)
 				{
@@ -133,7 +134,7 @@ internal static class SaveQueryExtensions
 						BinaryPrimitives.WriteInt32BigEndian(dest, BitConverter.SingleToInt32Bits(float.Parse(valSpan, CultureInfo.InvariantCulture)));
 						break;
 					case FieldType.Boolean:
-						dest[0] = (byte)(valSpan.Equals(BooleanTrue, StringComparison.OrdinalIgnoreCase) || valSpan.Equals(PostGreTrue, StringComparison.OrdinalIgnoreCase) ? 1 : 0);
+						dest[0] = valSpan.Equals(BooleanTrue, StringComparison.Ordinal) ? (byte)1 : (byte)0;
 						break;
 				}
 
@@ -170,4 +171,5 @@ internal static class SaveQueryExtensions
 		BinaryPrimitives.WriteInt32BigEndian(span.Slice(writeOffset, 4), 4);
 		return writeOffset + 4;
 	}
+
 }

@@ -339,11 +339,10 @@ internal static class NetworkStreamExtensions
 		var parseMsgLength = 8 + sql.Length; // 1 ('P') + 4 (len) + 1 (stmt) + sql.Length + 1 (NUL) + 2 (paramTypes)
 		var msgLength = parseMsgLength + variables.Length;
 
-		// Branch 1 & 2: Fast paths without ArrayPool renting (no try/finally needed)
 		if (msgLength <= sqlSendBuffer.Length)
 		{
+			// Branch 1 & 2: Fast paths without ArrayPool renting (no try/finally needed)
 			Span<byte> buffer = msgLength <= SmallMessageStackAllocThreshold ? stackalloc byte[msgLength] : sqlSendBuffer.AsSpan(0, msgLength);
-
 			buffer[0] = (byte)FrontendMessageCode.Parse;
 			BinaryPrimitives.WriteInt32BigEndian(buffer.Slice(1, 4), parseMsgLength - 1);
 			buffer[5] = 0; // unnamed statement
@@ -354,9 +353,9 @@ internal static class NetworkStreamExtensions
 
 			stream.Write(buffer);
 		}
-		// Branch 3: Slow path with ArrayPool allocation and try/finally
 		else
 		{
+			// Branch 3: Slow path with ArrayPool allocation and try/finally
 			var rented = ArrayPool<byte>.Shared.Rent(msgLength);
 			try
 			{
@@ -388,23 +387,19 @@ internal static class NetworkStreamExtensions
 		// Code size: 231 (0xe7)
 		var msgLength = 6 + sql.Length; // 1 ('Q') + 4 (len) + sql.Length + 1 (NUL)
 
-		// Branch 1 & 2: Fast paths without ArrayPool renting (no try/finally needed)
 		if (msgLength <= sqlSendBuffer.Length)
 		{
-			Span<byte> buffer = msgLength <= SmallMessageStackAllocThreshold
-				? stackalloc byte[msgLength]
-				: sqlSendBuffer.AsSpan(0, msgLength);
-
+			// Branch 1 & 2: Fast paths without ArrayPool renting (no try/finally needed)
+			Span<byte> buffer = msgLength <= SmallMessageStackAllocThreshold ? stackalloc byte[msgLength] : sqlSendBuffer.AsSpan(0, msgLength);
 			buffer[0] = (byte)FrontendMessageCode.Query;
 			BinaryPrimitives.WriteInt32BigEndian(buffer.Slice(1, 4), msgLength - 1);
 			sql.CopyTo(buffer.Slice(5));
 			buffer[msgLength - 1] = 0; // NUL terminator
-
 			stream.Write(buffer);
 		}
-		// Branch 3: Slow path with ArrayPool allocation and try/finally
 		else
 		{
+			// Branch 3: Slow path with ArrayPool allocation and try/finally
 			var rented = ArrayPool<byte>.Shared.Rent(msgLength);
 			try
 			{
@@ -413,7 +408,6 @@ internal static class NetworkStreamExtensions
 				BinaryPrimitives.WriteInt32BigEndian(buffer.Slice(1, 4), msgLength - 1);
 				sql.CopyTo(buffer.Slice(5));
 				buffer[msgLength - 1] = 0; // NUL terminator
-
 				stream.Write(buffer);
 			}
 			finally

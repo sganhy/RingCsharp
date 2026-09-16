@@ -1,6 +1,7 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Models;
 using Ring.Util.Extensions;
+using System.Buffers;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -40,23 +41,14 @@ internal static class FieldExtensions
 	/// </summary>
 	internal static string? GetSearchableValue(this Field? _, SearchableType searchableType, string? value)
 	{
-		// Code size: 117 (0x75)
-		if (value is null) return null;
-		switch (searchableType)
+		if (string.IsNullOrEmpty(value)) return value;
+
+		return searchableType switch
 		{
-			case SearchableType.IgnoreCase:	return value.ToUpperInvariant();
-			case SearchableType.IgnoreDiacritic:
-				var normalizedString = value.Normalize(NormalizationForm.FormD).AsSpan();
-				var result = new StringBuilder(normalizedString.Length);
-				foreach (var c in normalizedString)
-				{
-					// CharUnicodeInfo.GetUnicodeCategory(c) <> UnicodeCategory.NonSpacingMark
-					if (char.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
-						result.Append(char.ToUpper(c, CultureInfo.InvariantCulture));
-				}
-				return result.ToString();
-		}
-		return value;
+			SearchableType.IgnoreCase => value.ToUpperInvariant(),
+			SearchableType.IgnoreDiacritic => RemoveDiacriticAndUpper(value),
+			_ => value,
+		};
 	}
 
 	internal static Meta ToMeta(this Field field, int tableId, FieldType? newFieldType=null)
@@ -118,4 +110,58 @@ internal static class FieldExtensions
 		return field.Type == other!.Type && field.Size == other.Size && field.NotNull == other.NotNull && field.Multilingual == other.Multilingual && field.AllowTruncation == other.AllowTruncation
             && field.SearchableType == other.SearchableType && string.Equals(field.DefaultValue, other.DefaultValue, StringComparison.Ordinal);
 	}
+
+	#region private methods 
+
+	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
+	[SkipLocalsInit]
+	private static string RemoveDiacriticAndUpper(string value)
+	{
+		// Code size: 227 (0xe3)
+		// 1. Fast Path: High-performance SIMD check available in .NET 8+
+		if (Ascii.IsValid(value)) return value.ToUpperInvariant();
+
+		// 2. Normalize string to FormD (decomposes characters into base + diacritic marks)
+		string normalized = value.Normalize(NormalizationForm.FormD);
+		int length = normalized.Length;
+
+		// Rent memory from pool or stack-allocate up to 256 chars (512 bytes on stack)
+		char[]? rented = null;
+		Span<char> buffer = length <= 128 ? stackalloc char[length]	: (rented = ArrayPool<char>.Shared.Rent(length));
+
+		
+		int written = 0;
+		bool modified = false;
+
+		for (int i = 0; i < length; i++)
+		{
+			char c = normalized[i];
+			UnicodeCategory category = CharUnicodeInfo.GetUnicodeCategory(c);
+
+			if (category != UnicodeCategory.NonSpacingMark)
+			{
+				char upperC = char.ToUpperInvariant(c);
+				buffer[written++] = upperC;
+
+				if (upperC != c)
+				{
+					modified = true;
+				}
+			}
+			else
+			{
+				// Diacritic mark was dropped
+				modified = true;
+			}
+		}
+		Span<char> resultSpan = buffer[..written];
+
+		// If string was already uppercase and contained no diacritics, return original to avoid allocation
+		if (!modified && written == value.Length) return value;
+		if (rented is not null) ArrayPool<char>.Shared.Return(rented);
+		return new string(resultSpan);
+	}
+
+	#endregion
+
 }
