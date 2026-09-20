@@ -1,15 +1,14 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Util.Enums;
 using Ring.Util.Helpers;
+using System.Linq.Expressions;
 
 namespace Ring.Tests.Util.Helpers;
 
 public sealed class ResourceHelperTest : BaseTest
 {
 
-    public ResourceHelperTest(ITestOutputHelper output) : base(output) 
-    {
-    }
+    public ResourceHelperTest(ITestOutputHelper output) : base(output) => Expression.Empty();
 
 	[Theory]
 	[InlineData(ResourceType.RecordValueTooLarge, "Value was either too high or too low for an {0}.")]

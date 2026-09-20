@@ -14,7 +14,6 @@ internal static class SaveQueryExtensions
 	private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
 	private static readonly string BooleanTrue = true.ToString(DefaultCulture);
 
-
 	/// <summary>
 	/// Calculates the exact byte size required for the Bind ('B') + Execute ('E') + Sync ('S') payload.
 	/// </summary>
@@ -25,7 +24,10 @@ internal static class SaveQueryExtensions
 		ReadOnlySpan<Column> columns = query.Table.Columns;
 		var data = query.Data;
 		var offset = query.Offset;
-		var totalSize = 28 + (columns.Length * 6);
+		// Fixed part = 30 bytes: Bind header 9 ('B' + len + portal + stmt + Int16 formatCount) + Int16 paramCount 2
+		// + result formats 4 (Int16 count + Int16 code) + Execute 10 + Sync 5.
+		// Per column = 6 bytes: Int16 format code + Int32 value length.
+		var totalSize = 30 + (columns.Length * 6);
 
 		foreach (ref readonly var col in columns)
 		{

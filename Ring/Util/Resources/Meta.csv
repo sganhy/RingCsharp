@@ -1,6 +1,6 @@
 1,23,0,14,8192,"@Version","Database schema version.","1.01"
 2,23,0,18,8192,"@CreationTime","Timestamp indicating when the schema was created (IS0-8601).","[CURRENT_TIMESTAMP]"
-3,23,0,18,8192,"@LastUpgrade","Timestamp of the last schema upgrade (IS0-8601).","2026-08-30T17:50:00Z"
+3,23,0,18,8192,"@LastUpgrade","Timestamp of the last schema upgrade (IS0-8601).","[CURRENT_TIMESTAMP]"
 4,23,0,16,8192,"@Language","Language used by the schema.","en-US"
 5,23,0,16,8192,"@BinaryVersion","Binary version associated with the current schema.","1.0.0.367"
 15,23,0,1,8192,"@MinConnPoolSize","Minimum number of connections in the database pool.","1"

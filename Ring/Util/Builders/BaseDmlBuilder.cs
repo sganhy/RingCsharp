@@ -21,12 +21,14 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 
 	private string?[] _tableDelete;
 	private string?[] _tableInsert;
+	private byte[][] _tableBinaryInsert;
 	private string?[] _tableUpdate;
 
 	protected BaseDmlBuilder()
 	{
 		_tableDelete = Array.Empty<string?>();
 		_tableInsert = Array.Empty<string?>();
+		_tableBinaryInsert = Array.Empty<byte[]>();
 		_tableUpdate = Array.Empty<string?>();
 	}
 
@@ -38,16 +40,33 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 		_tableDelete = new string?[schema.ObjectCount];
 		_tableInsert = new string?[schema.ObjectCount];
 		_tableUpdate = new string?[schema.ObjectCount];
+		_tableBinaryInsert = new byte[schema.ObjectCount][];
 	}
 
-	public string Insert(Table table) {
-		// avoid lock
+	public string Insert(Table table) 
+	{
+		// Code size: 38 (0x26) - no virtual calls
+		// Used only for logging, and preparing statement. Avoid lock here!
 		var index = table.ObjectIndex;
 		var result = _tableInsert[index];
 		if (result==null)
 		{
 			result = BuildInsert(table);
 			_tableInsert[index] = result;
+		}
+		return result;
+	}
+
+	public ReadOnlySpan<byte> Insert(Table table, Encoding encoding)
+	{
+		// Code size: 63 (0x3f)
+		var index = table.ObjectIndex;
+		var result = _tableBinaryInsert[index];
+		if (result == null)
+		{ 
+			var sql = _tableInsert[index] ?? BuildInsert(table);
+			result = encoding.GetBytes(sql);
+			_tableBinaryInsert[index] = result;
 		}
 		return result;
 	}

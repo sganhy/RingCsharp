@@ -319,7 +319,6 @@ public sealed class Connection : IConnection
 		{
 			var payloadSize = query.GetVariablesPayloadSize(_encoding);
 			rentedPayload = ArrayPool<byte>.Shared.Rent(payloadSize);
-
 			var actualPayloadSize = query.WriteVariablesPayload(rentedPayload, _encoding);
 
 			// Zero heap allocations:

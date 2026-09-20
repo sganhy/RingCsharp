@@ -14,10 +14,10 @@ internal static class FieldExtensions
 #pragma warning disable RCS1187 // Use constant instead of field
 	private static readonly string PrimaryKeyFieldName = "id";
 	private static readonly string PrimaryKeyDescription = "Internal record number";
-	private static readonly Field DefaultPrimaryKeyInt64 =	new(0, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Long, 0, null, FieldType.Long.GetDefaultValue(), SearchableType.None, true, true, false, false, true);
-	private static readonly Field DefaultPrimaryKeyInt32 =	new(0, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Int, 0, null, FieldType.Int.GetDefaultValue(), SearchableType.None, true, true, false, false, true);
-	private static readonly Field DefaultPrimaryKeyInt16 =	new(0, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Short, 0, null, FieldType.Short.GetDefaultValue(), SearchableType.None, true, true, false, false, true);
-	private static readonly Field DefaultPrimaryKeyInt08 =	new(0, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Byte, 0, null, FieldType.Byte.GetDefaultValue(), SearchableType.None, true, true, false, false, true);
+	private static readonly Field DefaultPrimaryKeyInt64 =	new(1, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Long, 0, null, FieldType.Long.GetDefaultValue(), SearchableType.None, true, true, false, false, true);
+	private static readonly Field DefaultPrimaryKeyInt32 =	new(1, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Int, 0, null, FieldType.Int.GetDefaultValue(), SearchableType.None, true, true, false, false, true);
+	private static readonly Field DefaultPrimaryKeyInt16 =	new(1, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Short, 0, null, FieldType.Short.GetDefaultValue(), SearchableType.None, true, true, false, false, true);
+	private static readonly Field DefaultPrimaryKeyInt08 =	new(1, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Byte, 0, null, FieldType.Byte.GetDefaultValue(), SearchableType.None, true, true, false, false, true);
 #pragma warning restore RCS1187
 
 	internal static bool IsValid(this Field field) => IsPrimaryKey(field) || field.Id > 0; 

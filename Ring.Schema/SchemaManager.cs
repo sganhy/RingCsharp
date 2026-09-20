@@ -1,7 +1,6 @@
 ﻿using Ring.Data;
 using Ring.Schema.Builders;
 using Ring.Schema.Extensions;
-using Ring.Schema.Helpers;
 using Ring.Schema.Models;
 using Ring.Util.Extensions;
 using System.Runtime.CompilerServices;

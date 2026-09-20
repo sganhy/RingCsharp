@@ -206,12 +206,10 @@ public sealed class BulkSave : IBulkSave
 		foreach (var query in _queries.AsReadOnlySpan())
 		{
 			// callvirt instance int64 Ring.Data.IRingConnection::Execute
-			var sql = query.ToSql(builder);
-			if (sql is not null)
+			var sql = query.ToSql(builder, encoding);
+			if (sql.Length > 0)
 			{
-				var byteCount = encoding.GetByteCount(sql);
-				//if (typeId < FirstCancelOperationId) connection.Execute(query); 
-				//var error  = connection.Execute(query, sql, byteCount);
+				var error  = connection.Execute(query, sql);
 				//if (error is not null)
 				//{
 				//	int oi = 0;

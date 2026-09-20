@@ -9,13 +9,16 @@ namespace Ring.Schema.Extensions;
 internal static class ParameterExtensions
 {
 	private readonly static string DefaultConnPoolSize = "1";
+	private readonly static string CurrentTimestamp = "[CURRENT_TIMESTAMP]";
 
 	internal static Meta ToMeta(this Parameter parameter)
 	{
-		// Code size: 67 (0x43)
+		// Code size: 128 (0x80)
 		var flags = 0L;
 		flags = Meta.SetEntityBaseline(flags, parameter.Baseline);
-		var meta = new Meta((int)parameter.Type, (byte)EntityType.Parameter, parameter.ReferenceId, (int)parameter.ValueType, flags, parameter.Name, parameter.Description,	parameter.Value, parameter.Active);
+		var value = parameter.ValueType == FieldType.DateTime && string.Equals(parameter.Value,CurrentTimestamp, StringComparison.OrdinalIgnoreCase) ? 
+			DateTime.UtcNow.ToString(parameter.ValueType, true, null)	: parameter.Value;
+		var meta = new Meta((int)parameter.Type, (byte)EntityType.Parameter, parameter.ReferenceId, (int)parameter.ValueType, flags, parameter.Name, parameter.Description, value, parameter.Active);
 		return meta;
 	}
 

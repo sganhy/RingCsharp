@@ -11,7 +11,7 @@ public  sealed class DateTimeExtensionsTest
         var dt = new DateTime(2222, 12, 22, 23, 59, 59);
 
         // act 
-        var result = DateTimeExtensions.ToString(dt, FieldType.Date, null);
+        var result = DateTimeExtensions.ToString(dt, FieldType.Date, false, null);
 
         // assert
         Assert.Equal("2222-12-22", result);
@@ -26,9 +26,24 @@ public  sealed class DateTimeExtensionsTest
         var expectedValue = dt.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss.ffffff").Replace(' ', 'T') + "Z";
 
         // act 
-        var result = DateTimeExtensions.ToString(dt, FieldType.DateTime, null);
+        var result = DateTimeExtensions.ToString(dt, FieldType.DateTime, false, null);
 
         // assert
         Assert.Equal(expectedValue, result);
     }
+
+	[Fact]
+	public void ToString_DateTime_DateTimeNowNoMilliseconds()
+	{
+		// arrange 
+		var dt = DateTime.Now;
+		var expectedValue = dt.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss").Replace(' ', 'T') + "Z";
+
+		// act 
+		var result = DateTimeExtensions.ToString(dt, FieldType.DateTime, true, null);
+
+		// assert
+		Assert.Equal(expectedValue, result);
+	}
+
 }

@@ -336,7 +336,7 @@ internal static class NetworkStreamExtensions
 	internal static void SendExtendedQuery(this NetworkStream stream, ReadOnlySpan<byte> sql, ReadOnlySpan<byte> variables, byte[] sqlSendBuffer)
 	{
 		// Code size: 348 (0x15c)
-		var parseMsgLength = 8 + sql.Length; // 1 ('P') + 4 (len) + 1 (stmt) + sql.Length + 1 (NUL) + 2 (paramTypes)
+		var parseMsgLength = 9 + sql.Length; // 1 ('P') + 4 (len) + 1 (stmt) + sql.Length + 1 (NUL) + 2 (paramTypes); length field = parseMsgLength - 1
 		var msgLength = parseMsgLength + variables.Length;
 
 		if (msgLength <= sqlSendBuffer.Length)
