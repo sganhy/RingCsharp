@@ -118,7 +118,7 @@ internal static class SchemaExtensions
 		// 5. Populate TableSpaces
 		for (var i = 0; i < schema.TableSpaces.Length; ++i)
 		{
-			//result[index++] = schema.TableSpaces[i].ToMeta();
+			result[index++] = schema.TableSpaces[i].ToMeta(schema.Id);
 		}
 
 		// 6. Populate Lexicons

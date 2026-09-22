@@ -19,9 +19,11 @@ namespace Ring.PostgreSQL;
 public sealed class Connection : IConnection
 {
 	private static readonly NetworkStream ClosedStream = NetworkStreamExtensions.CreateClosedStream(null);
-	private static readonly DdlBuilder _ddlBuilder = new();
+	private static readonly DdlBuilder DdlBuilder = new();
+	private static readonly string TransactionStart = "BEGIN;";
+	private static readonly string TransactionEnd = "COMMIT";
+	private static readonly string TransactionRollback = "ROLLBACK";
 	private const int MinTimeOut = 5000; // 5 seconds
-
 	// Terminate message ('X' + Int32 self-inclusive length=4, no payload) is
 	// wire-protocol-constant - computed once instead of allocated on every Close.
 	private static readonly byte[] TerminateMessage = { (byte)'X', 0, 0, 0, 4 };
@@ -45,6 +47,10 @@ public sealed class Connection : IConnection
 	private readonly Encoding _encoding;
 	private readonly int _sqlSendBufferSize;
 	private readonly byte[] _sqlSendBuffer;
+	private readonly byte[] _sqlStartTransaction;
+	private readonly byte[] _sqlEndTransaction;
+	private readonly byte[] _sqlRollbackTransaction;
+
 
 	// Never null: defaults to ClosedStream so every code path that forgot to
 	// check _state first hits a well-defined (if slightly odd) stream state
@@ -85,6 +91,9 @@ public sealed class Connection : IConnection
 		_port = parameters.Port;
 		_encoding = Encoding.GetEncoding(parameters.ClientEncoding);
 		_sqlSendBufferSize = parameters.SqlSendBufferSize;
+		_sqlStartTransaction = _encoding.GetBytes(TransactionStart);
+		_sqlEndTransaction = _encoding.GetBytes(TransactionEnd);
+		_sqlRollbackTransaction = _encoding.GetBytes(TransactionRollback);
 		if (_sqlSendBufferSize > 0)
 		{
 			_sqlSendBuffer = new byte[_sqlSendBufferSize];
@@ -96,12 +105,9 @@ public sealed class Connection : IConnection
 
 	public void BeginTransaction()
 	{
-		if (_state != ConnectionState.Open) throw new InvalidOperationException("The connection is not open.");
-		if (_transactionStatus != (byte)TransactionStatus.Idle) throw new InvalidOperationException("A transaction is already in progress.");
-
 		try
 		{
-			//_stream.SendQuery("BEGIN".AsSpan(), _encoding.GetByteCount("BEGIN"), _encoding, _sqlSendBuffer);
+			_stream.SendQuery(_sqlStartTransaction, _sqlSendBuffer);
 			_stream.DrainToReadyForQuery(ref _transactionStatus);
 		}
 		catch (PgOperationalError)
@@ -199,12 +205,9 @@ public sealed class Connection : IConnection
 	/// </summary>
 	public void Commit()
 	{
-		if (_transactionStatus == (byte)TransactionStatus.Idle)
-			throw new InvalidOperationException("Commit() was called but no transaction is currently active.");
-
 		try
 		{
-			//_stream.SendQuery("COMMIT".AsSpan(), _encoding.GetByteCount("COMMIT"), _encoding, _sqlSendBuffer);
+			_stream.SendQuery(_sqlEndTransaction, _sqlSendBuffer);
 			_stream.DrainToReadyForQuery(ref _transactionStatus);
 		}
 		catch (PgOperationalError)
@@ -294,7 +297,7 @@ public sealed class Connection : IConnection
 		_state = ConnectionState.Open | ConnectionState.Executing; // we checked already the connection state in AlterQuery.Execute().
 		_stream.SendQuery(sql, _sqlSendBuffer);
 		var returnValue = _stream.DrainToReadyForQuery(ref _transactionStatus);
-		returnValue?.Set(query, _ddlBuilder);
+		returnValue?.Set(query, DdlBuilder);
 		_state = ConnectionState.Open;
 		return returnValue;
 	}
@@ -306,7 +309,7 @@ public sealed class Connection : IConnection
 		if (returnValue is not null)
 		{
 			_transactionStatus = drainedBody.Length > 0 ? drainedBody[0] : (byte)TransactionStatus.Idle;
-			returnValue.Set(query, _ddlBuilder);
+			returnValue.Set(query, DdlBuilder);
 		}
 		return returnValue;
 	}
@@ -350,12 +353,9 @@ public sealed class Connection : IConnection
 
 	public void Rollback()
 	{
-		if (_transactionStatus == (byte)TransactionStatus.Idle)
-			throw new InvalidOperationException("Rollback() was called but no transaction is currently active.");
-
 		try
 		{
-			//_stream.SendQuery("ROLLBACK"u8, _sqlSendBuffer);
+			_stream.SendQuery(_sqlRollbackTransaction, _sqlSendBuffer);
 			_stream.DrainToReadyForQuery(ref _transactionStatus);
 		}
 		catch (PgOperationalError)

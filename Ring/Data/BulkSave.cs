@@ -222,25 +222,29 @@ public sealed class BulkSave : IBulkSave
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private void SaveWithTransaction(IConnection connection)
 	{
-        // Code size: 91 (0x5b)
-        connection.BeginTransaction();
+		// Code size: 91 (0x5b)
+		var builder = _schema.DmlBuilder;
+		var encoding = connection.ClientEncoding;
+		var index = 0;
+
+		connection.BeginTransaction();
         foreach (var query in _queries.AsReadOnlySpan())
 		{
-            var type = query.Type;
-            var typeId = (byte)type;
-			//if (typeId < FirstCancelOperationId)
+			// callvirt instance int64 Ring.Data.IRingConnection::Execute
+			var sql = query.ToSql(builder, encoding);
+			if (sql.Length > 0)
 			{
-                // callvirt instance int64 Ring.Data.IRingConnection::Execute
-				 //var resull = connection.Execute(query, );
-				/*var returnValue = connection.Execute(query);
-				if (returnValue < 0L)
+				var error = connection.Execute(query, sql);
+				if (error is not null)
 				{
+					
+					int oi = 0;
+					++oi;
 					connection.Rollback();
-					return;
 				}
-				*/
 			}
-        }
+			++index;
+		}
 		connection.Commit();
     }
 
@@ -251,10 +255,7 @@ public sealed class BulkSave : IBulkSave
 		return metaTable.ToTable(new ReadOnlySpan<Meta>(metaArray), PhysicalType.Undefined, GetDefaultDdlBuilder(), string.Empty, -1) !; // cannot be null here!!
 	}
 
-	private static IDmlBuilder GetDefaultDmlBuilder() => new Util.Builders.PostgreSQL.DmlBuilder();
     private static IDdlBuilder GetDefaultDdlBuilder() => new Util.Builders.PostgreSQL.DdlBuilder();
-
-
 	
 	#endregion
 }

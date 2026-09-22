@@ -42,7 +42,6 @@ public sealed class SchemaManager
 		}
 		bulkAlter.Apply(_connection);
 
-
 		var bulkSave = new BulkSave(initialSchema);
 		var startTime = DateTime.Now;
 		// insert initial schema into @meta table
@@ -52,7 +51,7 @@ public sealed class SchemaManager
 			bulkSave.ForceInsert(record);
 		}
 		Console.WriteLine($"BulkSave: {bulkSave.Queries.Count} queries, elapsed time: {(DateTime.Now - startTime).TotalMilliseconds} ms");
-		bulkSave.Save(_connection,true);
+		bulkSave.Save(_connection,false);
 
 
 

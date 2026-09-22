@@ -271,20 +271,22 @@ internal static class NetworkStreamExtensions
 		OperationalError? operationalError = null;
 		while (true)
 		{
-			var (code, body) = stream.ReadMessage(true);
+			// Pass false so ReadyForQuery's 1-byte body isn't skipped
+			var (code, body) = stream.ReadMessage(false);
+			if (code == (byte)BackendMessageCode.ReadyForQuery)
+			{
+				if (body.Length > 0) transactionStatus = body[0];
+				return operationalError;
+			}
 
-			if (code == (byte)BackendMessageCode.ReadyForQuery) return operationalError;
 			if (code == (byte)BackendMessageCode.ErrorResponse)
 			{
-				byte drainCode;
-				byte[] drainBody;
-
 				operationalError = body.ParseErrorFields();
 
-				do
-					(drainCode, drainBody) = stream.ReadMessage(false);
+				byte drainCode;
+				byte[] drainBody;
+				do (drainCode, drainBody) = stream.ReadMessage(false);
 				while (drainCode != (byte)BackendMessageCode.ReadyForQuery);
-
 				transactionStatus = drainBody.Length > 0 ? drainBody[0] : (byte)'I';
 				return operationalError;
 			}
@@ -335,39 +337,30 @@ internal static class NetworkStreamExtensions
 	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
 	internal static void SendExtendedQuery(this NetworkStream stream, ReadOnlySpan<byte> sql, ReadOnlySpan<byte> variables, byte[] sqlSendBuffer)
 	{
-		// Code size: 348 (0x15c)
-		var parseMsgLength = 9 + sql.Length; // 1 ('P') + 4 (len) + 1 (stmt) + sql.Length + 1 (NUL) + 2 (paramTypes); length field = parseMsgLength - 1
-		var msgLength = parseMsgLength + variables.Length;
+		// Parse ('P'): Type(1) + Len(4) + StmtName(1) + SQL + NUL(1) + NumParams(2)
+		var parseMsgLength = 9 + sql.Length;
 
-		if (msgLength <= sqlSendBuffer.Length)
+		// Total message length = Parse ('P') + variables (which already contains 'B' + 'E' + 'S')
+		var totalLength = parseMsgLength + variables.Length;
+
+		if (totalLength <= sqlSendBuffer.Length)
 		{
-			// Branch 1 & 2: Fast paths without ArrayPool renting (no try/finally needed)
-			Span<byte> buffer = msgLength <= SmallMessageStackAllocThreshold ? stackalloc byte[msgLength] : sqlSendBuffer.AsSpan(0, msgLength);
-			buffer[0] = (byte)FrontendMessageCode.Parse;
-			BinaryPrimitives.WriteInt32BigEndian(buffer.Slice(1, 4), parseMsgLength - 1);
-			buffer[5] = 0; // unnamed statement
-			sql.CopyTo(buffer.Slice(6));
-			buffer[6 + sql.Length] = 0; // query NUL terminator
-			BinaryPrimitives.WriteInt16BigEndian(buffer.Slice(7 + sql.Length, 2), 0); // numParamTypes = 0
-			variables.CopyTo(buffer[parseMsgLength..]);
+			// Branch 1 & 2: Fast paths using stackalloc or pre-allocated per-connection buffer
+			Span<byte> buffer = totalLength <= SmallMessageStackAllocThreshold
+				? stackalloc byte[totalLength]
+				: sqlSendBuffer.AsSpan(0, totalLength);
 
+			WriteExtendedQueryPipeline(buffer, parseMsgLength, sql, variables);
 			stream.Write(buffer);
 		}
 		else
 		{
-			// Branch 3: Slow path with ArrayPool allocation and try/finally
-			var rented = ArrayPool<byte>.Shared.Rent(msgLength);
+			// Branch 3: Slow path with ArrayPool allocation
+			var rented = ArrayPool<byte>.Shared.Rent(totalLength);
 			try
 			{
-				var buffer = rented.AsSpan(0, msgLength);
-				buffer[0] = (byte)FrontendMessageCode.Parse;
-				BinaryPrimitives.WriteInt32BigEndian(buffer.Slice(1, 4), parseMsgLength - 1);
-				buffer[5] = 0; // unnamed statement
-				sql.CopyTo(buffer.Slice(6));
-				buffer[6 + sql.Length] = 0; // query NUL terminator
-				BinaryPrimitives.WriteInt16BigEndian(buffer.Slice(7 + sql.Length, 2), 0); // numParamTypes = 0
-				variables.CopyTo(buffer[parseMsgLength..]);
-
+				var buffer = rented.AsSpan(0, totalLength);
+				WriteExtendedQueryPipeline(buffer, parseMsgLength, sql, variables);
 				stream.Write(buffer);
 			}
 			finally
@@ -375,6 +368,28 @@ internal static class NetworkStreamExtensions
 				ArrayPool<byte>.Shared.Return(rented);
 			}
 		}
+		// NetworkStream has no internal write buffer - Write() already goes straight to
+		// the socket, so Flush() here would be a documented no-op. Skipped deliberately.
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static void WriteExtendedQueryPipeline(Span<byte> buffer, int parseMsgLength, ReadOnlySpan<byte> sql, ReadOnlySpan<byte> variables)
+	{
+		var offset = 0;
+
+		// 1. Write Parse ('P') Message
+		buffer[offset++] = (byte)FrontendMessageCode.Parse;
+		BinaryPrimitives.WriteInt32BigEndian(buffer.Slice(offset, 4), parseMsgLength - 1);
+		offset += 4;
+		buffer[offset++] = 0; // unnamed statement
+		sql.CopyTo(buffer.Slice(offset));
+		offset += sql.Length;
+		buffer[offset++] = 0; // query NUL terminator
+		BinaryPrimitives.WriteInt16BigEndian(buffer.Slice(offset, 2), 0); // numParamTypes = 0 (server infers parameter types)
+		offset += 2;
+
+		// 2. Copy Bind ('B') + Execute ('E') + Sync ('S') payload directly from WriteVariablesPayload
+		variables.CopyTo(buffer.Slice(offset));
 	}
 
 	/// <summary>
@@ -415,7 +430,8 @@ internal static class NetworkStreamExtensions
 				ArrayPool<byte>.Shared.Return(rented);
 			}
 		}
-		stream.Flush();
+		// NetworkStream has no internal write buffer - Write() already goes straight to
+		// the socket, so Flush() here would be a documented no-op. Skipped deliberately.
 	}
 
 	internal static async ValueTask<(int? BackendPid, int? BackendSecret)> WaitUntilReadyAsync(this NetworkStream stream, CancellationToken cancellationToken = default)
@@ -448,138 +464,6 @@ internal static class NetworkStreamExtensions
 	}
 
 	#region private methods
-
-	// Writes Parse+Bind+Execute+Sync into destination, which must be exactly
-	// (1 + parseLength) + (1 + bindLength) + (1 + executeLength) + (1 + syncLength)
-	// bytes long - the three call sites in SendExtendedQuery size it that way
-	// regardless of which buffer tier they picked, so this method itself
-	// doesn't care whether destination came from the stack, the per-connection
-	// buffer, or ArrayPool.
-	private static void WriteExtendedQueryMessages(Span<byte> destination, ReadOnlySpan<char> sql, int sqlByteCount, Encoding encoding, in SaveQuery query, ReadOnlySpan<Column> tableColumns, ReadOnlySpan<int> paramLengths, byte[]?[]? byteaBytes, int parseLength, int bindLength)
-	{
-		var offset = 0;
-
-		// ---- Parse ----
-		destination[offset++] = (byte)FrontendMessageCode.Parse;
-		BinaryPrimitives.WriteInt32BigEndian(destination.Slice(offset, 4), parseLength);
-		offset += 4;
-		destination[offset++] = 0; // unnamed statement
-		offset += encoding.GetBytes(sql, destination.Slice(offset, sqlByteCount));
-		destination[offset++] = 0; // query NUL terminator
-		BinaryPrimitives.WriteInt16BigEndian(destination.Slice(offset, 2), 0); // numParamTypes = 0, server infers types
-		offset += 2;
-
-		// ---- Bind ----
-		destination[offset++] = (byte)FrontendMessageCode.Bind;
-		BinaryPrimitives.WriteInt32BigEndian(destination.Slice(offset, 4), bindLength);
-		offset += 4;
-		destination[offset++] = 0; // unnamed portal
-		destination[offset++] = 0; // unnamed statement
-
-		// Per-parameter format codes: one short per parameter.
-		// Binary (1) for numeric types and ByteArray; text (0) for everything else.
-		//
-		// paramLengths.Length must be the real parameter count, not a rented
-		// array's capacity - ArrayPool<T>.Rent(n) can return an array bigger
-		// than n, so callers must pass paramLengths.AsSpan(0, realCount), not
-		// the raw rented array (see the three call sites in SendExtendedQuery).
-		var paramCount = paramLengths.Length;
-		BinaryPrimitives.WriteInt16BigEndian(destination.Slice(offset, 2), (short)paramCount);
-		offset += 2;
-		foreach (var col in tableColumns)
-		{
-			if (col.Type == EntityType.SearchableColumn) continue;
-			BinaryPrimitives.WriteInt16BigEndian(destination.Slice(offset, 2), col.BinaryType ? (short)1 : (short)0);
-			offset += 2;
-		}
-
-		// Parameter values
-		BinaryPrimitives.WriteInt16BigEndian(destination.Slice(offset, 2), (short)paramCount);
-		offset += 2;
-
-		var pi = 0;
-		foreach (var col in tableColumns)
-		{
-			if (col.Type == EntityType.SearchableColumn) continue;
-			var len = paramLengths[pi];
-			BinaryPrimitives.WriteInt32BigEndian(destination.Slice(offset, 4), len);
-			offset += 4;
-
-			if (len > 0)
-			{
-				if (col.FieldType == FieldType.ByteArray)
-				{
-					// Binary format: raw bytes, no hex encoding needed
-					byteaBytes![pi]!.CopyTo(destination.Slice(offset, len));
-				}
-				else if (col.BinaryType)
-				{
-					WriteBinaryParam(col.FieldType, query.Data[col.RecordIndex + query.Offset]!, destination.Slice(offset, len));
-				}
-				else
-				{
-					encoding.GetBytes(query.Data[col.RecordIndex + query.Offset]!, destination.Slice(offset, len));
-				}
-				offset += len;
-			}
-			// len == -1 (NULL) or len == 0 (empty string): no value bytes follow
-			pi++;
-		}
-
-		// One global result format code: text (0) — matches every read path in this file
-		BinaryPrimitives.WriteInt16BigEndian(destination.Slice(offset, 2), 1);
-		offset += 2;
-		BinaryPrimitives.WriteInt16BigEndian(destination.Slice(offset, 2), 0);
-		offset += 2;
-
-		// ---- Execute ----
-		destination[offset++] = (byte)FrontendMessageCode.Execute;
-		BinaryPrimitives.WriteInt32BigEndian(destination.Slice(offset, 4), 9); // length field + unnamed portal + maxRows
-		offset += 4;
-		destination[offset++] = 0; // unnamed portal
-		BinaryPrimitives.WriteInt32BigEndian(destination.Slice(offset, 4), 0); // maxRows = 0: no limit
-		offset += 4;
-
-		// ---- Sync ----
-		destination[offset++] = (byte)FrontendMessageCode.Sync;
-		BinaryPrimitives.WriteInt32BigEndian(destination.Slice(offset, 4), 4);
-	}
-
-	/// <summary>
-	///     Serialises a numeric or boolean field value stored as an invariant-culture
-	///     string into its fixed-width big-endian binary representation.
-	///     <paramref name="destination"/> must be exactly <see cref="GetBinaryParamLength"/> bytes.
-	/// </summary>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private static void WriteBinaryParam(FieldType fieldType, string value, Span<byte> destination)
-	{
-		switch (fieldType)
-		{
-			case FieldType.Long:
-				BinaryPrimitives.WriteInt64BigEndian(destination, long.Parse(value, CultureInfo.InvariantCulture));
-				break;
-			case FieldType.Int:
-				BinaryPrimitives.WriteInt32BigEndian(destination, int.Parse(value, CultureInfo.InvariantCulture));
-				break;
-			case FieldType.Short:
-				BinaryPrimitives.WriteInt16BigEndian(destination, short.Parse(value, CultureInfo.InvariantCulture));
-				break;
-			case FieldType.Byte:
-				// 2 bytes (int2), not 1 - matches GetBinaryParamLength's Byte => 2 and
-				// the confirmed physical width (e.g. Meta.ObjectType/byte -> Postgres int2).
-				BinaryPrimitives.WriteInt16BigEndian(destination, sbyte.Parse(value, CultureInfo.InvariantCulture));
-				break;
-			case FieldType.Double:
-				BinaryPrimitives.WriteInt64BigEndian(destination, BitConverter.DoubleToInt64Bits(double.Parse(value, CultureInfo.InvariantCulture)));
-				break;
-			case FieldType.Float:
-				BinaryPrimitives.WriteInt32BigEndian(destination, BitConverter.SingleToInt32Bits(float.Parse(value, CultureInfo.InvariantCulture)));
-				break;
-			case FieldType.Boolean:
-				destination[0] = string.Equals(value, "True", StringComparison.Ordinal) ? (byte)1 : (byte)0;
-				break;
-		}
-	}
 
 	// Consumes and discards bodyLength bytes from the socket without allocating
 	// a buffer sized to the message - needed so ReadMessage(errorOnly: true)

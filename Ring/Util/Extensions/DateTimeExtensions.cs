@@ -1,151 +1,125 @@
 ﻿using Ring.Schema.Enums;
+using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
-
-namespace Ring.Util.Extensions;
 
 internal static class DateTimeExtensions
 {
-	// templates
-	private const int DecimalSys = 10;
-
-	// ISO-8601 layout, shared by WriteTemplate and ToString so the template and the write positions cannot drift apart.
-	// index : content
-	//   0-3 yyyy | 4 '-' | 5-6 MM | 7 '-' | 8-9 dd | 10 'T' | 11-12 HH | 13 ':' | 14-15 mm | 16 ':' | 17-18 ss
-	//   19 '.' | 20-22 milliseconds | 23-25 microseconds | 26 'Z' (DateTime) or offset sign (DateTimeOffset)
-	//   27-28 offset HH | 29 ':' | 30-31 offset mm
-	// Date:                   2005-12-12                           (10 chars)
-	// DateTime:               2005-12-12T18:17:16.015000Z          (27 chars)
-	// DateTime, skip ms:      2005-12-12T18:17:16Z                 (20 chars)
-	// DateTimeOffset:         2005-12-12T18:17:16.015000+04:00     (32 chars, the longest)
-	private const int YearEnd = 3;
-	private const int MonthEnd = 6;
-	private const int DayEnd = 9;
-	private const int HourEnd = 12;
-	private const int MinuteEnd = 15;
-	private const int SecondEnd = 18;
-	private const int MillisecondEnd = 22;
-	private const int MicrosecondEnd = 25;
-	private const int OffsetSign = 26;
-	private const int OffsetHourEnd = 28;
-	private const int OffsetMinuteEnd = 31;
-	private const int MaxLength = OffsetMinuteEnd + 1; // stack buffer size (in chars)
-	private const char Zero = '0';
-	private const char DateSeparator = '-';
-	private const char DateTimeSeparator = 'T';
-	private const char TimeSeparator = ':';
-	private const char FractionSeparator = '.';
-	private const char UtcDesignator = 'Z';
-	private const char PlusSign = '+';
-	private const char MinusSign = '-';
-
-
-	internal static string ToString(this in DateTime value, FieldType fieldType, bool skipmilliseconds, TimeSpan? offset)
+	[Pure]
+	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
+	internal static string ToString(this in DateTime value, FieldType fieldType, bool skipMilliseconds, TimeSpan? offset)
 	{
-		// Code size: 329 (0x149)
-		// IS0-8601 ==> "YYYY-MM-DDTHH:MM:SS.mmmmmZ" eg. 2005-12-12T18:17:16.015+04:00; lenght max ==> 32 (see layout above)
-		// stackalloc must live in the caller: a span over stack memory cannot be returned from the method that allocated it.
-		Span<char> buffer = stackalloc char[MaxLength];
-		var result = buffer[..WriteTemplate(fieldType, skipmilliseconds, buffer)];
-		var dateToConv = fieldType == FieldType.DateTime || (offset == null && fieldType != FieldType.Date) ?
-			value.ToUniversalTime() : value;
-		SetDateTime(result, 4, dateToConv.Year, YearEnd);
-		SetDateTime(result, 2, dateToConv.Month, MonthEnd);
-		SetDateTime(result, 2, dateToConv.Day, DayEnd);
-		if (fieldType != FieldType.Date)
+		// Code size: 98 (0x62)
+		DateTime dateToConv = fieldType == FieldType.DateTime || (offset == null && fieldType != FieldType.Date)
+			? value.ToUniversalTime()
+			: value;
+
+		int length = GetBufferLength(fieldType, skipMilliseconds);
+		if (length == 0) return string.Empty;
+
+		// string.Create allocates memory directly in the target string instance without stack-to-heap copies
+		return string.Create(length, (dateToConv, fieldType, skipMilliseconds, offset), static (buffer, state) =>
 		{
-			SetDateTime(result, 2, dateToConv.Hour, HourEnd);
-			SetDateTime(result, 2, dateToConv.Minute, MinuteEnd);
-			SetDateTime(result, 2, dateToConv.Second, SecondEnd);
-			if (fieldType != FieldType.DateTime || !skipmilliseconds)
+			var (dt, type, skipMs, off) = state;
+
+			// Populate base template
+			WriteTemplate(type, skipMs, buffer);
+
+			// Write Digits (Using fast 2-digit writes instead of loop division)
+			Write4Digits(buffer, 0, dt.Year);
+			Write2Digits(buffer, 5, dt.Month);
+			Write2Digits(buffer, 8, dt.Day);
+
+			if (type == FieldType.Date) return;
+
+			Write2Digits(buffer, 11, dt.Hour);
+			Write2Digits(buffer, 14, dt.Minute);
+			Write2Digits(buffer, 17, dt.Second);
+
+			if (type != FieldType.DateTime || !skipMs)
 			{
-				SetDateTime(result, 3, dateToConv.Millisecond, MillisecondEnd);
-				SetDateTime(result, 3, dateToConv.Microsecond, MicrosecondEnd);
+				Write3Digits(buffer, 20, dt.Millisecond);
+				Write3Digits(buffer, 23, dt.Microsecond);
 			}
 
-			if (fieldType == FieldType.DateTimeOffset && offset != null)
+			if (type == FieldType.DateTimeOffset && off.HasValue)
 			{
-				int hours = offset.Value.Hours;
-				int minutes = offset.Value.Minutes;
-				if (offset.Value < TimeSpan.Zero) // not 'hours < 0': -00:30 has hours == 0
+				TimeSpan ts = off.Value;
+				if (ts < TimeSpan.Zero)
 				{
-					result[OffsetSign] = MinusSign;
-					hours *= -1;
-					minutes *= -1;
+					buffer[26] = '-';
+					ts = ts.Negate();
 				}
-				SetDateTime(result, 2, hours, OffsetHourEnd);
-				SetDateTime(result, 2, minutes, OffsetMinuteEnd);
+				Write2Digits(buffer, 27, ts.Hours);
+				Write2Digits(buffer, 30, ts.Minutes);
 			}
-		}
-		return new string(result);
+		});
 	}
 
-	#region private methods
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static int GetBufferLength(FieldType fieldType, bool skipMilliseconds) => 
+	fieldType switch
+	{   // Code size: 49 (0x31)
+		FieldType.Date => 10,
+		FieldType.DateTime => skipMilliseconds ? 20 : 27,
+		FieldType.DateTimeOffset => 32,
+		_ => 0
+	};
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private static void SetDateTime(Span<char> input, int size, int value, int lastPosition)
+	private static void Write2Digits(Span<char> buffer, int start, int value)
 	{
-		// Code size: 42 (0x2a)
-		var i = 0;
-		while (i < size)
-		{
-			input[lastPosition--] += (char)(value % DecimalSys);
-			value /= DecimalSys;
-			++i;
-		}
+		// Code size: 37 (0x25)
+		buffer[start] = (char)('0' + (value / 10));
+		buffer[start + 1] = (char)('0' + (value % 10));
 	}
 
-	/// <summary>
-	/// Builds the '0'-filled template for <paramref name="fieldType"/> in <paramref name="destination"/> (SetDateTime adds
-	/// the digits onto the '0' characters) and returns its length; 0 when the field type has no template.
-	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private static int WriteTemplate(FieldType fieldType, bool skipmilliseconds, Span<char> destination)
+	private static void Write3Digits(Span<char> buffer, int start, int value)
 	{
-		// Code size: 217 (0xd9)		
-		int length;
-		switch (fieldType)
-		{
-			case FieldType.Date:
-				length = DayEnd + 1;
-				break;
-			case FieldType.DateTime:
-				length = skipmilliseconds ? SecondEnd + 2 : MicrosecondEnd + 2; // + 'Z'
-				break;
-			case FieldType.DateTimeOffset:
-				length = MaxLength; // skipmilliseconds does not apply to DateTimeOffset
-				break;
-			default:
-				return 0;
-		}
+		// Code size: 59 (0x3b)
+		buffer[start] = (char)('0' + (value / 100));
+		buffer[start + 1] = (char)('0' + ((value / 10) % 10));
+		buffer[start + 2] = (char)('0' + (value % 10));
+	}
 
-		var template = destination[..length];
-		template.Fill(Zero);
-		template[YearEnd + 1] = DateSeparator;
-		template[MonthEnd + 1] = DateSeparator;
-		if (fieldType == FieldType.Date) return length;
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static void Write4Digits(Span<char> buffer, int start, int value)
+	{
+		// Code size: 84 (0x54)
+		buffer[start] = (char)('0' + (value / 1000));
+		buffer[start + 1] = (char)('0' + ((value / 100) % 10));
+		buffer[start + 2] = (char)('0' + ((value / 10) % 10));
+		buffer[start + 3] = (char)('0' + (value % 10));
+	}
 
-		template[DayEnd + 1] = DateTimeSeparator;
-		template[HourEnd + 1] = TimeSeparator;
-		template[MinuteEnd + 1] = TimeSeparator;
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static void WriteTemplate(FieldType fieldType, bool skipMs, Span<char> buffer)
+	{
+		// Code size: 156 (0x9c)
+		buffer.Fill('0');
+		buffer[4] = '-';
+		buffer[7] = '-';
+
+		if (fieldType == FieldType.Date) return;
+
+		buffer[10] = 'T';
+		buffer[13] = ':';
+		buffer[16] = ':';
 
 		if (fieldType == FieldType.DateTimeOffset)
 		{
-			template[SecondEnd + 1] = FractionSeparator;
-			template[OffsetSign] = PlusSign;
-			template[OffsetHourEnd + 1] = TimeSeparator;
+			buffer[19] = '.';
+			buffer[26] = '+';
+			buffer[29] = ':';
 		}
-		else if (skipmilliseconds)
+		else if (skipMs)
 		{
-			template[SecondEnd + 1] = UtcDesignator;
+			buffer[19] = 'Z';
 		}
 		else
 		{
-			template[SecondEnd + 1] = FractionSeparator;
-			template[MicrosecondEnd + 1] = UtcDesignator;
+			buffer[19] = '.';
+			buffer[26] = 'Z';
 		}
-
-		return length;
 	}
-
-	#endregion
 }
