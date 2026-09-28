@@ -1,12 +1,12 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Models;
+using System.Text;
 
 namespace Ring.Util.Builders.SQLite;
 
 internal sealed class DqlBuilder : BaseDqlBuilder
 {
-    public sealed override DatabaseProvider Provider => DatabaseProvider.SqlLite;
-    public DqlBuilder() : base() { }
+    internal DqlBuilder(Encoding clientEncoding) : base(DatabaseProvider.SqlLite, clientEncoding) { }
     protected sealed override string GetSelection(in Column column) => column.PhysicalName;
 
 }

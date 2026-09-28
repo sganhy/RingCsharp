@@ -6,13 +6,14 @@ using Ring.Schema.Extensions;
 using Ring.Util.Builders;
 using System.Globalization;
 using System.Linq.Expressions;
+using System.Text;
 using PostGDdlBuilder = Ring.Util.Builders.PostgreSQL.DdlBuilder;
 
 namespace Ring.Tests.Schema.Extensions;
 
 public class TableExtensionsTest : BaseTest
 {
-    private readonly IDdlBuilder _builder = new PostGDdlBuilder();
+    private readonly IDdlBuilder _builder = new PostGDdlBuilder(Encoding.UTF8);
 
     public TableExtensionsTest(ITestOutputHelper output) : base(output) => Expression.Empty();
 
@@ -197,7 +198,7 @@ public class TableExtensionsTest : BaseTest
     {
         // arrange 
         var metaList = GetSchema1();
-        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
+        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql, Encoding.UTF8);
         var table = schema?.GetTable("book");
 
         // act 
@@ -224,7 +225,7 @@ public class TableExtensionsTest : BaseTest
     internal void GetColumn_BookTable_ColumnObject()
     {
         var metaList = GetSchema1();
-        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
+        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql, Encoding.UTF8);
         var table = schema?.GetTable("book");
 
         // act 
@@ -241,7 +242,7 @@ public class TableExtensionsTest : BaseTest
     internal void GetColumn_ArmorTable_RelationColumnObject()
     {
         var metaList = GetSchema1();
-        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
+        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql, Encoding.UTF8);
         var table = schema?.GetTable("armor");
 
 		// act 
@@ -258,8 +259,8 @@ public class TableExtensionsTest : BaseTest
     internal void GetColumn_WeaponTable_SearchableColumnObject()
     {
         var metaList = GetSchema1();
-        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
-        var table = schema?.GetTable("weapon");
+        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql, Encoding.UTF8);
+		var table = schema?.GetTable("weapon");
 
         // act 
         Assert.NotNull(schema);
@@ -276,8 +277,8 @@ public class TableExtensionsTest : BaseTest
     internal void GetColumnIndex_AnonymousTable_FindAllColumns()
     {
         var metaList = GetSchema1();
-        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
-        var table = GetAnonymousTable(_builder, 512, 0);
+        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql, Encoding.UTF8);
+		var table = GetAnonymousTable(_builder, 512, 0);
 
         // act 
         Assert.NotNull(schema);
@@ -296,8 +297,8 @@ public class TableExtensionsTest : BaseTest
     {
         // arrange 
         var metaList = GetSchema1();
-        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
-        var table = schema?.GetTable("book");
+        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql, Encoding.UTF8);
+		var table = schema?.GetTable("book");
 
         // act 
         Assert.NotNull(schema);
@@ -313,8 +314,8 @@ public class TableExtensionsTest : BaseTest
     {
         // arrange 
         var metaList = GetSchema1();
-        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
-        var table = schema?.GetTable("domain");
+        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql, Encoding.UTF8);
+		var table = schema?.GetTable("domain");
 
         // act 
         Assert.NotNull(schema);
@@ -330,8 +331,8 @@ public class TableExtensionsTest : BaseTest
     {
         // arrange 
         var metaList = GetSchema1();
-        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
-        var table = schema?.GetTable("deity");
+        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql, Encoding.UTF8);
+		var table = schema?.GetTable("deity");
 
         // act 
         Assert.NotNull(schema);
@@ -348,8 +349,8 @@ public class TableExtensionsTest : BaseTest
     {
         // arrange 
         var metaList = GetSchema1();
-        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
-        var table = schema?.GetTable("class");
+        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql, Encoding.UTF8);
+		var table = schema?.GetTable("class");
 
         // act 
         Assert.NotNull(schema);
@@ -366,8 +367,8 @@ public class TableExtensionsTest : BaseTest
     {
         // arrange 
         var metaList = GetSchema1();
-        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
-        var table = schema?.GetTable("deity");
+        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql, Encoding.UTF8);
+		var table = schema?.GetTable("deity");
 
         // act 
         Assert.NotNull(schema);
@@ -383,7 +384,7 @@ public class TableExtensionsTest : BaseTest
 	{
 		// arrange 
 		var metaList = GetSchema1();
-		var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
+		var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql, Encoding.UTF8);
 		var table = schema?.GetTable("book");
         var expectedDesc = "International Standard Book Number (ISBN) - 13 digits long";    
 
@@ -403,7 +404,7 @@ public class TableExtensionsTest : BaseTest
 	{
 		// arrange 
 		var metaList = GetSchema1();
-		var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
+		var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql, Encoding.UTF8);
 		var table = schema?.GetTable("armor");
 		var expectedDesc = "armor2book";
 
@@ -425,7 +426,7 @@ public class TableExtensionsTest : BaseTest
         var schemaName = "@Test2";
         var schBuilder = new SchemaBuilder();
         var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
-        var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
+        var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config, Encoding.UTF8);
         var metaTable = schema.GetTable("@meta_id");
 
         // act 
@@ -447,10 +448,10 @@ public class TableExtensionsTest : BaseTest
         var schemaName = "@Test2";
         var schBuilder = new SchemaBuilder();
         var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
-        var schema1 = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
-        var schema2 = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
-        var schema3 = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
-        var schema4 = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
+        var schema1 = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config, Encoding.UTF8);
+        var schema2 = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config, Encoding.UTF8);
+        var schema3 = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config, Encoding.UTF8);
+        var schema4 = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config, Encoding.UTF8);
         var table1 = schema1.GetTable("@log");
         var table2 = schema2.GetTable("@log");
         var table3 = schema3.GetTable("@log"); // indentical
@@ -486,10 +487,10 @@ public class TableExtensionsTest : BaseTest
         var schemaName = "@Test2";
         var schBuilder = new SchemaBuilder();
         var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
-        var schema1 = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
-        var schema2 = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
-        var schema3 = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
-        var schema4 = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
+        var schema1 = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config, Encoding.UTF8);
+        var schema2 = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config, Encoding.UTF8);
+        var schema3 = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config, Encoding.UTF8);
+        var schema4 = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config, Encoding.UTF8);
         var table1 = schema1.GetTable("@log");
         var table2 = schema2.GetTable("@log");
         var table3 = schema3.GetTable("@log");

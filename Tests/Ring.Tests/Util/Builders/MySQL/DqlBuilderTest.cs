@@ -4,6 +4,7 @@ using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Util.Builders;
 using Ring.Util.Builders.PostgreSQL;
+using System.Text;
 using DbSchema = Ring.Schema.Models.Schema;
 
 namespace Ring.Tests.Util.Builders.MySQL;
@@ -18,9 +19,9 @@ public sealed class DqlBuilderTest : BaseBuilderTest
     {
         var metaList = GetSchema1();
         var meta = Meta.Create(_faker.Random.String());
-        _schema = Meta.ToSchema(metaList,DatabaseProvider.MySql) ??
+        _schema = Meta.ToSchema(metaList,DatabaseProvider.MySql, Encoding.UTF8) ??
             Meta.GetDefaultSchema(meta, DatabaseProvider.MySql);
-        _sut = new DqlBuilder();
+        _sut = new DqlBuilder(Encoding.UTF8);
         _sut.Init(_schema);
     }
 

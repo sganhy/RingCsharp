@@ -11,10 +11,10 @@ internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
 	private string[] _tableSelect; // include relations: yes , include searchable: no
 	protected readonly IDdlBuilder _ddlBuilder;
 
-	protected BaseDqlBuilder()
+	protected BaseDqlBuilder(DatabaseProvider provider, Encoding clientEncoding) : base(provider, clientEncoding)
 	{
 		_tableSelect = Array.Empty<string>();
-		_ddlBuilder = Provider.GetDdlBuilder();
+		_ddlBuilder = Provider.GetDdlBuilder(clientEncoding);
 	}
 
 	public void Init(DbSchema schema)

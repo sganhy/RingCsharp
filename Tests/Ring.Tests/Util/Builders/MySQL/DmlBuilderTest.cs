@@ -6,6 +6,7 @@ using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Util.Builders;
 using Ring.Util.Builders.MySQL;
+using System.Text;
 using DbSchema = Ring.Schema.Models.Schema;
 
 namespace Ring.Tests.Util.Builders.MySQL;
@@ -20,9 +21,9 @@ public class DmlBuilderTest : BaseBuilderTest
     {
         var metaList = GetSchema1();
         var meta = Meta.Create(_faker.Random.String());
-        _schema = Meta.ToSchema(metaList,DatabaseProvider.MySql) ??
+        _schema = Meta.ToSchema(metaList,DatabaseProvider.MySql, Encoding.UTF8) ??
             Meta.GetDefaultSchema(meta, DatabaseProvider.MySql);
-        _sut = new DmlBuilder();
+        _sut = new DmlBuilder(Encoding.UTF8);
         _sut.Init(_schema);
     }
 
@@ -66,12 +67,12 @@ public class DmlBuilderTest : BaseBuilderTest
     internal void Insert_EmptyTable_InsertSql()
     {
         // arrange 
-        var sut = new DmlBuilder();
+        var sut = new DmlBuilder(Encoding.UTF8);
         var schemaId = _faker.Random.Number(int.MinValue,int.MaxValue);
         var testTable= new Meta(_faker.Random.Number(int.MinValue,int.MaxValue), (byte)EntityType.Table, schemaId, (int)TableType.Business
             , 0L, "Test", null, null, true);
         var testSchema= new Meta(schemaId, (byte)EntityType.Schema, schemaId, 0, 0L, "Test", null, null, true);
-        var schema = Meta.ToSchema(new Meta[] { testTable, testSchema }, DatabaseProvider.MySql);
+        var schema = Meta.ToSchema(new Meta[] { testTable, testSchema }, DatabaseProvider.MySql, Encoding.UTF8);
         var expectedResult = "INSERT INTO test.t_test () VALUES ()";
         var tableTest = schema?.GetTable("Test");
 
@@ -138,11 +139,11 @@ public class DmlBuilderTest : BaseBuilderTest
     internal void Delete_TableMeta_DeleteSql()
     {
         // arrange 
-        var sut = new DmlBuilder();
+        var sut = new DmlBuilder(Encoding.UTF8);
         var schBuilder = new SchemaBuilder();
         var schemaName = "@Test";
         var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
-        var schema = schBuilder.GetMeta(DatabaseProvider.MySql, config);
+        var schema = schBuilder.GetMeta(DatabaseProvider.MySql, config, Encoding.UTF8);
         var table = schema.GetTable("@meta");
         var expectedResult = "DELETE FROM `@test`.`@meta` WHERE id=:a1 AND schema_id=:a2 AND object_type=:a3 AND reference_id=:a4";
 
@@ -160,11 +161,11 @@ public class DmlBuilderTest : BaseBuilderTest
     internal void Delete_TableMetaId_DeleteSql()
     {
         // arrange 
-        var sut = new DmlBuilder();
+        var sut = new DmlBuilder(Encoding.UTF8);
         var schBuilder = new SchemaBuilder();
         var schemaName = "@test";
         var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
-        var schema = schBuilder.GetMeta(DatabaseProvider.MySql, config);
+        var schema = schBuilder.GetMeta(DatabaseProvider.MySql, config, Encoding.UTF8);
         var table = schema.GetTable("@meta_id");
         var expectedResult = "DELETE FROM `@test`.`@meta_id` WHERE id=:a1 AND schema_id=:a2 AND object_type=:a3";
 
@@ -197,11 +198,11 @@ public class DmlBuilderTest : BaseBuilderTest
     internal void Update_TableMeta_UpdateSql()
     {
         // arrange 
-        var sut = new DmlBuilder();
+        var sut = new DmlBuilder(Encoding.UTF8);
         var schBuilder = new SchemaBuilder();
         var schemaName = "@Test";
         var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 8 };
-        var schema = schBuilder.GetMeta(DatabaseProvider.MySql, config);
+        var schema = schBuilder.GetMeta(DatabaseProvider.MySql, config, Encoding.UTF8);
         var table = schema.GetTable("@meta");
         var expectedResult = "UPDATE `@test`.`@meta` SET {0} WHERE id=:a1 AND schema_id=:a2 AND object_type=:a3 AND reference_id=:a4";
 
@@ -219,11 +220,11 @@ public class DmlBuilderTest : BaseBuilderTest
     internal void Update_TableMetaId_UpdateSql()
     {
         // arrange 
-        var sut = new DmlBuilder();
+        var sut = new DmlBuilder(Encoding.UTF8);
         var schBuilder = new SchemaBuilder();
         var schemaName = "@Test";
         var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 8 };
-        var schema = schBuilder.GetMeta(DatabaseProvider.MySql, config);
+        var schema = schBuilder.GetMeta(DatabaseProvider.MySql, config, Encoding.UTF8);
         var table = schema.GetTable("@meta_id");
         var expectedResult = "UPDATE `@test`.`@meta_id` SET {0} WHERE id=:a1 AND schema_id=:a2 AND object_type=:a3";
 

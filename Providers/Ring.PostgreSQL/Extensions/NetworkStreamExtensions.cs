@@ -333,10 +333,14 @@ internal static class NetworkStreamExtensions
 	/// <summary>
 	///     Sends the Extended Query subprotocol for a parameterized statement using pre-encoded UTF-8 SQL bytes.
 	/// </summary>
+	/// <summary>
+	///     Sends the Extended Query subprotocol for a parameterized statement using pre-encoded UTF-8 SQL bytes.
+	/// </summary>
 	[SkipLocalsInit]
 	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
 	internal static void SendExtendedQuery(this NetworkStream stream, ReadOnlySpan<byte> sql, ReadOnlySpan<byte> variables, byte[] sqlSendBuffer)
 	{
+		// Code size: 401 (0x191)
 		// Parse ('P'): Type(1) + Len(4) + StmtName(1) + SQL + NUL(1) + NumParams(2)
 		var parseMsgLength = 9 + sql.Length;
 
@@ -350,7 +354,21 @@ internal static class NetworkStreamExtensions
 				? stackalloc byte[totalLength]
 				: sqlSendBuffer.AsSpan(0, totalLength);
 
-			WriteExtendedQueryPipeline(buffer, parseMsgLength, sql, variables);
+			var offset = 0;
+
+			// 1. Write Parse ('P') Message
+			buffer[offset++] = (byte)FrontendMessageCode.Parse;
+			BinaryPrimitives.WriteInt32BigEndian(buffer.Slice(offset, 4), parseMsgLength - 1);
+			offset += 4;
+			buffer[offset++] = 0; // unnamed statement
+			sql.CopyTo(buffer[offset..]);
+			offset += sql.Length;
+			buffer[offset++] = 0; // query NUL terminator
+			BinaryPrimitives.WriteInt16BigEndian(buffer.Slice(offset, 2), 0); // numParamTypes = 0 (server infers parameter types)
+			offset += 2;
+
+			// 2. Copy Bind ('B') + Execute ('E') + Sync ('S') payload directly from WriteVariablesPayload
+			variables.CopyTo(buffer[offset..]);
 			stream.Write(buffer);
 		}
 		else
@@ -360,7 +378,21 @@ internal static class NetworkStreamExtensions
 			try
 			{
 				var buffer = rented.AsSpan(0, totalLength);
-				WriteExtendedQueryPipeline(buffer, parseMsgLength, sql, variables);
+				var offset = 0;
+
+				// 1. Write Parse ('P') Message
+				buffer[offset++] = (byte)FrontendMessageCode.Parse;
+				BinaryPrimitives.WriteInt32BigEndian(buffer.Slice(offset, 4), parseMsgLength - 1);
+				offset += 4;
+				buffer[offset++] = 0; // unnamed statement
+				sql.CopyTo(buffer[offset..]);
+				offset += sql.Length;
+				buffer[offset++] = 0; // query NUL terminator
+				BinaryPrimitives.WriteInt16BigEndian(buffer.Slice(offset, 2), 0); // numParamTypes = 0 (server infers parameter types)
+				offset += 2;
+
+				// 2. Copy Bind ('B') + Execute ('E') + Sync ('S') payload directly from WriteVariablesPayload
+				variables.CopyTo(buffer[offset..]);
 				stream.Write(buffer);
 			}
 			finally
@@ -372,26 +404,6 @@ internal static class NetworkStreamExtensions
 		// the socket, so Flush() here would be a documented no-op. Skipped deliberately.
 	}
 
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private static void WriteExtendedQueryPipeline(Span<byte> buffer, int parseMsgLength, ReadOnlySpan<byte> sql, ReadOnlySpan<byte> variables)
-	{
-		var offset = 0;
-
-		// 1. Write Parse ('P') Message
-		buffer[offset++] = (byte)FrontendMessageCode.Parse;
-		BinaryPrimitives.WriteInt32BigEndian(buffer.Slice(offset, 4), parseMsgLength - 1);
-		offset += 4;
-		buffer[offset++] = 0; // unnamed statement
-		sql.CopyTo(buffer.Slice(offset));
-		offset += sql.Length;
-		buffer[offset++] = 0; // query NUL terminator
-		BinaryPrimitives.WriteInt16BigEndian(buffer.Slice(offset, 2), 0); // numParamTypes = 0 (server infers parameter types)
-		offset += 2;
-
-		// 2. Copy Bind ('B') + Execute ('E') + Sync ('S') payload directly from WriteVariablesPayload
-		variables.CopyTo(buffer.Slice(offset));
-	}
-
 	/// <summary>
 	///     Sends a frontend Simple Query ('Q') message using pre-encoded UTF-8 SQL bytes.
 	/// </summary>
@@ -399,7 +411,7 @@ internal static class NetworkStreamExtensions
 	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
 	internal static void SendQuery(this NetworkStream stream, ReadOnlySpan<byte> sql, byte[] sqlSendBuffer)
 	{
-		// Code size: 231 (0xe7)
+		// Code size: 224 (0xe0)
 		var msgLength = 6 + sql.Length; // 1 ('Q') + 4 (len) + sql.Length + 1 (NUL)
 
 		if (msgLength <= sqlSendBuffer.Length)

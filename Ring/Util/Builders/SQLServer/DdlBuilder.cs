@@ -1,6 +1,7 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
+using System.Text;
 
 namespace Ring.Util.Builders.SQLServer;
 
@@ -23,13 +24,12 @@ internal sealed class DdlBuilder : BaseDdlBuilder
         { FieldType.DateTimeOffset,"datetimeoffset" }
     };
 
-    public DdlBuilder() : base() { }
+	internal DdlBuilder(Encoding encoding) : base(DatabaseProvider.SqlServer, encoding) {}
 
-    public sealed override string Create(TableSpace tablespace)
+	public sealed override string Create(TableSpace tablespace)
     {
         throw new NotImplementedException();
     }
-    public sealed override DatabaseProvider Provider => DatabaseProvider.SqlServer;
     protected sealed override string MtmPrefix => TableType.Mtm.GetLogicalName(); // physical name prefix for many-to-many tables
 	protected sealed override string? TimeZoneOffsetPrefix => null;
     protected sealed override Dictionary<FieldType, string> DataType => _dataType;

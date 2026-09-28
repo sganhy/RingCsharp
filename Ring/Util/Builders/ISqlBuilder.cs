@@ -1,8 +1,10 @@
 ﻿using Ring.Schema.Enums;
+using System.Text;
 
 namespace Ring.Util.Builders;
 
 internal interface ISqlBuilder
 {
-    DatabaseProvider Provider { get; }
+	Encoding ClientEncoding { get; }
+	DatabaseProvider Provider { get; }
 }

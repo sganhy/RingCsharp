@@ -3,12 +3,14 @@ using Ring.Data.Extensions;
 using Ring.Data.Models;
 using Ring.Schema;
 using Ring.Schema.Enums;
+using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using Ring.Util.Builders;
 using Ring.Util.Enums;
 using Ring.Util.Helpers;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Text;
 using Database = Ring.Schema.Models.Schema;
 
 namespace Ring.Data;
@@ -155,11 +157,12 @@ public sealed class BulkSave : IBulkSave
 		_queries.Clear();
 	}
 
-	public void Save()
+	public void Save(IsolationLevel? isolationLevel=null)
 	{	
+		
 	}
 
-	internal void Save(IConnection connection, bool noTransaction=false)
+	internal void Save(IConnection connection, bool noTransaction, IsolationLevel? isolationLevel)
 	{
 		// Code size: 77 (0x4d)
 		var queryCount = _queries.Count;
@@ -172,7 +175,7 @@ public sealed class BulkSave : IBulkSave
 		//TODO if more than 100K multiple transactions
 		//TODO throw exception ==> invalid insert into with id==0
 		if (queryCount == 1 || noTransaction) SaveWithoutTransactions(connection);
-		else if (queryCount > 1) SaveWithTransaction(connection);
+		else if (queryCount > 1) SaveWithTransaction(connection, isolationLevel);
 		
 		// clear bucket 
 		Clear();
@@ -220,14 +223,15 @@ public sealed class BulkSave : IBulkSave
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private void SaveWithTransaction(IConnection connection)
+	private void SaveWithTransaction(IConnection connection, IsolationLevel? isolationLevel)
 	{
 		// Code size: 91 (0x5b)
 		var builder = _schema.DmlBuilder;
 		var encoding = connection.ClientEncoding;
+		var level = isolationLevel ?? builder.Provider.GetDefaultIsolationLevel();
 		var index = 0;
 
-		connection.BeginTransaction();
+		connection.BeginTransaction(level);
         foreach (var query in _queries.AsReadOnlySpan())
 		{
 			// callvirt instance int64 Ring.Data.IRingConnection::Execute
@@ -255,7 +259,9 @@ public sealed class BulkSave : IBulkSave
 		return metaTable.ToTable(new ReadOnlySpan<Meta>(metaArray), PhysicalType.Undefined, GetDefaultDdlBuilder(), string.Empty, -1) !; // cannot be null here!!
 	}
 
-    private static IDdlBuilder GetDefaultDdlBuilder() => new Util.Builders.PostgreSQL.DdlBuilder();
-	
+#pragma warning disable CA1859 // Use concrete types when possible for improved performance
+	private static IDdlBuilder GetDefaultDdlBuilder() => new Util.Builders.PostgreSQL.DdlBuilder(Encoding.UTF8);
+#pragma warning restore CA1859
+
 	#endregion
 }

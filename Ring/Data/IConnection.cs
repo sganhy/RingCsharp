@@ -6,7 +6,7 @@ namespace Ring.Data;
 public interface IConnection : IDisposable
 {
 	int ProviderId();
-	void BeginTransaction();
+	void BeginTransaction(IsolationLevel isolationLevel);
 	void Commit();
 	void Rollback();
 	bool IsConnectionAlive();

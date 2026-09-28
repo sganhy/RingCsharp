@@ -10,6 +10,7 @@ using Ring.Util.Helpers;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.CompilerServices;
+using System.Text;
 
 namespace Ring.Data;
 
@@ -669,7 +670,7 @@ public struct Record : IEquatable<Record>
 
 
 #pragma warning disable CA1859 // Use concrete types when possible for improved performance
-    private static IDdlBuilder GetDefaultDdlBuilder() => new Util.Builders.PostgreSQL.DdlBuilder(); // Code size: 6 (0x6)
+	private static IDdlBuilder GetDefaultDdlBuilder() => new Util.Builders.PostgreSQL.DdlBuilder(Encoding.UTF8); // Code size: 6 (0x6)
 #pragma warning restore CA1859
 
     private static Table GetDefaultType()

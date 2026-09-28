@@ -6,6 +6,7 @@ using Ring.Util.Builders;
 using System.ComponentModel.DataAnnotations;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Text;
 using PostGDdlBuilder = Ring.Util.Builders.PostgreSQL.DdlBuilder;
 using Record = Ring.Data.Record;
 
@@ -13,7 +14,7 @@ namespace Ring.Tests.Schema;
 
 public sealed class MetaTest : BaseTest
 {
-    private readonly IDdlBuilder _builder = new PostGDdlBuilder();
+    private readonly IDdlBuilder _builder = new PostGDdlBuilder(Encoding.UTF8);
 
     public MetaTest(ITestOutputHelper output) : base(output) => Expression.Empty();
 
@@ -561,7 +562,7 @@ public sealed class MetaTest : BaseTest
         var segment = new ArraySegment<Meta>(metaItems, 0, metaItems.Length);
 
         // act 
-        var table = metaTable.ToTable(segment, PhysicalType.Table, new PostGDdlBuilder(), _faker.Random.String(), 0);
+        var table = metaTable.ToTable(segment, PhysicalType.Table, new PostGDdlBuilder(Encoding.UTF8), _faker.Random.String(), 0);
         var field = table?.GetField("name");
         var fieldPk = table?.GetField("id");
 
@@ -596,7 +597,7 @@ public sealed class MetaTest : BaseTest
         var segment = new ArraySegment<Meta>(metaItems, 0, metaItems.Length);
 
         // act 
-        var table = metaTable.ToTable(segment, PhysicalType.Table, new PostGDdlBuilder(), _faker.Random.String(), 0);
+        var table = metaTable.ToTable(segment, PhysicalType.Table, new PostGDdlBuilder(Encoding.UTF8), _faker.Random.String(), 0);
         var fieldPk = table?.GetField("id");
 
         // assert
@@ -650,7 +651,7 @@ public sealed class MetaTest : BaseTest
         var expectedPhysicalName = "rpg_sheet.t_ability";
 
         // act 
-        var result = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
+        var result = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql, Encoding.UTF8);
         var tblAbility = result?.GetTable("ability");
         var fldName = tblAbility?.GetField("name");
         var relAbility2book = tblAbility?.GetRelation("ability2book");
@@ -700,7 +701,7 @@ public sealed class MetaTest : BaseTest
         var rel = GetAnonymousRelation("Test2");
 
         // act 
-        var result = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
+        var result = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql, Encoding.UTF8);
 
         // assert
         Assert.NotNull(result);

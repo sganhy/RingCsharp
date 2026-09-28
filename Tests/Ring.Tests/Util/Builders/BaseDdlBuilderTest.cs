@@ -2,6 +2,7 @@
 using Ring.Schema.Extensions;
 using Ring.Util.Builders;
 using Ring.Util.Builders.PostgreSQL;
+using System.Text;
 
 namespace Ring.Tests.Util.Builders;
 
@@ -12,7 +13,7 @@ public sealed class BaseDdlBuilderTest : BaseBuilderTest
 
     public BaseDdlBuilderTest()
     {
-        _sut = new DdlBuilder();
+        _sut = new DdlBuilder(Encoding.UTF8);
     }
 
 

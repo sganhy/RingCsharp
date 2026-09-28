@@ -1,12 +1,12 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
+using System.Text;
 
 namespace Ring.Util.Builders.Oracle;
 
 internal sealed class DdlBuilder : BaseDdlBuilder
 {
-    private readonly static DatabaseProvider _currentProvider = DatabaseProvider.Oracle;
     private readonly static Dictionary<FieldType, string> _dataType = new()
     {
         { FieldType.String,        "VARCHAR"   },
@@ -24,10 +24,9 @@ internal sealed class DdlBuilder : BaseDdlBuilder
         { FieldType.DateTimeOffset,  "TIMESTAMP" }
     };
 
-    public DdlBuilder() : base() { }
+	internal DdlBuilder(Encoding encoding) : base(DatabaseProvider.Oracle, encoding) { }
 
-    public sealed override string Create(TableSpace tablespace) => tablespace.Name;
-    public sealed override DatabaseProvider Provider => _currentProvider;
+	public sealed override string Create(TableSpace tablespace) => tablespace.Name;
     protected sealed override string MtmPrefix => TableType.Mtm.GetLogicalName(); // physical name prefix for many-to-many tables
 	protected sealed override string? TimeZoneOffsetPrefix => null;
     protected sealed override Dictionary<FieldType, string> DataType => _dataType;

@@ -2,6 +2,7 @@
 using Ring.Schema;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
+using System.Text;
 using DbSchema = Ring.Schema.Models.Schema;
 using Record = Ring.Data.Record;
 
@@ -15,7 +16,7 @@ public class BulkSaveTest : BaseTest
     {
         var metaList = GetSchema1();
         var meta = Meta.Create("Test");
-        _schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql) ?? Meta.GetDefaultSchema(meta, DatabaseProvider.PostgreSql);
+        _schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql, Encoding.UTF8) ?? Meta.GetDefaultSchema(meta, DatabaseProvider.PostgreSql);
     }
 
     [Fact]

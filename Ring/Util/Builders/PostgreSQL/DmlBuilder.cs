@@ -1,5 +1,6 @@
 ﻿using Ring.Schema.Enums;
 using System.Globalization;
+using System.Text;
 
 namespace Ring.Util.Builders.PostgreSQL;
 
@@ -9,8 +10,9 @@ internal sealed class DmlBuilder : BaseDmlBuilder
     private static readonly string ShortDateTimeWrapper = "to_date({0},'"+ DateTemplate + "')";
     private static readonly string DateTimeWrapper = "to_timestamp({0},'" + DateTemplate + " HH24:MI:SS.US')";
     private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
-	public override DatabaseProvider Provider => DatabaseProvider.PostgreSql;
 	public override string VariableNameTemplate => "${0}";
+
+	internal DmlBuilder(Encoding clientEncoding) : base(DatabaseProvider.PostgreSql, clientEncoding) { }
 
 	protected override string WrapVariable(string variable, FieldType fieldType)
 	{

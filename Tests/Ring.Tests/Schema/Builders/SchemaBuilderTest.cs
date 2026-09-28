@@ -23,7 +23,7 @@ public sealed class SchemaBuilderTest
         var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 20 };
 
         // act 
-        var metaSchema = _sut.GetMeta(DatabaseProvider.PostgreSql, config);
+        var metaSchema = _sut.GetMeta(DatabaseProvider.PostgreSql, config, System.Text.Encoding.UTF8);
         var metaTable = metaSchema.GetTable(13);
         var metaLog = metaSchema.GetTable("@log");
         var metaId = metaSchema.GetTable("@meta_id");

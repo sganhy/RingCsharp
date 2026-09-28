@@ -18,13 +18,15 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 	private static readonly string DmlDelete = @"DELETE FROM ";
 	private static readonly string DmlWhere = @" WHERE ";
 	private static readonly string FirstParameter = @"1";
-
 	private string?[] _tableDelete;
 	private string?[] _tableInsert;
 	private byte[][] _tableBinaryInsert;
 	private string?[] _tableUpdate;
 
-	protected BaseDmlBuilder()
+	/// <summary>
+	/// 	Ctor
+	/// </summary>
+	protected BaseDmlBuilder(DatabaseProvider provider, Encoding clientEncoding) : base(provider, clientEncoding)
 	{
 		_tableDelete = Array.Empty<string?>();
 		_tableInsert = Array.Empty<string?>();

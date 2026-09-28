@@ -6,13 +6,14 @@ using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using Ring.Util.Builders;
+using System.Text;
 using DdlBuilder = Ring.Util.Builders.PostgreSQL.DdlBuilder; // test only for PostgreSQL
 
 namespace Ring.Tests.Util.Builders.PostgreSQL;
 
 public sealed class DdlBuilderTest : BaseBuilderTest
 {
-	private readonly IDdlBuilder _sut = new DdlBuilder();
+	private readonly IDdlBuilder _sut = new DdlBuilder(Encoding.UTF8);
 	private readonly Faker _faker = new();
 
     [Fact]
@@ -34,7 +35,7 @@ public sealed class DdlBuilderTest : BaseBuilderTest
 	{
 		// arrange 
 		var metaList = GetSchema1();
-		var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
+		var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql, Encoding.UTF8);
 		Assert.NotNull(schema);
 		var table = schema.GetTable("book");
 		Assert.NotNull(table);
@@ -52,7 +53,7 @@ public sealed class DdlBuilderTest : BaseBuilderTest
 	{
 		// arrange 
 		var metaList = GetSchema1();
-		var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
+		var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql, Encoding.UTF8);
 		Assert.NotNull(schema);
 		var table = schema.GetTable("rule");
 		Assert.NotNull(table);
@@ -113,7 +114,7 @@ public sealed class DdlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var metaList = GetSchema1();
-        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
+        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql, Encoding.UTF8);
         Assert.NotNull(schema);
         var table = schema.GetTable("skill");
         Assert.NotNull(table);
@@ -192,7 +193,7 @@ public sealed class DdlBuilderTest : BaseBuilderTest
         var tablespace = GetAnonymousTableSpace(tablespaceName);
         var builder = new SchemaBuilder();
         var config = new Configuration() { DefaultSchema = "test", MaxConnectionPoolSize = 1 };
-        var schema = builder.GetMeta(DatabaseProvider.PostgreSql, config);
+        var schema = builder.GetMeta(DatabaseProvider.PostgreSql, config, System.Text.Encoding.UTF8);
         var metaTable = schema.GetTable("@meta");
         var expectedSql = $"CREATE TABLE test.\"@meta\" (\n" + "\tid int4,\n" +
                 "\tschema_id int4,\n" + "\tobject_type int2,\n" + "\treference_id int4,\n" +
@@ -215,7 +216,7 @@ public sealed class DdlBuilderTest : BaseBuilderTest
         var tablespace = GetAnonymousTableSpace(tablespaceName);
         var builder = new SchemaBuilder();
         var config = new Configuration() { DefaultSchema = "test", MaxConnectionPoolSize = 1 };
-        var schema = builder.GetMeta(DatabaseProvider.PostgreSql, config);
+        var schema = builder.GetMeta(DatabaseProvider.PostgreSql, config, System.Text.Encoding.UTF8);
         var testTable = schema.GetTable("@test");
         // change test_11 field to not null!
         Assert.NotNull(testTable);
@@ -259,7 +260,7 @@ public sealed class DdlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var metaList = GetSchema1();
-        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
+        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql, Encoding.UTF8);
         var table = schema?.GetTable("book");
         var expectedResult = "CREATE INDEX idx_1021_002 ON rpg_sheet.t_book (s_title)";
         Assert.NotNull(table);
@@ -278,7 +279,7 @@ public sealed class DdlBuilderTest : BaseBuilderTest
         var schBuilder = new SchemaBuilder();
         var schemaName = "@Test";
         var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
-        var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
+        var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config, System.Text.Encoding.UTF8);
         var table = schema.GetTable("@meta");
         Assert.NotNull(table);
         var pk = table.Constraints.First(p => p.Type == ConstraintType.PrimaryKey);
@@ -299,7 +300,7 @@ public sealed class DdlBuilderTest : BaseBuilderTest
 		var schBuilder = new SchemaBuilder();
 		var schemaName = "@Test";
 		var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
-		var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
+		var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config, System.Text.Encoding.UTF8);
 		var table = schema.GetTable("@meta");
 		Assert.NotNull(table);
 		var notNull = table.Constraints.First(p => p.Type == ConstraintType.NotNull);
@@ -319,7 +320,7 @@ public sealed class DdlBuilderTest : BaseBuilderTest
 		var schBuilder = new SchemaBuilder();
 		var schemaName = "@Test";
 		var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
-		var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
+		var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config, System.Text.Encoding.UTF8);
 		var table = schema.GetTable("@meta");
 		Assert.NotNull(table);
 		var defaultConstraint = table.Constraints.Last(p => p.Type == ConstraintType.Default);
@@ -339,7 +340,7 @@ public sealed class DdlBuilderTest : BaseBuilderTest
 		var schBuilder = new SchemaBuilder();
 		var schemaName = "@Test";
 		var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
-		var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
+		var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config, System.Text.Encoding.UTF8);
 		var table = schema.GetTable("@meta");
 		Assert.NotNull(table);
 		var checks = table.Constraints.Where(p => p.Type == ConstraintType.Check).ToArray();
@@ -361,7 +362,7 @@ public sealed class DdlBuilderTest : BaseBuilderTest
         var schBuilder = new SchemaBuilder();
         var schemaName = "@Test";
         var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
-        var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
+        var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config, System.Text.Encoding.UTF8);
         var table = schema.GetTable("@meta_id");
         Assert.NotNull(table);
         var pk = table.Constraints.First(p => p.Type == ConstraintType.PrimaryKey);
@@ -450,7 +451,7 @@ public sealed class DdlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var metaList = GetSchema1();
-        var schema = Meta.ToSchema(metaList,DatabaseProvider.PostgreSql);
+        var schema = Meta.ToSchema(metaList,DatabaseProvider.PostgreSql, Encoding.UTF8);
         var table = schema?.GetTable("campaign_setting");
         var expectedResult = "rpg_sheet.t_campaign_setting";
 
@@ -513,7 +514,7 @@ public sealed class DdlBuilderTest : BaseBuilderTest
             , 0L, TableType.Mtm.GetLogicalName("Test"), null, null, true);
         var emptyTable = Meta.GetDefaultTable(metaTable);
         var emptySchema = Meta.GetDefaultSchema(Meta.Create("Where"), DatabaseProvider.MySql);
-        var ddlBuilder = DatabaseProvider.PostgreSql.GetDdlBuilder();
+        var ddlBuilder = DatabaseProvider.PostgreSql.GetDdlBuilder(Encoding.UTF8);
         var expectedValue = "\"where\".\"@mtm_test\"";
 
         // act 
@@ -528,9 +529,9 @@ public sealed class DdlBuilderTest : BaseBuilderTest
     {
         // arrange 
         var metaList = GetSchema1();
-        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
+        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql, Encoding.UTF8);
         var table = schema?.GetTable("deity");
-        var ddlBuilder = DatabaseProvider.PostgreSql.GetDdlBuilder();
+        var ddlBuilder = DatabaseProvider.PostgreSql.GetDdlBuilder(Encoding.UTF8);
         var expectedResult = "idx_1037_001";
         Assert.NotNull(table);
 
@@ -547,9 +548,9 @@ public sealed class DdlBuilderTest : BaseBuilderTest
         // arrange 
         var schBuilder = new SchemaBuilder();
         var config = new Configuration() { DefaultSchema = "public", MaxConnectionPoolSize = 2 };
-        var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
+        var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config, Encoding.UTF8);
         var table = schema.GetTable("@log");
-        var ddlBuilder = DatabaseProvider.PostgreSql.GetDdlBuilder();
+        var ddlBuilder = DatabaseProvider.PostgreSql.GetDdlBuilder(Encoding.UTF8);
         var expectedResult = "\"idx_@log_001\"";
 		Assert.NotNull(table);
 

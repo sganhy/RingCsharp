@@ -2,6 +2,7 @@
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using System.Linq.Expressions;
+using System.Text;
 
 namespace Ring.Tests.Schema.Extensions;
 
@@ -14,7 +15,7 @@ public class RelationExtensionsTest : BaseTest
     {
         // arrange 
         var metaList = GetSchema1();
-        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
+        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql, Encoding.UTF8);
         var table = schema?.GetTable("rule");
         var relation1 = table?.GetRelation("rule2book");
 
@@ -40,7 +41,7 @@ public class RelationExtensionsTest : BaseTest
     {
         // arrange
         var metaList = GetSchema1();
-        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
+        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql, Encoding.UTF8);
         var table = schema?.GetTable("alignment_descriptor");
         var relation2 = table?.GetRelation("align_descriptor2alignment");
 
@@ -65,7 +66,7 @@ public class RelationExtensionsTest : BaseTest
     {
         // arrange 
         var metaList = GetSchema1();
-        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
+        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql, Encoding.UTF8);
         var table = schema?.GetTable("ability");
         var relation1 = table?.GetRelation("ability2book");
         const string expectedValue = "01011_01021_002";
@@ -85,7 +86,7 @@ public class RelationExtensionsTest : BaseTest
     {
         // arrange 
         var metaList = GetSchema1();
-        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
+        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql, Encoding.UTF8);
         var table = schema?.GetTable("book");
         var relation2 = table?.GetRelation("book2ability");
         var expectedValue = "01011_01021_002";
@@ -105,7 +106,7 @@ public class RelationExtensionsTest : BaseTest
     {
         // arrange 
         var metaList = GetSchema1();
-        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
+        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql, Encoding.UTF8);
         var table = schema?.GetTable("skill");
         var relation3 = table?.GetRelation("synergy2skill");
         var expectedValue = "01061_01061_003";
@@ -125,7 +126,7 @@ public class RelationExtensionsTest : BaseTest
     {
         // arrange 
         var metaList = GetSchema1();
-        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
+        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql, Encoding.UTF8);
         var table = schema?.GetTable("skill");
         var relation3 = table?.GetRelation("skill2synergy");
         var expectedValue = "01061_01061_003";
@@ -225,7 +226,7 @@ public class RelationExtensionsTest : BaseTest
     {
         // arrange - all relations should be initialized
         var metaList = GetSchema1();
-        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
+        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql, Encoding.UTF8);
 
         // act 
         Assert.NotNull(schema);

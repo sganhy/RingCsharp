@@ -2,6 +2,7 @@
 using Ring.Schema.Enums;
 using Ring.Schema.Models;
 using Ring.Util.Helpers;
+using System.Text;
 using DbSchema = Ring.Schema.Models.Schema;
 
 namespace Ring.Schema.Builders;
@@ -10,7 +11,7 @@ internal sealed class SchemaBuilder
 {
 	private readonly TableBuilder _tableBuilder = new();
 
-	internal DbSchema GetMeta(DatabaseProvider provider, IConfiguration configuration)
+	internal DbSchema GetMeta(DatabaseProvider provider, IConfiguration configuration, Encoding clientEncoding)
 	{
 		// Code size: 491 (0x1eb)
 		const SchemaType type = SchemaType.Static;
@@ -54,7 +55,7 @@ internal sealed class SchemaBuilder
 		// sort prebuiltTables by Name
 		prebuiltTables.AsSpan().Sort(static (x, y) => string.CompareOrdinal(x.Name, y.Name));
 
-		var result = Meta.ToSchema(metaArray, provider, type, loadType, prebuiltTables) ?? Meta.GetDefaultSchema(schemaInfo, provider);
+		var result = Meta.ToSchema(metaArray, provider, clientEncoding, type, loadType, prebuiltTables) ?? Meta.GetDefaultSchema(schemaInfo, provider);
 		// initialise cache for : DmlBuilder & DqlBuilder
 		result.DmlBuilder.Init(result);
 		result.DqlBuilder.Init(result);

@@ -5,6 +5,7 @@ using Ring.PostgreSQL.Enums;
 using Ring.PostgreSQL.Exceptions;
 using Ring.PostgreSQL.Extensions;
 using Ring.PostgreSQL.Helpers;
+using Ring.Util.Builders;
 using Ring.Util.Builders.PostgreSQL;
 using Ring.Util.Enums;
 using Ring.Util.Helpers;
@@ -19,7 +20,6 @@ namespace Ring.PostgreSQL;
 public sealed class Connection : IConnection
 {
 	private static readonly NetworkStream ClosedStream = NetworkStreamExtensions.CreateClosedStream(null);
-	private static readonly DdlBuilder DdlBuilder = new();
 	private static readonly string TransactionStart = "BEGIN;";
 	private static readonly string TransactionEnd = "COMMIT";
 	private static readonly string TransactionRollback = "ROLLBACK";
@@ -70,10 +70,12 @@ public sealed class Connection : IConnection
 	private int _backendSecret;
 	private bool _disposed;
 	public long Id => _id;
+	private readonly IDdlBuilder _ddlBuilder;
 	public DateTime CreationTime => _creationTime;
 	public DateTime? LastConnectionTime => _lastConnectionTime;
 	public Encoding ClientEncoding => _encoding;
 	
+
 	public ConnectionState State => _state;
 
 	// build ConnectionParameters from connection string
@@ -94,6 +96,7 @@ public sealed class Connection : IConnection
 		_sqlStartTransaction = _encoding.GetBytes(TransactionStart);
 		_sqlEndTransaction = _encoding.GetBytes(TransactionEnd);
 		_sqlRollbackTransaction = _encoding.GetBytes(TransactionRollback);
+		_ddlBuilder = new DdlBuilder(_encoding);
 		if (_sqlSendBufferSize > 0)
 		{
 			_sqlSendBuffer = new byte[_sqlSendBufferSize];
@@ -103,7 +106,7 @@ public sealed class Connection : IConnection
 	}
 
 
-	public void BeginTransaction()
+	public void BeginTransaction(IsolationLevel isolationLevel)
 	{
 		try
 		{
@@ -297,7 +300,7 @@ public sealed class Connection : IConnection
 		_state = ConnectionState.Open | ConnectionState.Executing; // we checked already the connection state in AlterQuery.Execute().
 		_stream.SendQuery(sql, _sqlSendBuffer);
 		var returnValue = _stream.DrainToReadyForQuery(ref _transactionStatus);
-		returnValue?.Set(query, DdlBuilder);
+		returnValue?.Set(query, _ddlBuilder);
 		_state = ConnectionState.Open;
 		return returnValue;
 	}
@@ -309,7 +312,7 @@ public sealed class Connection : IConnection
 		if (returnValue is not null)
 		{
 			_transactionStatus = drainedBody.Length > 0 ? drainedBody[0] : (byte)TransactionStatus.Idle;
-			returnValue.Set(query, DdlBuilder);
+			returnValue.Set(query, _ddlBuilder);
 		}
 		return returnValue;
 	}

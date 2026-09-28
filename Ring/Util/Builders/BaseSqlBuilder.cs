@@ -27,10 +27,17 @@ internal abstract class BaseSqlBuilder : ISqlBuilder
 
 	// common operators in dml, dql and ddl
 	protected static readonly string SqlAnd = @" AND ";
+	protected readonly Encoding _clientEncoding;
+	protected readonly DatabaseProvider _provider;
 
-	public abstract DatabaseProvider Provider { get; }
+	public DatabaseProvider Provider => _provider;
+	public Encoding ClientEncoding => _clientEncoding;
 
-	protected BaseSqlBuilder() {}
+	protected BaseSqlBuilder(DatabaseProvider provider, Encoding clientEncoding)
+	{
+		_provider = provider;
+		_clientEncoding = clientEncoding;
+	}
 
 	protected static string EscapeString(string? description) // Code size: 66 (0x42)
 		=> description is null || !description.Contains(SqlQuote)

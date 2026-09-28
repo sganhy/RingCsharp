@@ -247,9 +247,9 @@ internal readonly struct Meta : IEquatable<Meta>
 	#endregion
 
 	internal static DbSchema GetDefaultSchema(in Meta meta, DatabaseProvider provider) // Code size: 90 (0x5a)
-		=> new(meta.Id, meta.Name, provider.GetDdlBuilder().GetPhysicalName(EntityType.Schema, meta.Name), meta.Description,
+		=> new(meta.Id, meta.Name, provider.GetDdlBuilder(Encoding.UTF8).GetPhysicalName(EntityType.Schema, meta.Name), meta.Description,
 			Array.Empty<Parameter>(), Array.Empty<Lexicon>(), SchemaLoadType.Full, SchemaType.Undefined, Array.Empty<Sequence>(),
-			Array.Empty<Table>(), Array.Empty<Table>(), Array.Empty<TableSpace>(), provider, 0, meta.Active, meta.IsEntityBaseline());
+			Array.Empty<Table>(), Array.Empty<Table>(), Array.Empty<TableSpace>(), provider, Encoding.UTF8, 0, meta.Active, meta.IsEntityBaseline());
 
 	internal static Table GetDefaultTable(in Meta meta) // Code size: 103 (0x67)
 		=> new(meta.Id, meta.Name, meta.Description, meta.Value, string.Empty,
@@ -349,9 +349,10 @@ internal readonly struct Meta : IEquatable<Meta>
 	/// <summary>
 	///		The static method orchestrates the complex process of building a complete database schema object.
 	/// </summary>
-	internal static DbSchema? ToSchema(Meta[] schema, DatabaseProvider provider, SchemaType type = SchemaType.Static, SchemaLoadType loadType = SchemaLoadType.Full, Table[]? prebuiltTables = null)
+	internal static DbSchema? ToSchema(Meta[] schema, DatabaseProvider provider, Encoding clientEncoding, SchemaType type = SchemaType.Static, SchemaLoadType loadType = SchemaLoadType.Full, 
+		Table[]? prebuiltTables = null)
 	{
-		// Code size: 377 (0x179)
+		// Code size: 379 (0x17b)
 		// sort ASC by reference_id, name
 		// prebuiltTables: table array should be sorted by name, if not, sort it before passing to this method
 		schema.AsSpan().Sort(static (x, y) => MetaSchemaComparer(x, y));
@@ -359,7 +360,7 @@ internal readonly struct Meta : IEquatable<Meta>
 		if (!meta.HasValue) return null;
 
 		var metaValue = meta.Value;
-		var ddlBuilder = provider.GetDdlBuilder();
+		var ddlBuilder = provider.GetDdlBuilder(clientEncoding);
 		var mtmCount = GetMtmCount(schema);
 		var tableCount = prebuiltTables?.Length ?? GetTableCount(schema);
 		var parameters = GetParameters(schema);
@@ -374,8 +375,8 @@ internal readonly struct Meta : IEquatable<Meta>
 		tableById.AsSpan().Sort(static (x, y) => x.Id.CompareTo(y.Id));
 
 		var result = new DbSchema(metaValue.Id, metaValue.Name, ddlBuilder.GetPhysicalName(EntityType.Schema, metaValue.Name),
-			metaValue.Description, parameters, lexicons, loadType, type, sequences, tableById, tableByName,
-			GetTableSpaces(schema, ddlBuilder), provider, tableCount + mtmCount, metaValue.Active, metaValue.IsEntityBaseline());
+			metaValue.Description, parameters, lexicons, loadType, type, sequences, tableById, tableByName,	GetTableSpaces(schema, ddlBuilder), 
+			provider, clientEncoding, tableCount + mtmCount, metaValue.Active, metaValue.IsEntityBaseline());
 
 		LoadRelations(result, schema, mtmCount);
 		return result;
@@ -945,7 +946,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	private static void LoadMtm(DbSchema schema, int mtmCount)
 	{
 		// Code size: 342 (0x156) - boxing removed
-		var ddlBuilder = schema.Provider.GetDdlBuilder();
+		var ddlBuilder = schema.Provider.GetDdlBuilder(Encoding.UTF8);
 		var mtm = new Dictionary<string, Table>(mtmCount * 2);
 
 		foreach (var table in schema.TablesById)

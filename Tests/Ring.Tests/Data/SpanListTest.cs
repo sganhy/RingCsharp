@@ -23,7 +23,7 @@ public sealed class SpanListTest
             DefaultTableStorage = "ring_data",
             DefaultIndexStorage = "ring_index"
         };
-        _schema = builder.GetMeta(DatabaseProvider.MySql, config);
+        _schema = builder.GetMeta(DatabaseProvider.MySql, config, System.Text.Encoding.UTF8);
     }
 
 }

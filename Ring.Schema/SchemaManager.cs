@@ -32,7 +32,7 @@ public sealed class SchemaManager
 		// create initial schema
 		var schemaBuilder = new SchemaBuilder();
 		var dbProvider = _connection.ProviderId().ToDatabaseProvider();
-		var initialSchema = schemaBuilder.GetMeta(dbProvider, GetInitSchemaConfiguration(physicalSchema, "meta_table", "meta_index"));
+		var initialSchema = schemaBuilder.GetMeta(dbProvider, GetInitSchemaConfiguration(physicalSchema, "meta_table", "meta_index"), _connection.ClientEncoding);
 		var initialMetaSchema = initialSchema.ToMeta();
 		var bulkAlter =  new BulkAlter(initialSchema);
 		var size = Unsafe.SizeOf<Column>();
@@ -51,10 +51,7 @@ public sealed class SchemaManager
 			bulkSave.ForceInsert(record);
 		}
 		Console.WriteLine($"BulkSave: {bulkSave.Queries.Count} queries, elapsed time: {(DateTime.Now - startTime).TotalMilliseconds} ms");
-		bulkSave.Save(_connection,false);
-
-
-
+		bulkSave.Save(_connection,false, null);
 	}
 
 	public List<Record> SelecMeta(string physicalSchema)
@@ -62,7 +59,7 @@ public sealed class SchemaManager
 		var query = new BulkRetrieve();
 		var schemaBuilder = new SchemaBuilder();
 		var dbProvider = _connection.ProviderId().ToDatabaseProvider();
-		query.Schema = schemaBuilder.GetMeta(dbProvider, GetInitSchemaConfiguration(physicalSchema, "meta_table", "meta_index"));
+		query.Schema = schemaBuilder.GetMeta(dbProvider, GetInitSchemaConfiguration(physicalSchema, "meta_table", "meta_index"), _connection.ClientEncoding);
 		//query.SimpleQuery(0, "@test");
 		query.SimpleQuery(0, "@test");
 		query.RetrieveRecords(_connection);

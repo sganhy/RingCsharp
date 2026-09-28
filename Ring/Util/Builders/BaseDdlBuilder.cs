@@ -1,7 +1,6 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
-using System.Data.Common;
 using System.Globalization;
 using System.Text;
 using DbSchema = Ring.Schema.Models.Schema;
@@ -69,6 +68,9 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	protected abstract string GetPhysicalName(TableType tableType, Field field); // get field physical name eg. "table_schema" or "table_name" for information_schema.tables
 	public bool HasTimeZoneOffsetColumn => TimeZoneOffsetPrefix is not null;
 	internal Dictionary<FieldType, string> ProviderDataType => DataType;
+
+
+	protected BaseDdlBuilder(DatabaseProvider provider, Encoding clientEncoding) : base(provider, clientEncoding) {}
 
 	public string AlterAddColumn(Table table, in Column column) // Code size: 90 (0x5a)
 		=> new StringBuilder()

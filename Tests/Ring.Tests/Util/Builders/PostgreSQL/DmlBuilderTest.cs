@@ -6,6 +6,7 @@ using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Util.Builders;
 using Ring.Util.Builders.PostgreSQL;
+using System.Text;
 using DbSchema = Ring.Schema.Models.Schema;
 
 namespace Ring.Tests.Util.Builders.PostgreSQL;
@@ -20,9 +21,9 @@ public class DmlBuilderTest : BaseBuilderTest
     {
         var metaList = GetSchema1();
         var meta = Meta.Create(_faker.Random.String());
-        _schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql) ??
+        _schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql, Encoding.UTF8) ??
             Meta.GetDefaultSchema(meta, DatabaseProvider.PostgreSql);
-        _sut = new DmlBuilder();
+        _sut = new DmlBuilder(Encoding.UTF8);
         _sut.Init(_schema);
     }
 
@@ -66,12 +67,12 @@ public class DmlBuilderTest : BaseBuilderTest
     internal void Insert_EmptyTable_InsertSql()
     {
         // arrange 
-        var sut = new DmlBuilder();
+        var sut = new DmlBuilder(Encoding.UTF8);
         var schemaId = _faker.Random.Number(int.MinValue,int.MaxValue);
         var testTable = new Meta(_faker.Random.Number(int.MinValue,int.MaxValue), (byte)EntityType.Table, schemaId, (int)TableType.Business
             , 0L, "Test", null, null, true);
         var testSch = new Meta(_faker.Random.Number(int.MinValue,int.MaxValue), (byte)EntityType.Schema, schemaId, 0, 0L, "Test", null, null, true);
-        var schema = Meta.ToSchema(new Meta[] { testTable, testSch }, DatabaseProvider.PostgreSql);
+        var schema = Meta.ToSchema(new Meta[] { testTable, testSch }, DatabaseProvider.PostgreSql, Encoding.UTF8);
         var expectedResult = "INSERT INTO test.t_test () VALUES ()";
         var tableTest = schema?.GetTable("Test");
 
@@ -88,11 +89,11 @@ public class DmlBuilderTest : BaseBuilderTest
     [Fact]
     internal void Insert_TestTable_InsertSql()
     {
-        var sut = new DmlBuilder();
+        var sut = new DmlBuilder(Encoding.UTF8);
         var schBuilder = new SchemaBuilder();
         const string schemaName = "@Test";
         var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
-        var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
+        var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config, Encoding.UTF8);
         var table = schema.GetTable("@test");
         const string expectedResult = "INSERT INTO \"@test\".\"@test\" (test_1,test_2,test_3,test_4,test_5,test_6,test_7,test_8,s_test_8,test_9,s_test_9,test_10,test_11,test_12,\"@tz_offset_12\",test_13,test_14,test_15) " +
             "VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,to_date($12,'YYYY-MM-DD'),to_timestamp($13,'YYYY-MM-DD HH24:MI:SS.US'),to_timestamp($14,'YYYY-MM-DD HH24:MI:SS.US'),$15,$16,$17,$18)";
@@ -128,11 +129,11 @@ public class DmlBuilderTest : BaseBuilderTest
     internal void Insert_MetaTable_InsertSql()
     {
         // arrange 
-        var sut = new DmlBuilder();
+        var sut = new DmlBuilder(Encoding.UTF8);
         var schBuilder = new SchemaBuilder();
         var schemaName = "@Test";
         var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
-        var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
+        var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config, Encoding.UTF8);
         var table = schema.GetTable("@meta");
         var expectedResult = "INSERT INTO \"@test\".\"@meta\" (id,schema_id,object_type,reference_id,data_type,flags,name,description,value,active) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)";
 
@@ -150,11 +151,11 @@ public class DmlBuilderTest : BaseBuilderTest
     internal void Insert_TableMetaId_InsertSql()
     {
         // arrange 
-        var sut = new DmlBuilder();
+        var sut = new DmlBuilder(Encoding.UTF8);
         var schBuilder = new SchemaBuilder();
         var schemaName = "@Test";
         var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
-        var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
+        var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config, Encoding.UTF8);
         var table = schema.GetTable("@meta_id"); 
         var expectedResult = "INSERT INTO \"@test\".\"@meta_id\" (id,schema_id,object_type,value) VALUES ($1,$2,$3,$4)";
 
@@ -208,11 +209,11 @@ public class DmlBuilderTest : BaseBuilderTest
     internal void Delete_TableMeta_DeleteSql()
     {
         // arrange 
-        var sut = new DmlBuilder();
+        var sut = new DmlBuilder(Encoding.UTF8);
         var schBuilder = new SchemaBuilder();
         var schemaName = "@Test";
         var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
-        var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
+        var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config, Encoding.UTF8);
         var table = schema.GetTable("@meta");
         var expectedResult = "DELETE FROM \"@test\".\"@meta\" WHERE id=$1 AND schema_id=$2 AND object_type=$3 AND reference_id=$4";
 
@@ -230,11 +231,11 @@ public class DmlBuilderTest : BaseBuilderTest
     internal void Delete_TableMetaId_DeleteSql()
     {
         // arrange 
-        var sut = new DmlBuilder();
+        var sut = new DmlBuilder(Encoding.UTF8);
         var schBuilder = new SchemaBuilder();
         var schemaName = "@Test";
         var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
-        var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
+        var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config, Encoding.UTF8);
         var table = schema.GetTable("@meta_id");
         var expectedResult = "DELETE FROM \"@test\".\"@meta_id\" WHERE id=$1 AND schema_id=$2 AND object_type=$3";
 
@@ -269,11 +270,11 @@ public class DmlBuilderTest : BaseBuilderTest
     internal void Update_TableMeta_UpdateSql()
     {
         // arrange 
-        var sut = new DmlBuilder();
+        var sut = new DmlBuilder(Encoding.UTF8);
         var schBuilder = new SchemaBuilder();
         var schemaName = "@Test";
         var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
-        var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
+        var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config, Encoding.UTF8);
         var table = schema.GetTable("@meta");
         var expectedResult = "UPDATE \"@test\".\"@meta\" SET {0} WHERE id=$1 AND schema_id=$2 AND object_type=$3 AND reference_id=$4";
 
@@ -291,11 +292,11 @@ public class DmlBuilderTest : BaseBuilderTest
     internal void Update_TableMetaId_UpdateSql()
     {
         // arrange 
-        var sut = new DmlBuilder();
+        var sut = new DmlBuilder(Encoding.UTF8);
         var schBuilder = new SchemaBuilder();
         var schemaName = "@Test";
         var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
-        var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config);
+        var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config, Encoding.UTF8);
         var table = schema.GetTable("@meta_id");
         var expectedResult = "UPDATE \"@test\".\"@meta_id\" SET {0} WHERE id=$1 AND schema_id=$2 AND object_type=$3";
 

@@ -28,9 +28,8 @@ internal sealed class DdlBuilder : BaseDdlBuilder
 		{ FieldType.DateTimeOffset,  "timestamp without time zone"}
 	};
 
-	public DdlBuilder() : base() { }
+	internal DdlBuilder(Encoding encoding) : base(DatabaseProvider.PostgreSql, encoding) { }
 
-	public sealed override DatabaseProvider Provider => DatabaseProvider.PostgreSql;
 	protected sealed override string StringCollateInformation => @"COLLATE ""C""";
 	protected sealed override string MtmPrefix => TableType.Mtm.GetLogicalName(); // physical name prefix for many-to-many tables
 	protected sealed override string TimeZoneOffsetPrefix => "@tz_offset_";

@@ -1,6 +1,7 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Util.Builders;
+using System.Text;
 
 namespace Ring.Schema.Models;
 
@@ -16,6 +17,7 @@ internal sealed class Schema : BaseEntity
 	internal readonly Table[] TablesByName;       // sorted table by Name (case sensitif)
 	internal readonly TableSpace[] TableSpaces;   // sorted tablespace by Id
 	internal readonly DatabaseProvider Provider;
+	internal readonly ITclBuilder TclBuilder;
 	internal readonly IDdlBuilder DdlBuilder;
 	internal readonly IDmlBuilder DmlBuilder;
 	internal readonly IDqlBuilder DqlBuilder;
@@ -26,7 +28,7 @@ internal sealed class Schema : BaseEntity
 	/// 	Ctor
 	/// </summary>
 	internal Schema(int id, string name, string physicalName, string? description, Parameter[] parameters, Lexicon[] lexicons, SchemaLoadType loadType,
-		SchemaType type, Sequence[] sequences, Table[] tablesById, Table[] tablesByName, TableSpace[] tableSpaces, DatabaseProvider provider,
+		SchemaType type, Sequence[] sequences, Table[] tablesById, Table[] tablesByName, TableSpace[] tableSpaces, DatabaseProvider provider, Encoding clientEncoding,
 		int objectCount, bool active, bool baseline) : base(id, name, description, baseline, active)
 	{
 		Connections = new ConnectionPool(ConnectionPoolExtensions.GetId(null), parameters.GetMinPoolSize(), parameters.GetMaxPoolSize(), 0, parameters.GetDbConnectionString());
@@ -41,8 +43,9 @@ internal sealed class Schema : BaseEntity
 		Provider = provider;
 		ObjectCount = objectCount;
 		PhysicalName = physicalName;
-		DmlBuilder = provider.GetDmlBuilder();
-		DdlBuilder = provider.GetDdlBuilder();
-		DqlBuilder = provider.GetDqlBuilder();
+		DmlBuilder = provider.GetDmlBuilder(clientEncoding);
+		DdlBuilder = provider.GetDdlBuilder(clientEncoding);
+		DqlBuilder = provider.GetDqlBuilder(clientEncoding);
+		TclBuilder = provider.GetTclBuilder(clientEncoding);
 	}
 }

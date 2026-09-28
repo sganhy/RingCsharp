@@ -1,0 +1,9 @@
+﻿using Ring.Schema.Enums;
+using System.Text;
+
+namespace Ring.Util.Builders.SQLServer;
+
+internal sealed class TclBuilder : BaseTclBuilder
+{
+	internal TclBuilder(Encoding clientEncoding) : base(DatabaseProvider.SqlServer, clientEncoding) { }
+}

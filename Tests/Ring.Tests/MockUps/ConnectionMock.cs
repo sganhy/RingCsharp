@@ -28,7 +28,7 @@ internal class ConnectionMock : IConnection
     public DateTime? LastConnectionTime => _lastConnectionTime;
     public ConnectionState State => _connectionState;
     public Encoding ClientEncoding => Encoding.UTF8;
-	public void BeginTransaction() => Expression.Empty();
+	public void BeginTransaction(IsolationLevel isolationLevel) => Expression.Empty();
     public void Close() => _connectionState = ConnectionState.Closed;
     public Task CloseAsync(CancellationToken cancellationToken) => 
         Task.Run(() =>

@@ -1,6 +1,7 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
+using System.Text;
 
 namespace Ring.Util.Builders.SQLite;
 
@@ -24,12 +25,11 @@ internal sealed class DdlBuilder : BaseDdlBuilder
         { FieldType.DateTimeOffset,  "TEXT"    }
     };
 
-    public DdlBuilder() : base() { }
+	internal DdlBuilder(Encoding encoding) : base(DatabaseProvider.SqlLite, encoding) { }
 
-    public sealed override string Create(TableSpace tablespace) => string.Empty; // no tablespace on SQLite
+	public sealed override string Create(TableSpace tablespace) => string.Empty; // no tablespace on SQLite
 
     protected sealed override Dictionary<FieldType, string> DataType => _dataType;
-    public sealed override DatabaseProvider Provider => _currentProvider;
     protected sealed override string MtmPrefix => TableType.Mtm.GetLogicalName(); // physical name prefix for many-to-many tables;
 	protected sealed override string? TimeZoneOffsetPrefix => null;
     protected sealed override int VarcharMaxSize => -1;

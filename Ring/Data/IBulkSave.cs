@@ -10,5 +10,5 @@ public interface IBulkSave : IEquatable<BulkSave>
 	Record? GetRecordByIndex(int index, string objectType);
 	void InsertRecord(Record record);
 	void UpdateRecord(Record record);
-	void Save();
+	void Save(IsolationLevel? isolationLevel=null);
 }

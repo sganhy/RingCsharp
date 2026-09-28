@@ -1,10 +1,9 @@
 ﻿using Ring.Schema;
-using Ring.Schema.Builders;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using System.Linq.Expressions;
-
+using System.Text;
 using Index = Ring.Schema.Models.Index;
 
 namespace Ring.Tests.Schema.Extensions;
@@ -18,7 +17,7 @@ public sealed class IndexExtensionsTest : BaseTest
     {
         // arrange 
         var metaList = GetSchema1();
-        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
+        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql, Encoding.UTF8);
         var table = schema?.GetTable("race");
         var index1 = table?.GetIndex("name");
 
@@ -43,7 +42,7 @@ public sealed class IndexExtensionsTest : BaseTest
     {
         // arrange 
         var metaList = GetSchema1();
-        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql);
+        var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql, Encoding.UTF8);
         var table = schema?.GetTable("class");
         var index2 = table?.GetIndex("prestige");
 

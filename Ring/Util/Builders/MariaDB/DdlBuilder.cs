@@ -1,18 +1,21 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
+using System.Text;
 using MySqlDdlBuilder = Ring.Util.Builders.MySQL.DdlBuilder;
 
 namespace Ring.Util.Builders.MariaDB;
 
 internal sealed class DdlBuilder : BaseDdlBuilder
 {
-    private readonly DatabaseProvider _currentProvider = DatabaseProvider.MariaDb;
-	private readonly MySqlDdlBuilder _mySqlDdlBuilder = new();
+ 	private readonly MySqlDdlBuilder _mySqlDdlBuilder;
 
-    public DdlBuilder() : base() {}
+    internal DdlBuilder(Encoding encoding) : base(DatabaseProvider.MariaDb, encoding)
+	{
+		_mySqlDdlBuilder = new MySqlDdlBuilder(encoding);
+	}
+
     public sealed override string Create(TableSpace tablespace) => tablespace.Name;
-    public sealed override DatabaseProvider Provider => _currentProvider;
     protected sealed override string MtmPrefix => TableType.Mtm.GetLogicalName(); // physical name prefix for many-to-many tables
 	protected sealed override string? TimeZoneOffsetPrefix => null;
     protected sealed override Dictionary<FieldType, string> DataType => _mySqlDdlBuilder.ProviderDataType;

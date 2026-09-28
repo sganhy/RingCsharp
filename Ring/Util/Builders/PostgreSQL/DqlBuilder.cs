@@ -19,8 +19,8 @@ internal sealed class DqlBuilder : BaseDqlBuilder
     private static readonly string DateTimeFormat = CastPrefix + DateFormat + " HH24:MI:SS.US')";
     private static readonly CompositeFormat ShortDateFormatComposite = CompositeFormat.Parse(ShortDateFormat);
     private static readonly CompositeFormat DateTimeFormatComposite = CompositeFormat.Parse(DateTimeFormat);
-    public override DatabaseProvider Provider => DatabaseProvider.PostgreSql;
-    public DqlBuilder() : base() {}
+    
+    internal DqlBuilder(Encoding clientEncoding) : base(DatabaseProvider.PostgreSql, clientEncoding) {}
 
     protected override string GetSelection(in Column column)
     {
