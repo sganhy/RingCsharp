@@ -20,7 +20,7 @@ internal sealed class DqlBuilder : BaseDqlBuilder
     private static readonly CompositeFormat ShortDateFormatComposite = CompositeFormat.Parse(ShortDateFormat);
     private static readonly CompositeFormat DateTimeFormatComposite = CompositeFormat.Parse(DateTimeFormat);
     
-    internal DqlBuilder(Encoding clientEncoding) : base(DatabaseProvider.PostgreSql, clientEncoding) {}
+    internal DqlBuilder(Encoding clientEncoding, bool logSql) : base(DatabaseProvider.PostgreSql, clientEncoding, logSql) {}
 
     protected override string GetSelection(in Column column)
     {

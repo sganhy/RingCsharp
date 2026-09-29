@@ -5,6 +5,5 @@ namespace Ring.Util.Builders.SQLite;
 
 internal sealed class TclBuilder : BaseTclBuilder
 {
-	internal TclBuilder(Encoding clientEncoding) : base(DatabaseProvider.SqlLite, clientEncoding) { }
-
+	internal TclBuilder(Encoding clientEncoding, bool logSql) : base(DatabaseProvider.SqlLite, clientEncoding, logSql) {}
 }

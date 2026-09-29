@@ -21,7 +21,7 @@ public sealed class DqlBuilderTest : BaseBuilderTest
         var meta = Meta.Create(_faker.Random.String());
         _schema = Meta.ToSchema(metaList,DatabaseProvider.MySql, Encoding.UTF8) ??
             Meta.GetDefaultSchema(meta, DatabaseProvider.MySql);
-        _sut = new DqlBuilder(Encoding.UTF8);
+        _sut = new DqlBuilder(Encoding.UTF8, true);
         _sut.Init(_schema);
     }
 

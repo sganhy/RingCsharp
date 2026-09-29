@@ -12,7 +12,7 @@ internal sealed class DmlBuilder : BaseDmlBuilder
     private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
 	public override string VariableNameTemplate => "${0}";
 
-	internal DmlBuilder(Encoding clientEncoding) : base(DatabaseProvider.PostgreSql, clientEncoding) { }
+	internal DmlBuilder(Encoding clientEncoding, bool logSql) : base(DatabaseProvider.PostgreSql, clientEncoding, logSql) { }
 
 	protected override string WrapVariable(string variable, FieldType fieldType)
 	{

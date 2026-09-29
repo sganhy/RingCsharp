@@ -13,7 +13,7 @@ public sealed class BaseDdlBuilderTest : BaseBuilderTest
 
     public BaseDdlBuilderTest()
     {
-        _sut = new DdlBuilder(Encoding.UTF8);
+        _sut = new DdlBuilder(Encoding.UTF8, true);
     }
 
 

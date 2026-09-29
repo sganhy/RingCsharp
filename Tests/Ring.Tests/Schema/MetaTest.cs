@@ -14,7 +14,7 @@ namespace Ring.Tests.Schema;
 
 public sealed class MetaTest : BaseTest
 {
-    private readonly IDdlBuilder _builder = new PostGDdlBuilder(Encoding.UTF8);
+    private readonly IDdlBuilder _builder = new PostGDdlBuilder(Encoding.UTF8, true);
 
     public MetaTest(ITestOutputHelper output) : base(output) => Expression.Empty();
 
@@ -562,7 +562,7 @@ public sealed class MetaTest : BaseTest
         var segment = new ArraySegment<Meta>(metaItems, 0, metaItems.Length);
 
         // act 
-        var table = metaTable.ToTable(segment, PhysicalType.Table, new PostGDdlBuilder(Encoding.UTF8), _faker.Random.String(), 0);
+        var table = metaTable.ToTable(segment, PhysicalType.Table, new PostGDdlBuilder(Encoding.UTF8, true), _faker.Random.String(), 0);
         var field = table?.GetField("name");
         var fieldPk = table?.GetField("id");
 
@@ -597,7 +597,7 @@ public sealed class MetaTest : BaseTest
         var segment = new ArraySegment<Meta>(metaItems, 0, metaItems.Length);
 
         // act 
-        var table = metaTable.ToTable(segment, PhysicalType.Table, new PostGDdlBuilder(Encoding.UTF8), _faker.Random.String(), 0);
+        var table = metaTable.ToTable(segment, PhysicalType.Table, new PostGDdlBuilder(Encoding.UTF8, true), _faker.Random.String(), 0);
         var fieldPk = table?.GetField("id");
 
         // assert

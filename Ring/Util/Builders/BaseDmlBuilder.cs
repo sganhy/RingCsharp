@@ -1,6 +1,7 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
+using Ring.Util.Models;
 using System.Globalization;
 using System.Text;
 using DbSchema = Ring.Schema.Models.Schema;
@@ -19,18 +20,16 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 	private static readonly string DmlWhere = @" WHERE ";
 	private static readonly string FirstParameter = @"1";
 	private string?[] _tableDelete;
-	private string?[] _tableInsert;
-	private byte[][] _tableBinaryInsert;
+	private SqlEntry?[] _tableInsert;
 	private string?[] _tableUpdate;
 
 	/// <summary>
 	/// 	Ctor
 	/// </summary>
-	protected BaseDmlBuilder(DatabaseProvider provider, Encoding clientEncoding) : base(provider, clientEncoding)
+	protected BaseDmlBuilder(DatabaseProvider provider, Encoding clientEncoding, bool logSql) : base(provider, clientEncoding, logSql)
 	{
 		_tableDelete = Array.Empty<string?>();
-		_tableInsert = Array.Empty<string?>();
-		_tableBinaryInsert = Array.Empty<byte[]>();
+		_tableInsert = Array.Empty<SqlEntry>();
 		_tableUpdate = Array.Empty<string?>();
 	}
 
@@ -40,36 +39,20 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 	public void Init(DbSchema schema)
 	{
 		_tableDelete = new string?[schema.ObjectCount];
-		_tableInsert = new string?[schema.ObjectCount];
+		_tableInsert = new SqlEntry?[schema.ObjectCount];
 		_tableUpdate = new string?[schema.ObjectCount];
-		_tableBinaryInsert = new byte[schema.ObjectCount][];
 	}
 
-	public string Insert(Table table) 
+	public SqlEntry Insert(Table table) 
 	{
-		// Code size: 38 (0x26) - no virtual calls
+		// Code size: 70 (0x46)
 		// Used only for logging, and preparing statement. Avoid lock here!
 		var index = table.ObjectIndex;
 		var result = _tableInsert[index];
-		if (result==null)
-		{
-			result = BuildInsert(table);
-			_tableInsert[index] = result;
-		}
-		return result;
-	}
-
-	public ReadOnlySpan<byte> Insert(Table table, Encoding encoding)
-	{
-		// Code size: 63 (0x3f)
-		var index = table.ObjectIndex;
-		var result = _tableBinaryInsert[index];
-		if (result == null)
-		{ 
-			var sql = _tableInsert[index] ?? BuildInsert(table);
-			result = encoding.GetBytes(sql);
-			_tableBinaryInsert[index] = result;
-		}
+		if (result is not null) return result;
+		var sql = BuildInsert(table);
+		result = new SqlEntry(_logSql ? sql : null, _clientEncoding.GetBytes(sql));
+		_tableInsert[index] = result;
 		return result;
 	}
 

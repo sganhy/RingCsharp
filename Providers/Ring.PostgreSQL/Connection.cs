@@ -70,7 +70,7 @@ public sealed class Connection : IConnection
 	private int _backendSecret;
 	private bool _disposed;
 	public long Id => _id;
-	private readonly IDdlBuilder _ddlBuilder;
+	private readonly DdlBuilder _ddlBuilder;
 	public DateTime CreationTime => _creationTime;
 	public DateTime? LastConnectionTime => _lastConnectionTime;
 	public Encoding ClientEncoding => _encoding;
@@ -96,7 +96,7 @@ public sealed class Connection : IConnection
 		_sqlStartTransaction = _encoding.GetBytes(TransactionStart);
 		_sqlEndTransaction = _encoding.GetBytes(TransactionEnd);
 		_sqlRollbackTransaction = _encoding.GetBytes(TransactionRollback);
-		_ddlBuilder = new DdlBuilder(_encoding);
+		_ddlBuilder = new DdlBuilder(_encoding, false);
 		if (_sqlSendBufferSize > 0)
 		{
 			_sqlSendBuffer = new byte[_sqlSendBufferSize];

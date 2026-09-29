@@ -13,7 +13,7 @@ namespace Ring.Tests.Schema.Extensions;
 
 public class TableExtensionsTest : BaseTest
 {
-    private readonly IDdlBuilder _builder = new PostGDdlBuilder(Encoding.UTF8);
+    private readonly IDdlBuilder _builder = new PostGDdlBuilder(Encoding.UTF8, true);
 
     public TableExtensionsTest(ITestOutputHelper output) : base(output) => Expression.Empty();
 

@@ -209,10 +209,10 @@ public sealed class BulkSave : IBulkSave
 		foreach (var query in _queries.AsReadOnlySpan())
 		{
 			// callvirt instance int64 Ring.Data.IRingConnection::Execute
-			var sql = query.ToSql(builder, encoding);
-			if (sql.Length > 0)
+			var sql = query.ToSql(builder);
+			if (sql is not null)
 			{
-				var error  = connection.Execute(query, sql);
+				var error  = connection.Execute(query, sql.Encoded);
 				//if (error is not null)
 				//{
 				//	int oi = 0;
@@ -235,10 +235,10 @@ public sealed class BulkSave : IBulkSave
         foreach (var query in _queries.AsReadOnlySpan())
 		{
 			// callvirt instance int64 Ring.Data.IRingConnection::Execute
-			var sql = query.ToSql(builder, encoding);
-			if (sql.Length > 0)
+			var sql = query.ToSql(builder);
+			if (sql is not null)
 			{
-				var error = connection.Execute(query, sql);
+				var error = connection.Execute(query, sql.Encoded);
 				if (error is not null)
 				{
 					
@@ -260,7 +260,7 @@ public sealed class BulkSave : IBulkSave
 	}
 
 #pragma warning disable CA1859 // Use concrete types when possible for improved performance
-	private static IDdlBuilder GetDefaultDdlBuilder() => new Util.Builders.PostgreSQL.DdlBuilder(Encoding.UTF8);
+	private static IDdlBuilder GetDefaultDdlBuilder() => new Util.Builders.PostgreSQL.DdlBuilder(Encoding.UTF8, false);
 #pragma warning restore CA1859
 
 	#endregion

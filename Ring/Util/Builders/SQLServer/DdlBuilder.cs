@@ -24,7 +24,7 @@ internal sealed class DdlBuilder : BaseDdlBuilder
         { FieldType.DateTimeOffset,"datetimeoffset" }
     };
 
-	internal DdlBuilder(Encoding encoding) : base(DatabaseProvider.SqlServer, encoding) {}
+	internal DdlBuilder(Encoding encoding, bool logSql) : base(DatabaseProvider.SqlServer, encoding, logSql) {}
 
 	public sealed override string Create(TableSpace tablespace)
     {

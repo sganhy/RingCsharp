@@ -22,7 +22,7 @@ public sealed class DqlBuilderTest : BaseBuilderTest
         var metaList = GetSchema1();
         var meta = Meta.Create(_faker.Random.String());
         _schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql, Encoding.UTF8) ?? Meta.GetDefaultSchema(meta, DatabaseProvider.PostgreSql);
-        _sut = new DqlBuilder(Encoding.UTF8);
+        _sut = new DqlBuilder(Encoding.UTF8,true);
         _sut.Init(_schema);
     }
 
@@ -84,7 +84,7 @@ public sealed class DqlBuilderTest : BaseBuilderTest
     internal void Select_EmptyTable_SqlQuery()
     {
         // arrange 
-        var sut = new DqlBuilder(Encoding.UTF8);
+        var sut = new DqlBuilder(Encoding.UTF8, true);
         var meta = new Meta(_faker.Random.Number(int.MinValue,int.MaxValue), (byte)EntityType.Table, _faker.Random.Number(int.MinValue,int.MaxValue), 
             (int)TableType.Business, 8704L, "Test", _faker.Random.String(), null, true);
         var metaSch = new Meta(_faker.Random.Number(int.MinValue,int.MaxValue), (byte)EntityType.Schema, _faker.Random.Number(int.MinValue,int.MaxValue),
@@ -122,7 +122,7 @@ public sealed class DqlBuilderTest : BaseBuilderTest
     internal void Select_TableMeta_SqlQuery()
     {
         // arrange 
-        var sut = new DqlBuilder(Encoding.UTF8);
+        var sut = new DqlBuilder(Encoding.UTF8, true);
         var tblBuilder = new TableBuilder();
         var schemaName = "@Test";
         var table = tblBuilder.GetMeta(schemaName, DatabaseProvider.PostgreSql);
@@ -148,7 +148,7 @@ public sealed class DqlBuilderTest : BaseBuilderTest
     internal void Select_TableMetaId_SqlQuery()
     {
         // arrange 
-        var sut = new DqlBuilder(Encoding.UTF8);
+        var sut = new DqlBuilder(Encoding.UTF8, true);
         var tblBuilder = new TableBuilder();
         var schemaName = "@Test";
         var table = tblBuilder.GetMetaId(schemaName, DatabaseProvider.PostgreSql);
@@ -176,7 +176,7 @@ public sealed class DqlBuilderTest : BaseBuilderTest
     internal void Select_TableLog_SqlQuery()
     {
         // arrange 
-        var sut = new DqlBuilder(Encoding.UTF8);
+        var sut = new DqlBuilder(Encoding.UTF8, true);
         var tblBuilder = new TableBuilder();
         var schemaName = "@Test";
         var table = tblBuilder.GetLog(schemaName, DatabaseProvider.PostgreSql);
@@ -205,7 +205,7 @@ public sealed class DqlBuilderTest : BaseBuilderTest
 	internal void Select_TableTest_SqlQuery()
 	{
 		// arrange 
-		var sut = new DqlBuilder(Encoding.UTF8);
+		var sut = new DqlBuilder(Encoding.UTF8, true);
 		var schBuilder = new SchemaBuilder();
 		var schemaName = "@Test2";
 		var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
@@ -228,7 +228,7 @@ public sealed class DqlBuilderTest : BaseBuilderTest
     {
         // field with reserved word in PostGreSQl eg. CURRENT_TIMESTAMP, ANALYZE, and @User
         // arrange 
-        var sut = new DqlBuilder(Encoding.UTF8);
+        var sut = new DqlBuilder(Encoding.UTF8, true);
         var meta = new Meta(_faker.Random.Number(int.MinValue,int.MaxValue), (byte)EntityType.Table, _faker.Random.Number(int.MinValue,int.MaxValue), 0, 0L, "Lateral",
             _faker.Random.String(), null, true);
         var metaSch = new Meta(_faker.Random.Number(int.MinValue,int.MaxValue), (byte)EntityType.Schema, _faker.Random.Number(int.MinValue,int.MaxValue), 0, 0L, "Test",

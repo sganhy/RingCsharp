@@ -23,7 +23,7 @@ public class DmlBuilderTest : BaseBuilderTest
         var meta = Meta.Create(_faker.Random.String());
         _schema = Meta.ToSchema(metaList,DatabaseProvider.MySql, Encoding.UTF8) ??
             Meta.GetDefaultSchema(meta, DatabaseProvider.MySql);
-        _sut = new DmlBuilder(Encoding.UTF8);
+        _sut = new DmlBuilder(Encoding.UTF8, true);
         _sut.Init(_schema);
     }
 
@@ -40,8 +40,8 @@ public class DmlBuilderTest : BaseBuilderTest
         var result2 = _sut.Insert(table); // using cache 
 
         // assert
-        Assert.Equal(expectedResult, result1);
-        Assert.Equal(expectedResult, result2);
+        Assert.Equal(expectedResult, result1.Text);
+        Assert.Equal(expectedResult, result2.Text);
     }
 
     [Fact]
@@ -59,15 +59,15 @@ public class DmlBuilderTest : BaseBuilderTest
         var result2 = _sut.Insert(mtmTable); // using cache 
 
         // assert
-        Assert.Equal(expectedResult, result1);
-        Assert.Equal(expectedResult, result2);
+        Assert.Equal(expectedResult, result1.Text);
+        Assert.Equal(expectedResult, result2.Text);
     }
 
     [Fact]
     internal void Insert_EmptyTable_InsertSql()
     {
         // arrange 
-        var sut = new DmlBuilder(Encoding.UTF8);
+        var sut = new DmlBuilder(Encoding.UTF8, true);
         var schemaId = _faker.Random.Number(int.MinValue,int.MaxValue);
         var testTable= new Meta(_faker.Random.Number(int.MinValue,int.MaxValue), (byte)EntityType.Table, schemaId, (int)TableType.Business
             , 0L, "Test", null, null, true);
@@ -83,7 +83,7 @@ public class DmlBuilderTest : BaseBuilderTest
         var result = sut.Insert(tableTest);
 
         // assert
-        Assert.Equal(expectedResult, result);
+        Assert.Equal(expectedResult, result.Text);
     }
 
     [Fact]
@@ -98,7 +98,7 @@ public class DmlBuilderTest : BaseBuilderTest
         var result = _sut.Insert(table);
 
         // assert
-        Assert.Equal(expectedResult, result);
+        Assert.Equal(expectedResult, result.Text);
     }
 
     [Fact]
@@ -139,7 +139,7 @@ public class DmlBuilderTest : BaseBuilderTest
     internal void Delete_TableMeta_DeleteSql()
     {
         // arrange 
-        var sut = new DmlBuilder(Encoding.UTF8);
+        var sut = new DmlBuilder(Encoding.UTF8, true);
         var schBuilder = new SchemaBuilder();
         var schemaName = "@Test";
         var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
@@ -161,7 +161,7 @@ public class DmlBuilderTest : BaseBuilderTest
     internal void Delete_TableMetaId_DeleteSql()
     {
         // arrange 
-        var sut = new DmlBuilder(Encoding.UTF8);
+        var sut = new DmlBuilder(Encoding.UTF8, true);
         var schBuilder = new SchemaBuilder();
         var schemaName = "@test";
         var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 2 };
@@ -198,7 +198,7 @@ public class DmlBuilderTest : BaseBuilderTest
     internal void Update_TableMeta_UpdateSql()
     {
         // arrange 
-        var sut = new DmlBuilder(Encoding.UTF8);
+        var sut = new DmlBuilder(Encoding.UTF8, true);
         var schBuilder = new SchemaBuilder();
         var schemaName = "@Test";
         var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 8 };
@@ -220,7 +220,7 @@ public class DmlBuilderTest : BaseBuilderTest
     internal void Update_TableMetaId_UpdateSql()
     {
         // arrange 
-        var sut = new DmlBuilder(Encoding.UTF8);
+        var sut = new DmlBuilder(Encoding.UTF8, true);
         var schBuilder = new SchemaBuilder();
         var schemaName = "@Test";
         var config = new Configuration() { DefaultSchema = schemaName, MaxConnectionPoolSize = 8 };

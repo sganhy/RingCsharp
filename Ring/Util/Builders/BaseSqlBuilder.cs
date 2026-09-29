@@ -1,7 +1,4 @@
-﻿using Ring.Data;
-using Ring.Schema.Enums;
-using Ring.Schema.Models;
-using System.Runtime.CompilerServices;
+﻿using Ring.Schema.Enums;
 using System.Text;
 
 namespace Ring.Util.Builders;
@@ -20,37 +17,25 @@ internal abstract class BaseSqlBuilder : ISqlBuilder
 	protected const char SqlLineFeed = '\n';
 
 	// clauses
-	protected static readonly string SqlSelect = @"SELECT ";
-	protected static readonly string SqlFrom = @" FROM ";
-	protected static readonly string SqlWhere = @" WHERE ";
 	protected static readonly char SqlQuote = '\'';
 
 	// common operators in dml, dql and ddl
 	protected static readonly string SqlAnd = @" AND ";
 	protected readonly Encoding _clientEncoding;
 	protected readonly DatabaseProvider _provider;
+	protected readonly bool _logSql;
 
+	// properties
+	public bool LogSql => _logSql;
 	public DatabaseProvider Provider => _provider;
 	public Encoding ClientEncoding => _clientEncoding;
 
-	protected BaseSqlBuilder(DatabaseProvider provider, Encoding clientEncoding)
+	protected BaseSqlBuilder(DatabaseProvider provider, Encoding clientEncoding, bool logSql)
 	{
 		_provider = provider;
 		_clientEncoding = clientEncoding;
+		_logSql = logSql;
 	}
-
-	protected static string EscapeString(string? description) // Code size: 66 (0x42)
-		=> description is null || !description.Contains(SqlQuote)
-			? description
-			: description.Replace(SqlQuote.ToString(), 
-			SqlQuote.ToString() + SqlQuote);
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-#pragma warning disable CA1822 // Mark members as static
-	public void AppendFilter(int index, Field field, Operator operatorType, StringBuilder selectFrom)
-#pragma warning restore CA1822 // Mark members as static
-	{
-		if (index == 0) selectFrom.Append(SqlWhere);
-	}
+	
 
 }

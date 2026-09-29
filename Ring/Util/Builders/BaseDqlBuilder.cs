@@ -8,13 +8,15 @@ namespace Ring.Util.Builders;
 
 internal abstract class BaseDqlBuilder : BaseSqlBuilder, IDqlBuilder
 {
+	protected static readonly string SqlSelect = @"SELECT ";
+	protected static readonly string SqlFrom = @" FROM ";
 	private string[] _tableSelect; // include relations: yes , include searchable: no
 	protected readonly IDdlBuilder _ddlBuilder;
 
-	protected BaseDqlBuilder(DatabaseProvider provider, Encoding clientEncoding) : base(provider, clientEncoding)
+	protected BaseDqlBuilder(DatabaseProvider provider, Encoding clientEncoding, bool logSql) : base(provider, clientEncoding, logSql)
 	{
 		_tableSelect = Array.Empty<string>();
-		_ddlBuilder = Provider.GetDdlBuilder(clientEncoding);
+		_ddlBuilder = Provider.GetDdlBuilder(clientEncoding, logSql);
 	}
 
 	public void Init(DbSchema schema)

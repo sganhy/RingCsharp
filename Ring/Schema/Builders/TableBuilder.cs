@@ -28,7 +28,7 @@ internal sealed class TableBuilder
 	internal Table GetCatalog(EntityType entityType, DatabaseProvider provider) 
 	{
 		// Code size: 231 (0xe7)
-		var ddlBuilder = provider.GetDdlBuilder(Encoding.UTF8);
+		var ddlBuilder = provider.GetDdlBuilder(Encoding.UTF8, false);
 		var fieldName = GetField(FieldSchemaName, FieldType.String);
 		var defaultField = Meta.GetDefaultField(fieldName,FieldType.String);
 		var tableType = entityType.ToTableType();
@@ -49,7 +49,7 @@ internal sealed class TableBuilder
 	{
 #pragma warning restore CA1822
 		// Code size: 96 (0x60)
-		var ddlBuilder = provider.GetDdlBuilder(Encoding.UTF8);
+		var ddlBuilder = provider.GetDdlBuilder(Encoding.UTF8, false);
 		var emptyTable = Meta.GetDefaultTable(metaTable);
 		var emptySchema = Meta.GetDefaultSchema(GetSchema(0, schemaName), provider);
 		var physicalName = ddlBuilder.GetPhysicalName(emptyTable, emptySchema);

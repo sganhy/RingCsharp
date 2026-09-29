@@ -25,7 +25,7 @@ internal sealed class DdlBuilder : BaseDdlBuilder
         { FieldType.DateTimeOffset,  "TEXT"    }
     };
 
-	internal DdlBuilder(Encoding encoding) : base(DatabaseProvider.SqlLite, encoding) { }
+	internal DdlBuilder(Encoding encoding, bool logSql) : base(DatabaseProvider.SqlLite, encoding, logSql) {}
 
 	public sealed override string Create(TableSpace tablespace) => string.Empty; // no tablespace on SQLite
 

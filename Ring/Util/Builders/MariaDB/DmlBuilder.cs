@@ -7,5 +7,5 @@ internal sealed class DmlBuilder : BaseDmlBuilder
 {
     public override string VariableNameTemplate => ":a{0}";
     protected override string WrapVariable(string variable, FieldType fieldType) => variable;
-	internal DmlBuilder(Encoding clientEncoding) : base(DatabaseProvider.MariaDb, clientEncoding) {}
+	internal DmlBuilder(Encoding clientEncoding, bool logSql) : base(DatabaseProvider.MariaDb, clientEncoding, logSql) {}
 }

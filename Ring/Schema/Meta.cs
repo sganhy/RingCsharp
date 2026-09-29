@@ -247,7 +247,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	#endregion
 
 	internal static DbSchema GetDefaultSchema(in Meta meta, DatabaseProvider provider) // Code size: 90 (0x5a)
-		=> new(meta.Id, meta.Name, provider.GetDdlBuilder(Encoding.UTF8).GetPhysicalName(EntityType.Schema, meta.Name), meta.Description,
+		=> new(meta.Id, meta.Name, provider.GetDdlBuilder(Encoding.UTF8, false).GetPhysicalName(EntityType.Schema, meta.Name), meta.Description,
 			Array.Empty<Parameter>(), Array.Empty<Lexicon>(), SchemaLoadType.Full, SchemaType.Undefined, Array.Empty<Sequence>(),
 			Array.Empty<Table>(), Array.Empty<Table>(), Array.Empty<TableSpace>(), provider, Encoding.UTF8, 0, meta.Active, meta.IsEntityBaseline());
 
@@ -360,7 +360,7 @@ internal readonly struct Meta : IEquatable<Meta>
 		if (!meta.HasValue) return null;
 
 		var metaValue = meta.Value;
-		var ddlBuilder = provider.GetDdlBuilder(clientEncoding);
+		var ddlBuilder = provider.GetDdlBuilder(clientEncoding, false);
 		var mtmCount = GetMtmCount(schema);
 		var tableCount = prebuiltTables?.Length ?? GetTableCount(schema);
 		var parameters = GetParameters(schema);
@@ -946,7 +946,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	private static void LoadMtm(DbSchema schema, int mtmCount)
 	{
 		// Code size: 342 (0x156) - boxing removed
-		var ddlBuilder = schema.Provider.GetDdlBuilder(Encoding.UTF8);
+		var ddlBuilder = schema.Provider.GetDdlBuilder(Encoding.UTF8, false);
 		var mtm = new Dictionary<string, Table>(mtmCount * 2);
 
 		foreach (var table in schema.TablesById)

@@ -5,5 +5,5 @@ namespace Ring.Util.Builders.PostgreSQL;
 
 internal sealed class TclBuilder : BaseTclBuilder
 {
-	internal TclBuilder(Encoding clientEncoding) : base(DatabaseProvider.PostgreSql, clientEncoding) { }
+	internal TclBuilder(Encoding clientEncoding, bool logSql) : base(DatabaseProvider.PostgreSql, clientEncoding, logSql) {}
 }

@@ -7,5 +7,5 @@ internal sealed class DmlBuilder : BaseDmlBuilder
 {
     public override string VariableNameTemplate => "@";
     protected override string WrapVariable(string variable, FieldType fieldType) => variable;
-	internal DmlBuilder(Encoding clientEncoding) : base(DatabaseProvider.SqlServer, clientEncoding) { }
+	internal DmlBuilder(Encoding clientEncoding, bool logSql) : base(DatabaseProvider.SqlServer, clientEncoding, logSql) {}
 }

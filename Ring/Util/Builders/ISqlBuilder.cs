@@ -7,4 +7,5 @@ internal interface ISqlBuilder
 {
 	Encoding ClientEncoding { get; }
 	DatabaseProvider Provider { get; }
+	bool LogSql { get; }
 }

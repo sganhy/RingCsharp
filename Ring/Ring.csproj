@@ -44,12 +44,6 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <Compile Remove="Util\Models\**" />
-	  <EmbeddedResource Remove="Util\Models\**" />
-	  <None Remove="Util\Models\**" />
-	</ItemGroup>
-
-	<ItemGroup>
 	  <None Remove="Util\Resources\Meta.gz" />
 	  <None Remove="Util\Resources\MethodInfo.gz" />
 	</ItemGroup>

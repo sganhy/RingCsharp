@@ -5,5 +5,5 @@ namespace Ring.Util.Builders.MariaDB;
 
 internal sealed class TclBuilder : BaseTclBuilder
 {
-	internal TclBuilder(Encoding clientEncoding) : base(DatabaseProvider.MariaDb, clientEncoding) {}
+	internal TclBuilder(Encoding clientEncoding, bool logSql) : base(DatabaseProvider.MariaDb, clientEncoding, logSql) {}
 }

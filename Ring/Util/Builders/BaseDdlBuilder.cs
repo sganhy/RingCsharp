@@ -70,7 +70,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	internal Dictionary<FieldType, string> ProviderDataType => DataType;
 
 
-	protected BaseDdlBuilder(DatabaseProvider provider, Encoding clientEncoding) : base(provider, clientEncoding) {}
+	protected BaseDdlBuilder(DatabaseProvider provider, Encoding clientEncoding, bool logSql) : base(provider, clientEncoding, logSql) {}
 
 	public string AlterAddColumn(Table table, in Column column) // Code size: 90 (0x5a)
 		=> new StringBuilder()
@@ -505,6 +505,10 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 		result.Length = result.Length - 1;
 		return result.ToString();
 	}
+
+	private static string EscapeString(string? description) // Code size: 66 (0x42)
+		=> description is null || !description.Contains(SqlQuote)
+			? description : description.Replace(SqlQuote.ToString(), SqlQuote.ToString() + SqlQuote);
 
 	#endregion
 

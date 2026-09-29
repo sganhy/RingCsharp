@@ -13,7 +13,7 @@ namespace Ring.Tests.Util.Builders.PostgreSQL;
 
 public sealed class DdlBuilderTest : BaseBuilderTest
 {
-	private readonly IDdlBuilder _sut = new DdlBuilder(Encoding.UTF8);
+	private readonly IDdlBuilder _sut = new DdlBuilder(Encoding.UTF8, true);
 	private readonly Faker _faker = new();
 
     [Fact]
@@ -514,7 +514,7 @@ public sealed class DdlBuilderTest : BaseBuilderTest
             , 0L, TableType.Mtm.GetLogicalName("Test"), null, null, true);
         var emptyTable = Meta.GetDefaultTable(metaTable);
         var emptySchema = Meta.GetDefaultSchema(Meta.Create("Where"), DatabaseProvider.MySql);
-        var ddlBuilder = DatabaseProvider.PostgreSql.GetDdlBuilder(Encoding.UTF8);
+        var ddlBuilder = DatabaseProvider.PostgreSql.GetDdlBuilder(Encoding.UTF8, true);
         var expectedValue = "\"where\".\"@mtm_test\"";
 
         // act 
@@ -531,7 +531,7 @@ public sealed class DdlBuilderTest : BaseBuilderTest
         var metaList = GetSchema1();
         var schema = Meta.ToSchema(metaList, DatabaseProvider.PostgreSql, Encoding.UTF8);
         var table = schema?.GetTable("deity");
-        var ddlBuilder = DatabaseProvider.PostgreSql.GetDdlBuilder(Encoding.UTF8);
+        var ddlBuilder = DatabaseProvider.PostgreSql.GetDdlBuilder(Encoding.UTF8, true);
         var expectedResult = "idx_1037_001";
         Assert.NotNull(table);
 
@@ -550,7 +550,7 @@ public sealed class DdlBuilderTest : BaseBuilderTest
         var config = new Configuration() { DefaultSchema = "public", MaxConnectionPoolSize = 2 };
         var schema = schBuilder.GetMeta(DatabaseProvider.PostgreSql, config, Encoding.UTF8);
         var table = schema.GetTable("@log");
-        var ddlBuilder = DatabaseProvider.PostgreSql.GetDdlBuilder(Encoding.UTF8);
+        var ddlBuilder = DatabaseProvider.PostgreSql.GetDdlBuilder(Encoding.UTF8, true);
         var expectedResult = "\"idx_@log_001\"";
 		Assert.NotNull(table);
 

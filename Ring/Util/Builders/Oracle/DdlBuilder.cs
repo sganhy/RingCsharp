@@ -24,7 +24,7 @@ internal sealed class DdlBuilder : BaseDdlBuilder
         { FieldType.DateTimeOffset,  "TIMESTAMP" }
     };
 
-	internal DdlBuilder(Encoding encoding) : base(DatabaseProvider.Oracle, encoding) { }
+	internal DdlBuilder(Encoding encoding, bool logSql) : base(DatabaseProvider.Oracle, encoding, logSql) {}
 
 	public sealed override string Create(TableSpace tablespace) => tablespace.Name;
     protected sealed override string MtmPrefix => TableType.Mtm.GetLogicalName(); // physical name prefix for many-to-many tables

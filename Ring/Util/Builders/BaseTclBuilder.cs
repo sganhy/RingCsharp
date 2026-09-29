@@ -5,7 +5,7 @@ namespace Ring.Util.Builders;
 
 internal abstract class BaseTclBuilder : BaseSqlBuilder, ITclBuilder
 {
-	protected BaseTclBuilder(DatabaseProvider provider, Encoding clientEncoding) : base(provider, clientEncoding) {}
+	protected BaseTclBuilder(DatabaseProvider provider, Encoding clientEncoding, bool logSql) : base(provider, clientEncoding, logSql) {}
 
 	public ReadOnlySpan<byte> Commit(Encoding encoding)
 	{

@@ -10,9 +10,9 @@ internal sealed class DdlBuilder : BaseDdlBuilder
 {
  	private readonly MySqlDdlBuilder _mySqlDdlBuilder;
 
-    internal DdlBuilder(Encoding encoding) : base(DatabaseProvider.MariaDb, encoding)
+    internal DdlBuilder(Encoding encoding, bool logSql) : base(DatabaseProvider.MariaDb, encoding, logSql)
 	{
-		_mySqlDdlBuilder = new MySqlDdlBuilder(encoding);
+		_mySqlDdlBuilder = new MySqlDdlBuilder(encoding, logSql);
 	}
 
     public sealed override string Create(TableSpace tablespace) => tablespace.Name;
