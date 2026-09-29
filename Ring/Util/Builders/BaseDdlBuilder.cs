@@ -67,7 +67,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	protected abstract string GetSchemaPhysicalName(TableType tableType);
 	protected abstract string GetPhysicalName(TableType tableType, Field field); // get field physical name eg. "table_schema" or "table_name" for information_schema.tables
 	public bool HasTimeZoneOffsetColumn => TimeZoneOffsetPrefix is not null;
-	internal Dictionary<FieldType, string> ProviderDataType => DataType;
+	internal Dictionary<FieldType, string> ProviderDataType => DataTypes;
 
 
 	protected BaseDdlBuilder(DatabaseProvider provider, Encoding clientEncoding, bool logSql) : base(provider, clientEncoding, logSql) {}
@@ -234,7 +234,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 
 
 	public abstract string Create(TableSpace tablespace);
-	protected abstract Dictionary<FieldType, string> DataType { get; }
+	protected abstract Dictionary<FieldType, string> DataTypes { get; }
 	protected abstract int VarcharMaxSize { get; }
 	protected abstract string StringCollateInformation { get; }
 	protected abstract string SchemaSeparator { get; }
@@ -388,7 +388,7 @@ internal abstract class BaseDdlBuilder : BaseSqlBuilder, IDdlBuilder
 	{
 		// Code size: 125 (0x7d)
 		var fieldType = column.FieldType;
-		var result = new StringBuilder(DataType[fieldType]);
+		var result = new StringBuilder(DataTypes[fieldType]);
 		var collateInformation = StringCollateInformation;
 		if (fieldType == FieldType.String) result.Append(GetSizeInfo(size ?? table.GetField(column.Id)?.Size ?? 0));
 		if (fieldType == FieldType.String || fieldType == FieldType.LongString) result.Append(SqlSpace).Append(collateInformation);

@@ -7,7 +7,7 @@ namespace Ring.Util.Builders.SQLServer;
 
 internal sealed class DdlBuilder : BaseDdlBuilder
 {
-    private readonly static Dictionary<FieldType, string> _dataType = new()
+    private readonly static Dictionary<FieldType, string> _dataTypes = new()
     {
         { FieldType.String,        "varchar"        },
         { FieldType.LongString,    "bigtext"        },
@@ -32,7 +32,7 @@ internal sealed class DdlBuilder : BaseDdlBuilder
     }
     protected sealed override string MtmPrefix => TableType.Mtm.GetLogicalName(); // physical name prefix for many-to-many tables
 	protected sealed override string? TimeZoneOffsetPrefix => null;
-    protected sealed override Dictionary<FieldType, string> DataType => _dataType;
+    protected sealed override Dictionary<FieldType, string> DataTypes => _dataTypes;
     protected sealed override int VarcharMaxSize => -1;
     protected sealed override string StringCollateInformation => throw new NotImplementedException();
     protected sealed override string SchemaSeparator => ".";

@@ -11,21 +11,21 @@ internal sealed class DdlBuilder : BaseDdlBuilder
 	//     1) GetPhysicalName(Constraint): StringBuilder capacity too small; Severity: Medium (Done)
 	//     2) _dataType: DateTimeOffset maps to timestamp without time zone — Semantic bug; Severity: Medium (Not a bug)
 
-	private readonly Dictionary<FieldType, string> _dataType = new()
+	private  readonly static Dictionary<FieldType, string> _dataTypes = new()
 	{
-		{ FieldType.String,        "varchar"},
-		{ FieldType.LongString,    "text"},
-		{ FieldType.Double,        "float8"},
-		{ FieldType.Float,         "float4"},
-		{ FieldType.Long,          "int8"},
-		{ FieldType.Int,           "int4"},
-		{ FieldType.Short,         "int2"},
-		{ FieldType.Byte,          "int2"},
-		{ FieldType.Boolean,       "bool"},
+		{ FieldType.String, "varchar"},
+		{ FieldType.LongString, "text"},
+		{ FieldType.Double, "float8"},
+		{ FieldType.Float, "float4"},
+		{ FieldType.Long, "int8"},
+		{ FieldType.Int, "int4"},
+		{ FieldType.Short,"int2"},
+		{ FieldType.Byte, "int2"},
+		{ FieldType.Boolean, "bool"},
 		{ FieldType.Date, "date"},
-		{ FieldType.ByteArray,     "bytea"},
-		{ FieldType.DateTime,      "timestamp without time zone"},
-		{ FieldType.DateTimeOffset,  "timestamp without time zone"}
+		{ FieldType.ByteArray, "bytea"},
+		{ FieldType.DateTime, "timestamp without time zone"},
+		{ FieldType.DateTimeOffset, "timestamp without time zone"}
 	};
 
 	internal DdlBuilder(Encoding encoding, bool logSql) : base(DatabaseProvider.PostgreSql, encoding, logSql) {}
@@ -34,7 +34,7 @@ internal sealed class DdlBuilder : BaseDdlBuilder
 	protected sealed override string MtmPrefix => TableType.Mtm.GetLogicalName(); // physical name prefix for many-to-many tables
 	protected sealed override string TimeZoneOffsetPrefix => "@tz_offset_";
 	protected sealed override int VarcharMaxSize => 65535;
-	protected sealed override Dictionary<FieldType, string> DataType => _dataType;
+	protected sealed override Dictionary<FieldType, string> DataTypes => _dataTypes;
 	protected sealed override string SchemaSeparator => ".";
 	protected sealed override char PhysSpecialEntityPrefix => TableType.NonBusinessTable.GetLogicalName()[0];
 	protected sealed override string AlterColumnStatment => "ALTER COLUMN";

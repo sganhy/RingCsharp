@@ -7,8 +7,7 @@ namespace Ring.Util.Builders.SQLite;
 
 internal sealed class DdlBuilder : BaseDdlBuilder
 {
-    private readonly static DatabaseProvider _currentProvider = DatabaseProvider.SqlLite;
-    private readonly static Dictionary<FieldType, string> _dataType = new()
+    private readonly static Dictionary<FieldType, string> _dataTypes = new()
     {
         { FieldType.String,        "TEXT"    },
         { FieldType.LongString,    "TEXT"    },
@@ -29,7 +28,7 @@ internal sealed class DdlBuilder : BaseDdlBuilder
 
 	public sealed override string Create(TableSpace tablespace) => string.Empty; // no tablespace on SQLite
 
-    protected sealed override Dictionary<FieldType, string> DataType => _dataType;
+    protected sealed override Dictionary<FieldType, string> DataTypes => _dataTypes;
     protected sealed override string MtmPrefix => TableType.Mtm.GetLogicalName(); // physical name prefix for many-to-many tables;
 	protected sealed override string? TimeZoneOffsetPrefix => null;
     protected sealed override int VarcharMaxSize => -1;
