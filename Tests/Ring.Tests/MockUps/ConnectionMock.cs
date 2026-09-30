@@ -28,7 +28,7 @@ internal class ConnectionMock : IConnection
     public DateTime? LastConnectionTime => _lastConnectionTime;
     public ConnectionState State => _connectionState;
     public Encoding ClientEncoding => Encoding.UTF8;
-	public void BeginTransaction(IsolationLevel isolationLevel) => Expression.Empty();
+    public int ProviderId => (int)_databaseProvider;
     public void Close() => _connectionState = ConnectionState.Closed;
     public Task CloseAsync(CancellationToken cancellationToken) => 
         Task.Run(() =>
@@ -37,7 +37,6 @@ internal class ConnectionMock : IConnection
             // do nothing 
         });
 
-    public void Commit() => Expression.Empty();
     public IConnection CreateInstance(int id, int sqlSendBufferSize) => new ConnectionMock(id, _databaseProvider, _connectionString);
     public void Dispose() => Expression.Empty();
 
@@ -61,6 +60,11 @@ internal class ConnectionMock : IConnection
 		throw new NotImplementedException();
 	}
 
+	public OperationalError? Execute(ReadOnlySpan<byte> sql)
+	{
+		throw new NotImplementedException();
+	}
+
 	public ValueTask<OperationalError?> ExecuteAsync(AlterQuery query, ReadOnlyMemory<byte> sql, CancellationToken cancellationToken = default)
 	{
         throw new NotImplementedException();
@@ -80,13 +84,6 @@ internal class ConnectionMock : IConnection
             _lastConnectionTime = DateTime.Now;
             _connectionState = ConnectionState.Open;
         });
-
-    public int ProviderId() => (int)_databaseProvider;
-
-    public void Rollback()
-    {
-        throw new NotImplementedException();
-    }
 
     public sealed override string ToString() => $"{Id} - {_connectionState}";
 

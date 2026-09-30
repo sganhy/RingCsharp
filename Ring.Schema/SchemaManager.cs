@@ -31,7 +31,7 @@ public sealed class SchemaManager
 	{
 		// create initial schema
 		var schemaBuilder = new SchemaBuilder();
-		var dbProvider = _connection.ProviderId().ToDatabaseProvider();
+		var dbProvider = _connection.ProviderId.ToDatabaseProvider();
 		var initialSchema = schemaBuilder.GetMeta(dbProvider, GetInitSchemaConfiguration(physicalSchema, "meta_table", "meta_index"), _connection.ClientEncoding);
 		var initialMetaSchema = initialSchema.ToMeta();
 		var bulkAlter =  new BulkAlter(initialSchema);
@@ -58,7 +58,7 @@ public sealed class SchemaManager
 	{
 		var query = new BulkRetrieve();
 		var schemaBuilder = new SchemaBuilder();
-		var dbProvider = _connection.ProviderId().ToDatabaseProvider();
+		var dbProvider = _connection.ProviderId.ToDatabaseProvider();
 		query.Schema = schemaBuilder.GetMeta(dbProvider, GetInitSchemaConfiguration(physicalSchema, "meta_table", "meta_index"), _connection.ClientEncoding);
 		//query.SimpleQuery(0, "@test");
 		query.SimpleQuery(0, "@test");

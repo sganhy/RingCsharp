@@ -205,7 +205,7 @@ internal static class ConnectionPoolExtensions
 
 		// close reference connection
 		if (initialConnection.State == ConnectionState.Open) initialConnection.Close();
-		var provider = initialConnection.ProviderId().ToDatabaseProvider();
+		var provider = initialConnection.ProviderId.ToDatabaseProvider();
 		var minPoolSize = connectionPool.MinConnection;
 
 		switch (provider)

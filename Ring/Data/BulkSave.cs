@@ -226,16 +226,18 @@ public sealed class BulkSave : IBulkSave
 	private void SaveWithTransaction(IConnection connection, IsolationLevel? isolationLevel)
 	{
 		// Code size: 91 (0x5b)
-		var builder = _schema.DmlBuilder;
-		var encoding = connection.ClientEncoding;
-		var level = isolationLevel ?? builder.Provider.GetDefaultIsolationLevel();
+		var dmlBuilder = _schema.DmlBuilder;
+		var tclBuilder = _schema.TclBuilder;
 		var index = 0;
 
-		connection.BeginTransaction(level);
-        foreach (var query in _queries.AsReadOnlySpan())
+		// start transaction
+		connection.Execute(tclBuilder.StartTransaction.Encoded);
+
+		//connection.BeginTransaction(level);
+		foreach (var query in _queries.AsReadOnlySpan())
 		{
 			// callvirt instance int64 Ring.Data.IRingConnection::Execute
-			var sql = query.ToSql(builder);
+			var sql = query.ToSql(dmlBuilder);
 			if (sql is not null)
 			{
 				var error = connection.Execute(query, sql.Encoded);
@@ -244,13 +246,13 @@ public sealed class BulkSave : IBulkSave
 					
 					int oi = 0;
 					++oi;
-					connection.Rollback();
+					connection.Execute(tclBuilder.Rollback.Encoded);
 				}
 			}
 			++index;
 		}
-		connection.Commit();
-    }
+		connection.Execute(tclBuilder.Commit.Encoded);
+	}
 
 	private static Table GetDefaultType()
 	{

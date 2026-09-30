@@ -196,7 +196,7 @@ These focus on the library's core job: mapping logical models to physical databa
 *Clean, enterprise-focused name suitable for critical backend infrastructure.*
 19. **Vortex**
 *Conveys a powerful engine driving all data mapping and dynamic routing at the center.*
-20. **Apex**
+20. **e**
 *Short, sleek, and high-performance sounding.*
 
 ---
@@ -206,3 +206,16 @@ These focus on the library's core job: mapping logical models to physical databa
 * **For a modern, developer-friendly feel:** `DataWire` or `DataMorph`
 * **For an architectural/layered product:** `Strata` or `Prism`
 * **For an enterprise/core infrastructure product:** `Relay` or `Substrate`
+
+*************************************
+
+Here are some candidates. The project spans driver, ORM, REST API, and configuration-driven changes without downtime, so I looked for names that suggest a layer connecting a database to applications.
+
+Trellis: a structure that things grow along. It fits the config-driven idea, where you change the framework and the application follows. It's short, easy to say in French and English, and reads well as a namespace (Trellis.Schema, Trellis.Util.Builders).
+Aqueduct: carries data from the database to consumers continuously, which suits the "no discontinuity" goal. The name is distinctive and technical.
+Conduit: simple and clear, but very common, so it will be harder to find and easy to confuse with other projects.
+Weft: the thread that crosses the warp in weaving. It suggests linking the driver, ORM, and API into one fabric. It's short and unusual, so it's easier to make unique.
+Tessera: one tile of a mosaic. It fits a modular design where each piece (driver, ORM, REST) is separate but forms one picture.
+Strata: layers (driver, ORM, API), which matches your architecture. It's already used by several products, though.
+
+My pick is Trellis for meaning and namespace fit, with Aqueduct as the second choice if you want to stress continuity.

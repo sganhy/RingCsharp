@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using Ring.Util.Models;
+using System.Text;
 
 namespace Ring.Util.Builders;
 
@@ -7,7 +8,7 @@ namespace Ring.Util.Builders;
 /// </summary>
 internal interface ITclBuilder : ISqlBuilder
 {
-	ReadOnlySpan<byte> Commit(Encoding encoding);
-	ReadOnlySpan<byte> StartTransaction(Encoding encoding);
-	ReadOnlySpan<byte> Rollback(Encoding encoding);
+	SqlEntry Commit { get; }
+	SqlEntry StartTransaction { get; }
+	SqlEntry Rollback { get; }
 }

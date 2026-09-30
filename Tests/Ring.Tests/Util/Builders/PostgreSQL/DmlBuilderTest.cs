@@ -30,19 +30,25 @@ public class DmlBuilderTest : BaseBuilderTest
     [Fact]
     internal void Insert_Table1_InsertSql()
     {
-        // arrange 
-        var table = _schema.GetTable("skill");
+		// arrange 
+		var dmlBuilderWithoutLog = new DmlBuilder(Encoding.UTF8, false);
+		dmlBuilderWithoutLog.Init(_schema);
+		var table = _schema.GetTable("skill");
         var expectedResult = "INSERT INTO rpg_sheet.t_skill (id,name,skill2ability,sub_name,is_group,category,armor_penality,trained_only,try_again,s_name) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)";
+		var expectedBinaryResult = Encoding.UTF8.GetBytes(expectedResult);
 
-        // act 
-        Assert.NotNull(table);
+		// act 
+		Assert.NotNull(table);
         var result1 = _sut.Insert(table);
         var result2 = _sut.Insert(table); // using cache 
+		var result3 = dmlBuilderWithoutLog.Insert(table); // not logs
 
-        // assert
-        Assert.Equal(expectedResult, result1.Text);
+		// assert
+		Assert.Equal(expectedResult, result1.Text);
         Assert.Equal(expectedResult, result2.Text);
-    }
+        Assert.Equal(expectedBinaryResult, result1.Encoded);
+		Assert.Null(result3.Text);
+	}
 
     [Fact]
     internal void Insert_MtmTable_InsertSql()

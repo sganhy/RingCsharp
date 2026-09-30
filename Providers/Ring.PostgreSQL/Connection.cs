@@ -5,8 +5,6 @@ using Ring.PostgreSQL.Enums;
 using Ring.PostgreSQL.Exceptions;
 using Ring.PostgreSQL.Extensions;
 using Ring.PostgreSQL.Helpers;
-using Ring.Util.Builders;
-using Ring.Util.Builders.PostgreSQL;
 using Ring.Util.Enums;
 using Ring.Util.Helpers;
 using System.Buffers;
@@ -20,9 +18,6 @@ namespace Ring.PostgreSQL;
 public sealed class Connection : IConnection
 {
 	private static readonly NetworkStream ClosedStream = NetworkStreamExtensions.CreateClosedStream(null);
-	private static readonly string TransactionStart = "BEGIN;";
-	private static readonly string TransactionEnd = "COMMIT";
-	private static readonly string TransactionRollback = "ROLLBACK";
 	private const int MinTimeOut = 5000; // 5 seconds
 	// Terminate message ('X' + Int32 self-inclusive length=4, no payload) is
 	// wire-protocol-constant - computed once instead of allocated on every Close.
@@ -45,12 +40,7 @@ public sealed class Connection : IConnection
 	// tcp connection
 	private readonly int _timeout; // milliseconds
 	private readonly Encoding _encoding;
-	private readonly int _sqlSendBufferSize;
 	private readonly byte[] _sqlSendBuffer;
-	private readonly byte[] _sqlStartTransaction;
-	private readonly byte[] _sqlEndTransaction;
-	private readonly byte[] _sqlRollbackTransaction;
-
 
 	// Never null: defaults to ClosedStream so every code path that forgot to
 	// check _state first hits a well-defined (if slightly odd) stream state
@@ -70,13 +60,13 @@ public sealed class Connection : IConnection
 	private int _backendSecret;
 	private bool _disposed;
 	public long Id => _id;
-	private readonly DdlBuilder _ddlBuilder;
 	public DateTime CreationTime => _creationTime;
 	public DateTime? LastConnectionTime => _lastConnectionTime;
 	public Encoding ClientEncoding => _encoding;
 	
 
 	public ConnectionState State => _state;
+	public int ProviderId => (int)_parameters.DatabaseProvider;
 
 	// build ConnectionParameters from connection string
 	public Connection(string connectionString) : this(connectionString.ToConnectionParameters()) { }
@@ -92,39 +82,12 @@ public sealed class Connection : IConnection
 		_host = parameters.Host;
 		_port = parameters.Port;
 		_encoding = Encoding.GetEncoding(parameters.ClientEncoding);
-		_sqlSendBufferSize = parameters.SqlSendBufferSize;
-		_sqlStartTransaction = _encoding.GetBytes(TransactionStart);
-		_sqlEndTransaction = _encoding.GetBytes(TransactionEnd);
-		_sqlRollbackTransaction = _encoding.GetBytes(TransactionRollback);
-		_ddlBuilder = new DdlBuilder(_encoding, false);
-		if (_sqlSendBufferSize > 0)
+		if (parameters.SqlSendBufferSize > 0)
 		{
-			_sqlSendBuffer = new byte[_sqlSendBufferSize];
+			_sqlSendBuffer = new byte[parameters.SqlSendBufferSize];
 			_sqlSendBuffer[0] = (byte)FrontendMessageCode.Query;
 		}
 		else _sqlSendBuffer = Array.Empty<byte>();
-	}
-
-
-	public void BeginTransaction(IsolationLevel isolationLevel)
-	{
-		try
-		{
-			_stream.SendQuery(_sqlStartTransaction, _sqlSendBuffer);
-			_stream.DrainToReadyForQuery(ref _transactionStatus);
-		}
-		catch (PgOperationalError)
-		{
-			// Server-side error; the connection itself is still usable.
-			throw;
-		}
-		catch
-		{
-			// I/O failure or protocol desync leaves the stream in an
-			// unknown state - don't let the connection be reused as-is.
-			_state = ConnectionState.Broken;
-			throw;
-		}
 	}
 
 	public bool IsConnectionAlive()
@@ -195,38 +158,6 @@ public sealed class Connection : IConnection
 	}
 	public Task CloseAsync(CancellationToken cancellationToken = default) => CloseAsyncImpl(cancellationToken);
 
-	/// <summary>
-	///     Sends a Simple Query "COMMIT" and waits for it to complete.
-	///     Refuses up front if the driver's tracked transaction status shows
-	///     no transaction is active - the wire protocol alone can't
-	///     distinguish "committed successfully" from "COMMIT with nothing to
-	///     commit" (Postgres treats the latter as a harmless no-op with just
-	///     a NoticeResponse), so this check is what actually catches the
-	///     caller's mistake. If the transaction is in the failed/aborted
-	///     state ('E'), COMMIT is still sent through: Postgres implicitly
-	///     rolls back an aborted transaction on COMMIT rather than erroring.
-	/// </summary>
-	public void Commit()
-	{
-		try
-		{
-			_stream.SendQuery(_sqlEndTransaction, _sqlSendBuffer);
-			_stream.DrainToReadyForQuery(ref _transactionStatus);
-		}
-		catch (PgOperationalError)
-		{
-			// Server-side error; the connection itself is still usable.
-			throw;
-		}
-		catch
-		{
-			// I/O failure or protocol desync leaves the stream in an
-			// unknown state - don't let the connection be reused as-is.
-			_state = ConnectionState.Broken;
-			throw;
-		}
-	}
-
 	public IConnection CreateInstance(int id, int sqlSendBufferSize) => new Connection(_parameters.Set(id, sqlSendBufferSize));
 
 	/// <summary>
@@ -293,26 +224,36 @@ public sealed class Connection : IConnection
 		}
 	}
 
-	[MethodImpl(MethodImplOptions.NoInlining)]
-	public OperationalError? Execute(in AlterQuery query, ReadOnlySpan<byte> sql)
+	public OperationalError? Execute(ReadOnlySpan<byte> sql)
 	{
-		// Code size: 76 (0x4c) - no virtual call
+		// Code size: 51 (0x33) - no virtual calls
 		_state = ConnectionState.Open | ConnectionState.Executing; // we checked already the connection state in AlterQuery.Execute().
 		_stream.SendQuery(sql, _sqlSendBuffer);
 		var returnValue = _stream.DrainToReadyForQuery(ref _transactionStatus);
-		returnValue?.Set(query, _ddlBuilder);
 		_state = ConnectionState.Open;
 		return returnValue;
 	}
+
+	public OperationalError? Execute(in AlterQuery query, ReadOnlySpan<byte> sql)
+	{
+		// Code size: 64 (0x40) - no virtual calls
+		_state = ConnectionState.Open | ConnectionState.Executing; // we checked already the connection state in AlterQuery.Execute().
+		_stream.SendQuery(sql, _sqlSendBuffer);
+		var returnValue = _stream.DrainToReadyForQuery(ref _transactionStatus);
+		returnValue?.Set(query);
+		_state = ConnectionState.Open;
+		return returnValue;
+	}
+
 	public async ValueTask<OperationalError?> ExecuteAsync(AlterQuery query, ReadOnlyMemory<byte> sql, CancellationToken cancellationToken = default)
 	{
-		// Code size: 88 (0x58) - no virtual call
+		// Code size: 88 (0x58) - no virtual calls
 		_stream.SendQuery(sql.Span, _sqlSendBuffer);
 		(var returnValue, var drainedBody) = await _stream.DrainToReadyForQueryAsync(cancellationToken).ConfigureAwait(false);
 		if (returnValue is not null)
 		{
 			_transactionStatus = drainedBody.Length > 0 ? drainedBody[0] : (byte)TransactionStatus.Idle;
-			returnValue.Set(query, _ddlBuilder);
+			returnValue.Set(query);
 		}
 		return returnValue;
 	}
@@ -351,30 +292,6 @@ public sealed class Connection : IConnection
 			if (rentedPayload is not null) ArrayPool<byte>.Shared.Return(rentedPayload);
 		}
 	}
-
-	public int ProviderId() => (int)_parameters.DatabaseProvider;
-
-	public void Rollback()
-	{
-		try
-		{
-			_stream.SendQuery(_sqlRollbackTransaction, _sqlSendBuffer);
-			_stream.DrainToReadyForQuery(ref _transactionStatus);
-		}
-		catch (PgOperationalError)
-		{
-			// Server-side error; the connection itself is still usable.
-			throw;
-		}
-		catch
-		{
-			// I/O failure or protocol desync leaves the stream in an
-			// unknown state - don't let the connection be reused as-is.
-			_state = ConnectionState.Broken;
-			throw;
-		}
-	}
-
 
 	#region private methods
 
@@ -506,7 +423,7 @@ public sealed class Connection : IConnection
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
 	private static void ThrowConnectionAlreadyOpen() => throw new InvalidOperationException(ResourceHelper.GetMessage(ResourceType.ConnectionAlreadyOpen));
-
+		
 	#endregion
 
 }

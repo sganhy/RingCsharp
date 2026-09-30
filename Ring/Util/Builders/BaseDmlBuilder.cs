@@ -33,7 +33,7 @@ internal abstract class BaseDmlBuilder : BaseSqlBuilder, IDmlBuilder
 		_tableUpdate = Array.Empty<string?>();
 	}
 
-	public abstract string VariableNameTemplate { get; }
+	protected abstract string VariableNameTemplate { get; }
 	protected abstract string WrapVariable(string variable, FieldType fieldType);
 
 	public void Init(DbSchema schema)
