@@ -1,5 +1,4 @@
 ﻿using Ring.Util.Models;
-using System.Text;
 
 namespace Ring.Util.Builders;
 
@@ -11,4 +10,5 @@ internal interface ITclBuilder : ISqlBuilder
 	SqlEntry Commit { get; }
 	SqlEntry StartTransaction { get; }
 	SqlEntry Rollback { get; }
+	bool TransactionalDdl { get; }
 }

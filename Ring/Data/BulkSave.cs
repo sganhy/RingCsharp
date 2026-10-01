@@ -174,7 +174,7 @@ public sealed class BulkSave : IBulkSave
 
 		//TODO if more than 100K multiple transactions
 		//TODO throw exception ==> invalid insert into with id==0
-		if (queryCount == 1 || noTransaction) SaveWithoutTransactions(connection);
+		if (queryCount == 1 || noTransaction) Save(connection);
 		else if (queryCount > 1) SaveWithTransaction(connection, isolationLevel);
 		
 		// clear bucket 
@@ -199,8 +199,10 @@ public sealed class BulkSave : IBulkSave
 
 	}
 
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private void SaveWithoutTransactions(IConnection connection)
+	/// <summary>
+	///		Save without transaction, used for single query or when noTransaction is true
+	/// </summary>
+	private void Save(IConnection connection)
 	{
 		// Code size: 69 (0x45)
 		var builder = _schema.DmlBuilder;
@@ -222,7 +224,6 @@ public sealed class BulkSave : IBulkSave
 		}
 	}
 
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private void SaveWithTransaction(IConnection connection, IsolationLevel? isolationLevel)
 	{
 		// Code size: 91 (0x5b)
@@ -231,27 +232,28 @@ public sealed class BulkSave : IBulkSave
 		var index = 0;
 
 		// start transaction
-		connection.Execute(tclBuilder.StartTransaction.Encoded);
-
-		//connection.BeginTransaction(level);
-		foreach (var query in _queries.AsReadOnlySpan())
+		if (connection.Execute(tclBuilder.StartTransaction.Encoded) is null)
 		{
-			// callvirt instance int64 Ring.Data.IRingConnection::Execute
-			var sql = query.ToSql(dmlBuilder);
-			if (sql is not null)
+			//connection.BeginTransaction(level);
+			foreach (var query in _queries.AsReadOnlySpan())
 			{
-				var error = connection.Execute(query, sql.Encoded);
-				if (error is not null)
+				// callvirt instance int64 Ring.Data.IRingConnection::Execute
+				var sql = query.ToSql(dmlBuilder);
+				if (sql is not null)
 				{
-					
-					int oi = 0;
-					++oi;
-					connection.Execute(tclBuilder.Rollback.Encoded);
+					var error = connection.Execute(query, sql.Encoded);
+					if (error is not null)
+					{
+
+						int oi = 0;
+						++oi;
+						connection.Execute(tclBuilder.Rollback.Encoded);
+					}
 				}
+				++index;
 			}
-			++index;
+			connection.Execute(tclBuilder.Commit.Encoded);
 		}
-		connection.Execute(tclBuilder.Commit.Encoded);
 	}
 
 	private static Table GetDefaultType()

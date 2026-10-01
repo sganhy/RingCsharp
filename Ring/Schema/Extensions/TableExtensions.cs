@@ -245,6 +245,9 @@ internal static class TableExtensions
 		return null;
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal static int GetColumnIndex(this Table table, in Column column) => table.GetColumnIndex(column.Id, column.Type); // Code size: 19 (0x13)
+
 	internal static int GetColumnIndex(this Table table, int id, EntityType type)
 	{
 		// Code size: 135 (0x87)

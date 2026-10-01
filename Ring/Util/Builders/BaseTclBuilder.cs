@@ -10,6 +10,7 @@ internal abstract class BaseTclBuilder : BaseSqlBuilder, ITclBuilder
 	private readonly SqlEntry _commit;
 	private readonly SqlEntry _rollback;
 
+	public abstract bool TransactionalDdl { get; }
 	protected abstract string BeginStatement { get; }
 	protected abstract string CommitStatement { get; }
 	protected abstract string RollbackStatement { get; }

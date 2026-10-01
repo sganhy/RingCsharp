@@ -163,12 +163,12 @@ internal static class HashCodeExtensions
 
 	internal static void AddAlterQuery(this ref HashCode hashCode, AlterQuery alterQuery)
     {
-		// Code size: 111 (0x6f)
+		// Code size: 91 (0x5b)
 		/*
 			int Id;
 			Table Table;
 			AlterQueryType Type;
-			Column? Column;
+			int ColumnIndex;
 			Constraint? Constraint;
 			Index? Index;
 			TableSpace? TableSpace;
@@ -177,7 +177,7 @@ internal static class HashCodeExtensions
 		hashCode.Add(alterQuery.Table.Id); // pair of identification for a table
         hashCode.Add(alterQuery.Table.SchemaId);
         hashCode.Add((int)alterQuery.Type);
-		if (alterQuery.Column.HasValue) AddColumn(ref hashCode, alterQuery.Column.Value);
+		hashCode.Add(alterQuery.ColumnIndex);
 		if (alterQuery.Index is not null) AddIndex(ref hashCode, alterQuery.Index);
     }
 

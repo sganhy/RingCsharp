@@ -14,7 +14,7 @@ internal static class AlterQueryExtensions
 		{
 			case AlterQueryType.CreateTable: return builder.Create(query.Table, query.TableSpace);
 			case AlterQueryType.CreateTableComment: return builder.Comment(query.Table);
-			case AlterQueryType.CreateColumnComment: return query.Column.HasValue? builder.Comment(query.Table, query.Column.Value): null;
+			case AlterQueryType.CreateColumnComment: return query.ColumnIndex>=0 ? builder.Comment(query.Table, query.Table.Columns[query.ColumnIndex]) : null;
 			case AlterQueryType.CreatePrimaryKey: 
 			case AlterQueryType.CreateNotNull:
 			case AlterQueryType.CreateDefaultConstraint:

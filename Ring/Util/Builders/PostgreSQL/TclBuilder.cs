@@ -14,6 +14,7 @@ internal sealed class TclBuilder : BaseTclBuilder
 	COMMIT;
 	*/
 
+	public override bool TransactionalDdl => true;
 	protected override string BeginStatement => "BEGIN;";
 	protected override string CommitStatement => "COMMIT;";
 	protected override string RollbackStatement => "ROLLBACK;";

@@ -138,12 +138,12 @@ internal sealed class BulkAlter : IEquatable<BulkAlter>
 			switch (constraint.Type)
 			{
 				case ConstraintType.PrimaryKey:
-					_queries.Add(new AlterQuery(table.Id, table, constraint.Type.ToAlterQueryType(), null, constraint, null, GetTableSpace(table, EntityType.Constraint)));
+					_queries.Add(new AlterQuery(table.Id, table, constraint.Type.ToAlterQueryType(), -1, constraint, null, GetTableSpace(table, EntityType.Constraint)));
 					break;
 				case ConstraintType.NotNull:
 				case ConstraintType.Check:
 				case ConstraintType.Default:
-					_queries.Add(new AlterQuery(table.Id, table, constraint.Type.ToAlterQueryType(), null, constraint, null, null));
+					_queries.Add(new AlterQuery(table.Id, table, constraint.Type.ToAlterQueryType(), -1, constraint, null, null));
 					break;
 			}
 	}
@@ -154,13 +154,13 @@ internal sealed class BulkAlter : IEquatable<BulkAlter>
 		{
 
 			case AlterQueryType.CreateTable:
-				_queries.Add(new AlterQuery(table.Id, table, type, null, null, null, GetTableSpace(table, EntityType.Table)));
+				_queries.Add(new AlterQuery(table.Id, table, type, -1, null, null, GetTableSpace(table, EntityType.Table)));
 				break;
 			case AlterQueryType.CreateTableComment:
-				_queries.Add(new AlterQuery(table.Id, table, type, null, null, null, null));
+				_queries.Add(new AlterQuery(table.Id, table, type, -1, null, null, null));
 				break;
 			case AlterQueryType.CreateColumnComment:
-				_queries.Add(new AlterQuery(table.Id, table, type, column, null, null, null));
+				_queries.Add(new AlterQuery(table.Id, table, type, column is null ? -1 : table.GetColumnIndex(column.Value), null, null, null));
 				break;
 		}
 	}
@@ -170,7 +170,7 @@ internal sealed class BulkAlter : IEquatable<BulkAlter>
 		switch (type)
 		{
 			case AlterQueryType.CreateIndex:
-				_queries.Add(new AlterQuery(table.Id, table, type, null, null, index, GetTableSpace(table, EntityType.Index)));
+				_queries.Add(new AlterQuery(table.Id, table, type, -1, null, index, GetTableSpace(table, EntityType.Index)));
 				break;
 		}
 	}

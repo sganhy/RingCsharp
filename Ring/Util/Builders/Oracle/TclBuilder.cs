@@ -9,4 +9,5 @@ internal sealed class TclBuilder : BaseTclBuilder
 	protected override string BeginStatement => ":a{0}";
 	protected override string CommitStatement => ":a{0}";
 	protected override string RollbackStatement => ":a{0}";
+	public override bool TransactionalDdl => false;
 }

@@ -7,23 +7,29 @@ namespace Ring.Data.Models;
 
 public readonly struct AlterQuery : IEquatable<AlterQuery>
 {
-	internal readonly int Id;
+	// Table(8) + Constraint(8) + Index(8) + TableSpace(8) + Id(4) + ColumnIndex(4) + Type(1) + [7 trailing padding] = 48 bytes
+	// 8-byte reference types (32 bytes total)
 	internal readonly Table Table;
-	internal readonly AlterQueryType Type;
-	internal readonly Column? Column;
 	internal readonly Constraint? Constraint;
 	internal readonly Index? Index;
 	internal readonly TableSpace? TableSpace;
 
+	// 4-byte integers (8 bytes total)
+	internal readonly int Id;
+	internal readonly int ColumnIndex; // -1 = no column
+
+	// 1-byte enum (1 byte payload + 7 bytes trailing padding for 8-byte alignment)
+	internal readonly AlterQueryType Type;
+
 	/// <summary>
 	/// 	Ctor
 	/// </summary>
-	internal AlterQuery(int id, Table table, AlterQueryType type, in Column? column, Constraint? constraint, Index? index, TableSpace? tableSpace)
+	internal AlterQuery(int id, Table table, AlterQueryType type, int columnIndex, Constraint? constraint, Index? index, TableSpace? tableSpace)
 	{
 		Id = id;
 		Table = table;
 		Type = type;
-		Column = column;
+		ColumnIndex = columnIndex;
 		Constraint = constraint;
 		Index = index;
 		TableSpace = tableSpace;
