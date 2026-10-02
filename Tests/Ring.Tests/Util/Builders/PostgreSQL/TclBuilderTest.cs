@@ -58,4 +58,15 @@ public sealed class TclBuilderTest : BaseBuilderTest
 		Assert.Equal(expectedBinResult, result.Encoded);
 	}
 
+	[Fact]
+	internal void TransactionalDdl_NoInput_True()
+	{
+		// arrange
+		// act 
+		var result = _sut.TransactionalDdl;
+
+		// assert
+		Assert.True(result);
+	}
+
 }

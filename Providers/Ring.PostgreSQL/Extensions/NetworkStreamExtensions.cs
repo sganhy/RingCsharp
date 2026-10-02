@@ -446,6 +446,47 @@ internal static class NetworkStreamExtensions
 		// the socket, so Flush() here would be a documented no-op. Skipped deliberately.
 	}
 
+	/// <summary>
+	///     Sends a frontend Simple Query ('Q') message asynchronously using pre-encoded UTF-8 SQL bytes.
+	/// </summary>
+	[SkipLocalsInit]
+	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
+	internal static async ValueTask SendQueryAsync(this NetworkStream stream, ReadOnlyMemory<byte> sql,	byte[] sqlSendBuffer, CancellationToken cancellationToken = default)
+	{
+		var msgLength = 6 + sql.Length; // 1 ('Q') + 4 (len) + sql.Length + 1 (NUL)
+
+		if (msgLength <= sqlSendBuffer.Length)
+		{
+			// Branch 1 & 2: Fast paths using pre-allocated per-connection buffer
+			var buffer = sqlSendBuffer.AsMemory(0, msgLength);
+			buffer.Span[0] = (byte)FrontendMessageCode.Query;
+			BinaryPrimitives.WriteInt32BigEndian(buffer.Span.Slice(1, 4), msgLength - 1);
+			sql.Span.CopyTo(buffer.Span.Slice(5));
+			buffer.Span[msgLength - 1] = 0; // NUL terminator
+
+			await stream.WriteAsync(buffer, cancellationToken).ConfigureAwait(false);
+		}
+		else
+		{
+			// Branch 3: Slow path with ArrayPool allocation
+			var rented = ArrayPool<byte>.Shared.Rent(msgLength);
+			try
+			{
+				var buffer = rented.AsMemory(0, msgLength);
+				buffer.Span[0] = (byte)FrontendMessageCode.Query;
+				BinaryPrimitives.WriteInt32BigEndian(buffer.Span.Slice(1, 4), msgLength - 1);
+				sql.Span.CopyTo(buffer.Span.Slice(5));
+				buffer.Span[msgLength - 1] = 0; // NUL terminator
+
+				await stream.WriteAsync(buffer, cancellationToken).ConfigureAwait(false);
+			}
+			finally
+			{
+				ArrayPool<byte>.Shared.Return(rented);
+			}
+		}
+	}
+
 	internal static async ValueTask<(int? BackendPid, int? BackendSecret)> WaitUntilReadyAsync(this NetworkStream stream, CancellationToken cancellationToken = default)
 	{
 		int? pid = null;

@@ -91,10 +91,13 @@ internal sealed class BulkAlter : IEquatable<BulkAlter>
 		}
 	}
 
+	/// <summary>
+	/// Apply changes to the database without transaction, the caller must handle transaction management if needed.
+	/// </summary>
 	internal void Apply(IConnection connection)
 	{
 		// Code size: 157 (0x9d)
-		// sort by Type
+		// sort by Type - cost is high but we need to ensure that the order of execution is correct
 		_queries.Sort(static delegate (AlterQuery q1, AlterQuery q2)
 		{
 			if (q1.Type == q2.Type) return q1.Id.CompareTo(q2.Id);
@@ -133,7 +136,7 @@ internal sealed class BulkAlter : IEquatable<BulkAlter>
 
 	private void AppendDdlCommand(AlterQueryType type, Constraint constraint, Table table)
 	{
-		// Code size: 166 (0xa6)
+		// Code size: 127 (0x7f)
 		if (type == AlterQueryType.CreateTable)
 			switch (constraint.Type)
 			{
@@ -150,6 +153,7 @@ internal sealed class BulkAlter : IEquatable<BulkAlter>
 
 	private void AppendDdlCommand(AlterQueryType type, Table table, in Column? column = null)
 	{
+		// Code size: 158 (0x9e)
 		switch (type)
 		{
 
