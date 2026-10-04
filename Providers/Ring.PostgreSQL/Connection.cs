@@ -5,10 +5,12 @@ using Ring.PostgreSQL.Enums;
 using Ring.PostgreSQL.Exceptions;
 using Ring.PostgreSQL.Extensions;
 using Ring.PostgreSQL.Helpers;
+using Ring.Schema.Models;
 using Ring.Util.Enums;
 using Ring.Util.Helpers;
 using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
+using System.IO.Pipelines;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -17,16 +19,8 @@ namespace Ring.PostgreSQL;
 
 public sealed class Connection : IConnection
 {
-	private static readonly NetworkStream ClosedStream = NetworkStreamExtensions.CreateClosedStream(null);
-	private const int MinTimeOut = 5000; // 5 seconds
-	// Terminate message ('X' + Int32 self-inclusive length=4, no payload) is
-	// wire-protocol-constant - computed once instead of allocated on every Close.
-	private static readonly byte[] TerminateMessage = { (byte)'X', 0, 0, 0, 4 };
-
-	// Transaction status as last reported by the server's ReadyForQuery
-	// message: 'I' = idle (no transaction), 'T' = in transaction block,
-	// 'E' = in a failed transaction block. Starts 'I' since a freshly
-	// opened connection has no transaction in progress.
+	private const int MinTimeOut = 5000;
+	private static readonly byte[] TerminateMessage = { (byte)FrontendMessageCode.Terminate, 0, 0, 0, 4 };
 	private byte _transactionStatus = (byte)TransactionStatus.Idle;
 
 	private readonly long _id;
@@ -37,39 +31,27 @@ public sealed class Connection : IConnection
 	private readonly ConnectionParameters _parameters;
 	private ConnectionState _state;
 
-	// tcp connection
-	private readonly int _timeout; // milliseconds
+	private readonly int _timeout;
 	private readonly Encoding _encoding;
-	private readonly byte[] _sqlSendBuffer;
 
-	// Never null: defaults to ClosedStream so every code path that forgot to
-	// check _state first hits a well-defined (if slightly odd) stream state
-	// instead of a NullReferenceException. Every real call site already
-	// checks _state before touching _stream, so this sentinel is never
-	// intentionally read from or written to - it exists purely so the field
-	// itself is never null. Dispose sites must compare against ClosedStream
-	// by reference before disposing (see e.g. DisposeStreamAsync) since it's
-	// one instance shared by every Connection.
-	private NetworkStream _stream = ClosedStream;
-
-	// Kept alongside _stream purely so IsConnectionAlive() can poll it -
-	// NetworkStream owns and disposes this Socket (ownsSocket: true in Open()),
-	// this field is never disposed independently.
 	private Socket? _socket;
+	private NetworkStream? _networkStream;
+	private PipeWriter? _writer;
+	private PipeReader? _reader;
+
 	private int _backendPid;
 	private int _backendSecret;
 	private bool _disposed;
+
 	public long Id => _id;
 	public DateTime CreationTime => _creationTime;
 	public DateTime? LastConnectionTime => _lastConnectionTime;
 	public Encoding ClientEncoding => _encoding;
-	
-
 	public ConnectionState State => _state;
 	public int ProviderId => (int)_parameters.DatabaseProvider;
 
-	// build ConnectionParameters from connection string
 	public Connection(string connectionString) : this(connectionString.ToConnectionParameters()) { }
+
 	internal Connection(ConnectionParameters parameters)
 	{
 		_parameters = parameters;
@@ -78,21 +60,14 @@ public sealed class Connection : IConnection
 		_creationTime = DateTime.Now;
 		_state = ConnectionState.None;
 		_lastConnectionTime = null;
-		_timeout = Math.Max(parameters.TimeOut, MinTimeOut); // min 5 seconds
+		_timeout = Math.Max(parameters.TimeOut, MinTimeOut);
 		_host = parameters.Host;
 		_port = parameters.Port;
 		_encoding = Encoding.GetEncoding(parameters.ClientEncoding);
-		if (parameters.SqlSendBufferSize > 0)
-		{
-			_sqlSendBuffer = new byte[parameters.SqlSendBufferSize];
-			_sqlSendBuffer[0] = (byte)FrontendMessageCode.Query;
-		}
-		else _sqlSendBuffer = Array.Empty<byte>();
 	}
 
 	public bool IsConnectionAlive()
 	{
-		// Code size: 67 (0x43)
 		if (_state != ConnectionState.Open || _socket is null) return false;
 		try
 		{
@@ -105,120 +80,25 @@ public sealed class Connection : IConnection
 
 	public void Open()
 	{
-		// Code size: 41 (0x29)
 		if ((_state & ConnectionState.Open) == ConnectionState.Open) ThrowConnectionAlreadyOpen();
-		// Delegate to the async implementation and block.
 		OpenAsyncImpl(CancellationToken.None).GetAwaiter().GetResult();
 	}
+
 	public Task OpenAsync(CancellationToken cancellationToken) => OpenAsyncImpl(cancellationToken);
-	public void Close()
-	{
-		// If not open, nothing to do beyond releasing any lingering resources
-		if (_state != ConnectionState.Open && _state != ConnectionState.Connecting)
-		{
-			_state = ConnectionState.Closed;
-			DisposeStream();
-			_backendPid = 0;
-			_backendSecret = 0;
-			return;
-		}
-
-		try
-		{
-			if (_stream.CanWrite)
-			{
-#pragma warning disable CA1031 // Do not catch general exception types
-				try
-				{
-					_stream.Write(TerminateMessage);
-					_stream.Flush();
-				}
-				catch
-				{
-					// Ignore write failures during close; proceed to dispose
-				}
-#pragma warning restore CA1031
-			}
-			DisposeStream();
-			_backendPid = 0;
-			_backendSecret = 0;
-			_state = ConnectionState.Closed;
-		}
-		catch
-		{
-			// If disposing failed, mark connection as broken. DisposeStream()
-			// already cleared _stream/_socket before the throw (it swaps fields
-			// to ClosedStream/null before attempting Dispose), so there's
-			// nothing left to reset here.
-			_state = ConnectionState.Broken;
-			_backendPid = 0;
-			_backendSecret = 0;
-			throw;
-		}
-	}
-	public Task CloseAsync(CancellationToken cancellationToken = default) => CloseAsyncImpl(cancellationToken);
-
-	public IConnection CreateInstance(int id, int sqlSendBufferSize) => new Connection(_parameters.Set(id, sqlSendBufferSize));
-
-	/// <summary>
-	///     Releases all resources held by this connection. Safe to call multiple times — subsequent calls are no-ops.
-	///     Sends the Postgres Terminate message if the connection is open, then disposes the underlying socket. Any I/O errors during teardown
-	///     are swallowed (Dispose must never throw per IDisposable contract).
-	/// </summary>
-	public void Dispose()
-	{
-		if (_disposed) return;
-		_disposed = true;
-
-		// If Close() fails for any reason we still fall through to DisposeStream()
-		// so the socket is always released. We never throw from Dispose.
-		if (_state == ConnectionState.Open || _state == ConnectionState.Connecting)
-		{
-#pragma warning disable CA1031 // Do not catch general exception types
-			try { Close(); }
-			catch { /* swallow — Dispose must not throw */ }
-#pragma warning restore CA1031
-		}
-
-		// DisposeStream is idempotent (guards against ClosedStream) so calling it
-		// here is safe even if Close() already ran it successfully.
-		DisposeStream();
-		GC.SuppressFinalize(this);
-	}
 
 	public string?[] Execute(in RetrieveQuery query, ReadOnlySpan<byte> sql)
 	{
-		// Filters/sorting/paging need RetrieveFilter/RetrieveSort/PageInfo -> SQL
-		// translation that isn't wired up yet. Fail loudly instead of silently
-		// returning an unfiltered result set.
-		/*
-	if (query.Sorts.HasValue)
-		throw new NotSupportedException("Execute(RetrieveQuery) does not yet support sorting.");
-	if (query.Page.HasValue)
-		throw new NotSupportedException("Execute(RetrieveQuery) does not yet support paging.");
-		*/
-		//var sql = query.Builder.SelectFrom(query.Table);
-
 		try
 		{
-
-			//var sql = "SELECT schemaname, tablename, tableowner, hasindexes FROM pg_catalog.pg_tables";
-
-			// fire-and-forget, no Describe/RowDescription needed for generic parsing; 
-			// keep it synchronous to avoid async overhead for a single round trip
-			_stream.SendQuery(sql, _sqlSendBuffer);
-			return _stream.ReadRetrieveRecords(ref _transactionStatus, _encoding, query.Table);
+			_writer!.SendQuery(sql);
+			return ReadRetrieveRecordsSync(_reader!, query.Table);
 		}
 		catch (PgOperationalError)
 		{
-			// Server-side error (bad SQL, constraint violation, etc.); the
-			// connection itself is still usable for subsequent commands.
 			throw;
 		}
 		catch
 		{
-			// Anything else (I/O failure, protocol desync) leaves the stream
-			// in an unknown state - don't let the connection be reused as-is.
 			_state = ConnectionState.Broken;
 			throw;
 		}
@@ -226,20 +106,18 @@ public sealed class Connection : IConnection
 
 	public OperationalError? Execute(ReadOnlySpan<byte> sql)
 	{
-		// Code size: 51 (0x33) - no virtual calls
-		_state = ConnectionState.Open | ConnectionState.Executing; // we checked already the connection state in AlterQuery.Execute().
-		_stream.SendQuery(sql, _sqlSendBuffer);
-		var returnValue = _stream.DrainToReadyForQuery(ref _transactionStatus);
+		_state = ConnectionState.Open | ConnectionState.Executing;
+		_writer!.SendQuery(sql);
+		var returnValue = DrainToReadyForQuerySync(_reader!);
 		_state = ConnectionState.Open;
 		return returnValue;
 	}
 
 	public OperationalError? Execute(in AlterQuery query, ReadOnlySpan<byte> sql)
 	{
-		// Code size: 64 (0x40) - no virtual calls
-		_state = ConnectionState.Open | ConnectionState.Executing; // we checked already the connection state in AlterQuery.Execute().
-		_stream.SendQuery(sql, _sqlSendBuffer);
-		var returnValue = _stream.DrainToReadyForQuery(ref _transactionStatus);
+		_state = ConnectionState.Open | ConnectionState.Executing;
+		_writer!.SendQuery(sql);
+		var returnValue = DrainToReadyForQuerySync(_reader!);
 		returnValue?.Set(query);
 		_state = ConnectionState.Open;
 		return returnValue;
@@ -247,9 +125,8 @@ public sealed class Connection : IConnection
 
 	public async ValueTask<OperationalError?> ExecuteAsync(AlterQuery query, ReadOnlyMemory<byte> sql, CancellationToken cancellationToken = default)
 	{
-		// Code size: 88 (0x58) - no virtual calls
-		_stream.SendQuery(sql.Span, _sqlSendBuffer);
-		(var returnValue, var drainedBody) = await _stream.DrainToReadyForQueryAsync(cancellationToken).ConfigureAwait(false);
+		await _writer!.SendQueryAsync(sql, cancellationToken).ConfigureAwait(false);
+		(var returnValue, var drainedBody) = await _reader!.DrainToReadyForQueryAsync(cancellationToken).ConfigureAwait(false);
 		if (returnValue is not null)
 		{
 			_transactionStatus = drainedBody.Length > 0 ? drainedBody[0] : (byte)TransactionStatus.Idle;
@@ -268,12 +145,9 @@ public sealed class Connection : IConnection
 			rentedPayload = ArrayPool<byte>.Shared.Rent(payloadSize);
 			var actualPayloadSize = query.WriteVariablesPayload(rentedPayload, _encoding);
 
-			// Zero heap allocations:
-			// _sqlSendBuffer implicitly casts byte[] -> ReadOnlySpan<byte>
-			// rentedPayload is sliced into a ReadOnlySpan<byte>
-			_stream.SendExtendedQuery(sql, rentedPayload.AsSpan(0, actualPayloadSize), _sqlSendBuffer);
+			_writer!.SendExtendedQuery(sql, rentedPayload.AsSpan(0, actualPayloadSize));
 
-			var returnValue = _stream.DrainToReadyForQuery(ref _transactionStatus);
+			var returnValue = DrainToReadyForQuerySync(_reader!);
 			_state = ConnectionState.Open;
 			return returnValue;
 		}
@@ -293,60 +167,89 @@ public sealed class Connection : IConnection
 		}
 	}
 
-	#region private methods
-
-	// Swaps the current stream/socket out for the ClosedStream sentinel before
-	// attempting to dispose them, so the Connection's fields are already in
-	// "closed" state even if Dispose() itself throws. Shared by Close()'s fast
-	// and success paths. Async counterpart: DisposeStreamAsync.
-	private void DisposeStream()
+	public void Close()
 	{
-		var stream = _stream;
-		_stream = ClosedStream;
-		_socket = null;
+		if (_state != ConnectionState.Open && _state != ConnectionState.Connecting)
+		{
+			_state = ConnectionState.Closed;
+			DisposePipeline();
+			return;
+		}
 
-		if (!ReferenceEquals(stream, ClosedStream))
-			stream.Dispose();
+		try
+		{
+			if (_writer is not null)
+			{
+				_writer.Write(TerminateMessage);
+				_writer.FlushAsync().AsTask().GetAwaiter().GetResult();
+			}
+			DisposePipeline();
+			_state = ConnectionState.Closed;
+		}
+		catch
+		{
+			_state = ConnectionState.Broken;
+			DisposePipeline();
+			throw;
+		}
 	}
 
-	// Async counterpart to DisposeStream. Shared by CloseAsyncImpl()'s fast
-	// and success paths.
-	private async ValueTask DisposeStreamAsync()
-	{
-		var stream = _stream;
-		_stream = ClosedStream;
-		_socket = null;
+	public Task CloseAsync(CancellationToken cancellationToken = default) => CloseAsyncImpl(cancellationToken);
 
-		if (!ReferenceEquals(stream, ClosedStream))
-			await stream.DisposeAsync().ConfigureAwait(false);
+	public void Dispose()
+	{
+		if (_disposed) return;
+		_disposed = true;
+
+		if (_state == ConnectionState.Open || _state == ConnectionState.Connecting)
+		{
+			try { Close(); } catch { }
+		}
+
+		DisposePipeline();
+		GC.SuppressFinalize(this);
 	}
-	
-	// Genuinely async - no outer Task.Run. An async Task method still never
-	// throws synchronously to the caller (even for the ThrowConnectionAlreadyOpen
-	// check before the first await), so OpenAsync()'s contract is unchanged.
-	// Only the actual blocking call (ConnectSocket) gets offloaded; SendStartupAsync
-	// and HandleAuthenticationAsync are already async and are awaited directly -
-	// wrapping an already-async call in Task.Run just queues an extra work item,
-	// it doesn't move any work off-thread.
+
+	public IConnection CreateInstance(int id, int sqlSendBufferSize) => new Connection(_parameters.Set(id, sqlSendBufferSize));
+
+	#region Private Methods
+
+	private string?[] ReadRetrieveRecordsSync(PipeReader reader, Table table)
+	{
+		Span<byte> txHolder = stackalloc byte[1];
+		txHolder[0] = _transactionStatus;
+		var task = reader.ReadRetrieveRecordsAsync(txHolder.ToArray(), _encoding, table).AsTask();
+		var results = task.GetAwaiter().GetResult();
+		_transactionStatus = txHolder[0];
+		return results;
+	}
+
+	private OperationalError? DrainToReadyForQuerySync(PipeReader reader)
+	{
+		var (error, drainedBody) = reader.DrainToReadyForQueryAsync().AsTask().GetAwaiter().GetResult();
+		if (drainedBody.Length > 0)
+		{
+			_transactionStatus = drainedBody[0];
+		}
+		return error;
+	}
+
 	private async Task OpenAsyncImpl(CancellationToken cancellationToken)
 	{
 		if ((_state & ConnectionState.Open) == ConnectionState.Open) ThrowConnectionAlreadyOpen();
 		_state = ConnectionState.Connecting;
 		try
 		{
-			// The only genuinely blocking call in this method - offload it, but only once.
 			var socket = await Task.Run(() => SocketHelper.ConnectSocket(_host, _port, _timeout), cancellationToken).ConfigureAwait(false);
 			socket.NoDelay = true;
 
-			_stream = new NetworkStream(socket, ownsSocket: true)
-			{
-				WriteTimeout = _timeout,
-				ReadTimeout = _timeout
-			};
 			_socket = socket;
+			_networkStream = new NetworkStream(socket, ownsSocket: true);
+			_writer = PipeWriter.Create(_networkStream, new StreamPipeWriterOptions(leaveOpen: true));
+			_reader = PipeReader.Create(_networkStream, new StreamPipeReaderOptions(leaveOpen: true));
 
-			await _stream.SendStartupAsync(_parameters, cancellationToken).ConfigureAwait(false);
-			var (pid, secret) = await AuthenticationHelper.HandleAuthenticationAsync(_stream, _parameters.UserName, _parameters.Password, cancellationToken).ConfigureAwait(false);
+			await _writer.SendStartupAsync(_parameters, cancellationToken).ConfigureAwait(false);
+			var (pid, secret) = await AuthenticationHelper.HandleAuthenticationAsync(_reader, _writer, _parameters.UserName, _parameters.Password, cancellationToken).ConfigureAwait(false);
 
 			_backendPid = pid ?? 0;
 			_backendSecret = secret ?? 0;
@@ -354,12 +257,7 @@ public sealed class Connection : IConnection
 		}
 		catch
 		{
-			// Cancellation and any other failure need identical cleanup, so one
-			// catch-all covers both (the OperationCanceledException-specific
-			// catch previously here had the same body as this one).
-			_stream.Dispose(); // also disposes underlying socket
-			_stream = ClosedStream;
-			_socket = null;
+			DisposePipeline();
 			_state = ConnectionState.None;
 			throw;
 		}
@@ -367,63 +265,46 @@ public sealed class Connection : IConnection
 
 	private async Task CloseAsyncImpl(CancellationToken cancellationToken)
 	{
-		// If not open, nothing to do beyond releasing any lingering resources
 		if (_state != ConnectionState.Open && _state != ConnectionState.Connecting)
 		{
 			_state = ConnectionState.Closed;
-			await DisposeStreamAsync().ConfigureAwait(false);
-			_backendPid = 0;
-			_backendSecret = 0;
+			DisposePipeline();
 			return;
 		}
 
-		var canceled = false;
-
-		if (_stream.CanWrite)
+		if (_writer is not null)
 		{
 			try
 			{
-				await _stream.WriteAsync(TerminateMessage, cancellationToken).ConfigureAwait(false);
+				_writer.Write(TerminateMessage);
+				await _writer.FlushAsync(cancellationToken).ConfigureAwait(false);
 			}
-			catch (OperationCanceledException)
-			{
-				// Don't bail out here: we still want to release the socket below.
-				// Re-thrown once cleanup has completed.
-				canceled = true;
-			}
-			catch
-			{
-				// Ignore write failures during close (server may already be gone); proceed to dispose.
-			}
+			catch { }
 		}
 
-		try
-		{
-			await DisposeStreamAsync().ConfigureAwait(false);
-		}
-		catch
-		{
-			// If disposing failed, mark connection as broken. DisposeStreamAsync()
-			// already cleared _stream/_socket before the throw (it swaps fields
-			// to ClosedStream/null before awaiting Dispose), so there's nothing
-			// left to reset here.
-			_state = ConnectionState.Broken;
-			_backendPid = 0;
-			_backendSecret = 0;
-			throw;
-		}
+		DisposePipeline();
+		_state = ConnectionState.Closed;
+	}
 
+	private void DisposePipeline()
+	{
+		_writer?.Complete();
+		_reader?.Complete();
+		_networkStream?.Dispose();
+		_socket?.Dispose();
+
+		_writer = null;
+		_reader = null;
+		_networkStream = null;
+		_socket = null;
 		_backendPid = 0;
 		_backendSecret = 0;
-		_state = ConnectionState.Closed;
-
-		if (canceled) throw new OperationCanceledException(cancellationToken);
 	}
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
-	private static void ThrowConnectionAlreadyOpen() => throw new InvalidOperationException(ResourceHelper.GetMessage(ResourceType.ConnectionAlreadyOpen));
-		
-	#endregion
+	private static void ThrowConnectionAlreadyOpen() =>
+		throw new InvalidOperationException(ResourceHelper.GetMessage(ResourceType.ConnectionAlreadyOpen));
 
+	#endregion
 }
