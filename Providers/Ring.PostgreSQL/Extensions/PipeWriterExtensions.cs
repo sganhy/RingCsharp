@@ -13,33 +13,31 @@ namespace Ring.PostgreSQL.Extensions;
 internal static class PipeWriterExtensions
 {
 	/// <summary>
-	///     Sends a frontend Simple Query ('Q') message asynchronously using pre-encoded UTF-8 SQL bytes.
+	/// Sends a frontend Simple Query ('Q') message asynchronously using pre-encoded UTF-8 SQL bytes.
 	/// </summary>
+	[SkipLocalsInit]
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static ValueTask<FlushResult> SendQueryAsync(this PipeWriter writer, ReadOnlyMemory<byte> sql, CancellationToken cancellationToken = default)
 	{
-		// Code size: 120 (0x78)
+		// Code size: 104 (0x68)
 		var msgLength = 6 + sql.Length;
-		var destination = writer.GetMemory(msgLength);
-		var span = destination.Span;
+		var memory = writer.GetMemory(msgLength);
+		var span = memory.Span;
 
-		ref var destRef = ref MemoryMarshal.GetReference(span);
-		Unsafe.WriteUnaligned(ref destRef, (byte)FrontendMessageCode.Query);
-
-		var payloadLength = msgLength - 1;
-		var bigEndianLen = BinaryPrimitives.ReverseEndianness(payloadLength);
-		Unsafe.WriteUnaligned(ref Unsafe.Add(ref destRef, 1), bigEndianLen);
-		Unsafe.CopyBlockUnaligned(ref Unsafe.Add(ref destRef, 5), ref MemoryMarshal.GetReference(sql.Span),	(uint)sql.Length);
-		Unsafe.WriteUnaligned(ref Unsafe.Add(ref destRef, msgLength - 1), (byte)0);
+		span[0] = (byte)FrontendMessageCode.Query;
+		BinaryPrimitives.WriteInt32BigEndian(span.Slice(1, 4), msgLength - 1);
+		sql.Span.CopyTo(span[5..]);
+		span[msgLength - 1] = 0; // Trailing NUL
 
 		writer.Advance(msgLength);
 		return writer.FlushAsync(cancellationToken);
 	}
 
 	/// <summary>
-	///     Sends a frontend Simple Query ('Q') message synchronously.
+	/// Sends a frontend Simple Query ('Q') message synchronously.
 	/// </summary>
 	[SkipLocalsInit]
-	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static void SendQuery(this PipeWriter writer, ReadOnlySpan<byte> sql)
 	{
 		// Code size: 105 (0x69)
@@ -59,12 +57,45 @@ internal static class PipeWriterExtensions
 	}
 
 	/// <summary>
-	///     Sends the Extended Query subprotocol for parameterized queries directly via PipeWriter.
+	/// Sends Extended Query protocol asynchronously.
 	/// </summary>
 	[SkipLocalsInit]
-	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal static ValueTask<FlushResult> SendExtendedQueryAsync(this PipeWriter writer, ReadOnlyMemory<byte> sql, ReadOnlyMemory<byte> variables, CancellationToken cancellationToken = default)
+	{
+		// Code size: 188 (0xbc)
+		var parseMsgLength = 9 + sql.Length;
+		var totalLength = parseMsgLength + variables.Length;
+
+		var memory = writer.GetMemory(totalLength);
+		var span = memory.Span;
+
+		span[0] = (byte)FrontendMessageCode.Parse;
+		BinaryPrimitives.WriteInt32BigEndian(span.Slice(1, 4), parseMsgLength - 1);
+		span[5] = 0; // unnamed statement
+
+		sql.Span.CopyTo(span[6..]);
+		var offset = 6 + sql.Length;
+
+		span[offset++] = 0; // NUL
+
+		BinaryPrimitives.WriteInt16BigEndian(span.Slice(offset, 2), 0); // 0 parameter types
+		offset += 2;
+
+		variables.Span.CopyTo(span[offset..]);
+
+		writer.Advance(totalLength);
+		return writer.FlushAsync(cancellationToken);
+	}
+
+	/// <summary>
+	/// Sends the Extended Query subprotocol for parameterized queries directly via PipeWriter synchronously.
+	/// </summary>
+	[SkipLocalsInit]
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static void SendExtendedQuery(this PipeWriter writer, ReadOnlySpan<byte> sql, ReadOnlySpan<byte> variables)
 	{
+		// Code size: 212 (0xd4)
 		var parseMsgLength = 9 + sql.Length;
 		var totalLength = parseMsgLength + variables.Length;
 
@@ -79,7 +110,7 @@ internal static class PipeWriterExtensions
 		offset += 4;
 
 		Unsafe.WriteUnaligned(ref Unsafe.Add(ref destRef, offset++), (byte)0); // unnamed statement
-		Unsafe.CopyBlockUnaligned(ref Unsafe.Add(ref destRef, offset), ref MemoryMarshal.GetReference(sql),	(uint)sql.Length);
+		Unsafe.CopyBlockUnaligned(ref Unsafe.Add(ref destRef, offset), ref MemoryMarshal.GetReference(sql), (uint)sql.Length);
 		offset += sql.Length;
 		Unsafe.WriteUnaligned(ref Unsafe.Add(ref destRef, offset++), (byte)0); // trailing NUL
 
@@ -88,7 +119,7 @@ internal static class PipeWriterExtensions
 
 		offset += 2;
 		Unsafe.CopyBlockUnaligned(ref Unsafe.Add(ref destRef, offset), ref MemoryMarshal.GetReference(variables), (uint)variables.Length);
-		
+
 		writer.Advance(totalLength);
 		FlushSynchronously(writer);
 	}
@@ -215,7 +246,6 @@ internal static class PipeWriterExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static void FlushSynchronously(PipeWriter writer)
 	{
-		// Code size: 64 (0x40)
 		var flushTask = writer.FlushAsync();
 		if (flushTask.IsCompleted)
 		{
@@ -227,5 +257,4 @@ internal static class PipeWriterExtensions
 	}
 
 	#endregion
-
 }

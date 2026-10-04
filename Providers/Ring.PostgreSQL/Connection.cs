@@ -126,10 +126,13 @@ public sealed class Connection : IConnection
 	public async ValueTask<OperationalError?> ExecuteAsync(AlterQuery query, ReadOnlyMemory<byte> sql, CancellationToken cancellationToken = default)
 	{
 		await _writer!.SendQueryAsync(sql, cancellationToken).ConfigureAwait(false);
-		(var returnValue, var drainedBody) = await _reader!.DrainToReadyForQueryAsync(cancellationToken).ConfigureAwait(false);
+		var (returnValue, txStatus) = await _reader!.DrainToReadyForQueryAsync(cancellationToken).ConfigureAwait(false);
+		if (txStatus > 0)
+		{
+			_transactionStatus = txStatus;
+		}
 		if (returnValue is not null)
 		{
-			_transactionStatus = drainedBody.Length > 0 ? drainedBody[0] : (byte)TransactionStatus.Idle;
 			returnValue.Set(query);
 		}
 		return returnValue;
@@ -216,20 +219,16 @@ public sealed class Connection : IConnection
 
 	private string?[] ReadRetrieveRecordsSync(PipeReader reader, Table table)
 	{
-		Span<byte> txHolder = stackalloc byte[1];
-		txHolder[0] = _transactionStatus;
-		var task = reader.ReadRetrieveRecordsAsync(txHolder.ToArray(), _encoding, table).AsTask();
-		var results = task.GetAwaiter().GetResult();
-		_transactionStatus = txHolder[0];
-		return results;
+		var task = reader.ReadRetrieveRecordsAsync(_encoding, table, status => _transactionStatus = status).AsTask();
+		return task.GetAwaiter().GetResult();
 	}
 
 	private OperationalError? DrainToReadyForQuerySync(PipeReader reader)
 	{
-		var (error, drainedBody) = reader.DrainToReadyForQueryAsync().AsTask().GetAwaiter().GetResult();
-		if (drainedBody.Length > 0)
+		var (error, txStatus) = reader.DrainToReadyForQueryAsync().AsTask().GetAwaiter().GetResult();
+		if (txStatus > 0)
 		{
-			_transactionStatus = drainedBody[0];
+			_transactionStatus = txStatus;
 		}
 		return error;
 	}

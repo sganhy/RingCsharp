@@ -244,19 +244,19 @@ Why it fits: Short, punchy (5 letters), and represents the load-bearing block sp
 2. Generative & Dynamic Engine Names
 These options highlight runtime adaptability, hot-swapping capabilities, and active generation.
 
-* Meridian
+* Meridian!
 
 Why it fits: Represents a line of origin that connects two poles (the physical DB schema and the outer HTTP surface). Sounds like modern, high-grade developer tooling.
 
 Namespace Feel: Meridian.Orm, Meridian.Api
 
-* Cadence
+* Cadence!
 
 Why it fits: Implies continuous rhythm, synchronization, and harmony between data changes and live endpoints without downtime.
 
 Namespace Feel: Cadence.Core
 
-* Resonance
+* Resonance!
 
 Why it fits: Suggests that when the underlying database schema shifts, the API surface "resonates" automatically in response without explicit glue code.
 

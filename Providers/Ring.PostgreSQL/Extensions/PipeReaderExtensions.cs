@@ -1,5 +1,6 @@
 ﻿using Ring.Data;
 using Ring.PostgreSQL.Enums;
+using Ring.PostgreSQL.Models;
 using Ring.Schema.Enums;
 using Ring.Schema.Models;
 using Ring.Util.Enums;
@@ -20,6 +21,8 @@ internal static class PipeReaderExtensions
 	private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
 	private static readonly string BooleanTrue = true.ToString(DefaultCulture);
 	private static readonly string BooleanFalse = false.ToString(DefaultCulture);
+	private const byte PgTrueChar = (byte)'t';
+	private const byte PgTrueDigit = (byte)'1';
 
 	internal static async ValueTask<MessageSlice> ReadMessageAsync(this PipeReader reader, bool errorOnly, CancellationToken cancellationToken = default)
 	{
@@ -55,7 +58,7 @@ internal static class PipeReaderExtensions
 		}
 	}
 
-	internal static async ValueTask<(OperationalError? Error, byte[] DrainBody)> DrainToReadyForQueryAsync(this PipeReader reader, CancellationToken cancellationToken = default)
+	internal static async ValueTask<(OperationalError? Error, byte TransactionStatus)> DrainToReadyForQueryAsync(this PipeReader reader, CancellationToken cancellationToken = default)
 	{
 		OperationalError? operationalError = null;
 		while (true)
@@ -64,27 +67,31 @@ internal static class PipeReaderExtensions
 
 			if (msg.Code == (byte)BackendMessageCode.ReadyForQuery)
 			{
+				var txStatus = !msg.Body.IsEmpty ? msg.Body.FirstSpan[0] : (byte)0;
 				reader.AdvanceTo(msg.EndPosition);
-				return (operationalError, Array.Empty<byte>());
+				return (operationalError, txStatus);
 			}
 
 			if (msg.Code == (byte)BackendMessageCode.ErrorResponse)
 			{
 				byte drainCode;
-				byte[] drainBody;
-				operationalError = msg.ToByteArray().ParseErrorFields();
+				byte txStatus = 0;
+				operationalError = ParseErrorFieldsFromSequence(msg.Body);
 				reader.AdvanceTo(msg.EndPosition);
 
 				do
 				{
 					var drainMsg = await reader.ReadMessageAsync(false, cancellationToken).ConfigureAwait(false);
 					drainCode = drainMsg.Code;
-					drainBody = drainMsg.ToByteArray();
+					if (drainCode == (byte)BackendMessageCode.ReadyForQuery && !drainMsg.Body.IsEmpty)
+					{
+						txStatus = drainMsg.Body.FirstSpan[0];
+					}
 					reader.AdvanceTo(drainMsg.EndPosition);
 				}
 				while (drainCode != (byte)BackendMessageCode.ReadyForQuery);
 
-				return (operationalError, drainBody);
+				return (operationalError, txStatus);
 			}
 
 			reader.AdvanceTo(msg.EndPosition);
@@ -98,33 +105,39 @@ internal static class PipeReaderExtensions
 		while (true)
 		{
 			var msg = await reader.ReadMessageAsync(false, cancellationToken).ConfigureAwait(false);
-			try
+
+			switch ((BackendMessageCode)msg.Code)
 			{
-				switch ((BackendMessageCode)msg.Code)
-				{
-					case BackendMessageCode.BackendKeyData:
-						if (msg.Body.Length >= 8)
-						{
-							ParseKeyData(msg.Body, out pid, out secret);
-						}
-						continue;
-					case BackendMessageCode.ParameterStatus:
-					case BackendMessageCode.NoticeResponse:
-						continue;
-					case BackendMessageCode.ReadyForQuery:
-						return (pid, secret);
-					case BackendMessageCode.ErrorResponse:
-						throw msg.ToByteArray().ParseErrorFields().ToPgOperationalError();
-				}
-			}
-			finally
-			{
-				reader.AdvanceTo(msg.EndPosition);
+				case BackendMessageCode.BackendKeyData:
+					if (msg.Body.Length >= 8)
+					{
+						ParseKeyData(msg.Body, out pid, out secret);
+					}
+					reader.AdvanceTo(msg.EndPosition);
+					continue;
+
+				case BackendMessageCode.ParameterStatus:
+				case BackendMessageCode.NoticeResponse:
+					reader.AdvanceTo(msg.EndPosition);
+					continue;
+
+				case BackendMessageCode.ReadyForQuery:
+					reader.AdvanceTo(msg.EndPosition);
+					return (pid, secret);
+
+				case BackendMessageCode.ErrorResponse:
+					var error = ParseErrorFieldsFromSequence(msg.Body).ToPgOperationalError();
+					reader.AdvanceTo(msg.EndPosition);
+					throw error;
+
+				default:
+					reader.AdvanceTo(msg.EndPosition);
+					continue;
 			}
 		}
 	}
 
-	internal static async ValueTask<string?[]> ReadRetrieveRecordsAsync(this PipeReader reader, byte[] transactionStatusHolder, Encoding encoding, Table table, int rowCount = -1, CancellationToken cancellationToken = default)
+	internal static async ValueTask<string?[]> ReadRetrieveRecordsAsync(this PipeReader reader, Encoding encoding, Table table, Action<byte>? onTransactionStatus = null, int rowCount = -1, CancellationToken cancellationToken = default)
 	{
 		var pool = ArrayPool<string?>.Shared;
 		var initialCapacity = table.RecordSize * (rowCount > 0 ? rowCount : InitialRowCapacityHint);
@@ -147,8 +160,8 @@ internal static class PipeReaderExtensions
 
 					case (byte)BackendMessageCode.ReadyForQuery:
 						{
-							if (msg.Body.Length > 0 && transactionStatusHolder.Length > 0)
-								transactionStatusHolder[0] = msg.Body.FirstSpan[0];
+							if (!msg.Body.IsEmpty)
+								onTransactionStatus?.Invoke(msg.Body.FirstSpan[0]);
 
 							var results = new string?[count];
 							Array.Copy(buffer, results, count);
@@ -159,16 +172,16 @@ internal static class PipeReaderExtensions
 					case (byte)BackendMessageCode.ErrorResponse:
 						{
 							byte drainCode;
-							var error = msg.ToByteArray().ParseErrorFields();
+							var error = ParseErrorFieldsFromSequence(msg.Body);
 							reader.AdvanceTo(msg.EndPosition);
 
 							do
 							{
 								var drainMsg = await reader.ReadMessageAsync(false, cancellationToken).ConfigureAwait(false);
 								drainCode = drainMsg.Code;
-								if (drainCode == (byte)BackendMessageCode.ReadyForQuery && drainMsg.Body.Length > 0 && transactionStatusHolder.Length > 0)
+								if (drainCode == (byte)BackendMessageCode.ReadyForQuery && !drainMsg.Body.IsEmpty)
 								{
-									transactionStatusHolder[0] = drainMsg.Body.FirstSpan[0];
+									onTransactionStatus?.Invoke(drainMsg.Body.FirstSpan[0]);
 								}
 								reader.AdvanceTo(drainMsg.EndPosition);
 							}
@@ -244,62 +257,120 @@ internal static class PipeReaderExtensions
 		var required = count + table.RecordSize;
 		if (required > buffer.Length) EnsureCapacity(pool, ref buffer, count, required);
 
-		byte[]? rentedBody = null;
-		ReadOnlySpan<byte> body = bodySequence.IsSingleSegment
-			? bodySequence.FirstSpan
-			: (rentedBody = ArrayPool<byte>.Shared.Rent((int)bodySequence.Length)).AsSpan(0, (int)bodySequence.Length);
+		var seqReader = new SequenceReader<byte>(bodySequence);
+		seqReader.Advance(2); // Skip column count field
 
-		if (rentedBody != null)
-			bodySequence.CopyTo(rentedBody);
+		var columns = new ReadOnlySpan<Column>(table.Columns);
+
+		foreach (var column in columns)
+		{
+			if (column.Type == EntityType.SearchableColumn) continue;
+
+			if (!seqReader.TryReadBigEndian(out int valueLength))
+				break;
+
+			var index = column.RecordIndex + count;
+
+			if (valueLength < 0)
+			{
+				buffer[index] = null;
+				continue;
+			}
+
+			if (column.Type == EntityType.TimeZoneColumn)
+			{
+				seqReader.Advance(valueLength);
+				continue;
+			}
+
+			var valueSeq = seqReader.Sequence.Slice(seqReader.Position, valueLength);
+			seqReader.Advance(valueLength);
+
+			if (column.FieldType == FieldType.ByteArray)
+			{
+				buffer[index] = GetByteaStringFromSequence(valueSeq, valueLength);
+			}
+			else if (column.FieldType == FieldType.Boolean)
+			{
+				var firstByte = valueSeq.FirstSpan[0];
+				var isTrue = valueLength == 1 && (firstByte == PgTrueChar || firstByte == PgTrueDigit);
+				buffer[index] = isTrue ? BooleanTrue : BooleanFalse;
+			}
+			else
+			{
+				buffer[index] = GetStringFromSequence(valueSeq, encoding);
+			}
+		}
+		buffer[count + table.RecordSize - 1] = null;
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static string GetByteaStringFromSequence(ReadOnlySequence<byte> sequence, int length)
+	{
+		if (sequence.IsSingleSegment)
+		{
+			return sequence.FirstSpan.ParseByteaHexToBase64(0, length);
+		}
+
+		byte[]? rented = null;
+		Span<byte> span = length <= 128
+			? stackalloc byte[length]
+			: (rented = ArrayPool<byte>.Shared.Rent(length)).AsSpan(0, length);
 
 		try
 		{
-			var offset = 2;
-			var columns = new ReadOnlySpan<Column>(table.Columns);
-
-			foreach (var column in columns)
-			{
-				if (column.Type == EntityType.SearchableColumn) continue;
-
-				var valueLength = BinaryPrimitives.ReadInt32BigEndian(body.Slice(offset, 4));
-				var index = column.RecordIndex + count;
-
-				offset += 4;
-				if (valueLength < 0)
-				{
-					buffer[index] = null;
-					continue;
-				}
-
-				if (column.Type == EntityType.TimeZoneColumn)
-				{
-					offset += valueLength;
-					continue;
-				}
-
-				var valueSpan = body.Slice(offset, valueLength);
-				if (column.FieldType == FieldType.ByteArray)
-				{
-					buffer[index] = valueSpan.ToArray().ParseByteaHexToBase64(0, valueLength);
-				}
-				else if (column.FieldType == FieldType.Boolean)
-				{
-					var b = valueSpan[0];
-					var isTrue = valueLength == 1 && (b == (byte)'t' || b == (byte)'1');
-					buffer[index] = isTrue ? BooleanTrue : BooleanFalse;
-				}
-				else
-				{
-					buffer[index] = encoding.GetString(valueSpan);
-				}
-				offset += valueLength;
-			}
-			buffer[count + table.RecordSize - 1] = null;
+			sequence.CopyTo(span);
+			return span.ParseByteaHexToBase64(0, length);
 		}
 		finally
 		{
-			if (rentedBody != null)
-				ArrayPool<byte>.Shared.Return(rentedBody);
+			if (rented != null)
+				ArrayPool<byte>.Shared.Return(rented);
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static string GetStringFromSequence(ReadOnlySequence<byte> sequence, Encoding encoding)
+	{
+		if (sequence.IsSingleSegment) return encoding.GetString(sequence.FirstSpan);
+
+		var length = (int)sequence.Length;
+		byte[]? rented = null;
+		Span<byte> span = length <= 128 ? stackalloc byte[length] : (rented = ArrayPool<byte>.Shared.Rent(length)).AsSpan(0, length);
+
+		try
+		{
+			sequence.CopyTo(span);
+			return encoding.GetString(span);
+		}
+		finally
+		{
+			if (rented != null)
+				ArrayPool<byte>.Shared.Return(rented);
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static OperationalError ParseErrorFieldsFromSequence(ReadOnlySequence<byte> sequence)
+	{
+		if (sequence.IsSingleSegment)
+		{
+			return sequence.FirstSpan.ParseErrorFields();
+		}
+
+		var length = (int)sequence.Length;
+		byte[]? rented = null;
+		Span<byte> span = length <= 128 ? stackalloc byte[length] : (rented = ArrayPool<byte>.Shared.Rent(length)).AsSpan(0, length);
+
+		try
+		{
+			sequence.CopyTo(span);
+			return span.ParseErrorFields();
+		}
+		finally
+		{
+			if (rented != null)
+				ArrayPool<byte>.Shared.Return(rented);
 		}
 	}
 
@@ -324,26 +395,4 @@ internal static class PipeReaderExtensions
 		throw new InvalidOperationException(ResourceHelper.GetMessage(ResourceType.InvalidMessageLengthFromServer));
 
 	#endregion
-
-	internal readonly struct MessageSlice
-	{
-		public readonly byte Code;
-		public readonly ReadOnlySequence<byte> Body;
-		public readonly SequencePosition EndPosition;
-
-		public MessageSlice(byte code, ReadOnlySequence<byte> body, SequencePosition endPosition)
-		{
-			Code = code;
-			Body = body;
-			EndPosition = endPosition;
-		}
-
-		public byte[] ToByteArray()
-		{
-			if (Body.IsEmpty) return Array.Empty<byte>();
-			var array = GC.AllocateUninitializedArray<byte>((int)Body.Length);
-			Body.CopyTo(array);
-			return array;
-		}
-	}
 }
