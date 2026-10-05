@@ -1,8 +1,7 @@
 ﻿using System.Buffers;
 using System.Buffers.Binary;
 using System.IO.Pipelines;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Text;
 using Ring.Data.Enums;
 using Ring.Data.Models;
@@ -12,121 +11,92 @@ namespace Ring.PostgreSQL.Extensions;
 
 internal static class PipeWriterExtensions
 {
-	/// <summary>
-	/// Sends a frontend Simple Query ('Q') message asynchronously using pre-encoded UTF-8 SQL bytes.
-	/// </summary>
-	[SkipLocalsInit]
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+
 	internal static ValueTask<FlushResult> SendQueryAsync(this PipeWriter writer, ReadOnlyMemory<byte> sql, CancellationToken cancellationToken = default)
 	{
-		// Code size: 104 (0x68)
 		var msgLength = 6 + sql.Length;
-		var memory = writer.GetMemory(msgLength);
-		var span = memory.Span;
+		var span = writer.GetSpan(msgLength);
 
 		span[0] = (byte)FrontendMessageCode.Query;
 		BinaryPrimitives.WriteInt32BigEndian(span.Slice(1, 4), msgLength - 1);
 		sql.Span.CopyTo(span[5..]);
-		span[msgLength - 1] = 0; // Trailing NUL
+		span[msgLength - 1] = 0;
 
 		writer.Advance(msgLength);
 		return writer.FlushAsync(cancellationToken);
 	}
 
-	/// <summary>
-	/// Sends a frontend Simple Query ('Q') message synchronously.
-	/// </summary>
-	[SkipLocalsInit]
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	/// <summary>Writes a Query message and flushes (blocking).</summary>
 	internal static void SendQuery(this PipeWriter writer, ReadOnlySpan<byte> sql)
 	{
-		// Code size: 105 (0x69)
 		var msgLength = 6 + sql.Length;
-		var destination = writer.GetSpan(msgLength);
+		var span = writer.GetSpan(msgLength);
 
-		ref var destRef = ref MemoryMarshal.GetReference(destination);
-		Unsafe.WriteUnaligned(ref destRef, (byte)FrontendMessageCode.Query);
-
-		var bigEndianLen = BinaryPrimitives.ReverseEndianness(msgLength - 1);
-		Unsafe.WriteUnaligned(ref Unsafe.Add(ref destRef, 1), bigEndianLen);
-		Unsafe.CopyBlockUnaligned(ref Unsafe.Add(ref destRef, 5), ref MemoryMarshal.GetReference(sql), (uint)sql.Length);
-		Unsafe.WriteUnaligned(ref Unsafe.Add(ref destRef, msgLength - 1), (byte)0);
+		span[0] = (byte)FrontendMessageCode.Query;
+		BinaryPrimitives.WriteInt32BigEndian(span.Slice(1, 4), msgLength - 1);
+		sql.CopyTo(span[5..]);
+		span[msgLength - 1] = 0;
 
 		writer.Advance(msgLength);
-		FlushSynchronously(writer);
+		writer.FlushBlocking();
 	}
 
-	/// <summary>
-	/// Sends Extended Query protocol asynchronously.
-	/// </summary>
-	[SkipLocalsInit]
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	internal static ValueTask<FlushResult> SendExtendedQueryAsync(this PipeWriter writer, ReadOnlyMemory<byte> sql, ReadOnlyMemory<byte> variables, CancellationToken cancellationToken = default)
-	{
-		// Code size: 188 (0xbc)
-		var parseMsgLength = 9 + sql.Length;
-		var totalLength = parseMsgLength + variables.Length;
-
-		var memory = writer.GetMemory(totalLength);
-		var span = memory.Span;
-
-		span[0] = (byte)FrontendMessageCode.Parse;
-		BinaryPrimitives.WriteInt32BigEndian(span.Slice(1, 4), parseMsgLength - 1);
-		span[5] = 0; // unnamed statement
-
-		sql.Span.CopyTo(span[6..]);
-		var offset = 6 + sql.Length;
-
-		span[offset++] = 0; // NUL
-
-		BinaryPrimitives.WriteInt16BigEndian(span.Slice(offset, 2), 0); // 0 parameter types
-		offset += 2;
-
-		variables.Span.CopyTo(span[offset..]);
-
-		writer.Advance(totalLength);
-		return writer.FlushAsync(cancellationToken);
-	}
-
-	/// <summary>
-	/// Sends the Extended Query subprotocol for parameterized queries directly via PipeWriter synchronously.
-	/// </summary>
-	[SkipLocalsInit]
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	/// <summary>Writes Parse + a pre-built Bind/Execute/Sync payload and flushes (blocking).</summary>
 	internal static void SendExtendedQuery(this PipeWriter writer, ReadOnlySpan<byte> sql, ReadOnlySpan<byte> variables)
 	{
-		// Code size: 212 (0xd4)
 		var parseMsgLength = 9 + sql.Length;
-		var totalLength = parseMsgLength + variables.Length;
+		var span = writer.GetSpan(parseMsgLength + variables.Length);
 
-		var destination = writer.GetSpan(totalLength);
-		ref var destRef = ref MemoryMarshal.GetReference(destination);
+		// Parse: 'P', int32 length, unnamed statement \0, sql \0, int16 parameter type count (0)
+		span[0] = (byte)FrontendMessageCode.Parse;
+		BinaryPrimitives.WriteInt32BigEndian(span.Slice(1, 4), parseMsgLength - 1);
+		span[5] = 0;
 
-		var offset = 0;
-		Unsafe.WriteUnaligned(ref Unsafe.Add(ref destRef, offset++), (byte)FrontendMessageCode.Parse);
+		sql.CopyTo(span[6..]);
+		var offset = 6 + sql.Length;
 
-		var bigEndianParseLen = BinaryPrimitives.ReverseEndianness(parseMsgLength - 1);
-		Unsafe.WriteUnaligned(ref Unsafe.Add(ref destRef, offset), bigEndianParseLen);
-		offset += 4;
-
-		Unsafe.WriteUnaligned(ref Unsafe.Add(ref destRef, offset++), (byte)0); // unnamed statement
-		Unsafe.CopyBlockUnaligned(ref Unsafe.Add(ref destRef, offset), ref MemoryMarshal.GetReference(sql), (uint)sql.Length);
-		offset += sql.Length;
-		Unsafe.WriteUnaligned(ref Unsafe.Add(ref destRef, offset++), (byte)0); // trailing NUL
-
-		var zeroParams = BinaryPrimitives.ReverseEndianness((short)0);
-		Unsafe.WriteUnaligned(ref Unsafe.Add(ref destRef, offset), zeroParams); // 0 parameter types
-
+		span[offset++] = 0;
+		BinaryPrimitives.WriteInt16BigEndian(span.Slice(offset, 2), 0);
 		offset += 2;
-		Unsafe.CopyBlockUnaligned(ref Unsafe.Add(ref destRef, offset), ref MemoryMarshal.GetReference(variables), (uint)variables.Length);
 
-		writer.Advance(totalLength);
-		FlushSynchronously(writer);
+		variables.CopyTo(span[offset..]);
+
+		writer.Advance(offset + variables.Length);
+		writer.FlushBlocking();
+	}
+
+	/// <summary>
+	/// Writes Parse + Bind/Execute/Sync directly into the pipe buffer (no intermediate payload buffer, no extra copy)
+	/// and flushes (blocking). Nothing is advanced if building the payload throws, so the pipe stays clean.
+	/// </summary>
+	internal static void SendExtendedQuery(this PipeWriter writer, ReadOnlySpan<byte> sql, in SaveQuery query, Encoding encoding)
+	{
+		// Code size: 155 (0x9b)
+		var parseMsgLength = 9 + sql.Length;
+		var span = writer.GetSpan(parseMsgLength + query.GetVariablesPayloadSize(encoding));
+
+		// Parse: 'P', int32 length, unnamed statement \0, sql \0, int16 parameter type count (0)
+		span[0] = (byte)FrontendMessageCode.Parse;
+		BinaryPrimitives.WriteInt32BigEndian(span.Slice(1, 4), parseMsgLength - 1);
+		span[5] = 0;
+
+		sql.CopyTo(span[6..]);
+		var offset = 6 + sql.Length;
+
+		span[offset++] = 0;
+		BinaryPrimitives.WriteInt16BigEndian(span.Slice(offset, 2), 0);
+		offset += 2;
+
+		// Bind + Execute + Sync
+		offset += query.WriteVariablesPayload(span[offset..], encoding);
+
+		writer.Advance(offset);
+		writer.FlushBlocking();
 	}
 
 	#region authentication & startup
 
-	internal static async ValueTask SendStartupAsync(this PipeWriter writer, ConnectionParameters connParameters, CancellationToken cancellationToken = default)
+	internal static ValueTask<FlushResult> SendStartupAsync(this PipeWriter writer, ConnectionParameters connParameters, CancellationToken cancellationToken = default)
 	{
 		const int protocolVersion3 = 0x00030000;
 
@@ -146,8 +116,7 @@ internal static class PipeWriterExtensions
 			: null;
 		var appName = connParameters.ApplicationName;
 
-		// Calculate total payload length
-		var length = 4 + 4 + 1; // Length header (4) + Protocol version (4) + Trailing NUL (1)
+		var length = 4 + 4 + 1;
 		length += Encoding.UTF8.GetByteCount(userParam) + 1 + Encoding.UTF8.GetByteCount(userName) + 1;
 		length += Encoding.UTF8.GetByteCount(encParam) + 1 + Encoding.UTF8.GetByteCount(clientEnc) + 1;
 
@@ -157,8 +126,7 @@ internal static class PipeWriterExtensions
 		if (appParam != null && appName != null)
 			length += Encoding.UTF8.GetByteCount(appParam) + 1 + Encoding.UTF8.GetByteCount(appName) + 1;
 
-		var destination = writer.GetMemory(length);
-		var span = destination.Span;
+		var span = writer.GetSpan(length);
 
 		BinaryPrimitives.WriteInt32BigEndian(span, length);
 		BinaryPrimitives.WriteInt32BigEndian(span[4..], protocolVersion3);
@@ -173,12 +141,11 @@ internal static class PipeWriterExtensions
 		if (appParam != null && appName != null)
 			offset += WriteKeyValuePair(span[offset..], appParam, appName);
 
-		span[offset] = 0; // Final terminating null byte
+		span[offset] = 0;
 		writer.Advance(length);
 
-		await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
+		return writer.FlushAsync(cancellationToken);
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		static int WriteKeyValuePair(Span<byte> destination, string key, string value)
 		{
 			var bytesWritten = Encoding.UTF8.GetBytes(key, destination);
@@ -189,27 +156,32 @@ internal static class PipeWriterExtensions
 		}
 	}
 
-	internal static async ValueTask SendPasswordMessageAsync(this PipeWriter writer, string password, CancellationToken cancellationToken = default)
+	/// <summary>
+	/// Sends a PasswordMessage (cleartext password or the "md5..." hash) and zeroes the bytes
+	/// in the pipe buffer once the flush has completed (or failed).
+	/// </summary>
+	internal static ValueTask SendPasswordMessageAsync(this PipeWriter writer, string password, CancellationToken cancellationToken = default)
 	{
 		var length = 4 + Encoding.UTF8.GetByteCount(password) + 1;
-		var destination = writer.GetMemory(1 + length);
-		var span = destination.Span;
+		var total = 1 + length;
+
+		var memory = writer.GetMemory(total).Slice(0, total);
+		var span = memory.Span;
 
 		span[0] = (byte)FrontendMessageCode.Password;
 		BinaryPrimitives.WriteInt32BigEndian(span[1..], length);
 		var written = Encoding.UTF8.GetBytes(password, span[5..]);
 		span[5 + written] = 0;
 
-		writer.Advance(1 + length);
-		await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
+		writer.Advance(total);
+		return FlushAndScrubAsync(writer, memory, cancellationToken);
 	}
 
-	internal static async ValueTask SendSASLInitialResponseAsync(this PipeWriter writer, string mechanism, byte[] data, CancellationToken cancellationToken = default)
+	internal static ValueTask<FlushResult> SendSASLInitialResponseAsync(this PipeWriter writer, string mechanism, byte[] data, CancellationToken cancellationToken = default)
 	{
 		var mechanismLength = Encoding.UTF8.GetByteCount(mechanism);
 		var outerLength = 4 + mechanismLength + 1 + 4 + data.Length;
-		var destination = writer.GetMemory(1 + outerLength);
-		var span = destination.Span;
+		var span = writer.GetSpan(1 + outerLength);
 
 		span[0] = (byte)FrontendMessageCode.Password;
 		BinaryPrimitives.WriteInt32BigEndian(span[1..], outerLength);
@@ -222,38 +194,53 @@ internal static class PipeWriterExtensions
 		data.CopyTo(span[offset..]);
 
 		writer.Advance(1 + outerLength);
-		await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
+		return writer.FlushAsync(cancellationToken);
 	}
 
-	internal static async ValueTask SendSASLResponseAsync(this PipeWriter writer, byte[] data, CancellationToken cancellationToken = default)
+	/// <summary>Sends the SCRAM client-final message (carries the client proof) and zeroes it in the pipe buffer afterwards.</summary>
+	internal static ValueTask SendSASLResponseAsync(this PipeWriter writer, byte[] data, CancellationToken cancellationToken = default)
 	{
 		var length = 4 + data.Length;
-		var destination = writer.GetMemory(1 + length);
-		var span = destination.Span;
+		var total = 1 + length;
+
+		var memory = writer.GetMemory(total).Slice(0, total);
+		var span = memory.Span;
 
 		span[0] = (byte)FrontendMessageCode.Password;
 		BinaryPrimitives.WriteInt32BigEndian(span[1..], length);
 		data.CopyTo(span[5..]);
 
-		writer.Advance(1 + length);
-		await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
+		writer.Advance(total);
+		return FlushAndScrubAsync(writer, memory, cancellationToken);
 	}
 
 	#endregion
 
-	#region private methods
+	#region private helpers
 
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private static void FlushSynchronously(PipeWriter writer)
+	// Assumes a stream-backed writer (PipeWriter.Create(stream)): when FlushAsync completes, the bytes have
+	// been handed to the stream and the writer no longer reads this region, so it can be zeroed safely.
+	// Do NOT use with a Pipe-backed writer, where a reader may still be consuming the memory.
+	private static async ValueTask FlushAndScrubAsync(PipeWriter writer, Memory<byte> written, CancellationToken cancellationToken)
 	{
-		var flushTask = writer.FlushAsync();
-		if (flushTask.IsCompleted)
+		try
 		{
-			_ = flushTask.GetAwaiter().GetResult();
-			return;
+			await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
 		}
+		finally
+		{
+			CryptographicOperations.ZeroMemory(written.Span);
+		}
+	}
 
-		flushTask.AsTask().GetAwaiter().GetResult();
+	/// <summary>Flushes and blocks. Allocation-free when the flush completes synchronously (the usual case for socket sends).</summary>
+	internal static void FlushBlocking(this PipeWriter writer)
+	{
+		var flush = writer.FlushAsync();
+		if (flush.IsCompleted)
+			flush.GetAwaiter().GetResult();
+		else
+			flush.AsTask().GetAwaiter().GetResult();
 	}
 
 	#endregion

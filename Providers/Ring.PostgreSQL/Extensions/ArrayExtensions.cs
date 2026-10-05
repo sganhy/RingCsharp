@@ -1,15 +1,15 @@
-﻿using Ring.Data;
-using Ring.PostgreSQL.Enums;
-using System.Buffers;
+﻿using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text;
+using Ring.Data;
+using Ring.PostgreSQL.Enums;
 
 namespace Ring.PostgreSQL.Extensions;
 
 internal static class ArrayExtensions
 {
-	private const int StackallocThreshold = 128; // Matched with PipeReader 128-byte threshold
+	private const int StackallocThreshold = 128;
 	private const byte ErrorSeverity = (byte)ErrorTypeCode.Severity;
 	private const byte ErrorCode = (byte)ErrorTypeCode.Code;
 	private const byte ErrorMessage = (byte)ErrorTypeCode.Message;
@@ -22,29 +22,44 @@ internal static class ArrayExtensions
 
 	internal static OperationalError ParseErrorFields(this ReadOnlySpan<byte> body)
 	{
-		string? severity = null, sqlState = null, message = null, detail = null, hint = null;
+		(int Offset, int Length) severity = (-1, 0);
+		(int Offset, int Length) sqlState = (-1, 0);
+		(int Offset, int Length) message = (-1, 0);
+		(int Offset, int Length) detail = (-1, 0);
+		(int Offset, int Length) hint = (-1, 0);
+
 		var offset = 0;
 		while (offset < body.Length && body[offset] != 0)
 		{
 			var field = body[offset++];
-			var value = ReadCString(body, ref offset);
+			var start = offset;
+			ReadCStringSpan(body, ref offset);
+
+			var isNullTerminated = offset <= body.Length && (offset == start || body[offset - 1] == 0);
+			var length = Math.Max(0, offset - start - (isNullTerminated ? 1 : 0));
+
 			switch (field)
 			{
-				case ErrorSeverity: severity = value; break;
-				case ErrorCode: sqlState = value; break;
-				case ErrorMessage: message = value; break;
-				case ErrorDetail: detail = value; break;
-				case ErrorHint: hint = value; break;
+				case ErrorSeverity: severity = (start, length); break;
+				case ErrorCode: sqlState = (start, length); break;
+				case ErrorMessage: message = (start, length); break;
+				case ErrorDetail: detail = (start, length); break;
+				case ErrorHint: hint = (start, length); break;
 			}
 		}
 
 		return new OperationalError
 		{
-			Message = message ?? string.Empty,
-			SqlState = sqlState ?? string.Empty,
-			Severity = severity ?? string.Empty,
-			Detail = detail,
-			Hint = hint
+			Message = severity.Offset >= 0 && severity.Offset + severity.Length <= body.Length
+				? Encoding.UTF8.GetString(body.Slice(message.Offset, message.Length)) : string.Empty,
+			SqlState = sqlState.Offset >= 0 && sqlState.Offset + sqlState.Length <= body.Length
+				? Encoding.UTF8.GetString(body.Slice(sqlState.Offset, sqlState.Length)) : string.Empty,
+			Severity = severity.Offset >= 0 && severity.Offset + severity.Length <= body.Length
+				? Encoding.UTF8.GetString(body.Slice(severity.Offset, severity.Length)) : string.Empty,
+			Detail = detail.Offset >= 0 && detail.Offset + detail.Length <= body.Length
+				? Encoding.UTF8.GetString(body.Slice(detail.Offset, detail.Length)) : null,
+			Hint = hint.Offset >= 0 && hint.Offset + hint.Length <= body.Length
+				? Encoding.UTF8.GetString(body.Slice(hint.Offset, hint.Length)) : null
 		};
 	}
 
@@ -61,23 +76,22 @@ internal static class ArrayExtensions
 		var hexLength = valueLength - 2;
 		if ((hexLength & 1) != 0) ThrowInvalidByteaFormat();
 
-		var byteCount = hexLength / 2;
-		var hexStart = offset + 2;
-		var hexSource = body.Slice(hexStart, hexLength);
+		var rawByteCount = hexLength / 2;
+		var hexSource = body.Slice(offset + 2, hexLength);
 
-		if (byteCount <= StackallocThreshold)
+		if (rawByteCount <= StackallocThreshold)
 		{
-			Span<byte> raw = stackalloc byte[byteCount];
+			Span<byte> raw = stackalloc byte[rawByteCount];
 			DecodeHex(hexSource, raw);
-			return Convert.ToBase64String((ReadOnlySpan<byte>)raw);
+			return Convert.ToBase64String(raw);
 		}
 
-		var rented = ArrayPool<byte>.Shared.Rent(byteCount);
+		var rented = ArrayPool<byte>.Shared.Rent(rawByteCount);
 		try
 		{
-			var raw = rented.AsSpan(0, byteCount);
+			var raw = rented.AsSpan(0, rawByteCount);
 			DecodeHex(hexSource, raw);
-			return Convert.ToBase64String((ReadOnlySpan<byte>)raw);
+			return Convert.ToBase64String(raw);
 		}
 		finally
 		{
@@ -85,25 +99,30 @@ internal static class ArrayExtensions
 		}
 	}
 
-	#region private methods 
+	#region Private Methods 
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal static ReadOnlySpan<byte> ReadCStringSpan(ReadOnlySpan<byte> data, ref int offset)
+	{
+		var remaining = data.Slice(offset);
+		var nullIdx = remaining.IndexOf((byte)0);
+
+		if (nullIdx < 0)
+		{
+			offset = data.Length;
+			return remaining;
+		}
+
+		var value = remaining.Slice(0, nullIdx);
+		offset += nullIdx + 1;
+		return value;
+	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static string ReadCString(ReadOnlySpan<byte> data, ref int offset)
 	{
-		var remaining = data.Slice(offset);
-		var nullIdx = remaining.IndexOf((byte)0); // Vectorized SIMD search
-
-		if (nullIdx < 0)
-		{
-			// Fallback if message isn't null-terminated
-			var str = Encoding.UTF8.GetString(remaining);
-			offset = data.Length;
-			return str;
-		}
-
-		var value = Encoding.UTF8.GetString(remaining.Slice(0, nullIdx));
-		offset += nullIdx + 1; // Advance past content + null terminator
-		return value;
+		var span = ReadCStringSpan(data, ref offset);
+		return span.IsEmpty ? string.Empty : Encoding.UTF8.GetString(span);
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -118,7 +137,11 @@ internal static class ArrayExtensions
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private static int HexNibble(byte c) => c is >= (byte)'0' and <= (byte)'9' ? c - '0' : ((c | 0x20) - 'a') + 10;
+	private static int HexNibble(byte c)
+	{
+		var cInt = (int)c;
+		return (cInt & 0xF) + (cInt >> 6) * 9;
+	}
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]

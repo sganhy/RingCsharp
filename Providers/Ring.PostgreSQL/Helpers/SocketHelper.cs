@@ -6,12 +6,12 @@ namespace Ring.PostgreSQL.Helpers;
 
 internal static class SocketHelper
 {
-	internal static Socket ConnectSocket(string host, int port, int timeoutMs)
+	internal static async ValueTask<Socket> ConnectSocketAsync(string host, int port, int timeoutMs, CancellationToken cancellationToken = default)
 	{
 		IPAddress[] addresses;
 		try
 		{
-			addresses = Dns.GetHostAddresses(host);
+			addresses = await Dns.GetHostAddressesAsync(host, cancellationToken).ConfigureAwait(false);
 		}
 		catch (SocketException ex)
 		{
@@ -25,30 +25,19 @@ internal static class SocketHelper
 
 		for (var i = 0; i < addresses.Length; i++)
 		{
-			var endpoint = new IPEndPoint(addresses[i], port);
-			var socket = new Socket(endpoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp) { Blocking = false };
+			var socket = new Socket(addresses[i].AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 
 			try
 			{
-				try
-				{
-					socket.Connect(endpoint);
-				}
-				catch (SocketException e) when (e.SocketErrorCode == SocketError.WouldBlock)
-				{
-					// expected: non-blocking connect doesn't complete immediately
-				}
+				using var cts = perAddressTimeoutMs > 0
+					? CancellationTokenSource.CreateLinkedTokenSource(cancellationToken)
+					: null;
 
-				var writable = new List<Socket> { socket };
-				var errored = new List<Socket> { socket };
-				var selectTimeoutUs = perAddressTimeoutMs < 0 ? -1 : perAddressTimeoutMs * 1000; // Select wants microseconds
-				Socket.Select(null, writable, errored, selectTimeoutUs);
+				cts?.CancelAfter(perAddressTimeoutMs);
 
-				var socketError = (int)socket.GetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Error)!;
-				if (socketError != 0) throw new SocketException(socketError);
-				if (writable.Count == 0) throw new TimeoutException();
+				var effectiveToken = cts?.Token ?? cancellationToken;
+				await socket.ConnectAsync(addresses[i], port, effectiveToken).ConfigureAwait(false);
 
-				socket.Blocking = true;
 				return socket;
 			}
 			catch (Exception e)
@@ -56,7 +45,7 @@ internal static class SocketHelper
 				socket.Dispose();
 				if (i == addresses.Length - 1)
 				{
-					var detail = e is TimeoutException
+					var detail = e is OperationCanceledException
 						? $"Connection to {host}:{port} timed out after {timeoutMs} ms."
 						: $"Connection to {host}:{port} ({addresses[i]}) failed: {e.Message}";
 					throw new PgOperationalError(detail, "08001", "FATAL", "", "");

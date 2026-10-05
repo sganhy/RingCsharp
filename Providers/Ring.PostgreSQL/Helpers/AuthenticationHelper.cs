@@ -1,365 +1,283 @@
-using Ring.PostgreSQL.Enums;
-using Ring.PostgreSQL.Extensions;
-using Ring.PostgreSQL.Models;
 using System.Buffers;
 using System.Buffers.Binary;
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 using System.IO.Pipelines;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
+using Ring.PostgreSQL.Enums;
+using Ring.PostgreSQL.Exceptions;
+using Ring.PostgreSQL.Extensions;
 
 namespace Ring.PostgreSQL.Helpers;
 
 internal static class AuthenticationHelper
 {
-	private const string Gs2Header = "n,,";
-	private const int MaxScramIterations = 10_000_000;
-
-	internal static async Task<(int? BackendPid, int? BackendSecret)> HandleAuthenticationAsync(
+	internal static async ValueTask<(int? BackendPid, int? BackendSecret)> HandleAuthenticationAsync(
 		PipeReader reader,
 		PipeWriter writer,
-		string user,
+		string username,
 		string password,
 		CancellationToken cancellationToken = default)
 	{
+		int? backendPid = null;
+		int? backendSecret = null;
+
 		while (true)
 		{
-			var msg = await reader.ReadMessageAsync(false, cancellationToken).ConfigureAwait(false);
+			var result = await reader.ReadAsync(cancellationToken).ConfigureAwait(false);
+			var buffer = result.Buffer;
 
-			switch ((BackendMessageCode)msg.Code)
+			if (buffer.IsEmpty && result.IsCompleted)
 			{
-				case BackendMessageCode.ErrorResponse:
-					try
-					{
-						throw ParseErrorFromSequence(msg.Body).ToPgOperationalError();
-					}
-					finally
-					{
-						reader.AdvanceTo(msg.EndPosition);
-					}
-
-				case BackendMessageCode.NoticeResponse:
-					reader.AdvanceTo(msg.EndPosition);
-					continue;
-
-				case BackendMessageCode.AuthenticationRequest:
-					break;
-
-				default:
-					// FIX: any other message used to fall through and be parsed as an auth request.
-					var unexpected = UnexpectedMessage(msg.Code, "AuthenticationRequest");
-					reader.AdvanceTo(msg.EndPosition);
-					throw unexpected;
+				ThrowUnexpectedEof();
 			}
 
-			var authType = GetAuthenticationType(msg.Body, 0);
-			switch (authType)
+			if (!TryProcessAuthMessage(buffer, out var messageLength))
 			{
-				case AuthenticationType.Ok:
-					reader.AdvanceTo(msg.EndPosition);
-					return await reader.WaitUntilReadyAsync(cancellationToken).ConfigureAwait(false);
+				reader.AdvanceTo(buffer.Start, buffer.End);
+				continue;
+			}
 
-				case AuthenticationType.CleartextPassword:
-					reader.AdvanceTo(msg.EndPosition);
-					await writer.SendPasswordMessageAsync(password, cancellationToken).ConfigureAwait(false);
-					continue;
+			var (consumed, isComplete, pid, secret) = await ProcessAuthMessageDetailsAsync(buffer, messageLength, writer, username, password, cancellationToken).ConfigureAwait(false);
 
-				case AuthenticationType.MD5Password:
-					// FIX: Span<byte> locals are not allowed in async methods; use a byte[].
-					var salt = msg.Body.Slice(4, 4).ToArray();
-					reader.AdvanceTo(msg.EndPosition);
-					await writer.SendPasswordMessageAsync(ComputeMD5Password(user, password, salt), cancellationToken).ConfigureAwait(false);
-					continue;
+			if (pid.HasValue) backendPid = pid;
+			if (secret.HasValue) backendSecret = secret;
 
-				case AuthenticationType.SASL:
-					var mechanisms = msg.Body.Slice(4).ToArray(); // materialized so it can cross awaits
-					reader.AdvanceTo(msg.EndPosition);
-					await AuthenticateSASLAsync(reader, writer, mechanisms, password, cancellationToken).ConfigureAwait(false);
-					// FIX: the server still sends AuthenticationOk after SASLFinal; let the loop consume it.
-					continue;
+			reader.AdvanceTo(consumed);
 
-				case AuthenticationType.GSS:
-				case AuthenticationType.SSPI:
-					reader.AdvanceTo(msg.EndPosition);
-					throw new NotSupportedException("GSSAPI/SSPI authentication is not implemented by this driver.");
-
-				default:
-					reader.AdvanceTo(msg.EndPosition);
-					throw new NotSupportedException($"Authentication method {authType} is not supported by this driver.");
+			if (isComplete)
+			{
+				return (backendPid, backendSecret);
 			}
 		}
 	}
 
-	// Only does I/O. All Span/stackalloc work lives in synchronous helpers below,
-	// because ref-struct locals cannot live across an await.
-	private static async Task AuthenticateSASLAsync(
-		PipeReader reader,
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static bool TryProcessAuthMessage(ReadOnlySequence<byte> buffer, out int messageLength)
+	{
+		if (buffer.Length < 5)
+		{
+			messageLength = 0;
+			return false;
+		}
+
+		Span<byte> header = stackalloc byte[5];
+		buffer.Slice(0, 5).CopyTo(header);
+
+		messageLength = BinaryPrimitives.ReadInt32BigEndian(header.Slice(1, 4));
+		return buffer.Length >= messageLength + 1;
+	}
+
+	private static async ValueTask<(SequencePosition Consumed, bool IsComplete, int? Pid, int? Secret)> ProcessAuthMessageDetailsAsync(
+		ReadOnlySequence<byte> buffer,
+		int messageLength,
 		PipeWriter writer,
-		byte[] mechanismsPayload,
+		string username,
 		string password,
-		CancellationToken cancellationToken = default)
+		CancellationToken cancellationToken)
 	{
-		if (!ContainsMechanism(mechanismsPayload, "SCRAM-SHA-256"u8))
-			throw new NotSupportedException("Server does not offer SCRAM-SHA-256; no other SASL mechanism is implemented.");
+		Span<byte> header = stackalloc byte[5];
+		buffer.Slice(0, 5).CopyTo(header);
 
-		var clientNonce = GetNonce();
-		var clientFirstBare = $"n=*,r={clientNonce}";
+		var messageType = (BackendMessageCode)header[0];
+		var messagePayload = buffer.Slice(5, messageLength - 4);
+		var isComplete = false;
+		int? pid = null;
+		int? secret = null;
 
-		await writer.SendSASLInitialResponseAsync("SCRAM-SHA-256", Encoding.UTF8.GetBytes(Gs2Header + clientFirstBare), cancellationToken).ConfigureAwait(false);
-
-		var msg = await reader.ReadMessageAsync(false, cancellationToken).ConfigureAwait(false);
-		string serverFirstMessage;
-		try
+		switch (messageType)
 		{
-			ThrowIfError(msg);
-			if (msg.Code != (byte)BackendMessageCode.AuthenticationRequest || GetAuthenticationType(msg.Body, 0) != AuthenticationType.SASLContinue)
-				throw UnexpectedMessage(msg.Code, "AuthenticationSASLContinue");
+			case BackendMessageCode.AuthenticationRequest:
+				await ProcessAuthenticationRequestAsync(messagePayload, writer, username, password, cancellationToken).ConfigureAwait(false);
+				break;
 
-			serverFirstMessage = Encoding.UTF8.GetString(msg.Body.Slice(4));
-		}
-		finally
-		{
-			reader.AdvanceTo(msg.EndPosition);
-		}
+			case BackendMessageCode.BackendKeyData:
+				ProcessBackendKeyData(messagePayload, out pid, out secret);
+				break;
 
-		var (clientFinalMessage, expectedServerSignature) = ComputeScramClientFinal(password, clientNonce, clientFirstBare, serverFirstMessage);
+			case BackendMessageCode.ReadyForQuery:
+				isComplete = true;
+				break;
 
-		await writer.SendSASLResponseAsync(Encoding.UTF8.GetBytes(clientFinalMessage), cancellationToken).ConfigureAwait(false);
+			case BackendMessageCode.ErrorResponse:
+				var error = messagePayload.IsSingleSegment
+					? messagePayload.FirstSpan.ParseErrorFields()
+					: messagePayload.ToArray().AsSpan().ParseErrorFields();
+				throw new PgOperationalError(error.Message);
 
-		msg = await reader.ReadMessageAsync(false, cancellationToken).ConfigureAwait(false);
-		string serverFinalMessage;
-		try
-		{
-			ThrowIfError(msg);
-			if (msg.Code != (byte)BackendMessageCode.AuthenticationRequest || GetAuthenticationType(msg.Body, 0) != AuthenticationType.SASLFinal)
-				throw UnexpectedMessage(msg.Code, "AuthenticationSASLFinal");
-
-			serverFinalMessage = Encoding.UTF8.GetString(msg.Body.Slice(4));
-		}
-		finally
-		{
-			reader.AdvanceTo(msg.EndPosition);
+			default:
+				break;
 		}
 
-		VerifyServerFinal(serverFinalMessage, expectedServerSignature);
+		var nextPosition = buffer.GetPosition(messageLength + 1);
+		return (nextPosition, isComplete, pid, secret);
 	}
 
-	private static (string ClientFinalMessage, byte[] ExpectedServerSignature) ComputeScramClientFinal(
+	private static async ValueTask ProcessAuthenticationRequestAsync(
+		ReadOnlySequence<byte> payload,
+		PipeWriter writer,
+		string username,
 		string password,
-		string clientNonce,
-		string clientFirstBare,
-		string serverFirstMessage)
+		CancellationToken cancellationToken)
 	{
-		var (serverNonce, salt, iterations) = ParseServerFirstMessage(serverFirstMessage.AsSpan());
-		if (!serverNonce.StartsWith(clientNonce, StringComparison.Ordinal))
-			throw new InvalidOperationException("SCRAM: server nonce does not start with the client nonce.");
-		if (iterations <= 0 || iterations > MaxScramIterations)
-			throw new InvalidOperationException($"SCRAM: unreasonable iteration count {iterations}.");
+		Span<byte> authTypeBuffer = stackalloc byte[4];
+		payload.Slice(0, 4).CopyTo(authTypeBuffer);
+		var authType = (AuthenticationType)BinaryPrimitives.ReadInt32BigEndian(authTypeBuffer);
 
-		var clientFinalNoProof = $"c={Convert.ToBase64String(Encoding.UTF8.GetBytes(Gs2Header))},r={serverNonce}";
-		var authMessage = $"{clientFirstBare},{serverFirstMessage},{clientFinalNoProof}";
+		switch (authType)
+		{
+			case AuthenticationType.Ok:
+				break;
 
-		Span<byte> saltedPassword = stackalloc byte[32];
-		Span<byte> clientKey = stackalloc byte[32];
-		var authMessageByteCount = Encoding.UTF8.GetByteCount(authMessage);
-		byte[]? rentedAuthMsg = null;
-		Span<byte> authMessageBytes = authMessageByteCount <= 512
-			? stackalloc byte[authMessageByteCount]
-			: (rentedAuthMsg = ArrayPool<byte>.Shared.Rent(authMessageByteCount)).AsSpan(0, authMessageByteCount);
+			case AuthenticationType.CleartextPassword:
+				await SendCleartextPasswordAsync(writer, password, cancellationToken).ConfigureAwait(false);
+				break;
+
+			case AuthenticationType.MD5Password:
+				byte[] saltArray = ArrayPool<byte>.Shared.Rent(4);
+				try
+				{
+					payload.Slice(4, 4).CopyTo(saltArray);
+					await SendMd5PasswordAsync(writer, username, password, saltArray.AsMemory(0, 4), cancellationToken).ConfigureAwait(false);
+				}
+				finally
+				{
+					ArrayPool<byte>.Shared.Return(saltArray);
+				}
+				break;
+
+			case AuthenticationType.GSS:
+			case AuthenticationType.GSSContinue:
+			case AuthenticationType.SSPI:
+			case AuthenticationType.SASL:
+			case AuthenticationType.SASLContinue:
+			case AuthenticationType.SASLFinal:
+				ThrowSaslNotImplemented();
+				break;
+
+			default:
+				ThrowUnsupportedAuthType(authType);
+				break;
+		}
+	}
+
+	private static async ValueTask SendCleartextPasswordAsync(PipeWriter writer, string password, CancellationToken cancellationToken)
+	{
+		var passwordByteCount = Encoding.UTF8.GetByteCount(password);
+		var messageLength = 4 + passwordByteCount + 1;
+
+		var memory = writer.GetMemory(1 + messageLength);
+		var span = memory.Span;
+		span[0] = (byte)FrontendMessageCode.Password;
+		BinaryPrimitives.WriteInt32BigEndian(span.Slice(1, 4), messageLength);
+
+		Encoding.UTF8.GetBytes(password, span.Slice(5, passwordByteCount));
+		span[5 + passwordByteCount] = 0;
+
+		writer.Advance(1 + messageLength);
+		await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
+	}
+
+	private static async ValueTask SendMd5PasswordAsync(
+		PipeWriter writer,
+		string username,
+		string password,
+		ReadOnlyMemory<byte> salt,
+		CancellationToken cancellationToken)
+	{
+		Span<byte> innerHashHex = stackalloc byte[32];
+		ComputeUserPasswordMd5Hex(password, username, innerHashHex);
+
+		Span<byte> combined = stackalloc byte[32 + 4];
+		innerHashHex.CopyTo(combined);
+		salt.Span.CopyTo(combined.Slice(32));
+
+		Span<byte> outerHashHex = stackalloc byte[32];
+		ComputeMd5Hex(combined, outerHashHex);
+
+		const int md5ResponseLength = 3 + 32;
+		var messageLength = 4 + md5ResponseLength + 1;
+
+		var memory = writer.GetMemory(1 + messageLength);
+		var span = memory.Span;
+		span[0] = (byte)FrontendMessageCode.Password;
+		BinaryPrimitives.WriteInt32BigEndian(span.Slice(1, 4), messageLength);
+
+		span[5] = (byte)'m';
+		span[6] = (byte)'d';
+		span[7] = (byte)'5';
+
+		outerHashHex.CopyTo(span.Slice(8, 32));
+		span[8 + 32] = 0;
+
+		writer.Advance(1 + messageLength);
+		await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
+	}
+
+	private static void ComputeUserPasswordMd5Hex(string password, string username, Span<byte> destinationHex)
+	{
+		var pwdBytesCount = Encoding.UTF8.GetByteCount(password);
+		var userBytesCount = Encoding.UTF8.GetByteCount(username);
+		var totalLen = pwdBytesCount + userBytesCount;
+
+		byte[]? rented = null;
+		Span<byte> buffer = totalLen <= 256
+			? stackalloc byte[totalLen]
+			: (rented = ArrayPool<byte>.Shared.Rent(totalLen)).AsSpan(0, totalLen);
 
 		try
 		{
-			Rfc2898DeriveBytes.Pbkdf2(password, salt, saltedPassword, iterations, HashAlgorithmName.SHA256);
-			HMACSHA256.HashData(saltedPassword, "Client Key"u8, clientKey);
+			Encoding.UTF8.GetBytes(password, buffer);
+			Encoding.UTF8.GetBytes(username, buffer.Slice(pwdBytesCount));
 
-			Span<byte> storedKey = stackalloc byte[32];
-			SHA256.HashData(clientKey, storedKey);
-
-			Encoding.UTF8.GetBytes(authMessage, authMessageBytes);
-
-			Span<byte> clientSignature = stackalloc byte[32];
-			HMACSHA256.HashData(storedKey, authMessageBytes, clientSignature);
-
-			Span<byte> clientProof = stackalloc byte[32];
-			XorSpans(clientKey, clientSignature, clientProof);
-
-			Span<byte> serverKey = stackalloc byte[32];
-			HMACSHA256.HashData(saltedPassword, "Server Key"u8, serverKey);
-
-			Span<byte> serverSignature = stackalloc byte[32];
-			HMACSHA256.HashData(serverKey, authMessageBytes, serverSignature);
-
-			var clientFinalMessage = $"{clientFinalNoProof},p={Convert.ToBase64String(clientProof)}";
-			return (clientFinalMessage, serverSignature.ToArray());
+			Span<byte> hash = stackalloc byte[16];
+			MD5.HashData(buffer, hash);
+			ToHexLower(hash, destinationHex);
 		}
 		finally
 		{
-			CryptographicOperations.ZeroMemory(saltedPassword);
-			CryptographicOperations.ZeroMemory(clientKey);
-			if (rentedAuthMsg is not null) ArrayPool<byte>.Shared.Return(rentedAuthMsg);
+			if (rented is not null) ArrayPool<byte>.Shared.Return(rented);
 		}
 	}
 
-	private static void VerifyServerFinal(string serverFinalMessage, byte[] expectedSignature)
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static void ComputeMd5Hex(ReadOnlySpan<byte> source, Span<byte> destinationHex)
 	{
-		if (serverFinalMessage.StartsWith("e=", StringComparison.Ordinal))
-			throw new InvalidOperationException($"SCRAM: server reported an error: {serverFinalMessage[2..]}");
-
-		if (!serverFinalMessage.StartsWith("v=", StringComparison.Ordinal))
-			throw new InvalidOperationException("SCRAM: malformed server-final-message.");
-
-		var value = serverFinalMessage.AsSpan(2);
-		var comma = value.IndexOf(',');
-		if (comma >= 0) value = value[..comma];
-
-		Span<byte> received = stackalloc byte[32];
-		// FIX: compare decoded bytes in constant time instead of a string StartsWith.
-		if (!Convert.TryFromBase64Chars(value, received, out var written)
-			|| written != expectedSignature.Length
-			|| !CryptographicOperations.FixedTimeEquals(received[..written], expectedSignature))
-		{
-			throw new InvalidOperationException("SCRAM: server signature verification failed - possible spoofed server.");
-		}
+		Span<byte> hash = stackalloc byte[16];
+		MD5.HashData(source, hash);
+		ToHexLower(hash, destinationHex);
 	}
 
-	private static bool ContainsMechanism(ReadOnlySpan<byte> payload, ReadOnlySpan<byte> target)
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static void ToHexLower(ReadOnlySpan<byte> bytes, Span<byte> destinationHex)
 	{
-		var offset = 0;
-		while (offset < payload.Length && payload[offset] != 0)
-		{
-			var slice = payload.Slice(offset);
-			var nullIdx = slice.IndexOf((byte)0);
-			if (nullIdx < 0) nullIdx = slice.Length;
-
-			var mech = slice.Slice(0, nullIdx);
-			if (mech.SequenceEqual(target)) return true;
-
-			offset += nullIdx + 1;
-		}
-		return false;
-	}
-
-	private static AuthenticationType GetAuthenticationType(ReadOnlySequence<byte> body, int offset)
-	{
-		Span<byte> temp = stackalloc byte[4];
-		body.Slice(offset, 4).CopyTo(temp);
-		return BinaryPrimitives.ReadInt32BigEndian(temp).ToAuthenticationType();
-	}
-
-	[SuppressMessage("Security", "CA5351:Do Not Use Broken Cryptographic Algorithms", Justification = "MD5 is required by the PostgreSQL wire protocol for legacy md5 authentication.")]
-	private static string ComputeMD5Password(string username, string password, ReadOnlySpan<byte> salt)
-	{
-		// md5( md5(password + username) as lowercase hex + salt ), prefixed with "md5"
-		Span<byte> innerInput = stackalloc byte[Encoding.UTF8.GetByteCount(password) + Encoding.UTF8.GetByteCount(username)];
-		var innerWritten = Encoding.UTF8.GetBytes(password, innerInput);
-		Encoding.UTF8.GetBytes(username, innerInput[innerWritten..]);
-
-		Span<byte> innerHash = stackalloc byte[16];
-		MD5.HashData(innerInput, innerHash);
-
-		// FIX: the inner hex must be LOWERCASE (it was being uppercased, which breaks md5 auth).
-		Span<char> innerHex = stackalloc char[32];
-		ToHexLower(innerHash, innerHex);
-
-		Span<byte> outerInput = stackalloc byte[32 + salt.Length];
-		Encoding.UTF8.GetBytes(innerHex, outerInput);
-		salt.CopyTo(outerInput[32..]);
-
-		Span<byte> outerHash = stackalloc byte[16];
-		MD5.HashData(outerInput, outerHash);
-
-		Span<char> outerHex = stackalloc char[32];
-		ToHexLower(outerHash, outerHex);
-
-		return "md5" + outerHex.ToString();
-	}
-
-	// Lowercase hex without relying on newer Convert APIs (TryToHexStringLower is .NET 9+).
-	private static void ToHexLower(ReadOnlySpan<byte> bytes, Span<char> chars)
-	{
-		const string hex = "0123456789abcdef";
+		const string hexAlphabet = "0123456789abcdef";
 		for (var i = 0; i < bytes.Length; i++)
 		{
-			chars[i * 2] = hex[bytes[i] >> 4];
-			chars[i * 2 + 1] = hex[bytes[i] & 0xF];
+			destinationHex[i * 2] = (byte)hexAlphabet[bytes[i] >> 4];
+			destinationHex[i * 2 + 1] = (byte)hexAlphabet[bytes[i] & 0xF];
 		}
 	}
 
-	private static string GetNonce()
+	private static void ProcessBackendKeyData(ReadOnlySequence<byte> payload, out int? pid, out int? secret)
 	{
-		Span<byte> bytes = stackalloc byte[18];
-		RandomNumberGenerator.Fill(bytes);
-		return Convert.ToBase64String(bytes);
+		Span<byte> data = stackalloc byte[8];
+		payload.Slice(0, 8).CopyTo(data);
+
+		pid = BinaryPrimitives.ReadInt32BigEndian(data.Slice(0, 4));
+		secret = BinaryPrimitives.ReadInt32BigEndian(data.Slice(4, 4));
 	}
 
-	private static void ThrowIfError(in MessageSlice msg)
-	{
-		if (msg.Code == (byte)BackendMessageCode.ErrorResponse)
-			throw ParseErrorFromSequence(msg.Body).ToPgOperationalError();
-	}
+	[DoesNotReturn]
+	private static void ThrowUnexpectedEof() =>
+		throw new InvalidOperationException("Connection closed by server during authentication handshake.");
 
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private static Ring.Data.OperationalError ParseErrorFromSequence(ReadOnlySequence<byte> sequence)
-	{
-		if (sequence.IsSingleSegment)
-		{
-			return sequence.FirstSpan.ParseErrorFields();
-		}
+	[DoesNotReturn]
+	private static void ThrowSaslNotImplemented() =>
+		throw new NotImplementedException("SASL/SCRAM authentication mechanism is not supported.");
 
-		var length = (int)sequence.Length;
-		byte[]? rented = null;
-		Span<byte> buffer = length <= 128 ? stackalloc byte[length] : (rented = ArrayPool<byte>.Shared.Rent(length)).AsSpan(0, length);
-
-		try
-		{
-			sequence.CopyTo(buffer);
-			// FIX: extension methods don't apply the Span -> ReadOnlySpan user-defined conversion; cast explicitly.
-			return ((ReadOnlySpan<byte>)buffer).ParseErrorFields();
-		}
-		finally
-		{
-			if (rented != null)
-				ArrayPool<byte>.Shared.Return(rented);
-		}
-	}
-
-	private static (string Nonce, byte[] Salt, int Iterations) ParseServerFirstMessage(ReadOnlySpan<char> message)
-	{
-		ReadOnlySpan<char> nonce = default;
-		ReadOnlySpan<char> saltBase64 = default;
-		ReadOnlySpan<char> iterations = default;
-
-		while (!message.IsEmpty)
-		{
-			var idx = message.IndexOf(',');
-			var part = idx >= 0 ? message.Slice(0, idx) : message;
-
-			if (part.StartsWith("r=")) nonce = part[2..];
-			else if (part.StartsWith("s=")) saltBase64 = part[2..];
-			else if (part.StartsWith("i=")) iterations = part[2..];
-
-			message = idx >= 0 ? message[(idx + 1)..] : default;
-		}
-
-		if (nonce.IsEmpty || saltBase64.IsEmpty || iterations.IsEmpty)
-			throw new InvalidOperationException("SCRAM: malformed server-first-message.");
-
-		return (
-			nonce.ToString(),
-			Convert.FromBase64String(saltBase64.ToString()),
-			int.Parse(iterations, NumberStyles.None, CultureInfo.InvariantCulture)
-		);
-	}
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private static void XorSpans(ReadOnlySpan<byte> a, ReadOnlySpan<byte> b, Span<byte> destination)
-	{
-		for (var i = 0; i < a.Length; i++)
-			destination[i] = (byte)(a[i] ^ b[i]);
-	}
-
-	private static InvalidOperationException UnexpectedMessage(byte code, string expected) =>
-		new($"Unexpected message '{(char)code}' from server; expected {expected}.");
+	[DoesNotReturn]
+	private static void ThrowUnsupportedAuthType(AuthenticationType authType) =>
+		throw new NotSupportedException($"PostgreSQL authentication type '{authType}' is not supported.");
 }

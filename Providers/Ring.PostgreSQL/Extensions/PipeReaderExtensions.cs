@@ -19,8 +19,11 @@ internal static class PipeReaderExtensions
 {
 	private const int InitialRowCapacityHint = 16;
 	private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
-	private static readonly string BooleanTrue = true.ToString(DefaultCulture);
-	private static readonly string BooleanFalse = false.ToString(DefaultCulture);
+
+	// Pre-cached static strings to avoid boolean string allocation
+	private static readonly string BooleanTrue = "True";
+	private static readonly string BooleanFalse = "False";
+
 	private const byte PgTrueChar = (byte)'t';
 	private const byte PgTrueDigit = (byte)'1';
 
@@ -58,44 +61,78 @@ internal static class PipeReaderExtensions
 		}
 	}
 
-	internal static async ValueTask<(OperationalError? Error, byte TransactionStatus)> DrainToReadyForQueryAsync(this PipeReader reader, CancellationToken cancellationToken = default)
+	internal static async ValueTask<(OperationalError? Error, byte TransactionStatus)> DrainToReadyForQueryAsync(
+	this PipeReader reader,
+	CancellationToken cancellationToken = default)
 	{
-		OperationalError? operationalError = null;
+		OperationalError? error = null;
+		byte transactionStatus = 0;
+
 		while (true)
 		{
-			var msg = await reader.ReadMessageAsync(true, cancellationToken).ConfigureAwait(false);
+			var result = await reader.ReadAsync(cancellationToken).ConfigureAwait(false);
+			var buffer = result.Buffer;
 
-			if (msg.Code == (byte)BackendMessageCode.ReadyForQuery)
+			while (TryReadMessageHeader(ref buffer, out var messageCode, out var payloadLength))
 			{
-				var txStatus = !msg.Body.IsEmpty ? msg.Body.FirstSpan[0] : (byte)0;
-				reader.AdvanceTo(msg.EndPosition);
-				return (operationalError, txStatus);
-			}
-
-			if (msg.Code == (byte)BackendMessageCode.ErrorResponse)
-			{
-				byte drainCode;
-				byte txStatus = 0;
-				operationalError = ParseErrorFieldsFromSequence(msg.Body);
-				reader.AdvanceTo(msg.EndPosition);
-
-				do
+				if (buffer.Length < 5 + payloadLength)
 				{
-					var drainMsg = await reader.ReadMessageAsync(false, cancellationToken).ConfigureAwait(false);
-					drainCode = drainMsg.Code;
-					if (drainCode == (byte)BackendMessageCode.ReadyForQuery && !drainMsg.Body.IsEmpty)
-					{
-						txStatus = drainMsg.Body.FirstSpan[0];
-					}
-					reader.AdvanceTo(drainMsg.EndPosition);
+					// Incomplete message body in buffer, wait for more data
+					break;
 				}
-				while (drainCode != (byte)BackendMessageCode.ReadyForQuery);
 
-				return (operationalError, txStatus);
+				var payload = buffer.Slice(5, payloadLength);
+
+				switch (messageCode)
+				{
+					case BackendMessageCode.ReadyForQuery:
+						if (!payload.IsEmpty)
+						{
+							// ReadyForQuery payload contains 1 byte representing transaction status
+							transactionStatus = payload.FirstSpan[0];
+						}
+						var readyPosition = buffer.GetPosition(5 + payloadLength);
+						reader.AdvanceTo(readyPosition, readyPosition);
+						return (error, transactionStatus);
+
+					case BackendMessageCode.ErrorResponse:
+						var errorSpan = payload.IsSingleSegment ? payload.FirstSpan : payload.ToArray().AsSpan();
+						error = errorSpan.ParseErrorFields();
+						break;
+
+					default:
+						// Skip non-error, non-ReadyForQuery payload bytes
+						break;
+				}
+
+				buffer = buffer.Slice(buffer.GetPosition(5 + payloadLength));
 			}
 
-			reader.AdvanceTo(msg.EndPosition);
+			reader.AdvanceTo(buffer.Start, buffer.End);
+
+			if (buffer.IsEmpty && result.IsCompleted)
+			{
+				throw new InvalidOperationException("Connection closed before ReadyForQuery message was received.");
+			}
 		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static bool TryReadMessageHeader(ref ReadOnlySequence<byte> buffer, out BackendMessageCode code, out int payloadLength)
+	{
+		if (buffer.Length < 5)
+		{
+			code = default;
+			payloadLength = 0;
+			return false;
+		}
+
+		Span<byte> header = stackalloc byte[5];
+		buffer.Slice(0, 5).CopyTo(header);
+
+		code = (BackendMessageCode)header[0];
+		payloadLength = BinaryPrimitives.ReadInt32BigEndian(header.Slice(1, 4)) - 4;
+		return true;
 	}
 
 	internal static async ValueTask<(int? BackendPid, int? BackendSecret)> WaitUntilReadyAsync(this PipeReader reader, CancellationToken cancellationToken = default)
@@ -137,7 +174,8 @@ internal static class PipeReaderExtensions
 		}
 	}
 
-	internal static async ValueTask<string?[]> ReadRetrieveRecordsAsync(this PipeReader reader, Encoding encoding, Table table, Action<byte>? onTransactionStatus = null, int rowCount = -1, CancellationToken cancellationToken = default)
+	// Refactored to accept a transaction status out reference instead of allocating an Action<byte> closure
+	internal static async ValueTask<string?[]> ReadRetrieveRecordsAsync(this PipeReader reader, Encoding encoding, Table table, TransactionStatusHolder txStatusHolder, int rowCount = -1, CancellationToken cancellationToken = default)
 	{
 		var pool = ArrayPool<string?>.Shared;
 		var initialCapacity = table.RecordSize * (rowCount > 0 ? rowCount : InitialRowCapacityHint);
@@ -161,7 +199,7 @@ internal static class PipeReaderExtensions
 					case (byte)BackendMessageCode.ReadyForQuery:
 						{
 							if (!msg.Body.IsEmpty)
-								onTransactionStatus?.Invoke(msg.Body.FirstSpan[0]);
+								txStatusHolder.Status = msg.Body.FirstSpan[0];
 
 							var results = new string?[count];
 							Array.Copy(buffer, results, count);
@@ -181,7 +219,7 @@ internal static class PipeReaderExtensions
 								drainCode = drainMsg.Code;
 								if (drainCode == (byte)BackendMessageCode.ReadyForQuery && !drainMsg.Body.IsEmpty)
 								{
-									onTransactionStatus?.Invoke(drainMsg.Body.FirstSpan[0]);
+									txStatusHolder.Status = drainMsg.Body.FirstSpan[0];
 								}
 								reader.AdvanceTo(drainMsg.EndPosition);
 							}
@@ -395,4 +433,12 @@ internal static class PipeReaderExtensions
 		throw new InvalidOperationException(ResourceHelper.GetMessage(ResourceType.InvalidMessageLengthFromServer));
 
 	#endregion
+}
+
+/// <summary>
+/// Value container to pass transaction status across calls without allocating closures.
+/// </summary>
+internal sealed class TransactionStatusHolder
+{
+	public byte Status { get; set; }
 }
