@@ -1,6 +1,7 @@
 ﻿using System.Buffers;
 using System.Buffers.Binary;
 using System.IO.Pipelines;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 using Ring.Data.Enums;
@@ -41,37 +42,12 @@ internal static class PipeWriterExtensions
 		writer.FlushBlocking();
 	}
 
-	/// <summary>Writes Parse + a pre-built Bind/Execute/Sync payload and flushes (blocking).</summary>
-	internal static void SendExtendedQuery(this PipeWriter writer, ReadOnlySpan<byte> sql, ReadOnlySpan<byte> variables)
-	{
-		var parseMsgLength = 9 + sql.Length;
-		var span = writer.GetSpan(parseMsgLength + variables.Length);
-
-		// Parse: 'P', int32 length, unnamed statement \0, sql \0, int16 parameter type count (0)
-		span[0] = (byte)FrontendMessageCode.Parse;
-		BinaryPrimitives.WriteInt32BigEndian(span.Slice(1, 4), parseMsgLength - 1);
-		span[5] = 0;
-
-		sql.CopyTo(span[6..]);
-		var offset = 6 + sql.Length;
-
-		span[offset++] = 0;
-		BinaryPrimitives.WriteInt16BigEndian(span.Slice(offset, 2), 0);
-		offset += 2;
-
-		variables.CopyTo(span[offset..]);
-
-		writer.Advance(offset + variables.Length);
-		writer.FlushBlocking();
-	}
-
 	/// <summary>
 	/// Writes Parse + Bind/Execute/Sync directly into the pipe buffer (no intermediate payload buffer, no extra copy)
 	/// and flushes (blocking). Nothing is advanced if building the payload throws, so the pipe stays clean.
 	/// </summary>
 	internal static void SendExtendedQuery(this PipeWriter writer, ReadOnlySpan<byte> sql, in SaveQuery query, Encoding encoding)
 	{
-		// Code size: 155 (0x9b)
 		var parseMsgLength = 9 + sql.Length;
 		var span = writer.GetSpan(parseMsgLength + query.GetVariablesPayloadSize(encoding));
 
@@ -177,6 +153,47 @@ internal static class PipeWriterExtensions
 		return FlushAndScrubAsync(writer, memory, cancellationToken);
 	}
 
+	/// <summary>
+	/// Sends the MD5 PasswordMessage: "md5" + hex(md5(hex(md5(password + user)) + salt)).
+	/// Built directly in the pipe buffer (no string allocation); the message and the intermediate hashes are zeroed afterwards.
+	/// </summary>
+	internal static ValueTask SendMd5PasswordAsync(this PipeWriter writer, string username, string password, ReadOnlySpan<byte> salt, CancellationToken cancellationToken = default)
+	{
+		if (salt.Length != 4) throw new ArgumentException("The MD5 salt must be 4 bytes.", nameof(salt));
+
+		Span<byte> innerHashHex = stackalloc byte[32];
+		ComputeUserPasswordMd5Hex(password, username, innerHashHex);
+
+		Span<byte> combined = stackalloc byte[32 + 4];
+		innerHashHex.CopyTo(combined);
+		salt.CopyTo(combined[32..]);
+
+		Span<byte> outerHashHex = stackalloc byte[32];
+		ComputeMd5Hex(combined, outerHashHex);
+
+		const int length = 4 + 3 + 32 + 1;
+		const int total = 1 + length;
+
+		var memory = writer.GetMemory(total).Slice(0, total);
+		var span = memory.Span;
+
+		span[0] = (byte)FrontendMessageCode.Password;
+		BinaryPrimitives.WriteInt32BigEndian(span[1..], length);
+		span[5] = (byte)'m';
+		span[6] = (byte)'d';
+		span[7] = (byte)'5';
+		outerHashHex.CopyTo(span.Slice(8, 32));
+		span[8 + 32] = 0;
+
+		writer.Advance(total);
+
+		// inner hash == md5(password + user) is itself enough to authenticate: don't leave it on the stack
+		CryptographicOperations.ZeroMemory(innerHashHex);
+		CryptographicOperations.ZeroMemory(combined);
+
+		return FlushAndScrubAsync(writer, memory, cancellationToken);
+	}
+
 	internal static ValueTask<FlushResult> SendSASLInitialResponseAsync(this PipeWriter writer, string mechanism, byte[] data, CancellationToken cancellationToken = default)
 	{
 		var mechanismLength = Encoding.UTF8.GetByteCount(mechanism);
@@ -230,6 +247,52 @@ internal static class PipeWriterExtensions
 		finally
 		{
 			CryptographicOperations.ZeroMemory(written.Span);
+		}
+	}
+
+	private static void ComputeUserPasswordMd5Hex(string password, string username, Span<byte> destinationHex)
+	{
+		var pwdBytesCount = Encoding.UTF8.GetByteCount(password);
+		var userBytesCount = Encoding.UTF8.GetByteCount(username);
+		var totalLen = pwdBytesCount + userBytesCount;
+
+		byte[]? rented = null;
+		Span<byte> buffer = totalLen <= 256
+			? stackalloc byte[totalLen]
+			: (rented = ArrayPool<byte>.Shared.Rent(totalLen)).AsSpan(0, totalLen);
+
+		try
+		{
+			Encoding.UTF8.GetBytes(password, buffer);
+			Encoding.UTF8.GetBytes(username, buffer.Slice(pwdBytesCount));
+
+			Span<byte> hash = stackalloc byte[16];
+			MD5.HashData(buffer, hash);
+			ToHexLower(hash, destinationHex);
+		}
+		finally
+		{
+			CryptographicOperations.ZeroMemory(buffer); // contains the clear password
+			if (rented is not null) ArrayPool<byte>.Shared.Return(rented);
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static void ComputeMd5Hex(ReadOnlySpan<byte> source, Span<byte> destinationHex)
+	{
+		Span<byte> hash = stackalloc byte[16];
+		MD5.HashData(source, hash);
+		ToHexLower(hash, destinationHex);
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static void ToHexLower(ReadOnlySpan<byte> bytes, Span<byte> destinationHex)
+	{
+		const string hexAlphabet = "0123456789abcdef";
+		for (var i = 0; i < bytes.Length; i++)
+		{
+			destinationHex[i * 2] = (byte)hexAlphabet[bytes[i] >> 4];
+			destinationHex[i * 2 + 1] = (byte)hexAlphabet[bytes[i] & 0xF];
 		}
 	}
 

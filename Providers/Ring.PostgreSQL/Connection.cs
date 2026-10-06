@@ -24,11 +24,8 @@ public sealed class Connection : IConnection
 {
 	private const int MinTimeOut = 5000;
 	private static readonly byte[] TerminateMessage = { (byte)FrontendMessageCode.Terminate, 0, 0, 0, 4 };
-	private byte _transactionStatus = (byte)TransactionStatus.Idle;
 
 	// Reused for every retrieve: a connection runs one query at a time, so no per-query allocation is needed.
-	private readonly TransactionStatusHolder _txHolder = new();
-
 	private readonly long _id;
 	private readonly DateTime _creationTime;
 	private DateTime? _lastConnectionTime;
@@ -172,10 +169,6 @@ public sealed class Connection : IConnection
 		{
 			await _writer!.SendQueryAsync(sql, cancellationToken).ConfigureAwait(false);
 			var (returnValue, txStatus) = await _reader!.DrainToReadyForQueryAsync(cancellationToken).ConfigureAwait(false);
-			if (txStatus > 0)
-			{
-				_transactionStatus = txStatus;
-			}
 			returnValue?.Set(query);
 			_state = ConnectionState.Open;
 			return returnValue;
@@ -269,32 +262,20 @@ public sealed class Connection : IConnection
 
 	private string?[] ReadRetrieveRecordsSync(PipeReader reader, Table table)
 	{
-		_txHolder.Status = 0;
-		var vt = reader.ReadRetrieveRecordsAsync(_encoding, table, _txHolder);
+		var vt = reader.ReadRetrieveRecordsAsync(_encoding, table);
 
 		var result = vt.IsCompleted
 			? vt.GetAwaiter().GetResult()
 			: vt.AsTask().GetAwaiter().GetResult();
-
-		if (_txHolder.Status > 0)
-		{
-			_transactionStatus = _txHolder.Status;
-		}
-
 		return result;
 	}
 
-	private OperationalError? DrainToReadyForQuerySync(PipeReader reader)
+	private static OperationalError? DrainToReadyForQuerySync(PipeReader reader)
 	{
 		var vt = reader.DrainToReadyForQueryAsync();
-		var (error, txStatus) = vt.IsCompleted
+		var (error, _) = vt.IsCompleted
 			? vt.GetAwaiter().GetResult()
 			: vt.AsTask().GetAwaiter().GetResult();
-
-		if (txStatus > 0)
-		{
-			_transactionStatus = txStatus;
-		}
 		return error;
 	}
 
@@ -313,7 +294,7 @@ public sealed class Connection : IConnection
 			_reader = PipeReader.Create(_networkStream, new StreamPipeReaderOptions(leaveOpen: true));
 
 			await _writer.SendStartupAsync(_parameters, cancellationToken).ConfigureAwait(false);
-			var (pid, secret) = await AuthenticationHelper.HandleAuthenticationAsync(_reader, _writer, _parameters.UserName, _parameters.Password, cancellationToken).ConfigureAwait(false);
+			var (pid, secret) = await AuthenticationHelper.HandleAuthenticationAsync(_reader, _writer, _host, _parameters.UserName, _parameters.Password, string.Empty, cancellationToken).ConfigureAwait(false);
 
 			_backendPid = pid ?? 0;
 			_backendSecret = secret ?? 0;

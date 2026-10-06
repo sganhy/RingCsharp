@@ -175,7 +175,7 @@ internal static class PipeReaderExtensions
 	}
 
 	// Refactored to accept a transaction status out reference instead of allocating an Action<byte> closure
-	internal static async ValueTask<string?[]> ReadRetrieveRecordsAsync(this PipeReader reader, Encoding encoding, Table table, TransactionStatusHolder txStatusHolder, int rowCount = -1, CancellationToken cancellationToken = default)
+	internal static async ValueTask<string?[]> ReadRetrieveRecordsAsync(this PipeReader reader, Encoding encoding, Table table, int rowCount = -1, CancellationToken cancellationToken = default)
 	{
 		var pool = ArrayPool<string?>.Shared;
 		var initialCapacity = table.RecordSize * (rowCount > 0 ? rowCount : InitialRowCapacityHint);
@@ -198,9 +198,6 @@ internal static class PipeReaderExtensions
 
 					case (byte)BackendMessageCode.ReadyForQuery:
 						{
-							if (!msg.Body.IsEmpty)
-								txStatusHolder.Status = msg.Body.FirstSpan[0];
-
 							var results = new string?[count];
 							Array.Copy(buffer, results, count);
 							reader.AdvanceTo(msg.EndPosition);
@@ -217,10 +214,6 @@ internal static class PipeReaderExtensions
 							{
 								var drainMsg = await reader.ReadMessageAsync(false, cancellationToken).ConfigureAwait(false);
 								drainCode = drainMsg.Code;
-								if (drainCode == (byte)BackendMessageCode.ReadyForQuery && !drainMsg.Body.IsEmpty)
-								{
-									txStatusHolder.Status = drainMsg.Body.FirstSpan[0];
-								}
 								reader.AdvanceTo(drainMsg.EndPosition);
 							}
 							while (drainCode != (byte)BackendMessageCode.ReadyForQuery);
@@ -435,10 +428,13 @@ internal static class PipeReaderExtensions
 	#endregion
 }
 
+
 /// <summary>
 /// Value container to pass transaction status across calls without allocating closures.
 /// </summary>
+/*
 internal sealed class TransactionStatusHolder
 {
 	public byte Status { get; set; }
 }
+*/
