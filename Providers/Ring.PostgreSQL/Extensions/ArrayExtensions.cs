@@ -17,49 +17,40 @@ internal static class ArrayExtensions
 	private const byte ErrorHint = (byte)ErrorTypeCode.Hint;
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	internal static OperationalError ParseErrorFields(this Span<byte> body) =>
-		ParseErrorFields((ReadOnlySpan<byte>)body);
+	internal static OperationalError ParseErrorFields(this Span<byte> body) => ParseErrorFields((ReadOnlySpan<byte>)body); // Code size: 12 (0xc)
 
 	internal static OperationalError ParseErrorFields(this ReadOnlySpan<byte> body)
 	{
-		(int Offset, int Length) severity = (-1, 0);
-		(int Offset, int Length) sqlState = (-1, 0);
-		(int Offset, int Length) message = (-1, 0);
-		(int Offset, int Length) detail = (-1, 0);
-		(int Offset, int Length) hint = (-1, 0);
+		// Code size: 217 (0xd9)
+		string? severity = null, sqlState = null, message = null, detail = null, hint = null;
 
+		// ErrorResponse body: repeated (1-byte field code, NUL-terminated string), ended by a single 0 byte.
 		var offset = 0;
-		while (offset < body.Length && body[offset] != 0)
+		while (offset < body.Length)
 		{
 			var field = body[offset++];
-			var start = offset;
-			ReadCStringSpan(body, ref offset);
+			if (field == 0) break;
 
-			var isNullTerminated = offset <= body.Length && (offset == start || body[offset - 1] == 0);
-			var length = Math.Max(0, offset - start - (isNullTerminated ? 1 : 0));
+			var value = ReadCStringSpan(body, ref offset);
 
 			switch (field)
 			{
-				case ErrorSeverity: severity = (start, length); break;
-				case ErrorCode: sqlState = (start, length); break;
-				case ErrorMessage: message = (start, length); break;
-				case ErrorDetail: detail = (start, length); break;
-				case ErrorHint: hint = (start, length); break;
+				case ErrorSeverity: severity = Decode(value); break;
+				case ErrorCode: sqlState = Decode(value); break;
+				case ErrorMessage: message = Decode(value); break;
+				case ErrorDetail: detail = Decode(value); break;
+				case ErrorHint: hint = Decode(value); break;
+					// every other field (position, schema, table, file, line, routine...) is skipped
 			}
 		}
 
 		return new OperationalError
 		{
-			Message = severity.Offset >= 0 && severity.Offset + severity.Length <= body.Length
-				? Encoding.UTF8.GetString(body.Slice(message.Offset, message.Length)) : string.Empty,
-			SqlState = sqlState.Offset >= 0 && sqlState.Offset + sqlState.Length <= body.Length
-				? Encoding.UTF8.GetString(body.Slice(sqlState.Offset, sqlState.Length)) : string.Empty,
-			Severity = severity.Offset >= 0 && severity.Offset + severity.Length <= body.Length
-				? Encoding.UTF8.GetString(body.Slice(severity.Offset, severity.Length)) : string.Empty,
-			Detail = detail.Offset >= 0 && detail.Offset + detail.Length <= body.Length
-				? Encoding.UTF8.GetString(body.Slice(detail.Offset, detail.Length)) : null,
-			Hint = hint.Offset >= 0 && hint.Offset + hint.Length <= body.Length
-				? Encoding.UTF8.GetString(body.Slice(hint.Offset, hint.Length)) : null
+			Message = message ?? string.Empty,
+			SqlState = sqlState ?? string.Empty,
+			Severity = severity ?? string.Empty,
+			Detail = detail,
+			Hint = hint
 		};
 	}
 
@@ -70,6 +61,7 @@ internal static class ArrayExtensions
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	internal static string ParseByteaHexToBase64(this ReadOnlySpan<byte> body, int offset, int valueLength)
 	{
+		// Code size: 177 (0xb1)
 		if (valueLength < 2 || body[offset] != (byte)'\\' || body[offset + 1] != (byte)'x')
 			ThrowInvalidByteaFormat();
 
@@ -101,10 +93,13 @@ internal static class ArrayExtensions
 
 	#region Private Methods 
 
+	private static string Decode(ReadOnlySpan<byte> value) => value.IsEmpty ? string.Empty : Encoding.UTF8.GetString(value); // Code size: 27 (0x1b)
+
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	internal static ReadOnlySpan<byte> ReadCStringSpan(ReadOnlySpan<byte> data, ref int offset)
+	private static ReadOnlySpan<byte> ReadCStringSpan(ReadOnlySpan<byte> data, ref int offset)
 	{
-		var remaining = data.Slice(offset);
+		// Code size: 51 (0x33)	
+		var remaining = data[offset..];
 		var nullIdx = remaining.IndexOf((byte)0);
 
 		if (nullIdx < 0)
@@ -119,15 +114,9 @@ internal static class ArrayExtensions
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	internal static string ReadCString(ReadOnlySpan<byte> data, ref int offset)
-	{
-		var span = ReadCStringSpan(data, ref offset);
-		return span.IsEmpty ? string.Empty : Encoding.UTF8.GetString(span);
-	}
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static void DecodeHex(ReadOnlySpan<byte> source, Span<byte> destination)
 	{
+		// Code size: 70 (0x46)
 		for (var i = 0; i < destination.Length; i++)
 		{
 			var hi = HexNibble(source[i * 2]);
@@ -139,6 +128,7 @@ internal static class ArrayExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static int HexNibble(byte c)
 	{
+		// Code size: 14 (0xe)
 		var cInt = (int)c;
 		return (cInt & 0xF) + (cInt >> 6) * 9;
 	}

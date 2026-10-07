@@ -16,8 +16,8 @@ namespace Ring.PostgreSQL.Helpers;
 internal static class AuthenticationHelper
 {
 
-	internal static async ValueTask<(int? BackendPid, int? BackendSecret)> HandleAuthenticationAsync(PipeReader reader, PipeWriter writer,
-		string host, string username, string password, string kerberosServiceName, CancellationToken cancellationToken = default)
+	internal static async ValueTask<(int? BackendPid, int? BackendSecret)> HandleAuthenticationAsync(PipeReader reader, PipeWriter writer, string host, string username, string password, 
+		string kerberosServiceName, CancellationToken cancellationToken = default)
 	{
 		int? backendPid = null;
 		int? backendSecret = null;
@@ -277,7 +277,7 @@ internal static class AuthenticationHelper
 		Span<byte> data = stackalloc byte[8];
 		payload.Slice(0, 8).CopyTo(data);
 
-		pid = BinaryPrimitives.ReadInt32BigEndian(data.Slice(0, 4));
+		pid = BinaryPrimitives.ReadInt32BigEndian(data[..4]);
 		secret = BinaryPrimitives.ReadInt32BigEndian(data.Slice(4, 4));
 	}
 

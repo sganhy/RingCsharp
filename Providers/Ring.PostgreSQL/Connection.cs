@@ -51,6 +51,8 @@ public sealed class Connection : IConnection
 	public DateTime? LastConnectionTime => _lastConnectionTime;
 	public Encoding ClientEncoding => _encoding;
 	public ConnectionState State => _state;
+	public int BackendPid => _backendPid;
+
 	public int ProviderId => (int)_parameters.DatabaseProvider;
 
 	// ConnectionState is a flags enum (Open | Executing): test bits, never compare with == / !=.
@@ -86,11 +88,12 @@ public sealed class Connection : IConnection
 
 	public void Open()
 	{
+		// Code size: 41 (0x29)
 		if ((_state & ConnectionState.Open) == ConnectionState.Open) ThrowConnectionAlreadyOpen();
 		OpenAsyncImpl(CancellationToken.None).GetAwaiter().GetResult();
 	}
 
-	public Task OpenAsync(CancellationToken cancellationToken) => OpenAsyncImpl(cancellationToken);
+	public Task OpenAsync(CancellationToken cancellationToken) => OpenAsyncImpl(cancellationToken); // Code size: 8 (0x8)
 
 	public string?[] Execute(in RetrieveQuery query, ReadOnlySpan<byte> sql)
 	{
@@ -120,7 +123,7 @@ public sealed class Connection : IConnection
 		try
 		{
 			_writer!.SendQuery(sql);
-			var returnValue = DrainToReadyForQuerySync(_reader!);
+			var returnValue = _reader!.DrainToReadyForQuery();
 			_state = ConnectionState.Open;
 			return returnValue;
 		}
@@ -142,7 +145,7 @@ public sealed class Connection : IConnection
 		try
 		{
 			_writer!.SendQuery(sql);
-			var returnValue = DrainToReadyForQuerySync(_reader!);
+			var returnValue = _reader!.DrainToReadyForQuery();
 			returnValue?.Set(query);
 			_state = ConnectionState.Open;
 			return returnValue;
@@ -192,7 +195,7 @@ public sealed class Connection : IConnection
 		try
 		{
 			_writer!.SendExtendedQuery(sql, query, _encoding);
-			var returnValue = DrainToReadyForQuerySync(_reader!);
+			var returnValue = _reader!.DrainToReadyForQuery();
 			_state = ConnectionState.Open;
 			return returnValue;
 		}
@@ -269,16 +272,7 @@ public sealed class Connection : IConnection
 			: vt.AsTask().GetAwaiter().GetResult();
 		return result;
 	}
-
-	private static OperationalError? DrainToReadyForQuerySync(PipeReader reader)
-	{
-		var vt = reader.DrainToReadyForQueryAsync();
-		var (error, _) = vt.IsCompleted
-			? vt.GetAwaiter().GetResult()
-			: vt.AsTask().GetAwaiter().GetResult();
-		return error;
-	}
-
+		
 	private async Task OpenAsyncImpl(CancellationToken cancellationToken)
 	{
 		if ((_state & ConnectionState.Open) == ConnectionState.Open) ThrowConnectionAlreadyOpen();

@@ -29,7 +29,8 @@ internal class ConnectionMock : IConnection
     public ConnectionState State => _connectionState;
     public Encoding ClientEncoding => Encoding.UTF8;
     public int ProviderId => (int)_databaseProvider;
-    public void Close() => _connectionState = ConnectionState.Closed;
+	public int BackendPid => 88;
+	public void Close() => _connectionState = ConnectionState.Closed;
     public Task CloseAsync(CancellationToken cancellationToken) => 
         Task.Run(() =>
         {
