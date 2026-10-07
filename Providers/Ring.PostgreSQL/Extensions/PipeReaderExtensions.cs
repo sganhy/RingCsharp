@@ -5,11 +5,9 @@ using Ring.Schema.Models;
 using Ring.Util.Enums;
 using Ring.Util.Helpers;
 using System.Buffers;
-using System.Buffers.Binary;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO.Pipelines;
-using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace Ring.PostgreSQL.Extensions;
@@ -111,7 +109,7 @@ internal static class PipeReaderExtensions
 			var result = await reader.ReadAsync(cancellationToken).ConfigureAwait(false);
 			var buffer = result.Buffer;
 
-			while (TryReadMessageHeader(ref buffer, out var messageCode, out var payloadLength))
+			while (buffer.TryReadMessageHeader(out var messageCode, out var payloadLength))
 			{
 				if (buffer.Length < 5 + payloadLength)
 				{
@@ -154,25 +152,7 @@ internal static class PipeReaderExtensions
 			}
 		}
 	}
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private static bool TryReadMessageHeader(ref ReadOnlySequence<byte> buffer, out BackendMessageCode code, out int payloadLength)
-	{
-		if (buffer.Length < 5)
-		{
-			code = default;
-			payloadLength = 0;
-			return false;
-		}
-
-		Span<byte> header = stackalloc byte[5];
-		buffer.Slice(0, 5).CopyTo(header);
-
-		code = (BackendMessageCode)header[0];
-		payloadLength = BinaryPrimitives.ReadInt32BigEndian(header.Slice(1, 4)) - 4;
-		return true;
-	}
-
+	
 	// Refactored to accept a transaction status out reference instead of allocating an Action<byte> closure
 	internal static async ValueTask<string?[]> ReadRetrieveRecordsAsync(this PipeReader reader, Encoding encoding, Table table, int rowCount = -1, CancellationToken cancellationToken = default)
 	{

@@ -1,4 +1,5 @@
 ﻿using Ring.Data;
+using Ring.PostgreSQL.Enums;
 using Ring.Schema.Enums;
 using Ring.Schema.Models;
 using Ring.Util.Enums;
@@ -56,24 +57,64 @@ internal static class ReadOnlySequenceExtensions
 	/// <summary>
 	/// Decodes one DataRow body into <paramref name="cells"/> at <paramref name="count"/> (growing the pooled array when needed).
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static void AppendRecordData(this in ReadOnlySequence<byte> body, Encoding encoding, Table table, ref string?[] cells, int count)
 	{
-		// Code size: 73 (0x49)
+		// Code size: 77 (0x4d)
 		var required = count + table.RecordSize;
 		if (required > cells.Length) EnsureCapacity(ref cells, count, required);
 
 		if (body.IsSingleSegment) AppendFromSpan(body.FirstSpan, encoding, table, cells, count);
 		else AppendFromSequence(body, encoding, table, cells, count);
 
-		cells[required - 1] = null;
+		// Ensure array is non-empty before writing the trailing null terminator
+		if (required > 0) cells[required - 1] = null;
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal static bool TryReadMessageHeader(this in ReadOnlySequence<byte> buffer, out BackendMessageCode code, out int payloadLength)
+	{
+		// Code size: 70 (0x46) - no virtual calls, no SequenceReader, no Slice, one bounds check per cell.
+		var first = buffer.FirstSpan;
+		if (first.Length >= HeaderSize) // Fast path: Header is contiguous in the first segment
+		{
+			code = (BackendMessageCode)first[0];
+			payloadLength = BinaryPrimitives.ReadInt32BigEndian(first[1..]) - 4;
+
+			if ((uint)payloadLength > MaxBodyLength) ThrowInvalidMessageLength();
+			return true;
+		}
+
+		return TryReadMessageHeaderSlow(buffer, out code, out payloadLength);
 	}
 
 	#region private helpers
 
+	[MethodImpl(MethodImplOptions.NoInlining)]
+	private static bool TryReadMessageHeaderSlow(in ReadOnlySequence<byte> buffer, out BackendMessageCode code, out int payloadLength)
+	{
+		// Code size: 95 (0x5f)
+		if (buffer.Length < HeaderSize)
+		{
+			code = default;
+			payloadLength = default;
+			return false;
+		}
+
+		Span<byte> header = stackalloc byte[HeaderSize];
+		buffer.Slice(0, HeaderSize).CopyTo(header);
+
+		code = (BackendMessageCode)header[0];
+		payloadLength = BinaryPrimitives.ReadInt32BigEndian(header[1..]) - 4;
+
+		if ((uint)payloadLength > MaxBodyLength) ThrowInvalidMessageLength();
+		return true;
+	}
+
 	// Fast path: the whole row is one contiguous span. No SequenceReader, no Slice, one bounds check per cell.
 	private static void AppendFromSpan(ReadOnlySpan<byte> row, Encoding encoding, Table table, string?[] cells, int count)
 	{
-		// Code size: 176 (0xb0)
+		// Code size: 177 (0xb1) - no virtual calls
 		var offset = ColumnCountSize;
 
 		foreach (ref readonly var column in new ReadOnlySpan<Column>(table.Columns))
@@ -81,13 +122,16 @@ internal static class ReadOnlySequenceExtensions
 			if (column.Type == EntityType.SearchableColumn) continue;
 			if (row.Length - offset < 4) break;
 
-			var valueLength = BinaryPrimitives.ReadInt32BigEndian(row[offset..]);
+			// Micro-optimization 1: Slice explicitly by length instead of using range indexing [offset..]
+			// to give the JIT explicit bounds and prevent range construction overhead.
+			var valueLength = BinaryPrimitives.ReadInt32BigEndian(row.Slice(offset, 4));
 			offset += 4;
 
 			var index = column.RecordIndex + count;
 			if (valueLength < 0) { cells[index] = null; continue; }
 			if (valueLength > row.Length - offset) ThrowInvalidMessageLength();
 
+			// Micro-optimization 2: Use row.Slice directly instead of range syntax row[offset..]
 			var value = row.Slice(offset, valueLength);
 			offset += valueLength;
 
