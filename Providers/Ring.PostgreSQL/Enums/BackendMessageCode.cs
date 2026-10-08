@@ -2,6 +2,8 @@
 
 internal enum BackendMessageCode : byte
 {
+	Unknown = 0,
+
 	/// <summary>
 	///     Identifies the message as an authentication request ('R').
 	/// </summary>
@@ -126,4 +128,5 @@ internal enum BackendMessageCode : byte
 	///     Identifies the message as a row description ('T').
 	/// </summary>
 	RowDescription = (byte)'T',
+
 }

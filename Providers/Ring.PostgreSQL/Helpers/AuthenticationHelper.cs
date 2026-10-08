@@ -82,7 +82,7 @@ internal static class AuthenticationHelper
 		Span<byte> header = stackalloc byte[5];
 		buffer.Slice(0, 5).CopyTo(header);
 
-		var messageType = (BackendMessageCode)header[0];
+		var messageType = header[0].ToBackendMessageCode();
 		var messagePayload = buffer.Slice(5, messageLength - 4);
 		var isComplete = false;
 		int? pid = null;

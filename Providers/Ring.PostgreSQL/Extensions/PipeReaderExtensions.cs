@@ -72,13 +72,13 @@ internal static class PipeReaderExtensions
 
 			while (buffer.Length >= 5)
 			{
-				if (!buffer.TryReadHeader(out var code, out var bodyLength))
+				if (!buffer.TryReadHeader(out var rawCode, out var bodyLength))
 					ThrowInvalidMessageLength(); // corrupt length field
-
+				var code = rawCode.ToBackendMessageCode();
 				var total = 5 + bodyLength;
 				if (buffer.Length < total) break; // incomplete message, wait for more data
-
-				switch ((BackendMessageCode)code)
+				// not good here code !
+				switch (code)
 				{
 					case BackendMessageCode.ReadyForQuery:
 						reader.AdvanceTo(buffer.GetPosition(total));
@@ -99,6 +99,10 @@ internal static class PipeReaderExtensions
 				throw new InvalidOperationException("Connection closed before ReadyForQuery message was received.");
 		}
 	}
+	/// <summary>
+	/// Reads from the pipe until a <see cref="BackendMessageCode.ReadyForQuery"/> message is encountered.
+	/// Accumulates operational errors and extracts final transaction status using zero-allocation sequence extensions.
+	/// </summary>
 	internal static async ValueTask<(OperationalError? Error, byte TransactionStatus)> DrainToReadyForQueryAsync(this PipeReader reader, CancellationToken cancellationToken = default)
 	{
 		OperationalError? error = null;
@@ -109,31 +113,33 @@ internal static class PipeReaderExtensions
 			var result = await reader.ReadAsync(cancellationToken).ConfigureAwait(false);
 			var buffer = result.Buffer;
 
-			while (buffer.TryReadMessageHeader(out var messageCode, out var payloadLength))
+			while (buffer.TryReadHeader(out byte rawCode, out int bodyLength))
 			{
-				if (buffer.Length < 5 + payloadLength)
+				var code = rawCode.ToBackendMessageCode();
+				var totalMessageLength = 5 + bodyLength;
+				if (buffer.Length < totalMessageLength)
 				{
-					// Incomplete message body in buffer, wait for more data
+					// Incomplete message body in buffer, wait for more network bytes
 					break;
 				}
 
-				var payload = buffer.Slice(5, payloadLength);
+				var payload = buffer.Slice(5, bodyLength);
 
-				switch (messageCode)
+				switch (code)
 				{
 					case BackendMessageCode.ReadyForQuery:
 						if (!payload.IsEmpty)
 						{
-							// ReadyForQuery payload contains 1 byte representing transaction status
+							// ReadyForQuery payload contains 1 byte representing transaction status ('I', 'T', 'E')
 							transactionStatus = payload.FirstSpan[0];
 						}
-						var readyPosition = buffer.GetPosition(5 + payloadLength);
+						var readyPosition = buffer.GetPosition(totalMessageLength);
 						reader.AdvanceTo(readyPosition, readyPosition);
 						return (error, transactionStatus);
 
 					case BackendMessageCode.ErrorResponse:
-						var errorSpan = payload.IsSingleSegment ? payload.FirstSpan : payload.ToArray().AsSpan();
-						error = errorSpan.ParseErrorFields();
+						// Zero-allocation error field parsing directly from ReadOnlySequence<byte>
+						error = payload.ParseErrorFieldsFromSequence();
 						break;
 
 					default:
@@ -141,7 +147,7 @@ internal static class PipeReaderExtensions
 						break;
 				}
 
-				buffer = buffer.Slice(buffer.GetPosition(5 + payloadLength));
+				buffer = buffer.Slice(totalMessageLength);
 			}
 
 			reader.AdvanceTo(buffer.Start, buffer.End);
@@ -152,7 +158,8 @@ internal static class PipeReaderExtensions
 			}
 		}
 	}
-	
+
+
 	// Refactored to accept a transaction status out reference instead of allocating an Action<byte> closure
 	internal static async ValueTask<string?[]> ReadRetrieveRecordsAsync(this PipeReader reader, Encoding encoding, Table table, int rowCount = -1, CancellationToken cancellationToken = default)
 	{
