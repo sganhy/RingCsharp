@@ -8,6 +8,7 @@ using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO.Pipelines;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace Ring.PostgreSQL.Extensions;
@@ -77,7 +78,7 @@ internal static class PipeReaderExtensions
 				var code = rawCode.ToBackendMessageCode();
 				var total = 5 + bodyLength;
 				if (buffer.Length < total) break; // incomplete message, wait for more data
-				// not good here code !
+
 				switch (code)
 				{
 					case BackendMessageCode.ReadyForQuery:
@@ -103,10 +104,9 @@ internal static class PipeReaderExtensions
 	/// Reads from the pipe until a <see cref="BackendMessageCode.ReadyForQuery"/> message is encountered.
 	/// Accumulates operational errors and extracts final transaction status using zero-allocation sequence extensions.
 	/// </summary>
-	internal static async ValueTask<(OperationalError? Error, byte TransactionStatus)> DrainToReadyForQueryAsync(this PipeReader reader, CancellationToken cancellationToken = default)
+	internal static async ValueTask<OperationalError?> DrainToReadyForQueryAsync(this PipeReader reader, CancellationToken cancellationToken = default)
 	{
 		OperationalError? error = null;
-		byte transactionStatus = 0;
 
 		while (true)
 		{
@@ -131,11 +131,11 @@ internal static class PipeReaderExtensions
 						if (!payload.IsEmpty)
 						{
 							// ReadyForQuery payload contains 1 byte representing transaction status ('I', 'T', 'E')
-							transactionStatus = payload.FirstSpan[0];
+							_ = payload.FirstSpan[0];
 						}
 						var readyPosition = buffer.GetPosition(totalMessageLength);
 						reader.AdvanceTo(readyPosition, readyPosition);
-						return (error, transactionStatus);
+						return error;
 
 					case BackendMessageCode.ErrorResponse:
 						// Zero-allocation error field parsing directly from ReadOnlySequence<byte>
@@ -161,6 +161,7 @@ internal static class PipeReaderExtensions
 
 
 	// Refactored to accept a transaction status out reference instead of allocating an Action<byte> closure
+	[AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
 	internal static async ValueTask<string?[]> ReadRetrieveRecordsAsync(this PipeReader reader, Encoding encoding, Table table, int rowCount = -1, CancellationToken cancellationToken = default)
 	{
 		var pool = ArrayPool<string?>.Shared;
@@ -173,16 +174,15 @@ internal static class PipeReaderExtensions
 			while (true)
 			{
 				var msg = await reader.ReadMessageAsync(false, cancellationToken).ConfigureAwait(false);
-
-				switch (msg.Code)
+				var code = msg.Code.ToBackendMessageCode();
+				switch (code)
 				{
-					case (byte)BackendMessageCode.DataRow:
+					case BackendMessageCode.DataRow:
 						msg.Body.AppendRecordData(encoding, table, ref buffer, count);
 						count += table.RecordSize;
 						reader.AdvanceTo(msg.EndPosition);
 						break;
-
-					case (byte)BackendMessageCode.ReadyForQuery:
+					case BackendMessageCode.ReadyForQuery:
 						{
 							var results = new string?[count];
 							Array.Copy(buffer, results, count);
@@ -190,7 +190,7 @@ internal static class PipeReaderExtensions
 							return results;
 						}
 
-					case (byte)BackendMessageCode.ErrorResponse:
+					case BackendMessageCode.ErrorResponse:
 						{
 							byte drainCode;
 							var error = msg.Body.ParseErrorFieldsFromSequence();
@@ -203,23 +203,20 @@ internal static class PipeReaderExtensions
 								reader.AdvanceTo(drainMsg.EndPosition);
 							}
 							while (drainCode != (byte)BackendMessageCode.ReadyForQuery);
-
-							throw error.ToPgOperationalError();
+							break;
 						}
-
-					case (byte)BackendMessageCode.RowDescription:
-					case (byte)BackendMessageCode.CommandComplete:
-					case (byte)BackendMessageCode.EmptyQueryResponse:
-					case (byte)BackendMessageCode.NoticeResponse:
-					case (byte)BackendMessageCode.ParameterStatus:
-					case (byte)BackendMessageCode.NotificationResponse:
-					case (byte)BackendMessageCode.ParseComplete:
-					case (byte)BackendMessageCode.BindComplete:
-					case (byte)BackendMessageCode.NoData:
-					case (byte)BackendMessageCode.ParameterDescription:
+					case BackendMessageCode.RowDescription:
+					case BackendMessageCode.CommandComplete:
+					case BackendMessageCode.EmptyQueryResponse:
+					case BackendMessageCode.NoticeResponse:
+					case BackendMessageCode.ParameterStatus:
+					case BackendMessageCode.NotificationResponse:
+					case BackendMessageCode.ParseComplete:
+					case BackendMessageCode.BindComplete:
+					case BackendMessageCode.NoData:
+					case BackendMessageCode.ParameterDescription:
 						reader.AdvanceTo(msg.EndPosition);
 						break;
-
 					default:
 						reader.AdvanceTo(msg.EndPosition);
 						UnexpectedProviderMessage(msg.Code);

@@ -22,4 +22,16 @@ public sealed class ByteExtensionsTest : BaseTest
 			Assert.Equal(messageCode, relationTypeResult);
 		}
 	}
+
+	[Fact]
+	public void ToBackendMessageCode_1_Unknown()
+	{
+		// arrange 
+		// act 
+		var result = ByteExtensions.ToBackendMessageCode(1);
+
+		// assert 
+		Assert.Equal(BackendMessageCode.Unknown, result);
+	}
+
 }

@@ -51,9 +51,7 @@ internal static class ReadOnlySequenceExtensions
 	/// <summary>Parses an ErrorResponse body. Single segment (always, in practice): parsed in place, no copy.</summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static OperationalError ParseErrorFieldsFromSequence(this in ReadOnlySequence<byte> sequence) => // Code size: 27 (0x1b)
-		sequence.IsSingleSegment
-			? sequence.FirstSpan.ParseErrorFields()
-			: ParseErrorFieldsSlow(sequence);
+		sequence.IsSingleSegment ? sequence.FirstSpan.ParseErrorFields() : ParseErrorFieldsSlow(sequence);
 
 	/// <summary>
 	/// Decodes one DataRow body into <paramref name="cells"/> at <paramref name="count"/> (growing the pooled array when needed).
@@ -65,10 +63,8 @@ internal static class ReadOnlySequenceExtensions
 		var required = count + table.RecordSize;
 		if (required > cells.Length) EnsureCapacity(ref cells, count, required);
 
-		if (body.IsSingleSegment)
-			AppendFromSpan(body.FirstSpan, encoding, table, cells, count);
-		else
-			AppendFromSequence(body, encoding, table, cells, count);
+		if (body.IsSingleSegment) AppendFromSpan(body.FirstSpan, encoding, table, cells, count);
+		else AppendFromSequence(body, encoding, table, cells, count);
 
 		if (required > 0) cells[required - 1] = null;
 	}
@@ -78,6 +74,7 @@ internal static class ReadOnlySequenceExtensions
 	// Fast path: the whole row is one contiguous span. No SequenceReader, no Slice, one bounds check per cell.
 	private static void AppendFromSpan(ReadOnlySpan<byte> row, Encoding encoding, Table table, string?[] cells, int count)
 	{
+		// Code size: 177 (0xb1)
 		var offset = ColumnCountSize;
 
 		foreach (ref readonly var column in new ReadOnlySpan<Column>(table.Columns))
@@ -104,6 +101,7 @@ internal static class ReadOnlySequenceExtensions
 	// Rare: the row straddles pipe segments. Cells are still decoded from the current span when they fit in it.
 	private static void AppendFromSequence(in ReadOnlySequence<byte> body, Encoding encoding, Table table, string?[] cells, int count)
 	{
+		// Code size: 220 (0xdc)
 		var reader = new SequenceReader<byte>(body);
 		reader.Advance(ColumnCountSize);
 
@@ -130,6 +128,7 @@ internal static class ReadOnlySequenceExtensions
 
 	private static string Decode(ReadOnlySpan<byte> value, FieldType fieldType, Encoding encoding) => fieldType switch
 	{
+		// Code size: 90 (0x5a)
 		FieldType.ByteArray => value.ParseByteaHexToBase64(0, value.Length),
 		FieldType.Boolean => value.Length == 1 && (value[0] == PgTrueChar || value[0] == PgTrueDigit) ? BooleanTrue : BooleanFalse,
 		_ => encoding.GetString(value)
@@ -139,6 +138,7 @@ internal static class ReadOnlySequenceExtensions
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	private static string DecodeStraddling(ref SequenceReader<byte> reader, int length, FieldType fieldType, Encoding encoding)
 	{
+		// Code size: 92 (0x5c)		
 		byte[]? rented = null;
 		Span<byte> span = length <= StackallocThreshold
 			? stackalloc byte[length]
@@ -159,6 +159,7 @@ internal static class ReadOnlySequenceExtensions
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	private static bool TryReadHeaderSlow(in ReadOnlySequence<byte> buffer, out byte code, out int bodyLength)
 	{
+		// Code size: 96 (0x60)
 		if (buffer.Length < HeaderSize)
 		{
 			code = default;
@@ -182,6 +183,7 @@ internal static class ReadOnlySequenceExtensions
 
 	private static void EnsureCapacity(ref string?[] cells, int usedCount, int required)
 	{
+		// Code size: 45 (0x2d)
 		var pool = ArrayPool<string?>.Shared;
 		var grown = pool.Rent(Math.Max(cells.Length * 2, required));
 		Array.Copy(cells, grown, usedCount);

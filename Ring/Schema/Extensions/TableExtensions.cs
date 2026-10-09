@@ -2,6 +2,7 @@
 using Ring.Schema.Models;
 using Ring.Util.Extensions;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Index = Ring.Schema.Models.Index;
 
 namespace Ring.Schema.Extensions;
@@ -19,20 +20,29 @@ internal static class TableExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static Field? GetField(this Table table, string name)
 	{
-		// Code size: 90 (0x5a) - no virtual calls
-		var span = new ReadOnlySpan<Field>(table.Fields);
-		int indexerLeft = 0, indexerRight = span.Length - 1;
-		while (indexerLeft <= indexerRight)
+		// Code size: 82 (0x52) - no virtual calls
+		var fields = table.Fields;
+
+		// Obtain reference to the first array element payload (bypasses array bounds checking entirely)
+		ref Field baseRef = ref MemoryMarshal.GetArrayDataReference(fields);
+		int left = 0, right = fields.Length - 1;
+
+		while (left <= right)
 		{
-			var indexerMiddle = (indexerLeft + indexerRight) >> 1;
-			var indexerCompare = string.CompareOrdinal(name, span[indexerMiddle].Name);
-			if (indexerCompare == 0) return span[indexerMiddle];
-			if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
-			else indexerRight = indexerMiddle - 1;
+			int middle = (left + right) >> 1;
+
+			// Direct zero-cost memory pointer offset read
+			ref readonly var candidate = ref Unsafe.Add(ref baseRef, middle);
+
+			int compare = string.CompareOrdinal(name, candidate.Name);
+			if (compare == 0) return candidate;
+			if (compare > 0) left = middle + 1;
+			else right = middle - 1;
 		}
+
 		return null;
 	}
-
+	
 	/// <summary>
 	/// 	Get field by name, case unsensitive search ==> O(n) complexity
 	/// </summary>
@@ -67,19 +77,27 @@ internal static class TableExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static int GetFieldIndex(this Table table, string name)
 	{
-		// Code size: 82 (0x52) - no virtual calls
-		var span = new ReadOnlySpan<Field>(table.Fields);
-		int indexerLeft = 0, indexerRight = span.Length - 1;
-		while (indexerLeft <= indexerRight)
+		// Code size: 76 (0x4c) - no virtual calls
+		var fields = table.Fields;
+
+		// Obtain reference to the first array element payload (bypasses array bounds checking entirely)
+		ref Field baseRef = ref MemoryMarshal.GetArrayDataReference(fields);
+		int left = 0, right = fields.Length - 1;
+
+		while (left <= right)
 		{
-			var indexerMiddle = (indexerLeft + indexerRight) >> 1;
-			var indexerCompare = string.CompareOrdinal(name, span[indexerMiddle].Name);
-			if (indexerCompare == 0) return indexerMiddle;
-			if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
-			else indexerRight = indexerMiddle - 1;
+			int middle = (left + right) >> 1;
+
+			// Direct zero-cost memory pointer offset read without bounds check
+			int compare = string.CompareOrdinal(name, Unsafe.Add(ref baseRef, middle).Name);
+			if (compare == 0) return middle;
+			if (compare > 0) left = middle + 1;
+			else right = middle - 1;
 		}
+
 		return -1;
 	}
+
 
 	/// <summary>
 	/// 	Get relation object by name ==> O(log n) complexity
@@ -90,17 +108,26 @@ internal static class TableExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static Relation? GetRelation(this Table table, string name)
 	{
-		// Code size: 90 (0x5a) - no virtual calls
-		var span = new ReadOnlySpan<Relation>(table.Relations);
-		int indexerLeft = 0, indexerRight = span.Length - 1;
-		while (indexerLeft <= indexerRight)
+		// Code size: 82 (0x52) - no virtual calls
+		var relations = table.Relations;
+
+		// Direct reference to the first array payload byte (completely bypasses bounds checking)
+		ref Relation baseRef = ref MemoryMarshal.GetArrayDataReference(relations);
+		int left = 0, right = relations.Length - 1;
+
+		while (left <= right)
 		{
-			var indexerMiddle = (indexerLeft + indexerRight) >> 1;
-			var indexerCompare = string.CompareOrdinal(name, span[indexerMiddle].Name);
-			if (indexerCompare == 0) return span[indexerMiddle];
-			if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
-			else indexerRight = indexerMiddle - 1;
+			int middle = (left + right) >> 1;
+
+			// Zero-cost memory pointer offset access
+			ref readonly var candidate = ref Unsafe.Add(ref baseRef, middle);
+
+			int compare = string.CompareOrdinal(name, candidate.Name);
+			if (compare == 0) return candidate;
+			if (compare > 0) left = middle + 1;
+			else right = middle - 1;
 		}
+
 		return null;
 	}
 
@@ -139,21 +166,27 @@ internal static class TableExtensions
 	/// </summary>
 	/// <param name="table">table object</param>
 	/// <param name="name">relation name</param>
-	/// <returns>Field index or -1 if not found</returns>
+	/// <returns>Relation index or -1 if not found</returns>
 	internal static int GetRelationIndex(this Table table, string name)
 	{
-		// Code size: 82 (0x52)
-		var span = new ReadOnlySpan<Relation>(table.Relations);
+		// Code size: 76 (0x4c) - no virtual calls
+		var relations = table.Relations;
 
-		int indexerLeft = 0, indexerRight = span.Length - 1;
-		while (indexerLeft <= indexerRight)
+		// Direct reference to the first array payload byte (completely bypasses bounds checking)
+		ref Relation baseRef = ref MemoryMarshal.GetArrayDataReference(relations);
+		int left = 0, right = relations.Length - 1;
+
+		while (left <= right)
 		{
-			var indexerMiddle = (indexerLeft + indexerRight) >> 1;
-			var indexerCompare = string.CompareOrdinal(name, span[indexerMiddle].Name);
-			if (indexerCompare == 0) return indexerMiddle;
-			if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
-			else indexerRight = indexerMiddle - 1;
+			int middle = (left + right) >> 1;
+
+			// Direct zero-cost memory pointer offset access without bounds check
+			int compare = string.CompareOrdinal(name, Unsafe.Add(ref baseRef, middle).Name);
+			if (compare == 0) return middle;
+			if (compare > 0) left = middle + 1;
+			else right = middle - 1;
 		}
+
 		return -1;
 	}
 
@@ -221,27 +254,34 @@ internal static class TableExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static Column? GetColumn(this Table table, int id, EntityType type)
 	{
-		// Code size: 151 (0x97) - no virtual calls
+		// Code size: 145 (0x91) - no virtual calls
+		var columns = table.Columns;
 		var colWeight = Meta.ColumnTypeWeight(type);
-		var span = new ReadOnlySpan<Column>(table.Columns); // sorted by Id
-		int indexerLeft = 0, indexerRight = span.Length - 1;
 
-		while (indexerLeft <= indexerRight)
+		// Direct reference to the array payload base (bypasses array bounds checking entirely)
+		ref Column baseRef = ref MemoryMarshal.GetArrayDataReference(columns);
+		int left = 0, right = columns.Length - 1;
+
+		while (left <= right)
 		{
-			var indexerMiddle = (indexerLeft + indexerRight) >> 1;
-			ref readonly var candidate = ref span[indexerMiddle]; // one indexer call, aliased — no Column copy yet
-			var indexerCompare = id - candidate.Id;
-			if (indexerCompare == 0)
+			int middle = (left + right) >> 1;
+
+			// Aliased reference to middle element: zero array bounds check, zero double-indexing
+			ref readonly var candidate = ref Unsafe.Add(ref baseRef, middle);
+
+			int compare = id - candidate.Id;
+			if (compare == 0)
 			{
-				// sub search on Column.Type
-				var weightCompare = colWeight - Meta.ColumnTypeWeight(candidate.Type);
-				if (weightCompare == 0) return candidate; // the only copy: building the Column? to return
-				if (weightCompare > 0) indexerLeft = indexerMiddle + 1;
-				else indexerRight = indexerMiddle - 1;
+				// Sub-search on Column.Type weight
+				int weightCompare = colWeight - Meta.ColumnTypeWeight(candidate.Type);
+				if (weightCompare == 0) return candidate;
+				if (weightCompare > 0) left = middle + 1;
+				else right = middle - 1;
 			}
-			else if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
-			else indexerRight = indexerMiddle - 1;
+			else if (compare > 0) left = middle + 1;
+			else right = middle - 1;
 		}
+
 		return null;
 	}
 
@@ -250,26 +290,34 @@ internal static class TableExtensions
 
 	internal static int GetColumnIndex(this Table table, int id, EntityType type)
 	{
-		// Code size: 135 (0x87)
+		// Code size: 126 (0x7e)
+		var columns = table.Columns;
 		var colWeight = Meta.ColumnTypeWeight(type);
-		var span = new ReadOnlySpan<Column>(table.Columns); // sorted by Id
-		int indexerLeft = 0, indexerRight = span.Length - 1;
 
-		while (indexerLeft <= indexerRight)
+		// Direct reference to the array payload base (bypasses array bounds checking entirely)
+		ref Column baseRef = ref MemoryMarshal.GetArrayDataReference(columns);
+		int left = 0, right = columns.Length - 1;
+
+		while (left <= right)
 		{
-			var indexerMiddle = (indexerLeft + indexerRight) >> 1;
-			var indexerCompare = id - span[indexerMiddle].Id;
-			if (indexerCompare == 0)
+			int middle = (left + right) >> 1;
+
+			// Single aliased reference to element at middle: prevents double array access
+			ref readonly var candidate = ref Unsafe.Add(ref baseRef, middle);
+
+			int compare = id - candidate.Id;
+			if (compare == 0)
 			{
-				// sub search on Column.Type
-				var weightCompare = colWeight - Meta.ColumnTypeWeight(span[indexerMiddle].Type);
-				if (weightCompare == 0) return indexerMiddle;
-				if (weightCompare > 0) indexerLeft = indexerMiddle + 1;
-				else indexerRight = indexerMiddle - 1;
+				// Sub-search on Column.Type weight
+				int weightCompare = colWeight - Meta.ColumnTypeWeight(candidate.Type);
+				if (weightCompare == 0) return middle;
+				if (weightCompare > 0) left = middle + 1;
+				else right = middle - 1;
 			}
-			else if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
-			else indexerRight = indexerMiddle - 1;
+			else if (compare > 0) left = middle + 1;
+			else right = middle - 1;
 		}
+
 		return -1;
 	}
 

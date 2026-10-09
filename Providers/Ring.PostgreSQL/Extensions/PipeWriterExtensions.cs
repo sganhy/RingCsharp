@@ -12,6 +12,10 @@ namespace Ring.PostgreSQL.Extensions;
 
 internal static class PipeWriterExtensions
 {
+	// Query: 1 code + 4 length + sql + 1 terminator, so the sql can be at most MaxMessageBody - 5 bytes... kept conservative.
+	//private const int MaxSqlLength = 0x3FFFFFFF - 16; // 1073741801
+	private const int StackallocThreshold = 128;
+
 
 	internal static ValueTask<FlushResult> SendQueryAsync(this PipeWriter writer, ReadOnlyMemory<byte> sql, CancellationToken cancellationToken = default)
 	{
@@ -30,6 +34,7 @@ internal static class PipeWriterExtensions
 	/// <summary>Writes a Query message and flushes (blocking).</summary>
 	internal static void SendQuery(this PipeWriter writer, ReadOnlySpan<byte> sql)
 	{
+		// Code size: 87 (0x57)
 		var msgLength = 6 + sql.Length;
 		var span = writer.GetSpan(msgLength);
 
@@ -69,8 +74,6 @@ internal static class PipeWriterExtensions
 		writer.Advance(offset);
 		writer.FlushBlocking();
 	}
-
-	#region authentication & startup
 
 	internal static ValueTask<FlushResult> SendStartupAsync(this PipeWriter writer, ConnectionParameters connParameters, CancellationToken cancellationToken = default)
 	{
@@ -155,43 +158,51 @@ internal static class PipeWriterExtensions
 
 	/// <summary>
 	/// Sends the MD5 PasswordMessage: "md5" + hex(md5(hex(md5(password + user)) + salt)).
-	/// Built directly in the pipe buffer (no string allocation); the message and the intermediate hashes are zeroed afterwards.
+	/// Built directly in the pipe buffer (no string allocation); the message and the intermediate hashes are zeroed afterwards,
+	/// including when an exception is thrown half way.
 	/// </summary>
 	internal static ValueTask SendMd5PasswordAsync(this PipeWriter writer, string username, string password, ReadOnlySpan<byte> salt, CancellationToken cancellationToken = default)
 	{
 		if (salt.Length != 4) throw new ArgumentException("The MD5 salt must be 4 bytes.", nameof(salt));
 
 		Span<byte> innerHashHex = stackalloc byte[32];
-		ComputeUserPasswordMd5Hex(password, username, innerHashHex);
-
 		Span<byte> combined = stackalloc byte[32 + 4];
-		innerHashHex.CopyTo(combined);
-		salt.CopyTo(combined[32..]);
-
 		Span<byte> outerHashHex = stackalloc byte[32];
-		ComputeMd5Hex(combined, outerHashHex);
 
-		const int length = 4 + 3 + 32 + 1;
-		const int total = 1 + length;
+		try
+		{
+			ComputeUserPasswordMd5Hex(password, username, innerHashHex);
 
-		var memory = writer.GetMemory(total).Slice(0, total);
-		var span = memory.Span;
+			innerHashHex.CopyTo(combined);
+			salt.CopyTo(combined[32..]);
 
-		span[0] = (byte)FrontendMessageCode.Password;
-		BinaryPrimitives.WriteInt32BigEndian(span[1..], length);
-		span[5] = (byte)'m';
-		span[6] = (byte)'d';
-		span[7] = (byte)'5';
-		outerHashHex.CopyTo(span.Slice(8, 32));
-		span[8 + 32] = 0;
+			ComputeMd5Hex(combined, outerHashHex);
 
-		writer.Advance(total);
+			const int length = 4 + 3 + 32 + 1;
+			const int total = 1 + length;
 
-		// inner hash == md5(password + user) is itself enough to authenticate: don't leave it on the stack
-		CryptographicOperations.ZeroMemory(innerHashHex);
-		CryptographicOperations.ZeroMemory(combined);
+			var memory = writer.GetMemory(total).Slice(0, total);
+			var span = memory.Span;
 
-		return FlushAndScrubAsync(writer, memory, cancellationToken);
+			span[0] = (byte)FrontendMessageCode.Password;
+			BinaryPrimitives.WriteInt32BigEndian(span[1..], length);
+			span[5] = (byte)'m';
+			span[6] = (byte)'d';
+			span[7] = (byte)'5';
+			outerHashHex.CopyTo(span.Slice(8, 32));
+			span[8 + 32] = 0;
+
+			writer.Advance(total);
+
+			return FlushAndScrubAsync(writer, memory, cancellationToken);
+		}
+		finally
+		{
+			// inner hash == md5(password + user) is itself enough to authenticate: don't leave it on the stack
+			CryptographicOperations.ZeroMemory(innerHashHex);
+			CryptographicOperations.ZeroMemory(combined);
+			CryptographicOperations.ZeroMemory(outerHashHex);
+		}
 	}
 
 	internal static ValueTask<FlushResult> SendSASLInitialResponseAsync(this PipeWriter writer, string mechanism, byte[] data, CancellationToken cancellationToken = default)
@@ -231,8 +242,6 @@ internal static class PipeWriterExtensions
 		return FlushAndScrubAsync(writer, memory, cancellationToken);
 	}
 
-	#endregion
-
 	#region private helpers
 
 	// Assumes a stream-backed writer (PipeWriter.Create(stream)): when FlushAsync completes, the bytes have
@@ -257,7 +266,7 @@ internal static class PipeWriterExtensions
 		var totalLen = pwdBytesCount + userBytesCount;
 
 		byte[]? rented = null;
-		Span<byte> buffer = totalLen <= 256
+		Span<byte> buffer = totalLen <= StackallocThreshold
 			? stackalloc byte[totalLen]
 			: (rented = ArrayPool<byte>.Shared.Rent(totalLen)).AsSpan(0, totalLen);
 
@@ -265,9 +274,10 @@ internal static class PipeWriterExtensions
 		{
 			Encoding.UTF8.GetBytes(password, buffer);
 			Encoding.UTF8.GetBytes(username, buffer.Slice(pwdBytesCount));
-
 			Span<byte> hash = stackalloc byte[16];
+#pragma warning disable CA5351 // Do Not Use Broken Cryptographic Algorithms
 			MD5.HashData(buffer, hash);
+#pragma warning restore CA5351
 			ToHexLower(hash, destinationHex);
 		}
 		finally
@@ -281,7 +291,9 @@ internal static class PipeWriterExtensions
 	private static void ComputeMd5Hex(ReadOnlySpan<byte> source, Span<byte> destinationHex)
 	{
 		Span<byte> hash = stackalloc byte[16];
+#pragma warning disable CA5351 // Do Not Use Broken Cryptographic Algorithms
 		MD5.HashData(source, hash);
+#pragma warning restore CA5351
 		ToHexLower(hash, destinationHex);
 	}
 
@@ -297,14 +309,17 @@ internal static class PipeWriterExtensions
 	}
 
 	/// <summary>Flushes and blocks. Allocation-free when the flush completes synchronously (the usual case for socket sends).</summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static void FlushBlocking(this PipeWriter writer)
 	{
+		// Code size: 49 (0x31)
 		var flush = writer.FlushAsync();
-		if (flush.IsCompleted)
-			flush.GetAwaiter().GetResult();
-		else
-			flush.AsTask().GetAwaiter().GetResult();
+		if (flush.IsCompleted) flush.GetAwaiter().GetResult();
+		else WaitSlow(flush);
 	}
+
+	[MethodImpl(MethodImplOptions.NoInlining)]
+	private static void WaitSlow(ValueTask<FlushResult> flush) => flush.AsTask().GetAwaiter().GetResult();
 
 	#endregion
 }
