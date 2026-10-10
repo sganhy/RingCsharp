@@ -52,9 +52,15 @@ internal static class TableExtensions
 	/// <returns>Field object</returns>
 	internal static Field? GetField(this Table table, string name, StringComparison comparisonType)
 	{
-		// Code size: 59 (0x3b) - no virtual calls
-		var span = new ReadOnlySpan<Field>(table.Fields);
-		foreach (var field in span) if (string.Equals(name, field.Name, comparisonType)) return field;
+		// Code size: 57 (0x39) - no virtual calls
+		var fields = table.Fields;
+		ref Field baseRef = ref MemoryMarshal.GetArrayDataReference(fields);
+		int length = fields.Length;
+		for (int i = length - 1; i >= 0; --i)
+		{
+			ref readonly var field = ref Unsafe.Add(ref baseRef, i);
+			if (string.Equals(name, field.Name, comparisonType)) return field;
+		}
 		return null;
 	}
 
@@ -63,9 +69,14 @@ internal static class TableExtensions
 	/// </summary>
 	internal static Field? GetField(this Table table, int id)
 	{
-		// Code size: 28 (0x1c)
-		var column = GetColumn(table, id, EntityType.Field);
-		return column.HasValue ? table.Fields[column.Value.RecordIndex] : null;
+		// Code size: 62 (0x3e)
+		var column = table.GetColumn(id, EntityType.Field);
+		if (!column.HasValue) return null;
+		var index = column.Value.RecordIndex;
+		var fields = table.Fields;
+
+		// Zero-cost direct reference access with single-instruction unsigned bounds check
+		return (uint)index < (uint)fields.Length ? Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(fields), index) : null;
 	}
 
 	/// <summary>
@@ -140,10 +151,13 @@ internal static class TableExtensions
 	/// <returns>Relation object</returns>
 	internal static Relation? GetRelation(this Table table, string name, StringComparison comparisonType)
 	{
-		// Code size: 49 (0x31)
-		for (var i = table.Relations.Length - 1; i >= 0; --i)
+		// Code size: 57 (0x39) - no virtual calls
+		var relations = table.Relations;
+		ref Relation baseRef = ref MemoryMarshal.GetArrayDataReference(relations);
+		int length = relations.Length;
+		for (int i = length - 1; i >= 0; --i)
 		{
-			var relation = table.Relations[i];
+			ref readonly var relation = ref Unsafe.Add(ref baseRef, i);
 			if (string.Equals(name, relation.Name, comparisonType)) return relation;
 		}
 		return null;
@@ -155,9 +169,15 @@ internal static class TableExtensions
 	/// <returns>Relation object</returns>
 	internal static Relation? GetRelation(this Table table, int id)
 	{
-		// Code size: 54 (0x36)
-		foreach (var relation in new ReadOnlySpan<Relation>(table.Relations))
-			if (id == relation.Id) return relation;
+		// Code size: 51 (0x33)
+		var relations = table.Relations;
+		ref Relation baseRef = ref MemoryMarshal.GetArrayDataReference(relations);
+		int length = relations.Length;
+		for (var i = 0; i < length; i++)
+		{
+			ref readonly var relation = ref Unsafe.Add(ref baseRef, i);
+			if (relation.Id == id) return relation;
+		}
 		return null;
 	}
 
@@ -221,18 +241,40 @@ internal static class TableExtensions
 
 	internal static string? GetDescription(this Table table,in Column column)
 	{
-		// Code size: 67 (0x43)
-		if (column.Type == EntityType.Relation) return table.Relations[column.RecordIndex-table.Fields.Length].Description;
-		else if (column.Type == EntityType.Field) return table.Fields[column.RecordIndex].Description;
-		// no descriptions for searchable fields 
+		// Code size: 110 (0x6e) - no virtual calls
+		var type = column.Type;
+		int index;
+		switch (type)
+		{
+			case EntityType.Field:
+				var fields = table.Fields;
+				index = column.RecordIndex;
+				return (uint)index < (uint)fields.Length ? Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(fields), index).Description : null;
+			case EntityType.Relation:
+				var relations = table.Relations;
+				index = column.RecordIndex - table.Fields.Length;
+				return (uint)index < (uint)relations.Length ? Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(relations), index).Description : null;
+		}
 		return null;
 	}
 
 	internal static string? GetLogicalName(this Table table,in Column column)
 	{
-		// Code size: 67 (0x43)
-		if (column.Type == EntityType.Relation) return table.Relations[column.RecordIndex - table.Fields.Length].Name;
-		else if (column.Type == EntityType.Field || column.Type == EntityType.SearchableColumn) return table.Fields[column.RecordIndex].Name;
+		// Code size: 113 (0x71)
+		var type = column.Type;
+		int index;
+		switch (type)
+		{
+			case EntityType.Field:
+			case EntityType.SearchableColumn:
+				var fields = table.Fields;
+				index = column.RecordIndex;
+				return (uint)index < (uint)fields.Length ? Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(fields), index).Name : null;
+			case EntityType.Relation:
+				var relations = table.Relations;
+				index = column.RecordIndex - table.Fields.Length;
+				return (uint)index < (uint)relations.Length ? Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(relations), index).Name : null;
+		}
 		return null;
 	}
 
@@ -240,11 +282,19 @@ internal static class TableExtensions
 	/// 	Get the first constraint object by ConstraintType ==> O(n) complexity
 	/// </summary>
 	/// <returns>Constraint object</returns>
-	internal static Constraint GetFirstConstraint(this Table table, ConstraintType constraintType)
+	internal static Constraint? GetFirstConstraint(this Table table, ConstraintType constraintType)
 	{
-		// Code size: 54 (0x36)
-		foreach (var constraint in new ReadOnlySpan<Constraint>(table.Constraints)) 
+		// Code size: 51 (0x33)
+		var constraints = table.Constraints;
+		ref Constraint baseRef = ref MemoryMarshal.GetArrayDataReference(constraints);
+		int length = constraints.Length;
+
+		for (int i = 0; i < length; i++)
+		{
+			ref readonly var constraint = ref Unsafe.Add(ref baseRef, i);
 			if (constraint.Type == constraintType) return constraint;
+		}
+
 		return null;
 	}
 
@@ -290,7 +340,7 @@ internal static class TableExtensions
 
 	internal static int GetColumnIndex(this Table table, int id, EntityType type)
 	{
-		// Code size: 126 (0x7e)
+		// Code size: 126 (0x7e) - no virtual calls
 		var columns = table.Columns;
 		var colWeight = Meta.ColumnTypeWeight(type);
 
@@ -327,16 +377,20 @@ internal static class TableExtensions
 	/// <returns>Index object</returns>
 	internal static Index? GetIndex(this Table table, string name)
 	{
-		// Code size: 90 (0x5a)
-		var span = new ReadOnlySpan<Index>(table.Indexes);
-		int indexerLeft = 0, indexerRight = span.Length - 1;
-		while (indexerLeft <= indexerRight)
+		// Code size: 82 (0x52)
+		var indexes = table.Indexes;
+		ref Index baseRef = ref MemoryMarshal.GetArrayDataReference(indexes);
+		int left = 0, right = indexes.Length - 1;
+
+		while (left <= right)
 		{
-			var indexerMiddle = (indexerLeft + indexerRight) >> 1;
-			var indexerCompare = string.CompareOrdinal(name, span[indexerMiddle].Name);
-			if (indexerCompare == 0) return span[indexerMiddle];
-			if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
-			else indexerRight = indexerMiddle - 1;
+			var middle = (left + right) >> 1;
+			ref readonly var candidate = ref Unsafe.Add(ref baseRef, middle);
+			var compare = string.CompareOrdinal(name, candidate.Name);
+
+			if (compare == 0) return candidate;
+			if (compare > 0) left = middle + 1;
+			else right = middle - 1;
 		}
 		return null;
 	}

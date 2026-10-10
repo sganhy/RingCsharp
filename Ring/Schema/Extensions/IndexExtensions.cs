@@ -1,6 +1,8 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Models;
 using Ring.Util.Extensions;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Index = Ring.Schema.Models.Index;
 
 namespace Ring.Schema.Extensions;
@@ -18,10 +20,9 @@ internal static class IndexExtensions
 		flags = Meta.SetEntityBaseline(flags, index.Baseline);
 		flags = Meta.SetIndexUnique(flags, index.Unique);
 		flags = Meta.SetIndexBitmap(flags, index.Bitmap);
+
 		string? value = Meta.GetColumnList(GetLogicalNames(index, table));
-		// compute ColumnList
-		var meta = new Meta(index.Id, (byte)EntityType.Index, table.Id, 0, flags, index.Name, index.Description, value, index.Active);
-		return meta;
+		return new Meta(index.Id, (byte)EntityType.Index, table.Id, 0, flags, index.Name, index.Description, value, index.Active);
 	}
 
 	internal static int Hash(this Index index)
@@ -38,9 +39,8 @@ internal static class IndexExtensions
 	/// </summary>
 	internal static bool IsEquivalentTo(this Index index, Index? other)
 	{
-		// Code size: 105 (0x69)
+		// Code size: 59 (0x3b)
 		if (!index.BaseEntityEquals(other)) return false;
-		// other cannot be null here 
 		return index.Unique == other!.Unique && index.Bitmap == other.Bitmap && index.Columns.ArraysEqual(other.Columns);
 	}
 
@@ -50,10 +50,20 @@ internal static class IndexExtensions
 	private static string[] GetLogicalNames(this Index index, Table table)
 	{
 		// Code size: 97 (0x61)
-		if (index.Columns.Length <= 0) return Array.Empty<string>();
-		var result = new string[index.Columns.Length];
-		var resultIndex = 0;
-		foreach (ref readonly var column in index.Columns.AsSpan()) result[resultIndex++] = table.GetLogicalName(column) ?? string.Empty;
+		var columns = index.Columns;
+		int length = columns.Length;
+		if (length == 0) return Array.Empty<string>();
+
+		var result = new string[length];
+		ref Column colsRef = ref MemoryMarshal.GetArrayDataReference(columns);
+		ref string destRef = ref MemoryMarshal.GetArrayDataReference(result);
+
+		for (int i = 0; i < length; i++)
+		{
+			ref readonly var column = ref Unsafe.Add(ref colsRef, i);
+			Unsafe.Add(ref destRef, i) = table.GetLogicalName(column) ?? string.Empty;
+		}
+
 		return result;
 	}
 

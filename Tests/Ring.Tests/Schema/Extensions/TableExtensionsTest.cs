@@ -95,7 +95,7 @@ public class TableExtensionsTest : BaseTest
     {
         // arrange 
         var table = GetAnonymousTable(_builder, 40, 10);
-        foreach (var field in table.Fields.OrderByDescending(x => x.Id))
+        foreach (var field in table.Fields)
         {
             // act 
             var result = TableExtensions.GetField(table, field.Id);
@@ -175,13 +175,12 @@ public class TableExtensionsTest : BaseTest
     }
 
     [Fact]
-    internal void GetRelation_Id_FieldObject()
+    internal void GetRelation_Id_RelationObject()
     {
         // arrange 
-        var table = GetAnonymousTable(_builder, 2, 15);
-        var relations = table.Relations.OrderByDescending(x => x.Name);
+        var table = GetAnonymousTable(_builder, 2, 25);
 
-        foreach (var relation in relations)
+        foreach (var relation in table.Relations)
         {
             // act 
             var result = TableExtensions.GetRelation(table, relation.Id);

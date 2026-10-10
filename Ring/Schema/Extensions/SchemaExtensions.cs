@@ -1,6 +1,7 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Models;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using DbSchema = Ring.Schema.Models.Schema;
 
 namespace Ring.Schema.Extensions;
@@ -13,16 +14,19 @@ internal static class SchemaExtensions
 	/// </summary>
 	internal static Sequence? GetSequence(this DbSchema schema, string name)
 	{
-		// Code size: 90 (0x5a)
-		var span = new ReadOnlySpan<Sequence>(schema.Sequences);
-		int indexerLeft = 0, indexerRight = span.Length - 1;
-		while (indexerLeft <= indexerRight)
+		// Code size: 82 (0x52)
+		var sequences = schema.Sequences;
+		ref Sequence baseRef = ref MemoryMarshal.GetArrayDataReference(sequences);
+		int left = 0, right = sequences.Length - 1;
+
+		while (left <= right)
 		{
-			var indexerMiddle = (indexerLeft + indexerRight) >> 1;
-			var indexerCompare = string.CompareOrdinal(name, span[indexerMiddle].Name);
-			if (indexerCompare == 0) return span[indexerMiddle];
-			if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
-			else indexerRight = indexerMiddle - 1;
+			int middle = (left + right) >> 1;
+			ref readonly var candidate = ref Unsafe.Add(ref baseRef, middle);
+			int compare = string.CompareOrdinal(name, candidate.Name);
+			if (compare == 0) return candidate;
+			if (compare > 0) left = middle + 1;
+			else right = middle - 1;
 		}
 		return null;
 	}
@@ -33,17 +37,21 @@ internal static class SchemaExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static Table? GetTable(this DbSchema schema, int id)
 	{
-		// Code size: 89 (0x59) - no virtual calls
-		var span = new ReadOnlySpan<Table>(schema.TablesById);
-		int indexerLeft = 0, indexerRight = span.Length - 1;
-		while (indexerLeft <= indexerRight)
+		// Code size: 78 (0x4e) - no virtual calls
+		var tables = schema.TablesById;
+		ref Table baseRef = ref MemoryMarshal.GetArrayDataReference(tables);
+		int left = 0, right = tables.Length - 1;
+
+		while (left <= right)
 		{
-			var indexerMiddle = (indexerLeft + indexerRight) >> 1;
-			var indexerCompare = id - span[indexerMiddle].Id;
-			if (indexerCompare == 0L) return span[indexerMiddle];
-			if (indexerCompare > 0L) indexerLeft = indexerMiddle + 1;
-			else indexerRight = indexerMiddle - 1;
+			int middle = (left + right) >> 1;
+			ref readonly var candidate = ref Unsafe.Add(ref baseRef, middle);
+			int compare = id - candidate.Id;
+			if (compare == 0) return candidate;
+			if (compare > 0) left = middle + 1;
+			else right = middle - 1;
 		}
+
 		return null;
 	}
 
@@ -59,16 +67,19 @@ internal static class SchemaExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static Table? GetTable(this DbSchema schema, string name)
 	{
-		// Code size: 90 (0x5a) - no virtual calls
-		var span = new ReadOnlySpan<Table>(schema.TablesByName);
-		int indexerLeft = 0, indexerRight = span.Length - 1;
-		while (indexerLeft <= indexerRight)
+		// Code size: 82 (0x52) - no virtual calls
+		var tables = schema.TablesByName;
+		ref Table baseRef = ref MemoryMarshal.GetArrayDataReference(tables);
+		int left = 0, right = tables.Length - 1;
+
+		while (left <= right)
 		{
-			var indexerMiddle = (indexerLeft + indexerRight) >> 1;
-			var indexerCompare = string.CompareOrdinal(name, span[indexerMiddle].Name); 
-			if (indexerCompare == 0) return span[indexerMiddle];
-			if (indexerCompare > 0) indexerLeft = indexerMiddle + 1;
-			else indexerRight = indexerMiddle - 1;
+			int middle = (left + right) >> 1;
+			ref readonly var candidate = ref Unsafe.Add(ref baseRef, middle);
+			int compare = string.CompareOrdinal(name, candidate.Name);
+			if (compare == 0) return candidate;
+			if (compare > 0) left = middle + 1;
+			else right = middle - 1;
 		}
 		return null;
 	}
