@@ -114,12 +114,11 @@ public sealed class Connection : IConnection, IAsyncDisposable
 		OpenAsyncImpl(CancellationToken.None).GetAwaiter().GetResult();
 	}
 
-	public Task OpenAsync(CancellationToken cancellationToken)
-	{
-		ThrowIfDisposed();
-		return OpenAsyncImpl(cancellationToken);
-	}
-
+public Task OpenAsync(CancellationToken cancellationToken)
+{
+    ThrowIfDisposed();
+    return OpenAsyncImpl(cancellationToken);
+}
 	public string?[] Execute(in RetrieveQuery query, ReadOnlySpan<byte> sql)
 	{
 		_state = ConnectionState.Open | ConnectionState.Executing;

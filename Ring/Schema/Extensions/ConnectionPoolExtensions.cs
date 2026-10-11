@@ -1,8 +1,11 @@
 using Ring.Data;
 using Ring.Schema.Enums;
 using Ring.Schema.Models;
+using Ring.Util.Enums;
 using Ring.Util.Extensions;
+using Ring.Util.Helpers;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Ring.Schema.Extensions;
 
@@ -13,29 +16,48 @@ internal static class ConnectionPoolExtensions
 
 	internal static int GetId(this ConnectionPool? _) => Interlocked.Increment(ref _connectionPoolId); // Code size: 11 (0xb) - first ConnectionPool id is equal to 1
 
-	internal static Task InitAsync(this ConnectionPool connectionPool, IConnection initialConnection, CancellationToken cancellationToken=default)
+	internal static ValueTask InitAsync(this ConnectionPool connectionPool, IConnection initialConnection, CancellationToken cancellationToken=default)
 	{
-		// Code size: 62 (0x3e)
+		// Code size: 147 (0x93)
 		// InitAsync() builds a Task[] with potentially null entries
-		Initialize(connectionPool, initialConnection); // sync
-		var minPoolSize = connectionPool.MinConnection;
-		var tasks = new Task [minPoolSize];
-		for (var i = 0; i < minPoolSize; ++i)
+		Initialize(connectionPool, initialConnection);
+
+		int minPoolSize = connectionPool.MinConnection;
+		if (minPoolSize == 0) return ValueTask.CompletedTask;
+
+		var connections = connectionPool.Connections;
+		ref var baseRef = ref MemoryMarshal.GetArrayDataReference(connections);
+
+		// If minPoolSize == 1, avoid array allocations entirely
+		if (minPoolSize == 1)
 		{
-			var conn = connectionPool.Connections[i];
-			if (conn is not null) tasks[i]= conn.OpenAsync(cancellationToken);
+			var conn = Unsafe.Add(ref baseRef, 0);
+			return conn is not null	? new ValueTask(conn.OpenAsync(cancellationToken)) : ValueTask.CompletedTask;
 		}
-		return Task.WhenAll(tasks);
+
+		var tasks = new Task[minPoolSize];
+		ref var taskRef = ref MemoryMarshal.GetArrayDataReference(tasks);
+
+		for (int i = 0; i < minPoolSize; ++i)
+		{
+			var conn = Unsafe.Add(ref baseRef, i);
+			if (conn is not null) Unsafe.Add(ref taskRef, i) = conn.OpenAsync(cancellationToken);
+		}
+		return new ValueTask(Task.WhenAll(tasks));
 	}
 
 	internal static void Init(this ConnectionPool connectionPool, IConnection initialConnection)
 	{
-		// Code size: 46 (0x2e)
-		Initialize(connectionPool, initialConnection); // sync
-		var minPoolSize = connectionPool.MinConnection;
-		for (var i = 0; i < minPoolSize; ++i)
+		// Code size: 58 (0x3a)
+		Initialize(connectionPool, initialConnection);
+
+		int minPoolSize = connectionPool.MinConnection;
+		var connections = connectionPool.Connections;
+		ref var baseRef = ref MemoryMarshal.GetArrayDataReference(connections);
+
+		for (int i = 0; i < minPoolSize; ++i)
 		{
-			var conn = connectionPool.Connections[i];
+			var conn = Unsafe.Add(ref baseRef, i);
 			conn?.Open();
 		}
 	}
@@ -47,10 +69,16 @@ internal static class ConnectionPoolExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static IConnection Get(this ConnectionPool connectionPool)
 	{
-		// Code size: 70 (0x46)
+		// Code size: 75 (0x4b) - no virtual calls
 		IConnection? result = null;
-		SpinEnter(ref connectionPool.SpinLock); // replacing Monitor.Enter(connectionPool.SyncRoot);
-		if (connectionPool.Cursor >= 0)	result = connectionPool.Connections[connectionPool.Cursor--];
+		SpinEnter(ref connectionPool.SpinLock);
+		int cursor = connectionPool.Cursor;
+		if (cursor >= 0)
+		{
+			var connections = connectionPool.Connections;
+			result = Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(connections), cursor);
+			connectionPool.Cursor = cursor - 1;
+		}
 		SpinExit(ref connectionPool.SpinLock);
 		return result ?? CreateConnection(connectionPool);
 	}
@@ -61,18 +89,32 @@ internal static class ConnectionPoolExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static void Put(this ConnectionPool connectionPool, IConnection connection)
 	{
-		// Code size: 155 (0x9b)
+		// Code size: 137 (0x89) - no virtual calls
 		SpinEnter(ref connectionPool.SpinLock);
-		if (connectionPool.Cursor < connectionPool.LastIndex)
+
+		int cursor = connectionPool.Cursor;
+		if (cursor < connectionPool.LastIndex)
 		{
-			++connectionPool.PutRequestCount;
-			++connectionPool.Cursor;
-			connectionPool.SwapIndex = connectionPool.Cursor != 0 ? connectionPool.PutRequestCount % connectionPool.Cursor : 0;
-			connectionPool.Connections[connectionPool.Cursor] = connectionPool.Connections[connectionPool.SwapIndex];
-			connectionPool.Connections[connectionPool.SwapIndex] = connection;
+			ushort putCount = (ushort)(connectionPool.PutRequestCount + 1);
+			int newCursor = cursor + 1;
+			int swapIndex = newCursor != 0 ? putCount % newCursor : 0;
+
+			connectionPool.PutRequestCount = putCount;
+			connectionPool.Cursor = newCursor;
+			connectionPool.SwapIndex = swapIndex;
+
+			var connections = connectionPool.Connections;
+			ref var baseRef = ref MemoryMarshal.GetArrayDataReference(connections);
+			ref var swapRef = ref Unsafe.Add(ref baseRef, swapIndex);
+			ref var cursorRef = ref Unsafe.Add(ref baseRef, newCursor);
+
+			cursorRef = swapRef;
+			swapRef = connection;
+
 			SpinExit(ref connectionPool.SpinLock);
 			return;
 		}
+
 		SpinExit(ref connectionPool.SpinLock);
 		DestroyConnectionAsync(connectionPool, connection);
 	}
@@ -85,45 +127,59 @@ internal static class ConnectionPoolExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static ValueTask PutAsync(this ConnectionPool connectionPool, IConnection connection, CancellationToken cancellationToken = default)
 	{
-		// Code size: 161 (0xa1)
+		// Code size: 143 (0x8f) - no virtual calls
 		SpinEnter(ref connectionPool.SpinLock);
-		if (connectionPool.Cursor < connectionPool.LastIndex)
+		int cursor = connectionPool.Cursor;
+		if (cursor < connectionPool.LastIndex)
 		{
-			++connectionPool.PutRequestCount;
-			++connectionPool.Cursor;
-			connectionPool.SwapIndex = connectionPool.Cursor != 0 ? connectionPool.PutRequestCount % connectionPool.Cursor : 0;
-			connectionPool.Connections[connectionPool.Cursor] = connectionPool.Connections[connectionPool.SwapIndex];
-			connectionPool.Connections[connectionPool.SwapIndex] = connection;
+			ushort putCount = (ushort)(connectionPool.PutRequestCount + 1);
+			int newCursor = cursor + 1;
+			int swapIndex = newCursor != 0 ? putCount % newCursor : 0;
+
+			connectionPool.PutRequestCount = putCount;
+			connectionPool.Cursor = newCursor;
+			connectionPool.SwapIndex = swapIndex;
+
+			var connections = connectionPool.Connections;
+			ref var baseRef = ref MemoryMarshal.GetArrayDataReference(connections);
+			ref var swapRef = ref Unsafe.Add(ref baseRef, swapIndex);
+			ref var cursorRef = ref Unsafe.Add(ref baseRef, newCursor);
+
+			cursorRef = swapRef;
+			swapRef = connection;
+
 			SpinExit(ref connectionPool.SpinLock);
-			return ValueTask.CompletedTask; // ← zero allocation, synchronous return
+			return ValueTask.CompletedTask;
 		}
 		SpinExit(ref connectionPool.SpinLock);
-		return DestroyConnectionAsync(connectionPool, connection, cancellationToken); // ← cold path only
+		return DestroyConnectionAsync(connectionPool, connection, cancellationToken);
 	}
-
 
 	internal static bool Unloaded(this ConnectionPool connectionPool) => connectionPool.Cursor == int.MinValue || connectionPool.LastIndex == int.MinValue; // Code size: 29 (0x1d)
 
 	internal static void Unload(this ConnectionPool connectionPool)
 	{
-		// Code size: 126 (0x7e)
-		SpinEnter(ref connectionPool.SpinLock);  // was: Monitor.Enter(connectionPool.SyncRoot)
-		var currentCursor = connectionPool.Cursor;
+		// Code size: 129 (0x81)
+		SpinEnter(ref connectionPool.SpinLock);
+		int currentCursor = connectionPool.Cursor;
 		connectionPool.Cursor = int.MinValue;
 		connectionPool.LastIndex = int.MinValue;
-		SpinExit(ref connectionPool.SpinLock);   // was: Monitor.Exit(connectionPool.SyncRoot)
+		SpinExit(ref connectionPool.SpinLock);
 
-		var span = new Span<IConnection?>(connectionPool.Connections);
-		for (var i=0; i< span.Length; ++i)
+		var connections = connectionPool.Connections;
+		ref var baseRef = ref MemoryMarshal.GetArrayDataReference(connections);
+		int length = connections.Length;
+
+		for (int i = 0; i < length; ++i)
 		{
-			var conn = span[i];
-			if (conn!=null && conn.State!=ConnectionState.Closed && i<= currentCursor)
+			ref var conn = ref Unsafe.Add(ref baseRef, i);
+			if (conn is not null && conn.State != ConnectionState.Closed && i <= currentCursor)
 			{
 				conn.Close();
 				conn.Dispose();
 			}
+			conn = null;
 		}
-		connectionPool.ClearConnections();
 	}
 
 	internal static void CheckHealth(this ConnectionPool connectionPool)
@@ -134,40 +190,55 @@ internal static class ConnectionPoolExtensions
 
 	internal static ConnectionPool Resize(this ConnectionPool connectionPool, int minPoolSize, int maxPoolSize)
 	{
-		// Code size: 295 (0x127)
-		if (minPoolSize == connectionPool.MinConnection && maxPoolSize == connectionPool.MaxConnection) return connectionPool;
-		SpinEnter(ref connectionPool.SpinLock);  // was: Monitor.Enter(connectionPool.SyncRoot)
-		var currentCursor = connectionPool.Cursor;
+		// Code size: 357 (0x165)
+		if (minPoolSize == connectionPool.MinConnection && maxPoolSize == connectionPool.MaxConnection)	return connectionPool;
+		SpinEnter(ref connectionPool.SpinLock);
+		int currentCursor = connectionPool.Cursor;
 		connectionPool.Cursor = int.MinValue;
 		connectionPool.LastIndex = int.MinValue;
-		SpinExit(ref connectionPool.SpinLock);   // was: Monitor.Exit(connectionPool.SyncRoot)
+		SpinExit(ref connectionPool.SpinLock);
+
 		var newPool = new ConnectionPool(GetId(connectionPool), minPoolSize, maxPoolSize, connectionPool.ResizeCount + 1, connectionPool.ConnectionString)
 		{
 			ConnectionCount = connectionPool.ConnectionCount,
 			DestroyCount = connectionPool.DestroyCount,
 			CreationCount = connectionPool.CreationCount,
 		};
-		
-		var preserveCount = Math.Min(currentCursor, newPool.LastIndex); // close as less as possible connections
 
-		// preserve current openned connections
-		var i = 0;
-		for (i = 0; i <= preserveCount; ++i) newPool.Connections[i] = connectionPool.Connections[i];
-		var initialConnection = newPool.Connections[0];
-		// bigger pool ?
+		int preserveCount = Math.Min(currentCursor, newPool.LastIndex);
+
+		var oldConns = connectionPool.Connections;
+		var newConns = newPool.Connections;
+		ref var oldBase = ref MemoryMarshal.GetArrayDataReference(oldConns);
+		ref var newBase = ref MemoryMarshal.GetArrayDataReference(newConns);
+
+		int i = 0;
+		// Preserve open connections
+		for (i = 0; i <= preserveCount; ++i)
+		{
+			Unsafe.Add(ref newBase, i) = Unsafe.Add(ref oldBase, i);
+		}
+
+		var initialConnection = preserveCount >= 0 ? Unsafe.Add(ref newBase, 0) : null;
+
+		// Expand pool if necessary
 		for (; i < minPoolSize; ++i)
 		{
-			var conn = initialConnection?.CreateInstance(i+1, SqlSendBufferSize);
+			var conn = initialConnection?.CreateInstance(i + 1, SqlSendBufferSize);
 			conn?.Open();
-			newPool.Connections[i] = conn;
+			Unsafe.Add(ref newBase, i) = conn;
 		}
-		// smaller pool ?
-		for (i= preserveCount + 1; i<= currentCursor; ++i)
+
+		// Close surplus connections if shrunk
+		for (i = preserveCount + 1; i <= currentCursor; ++i)
 		{
-			var conn = connectionPool.Connections[i];
+			var conn = Unsafe.Add(ref oldBase, i);
 			conn?.Close();
 		}
-		if (preserveCount > newPool.Cursor) newPool.Cursor = preserveCount;
+
+		if (preserveCount > newPool.Cursor)
+			newPool.Cursor = preserveCount;
+
 		connectionPool.ClearConnections();
 		return newPool;
 	}
@@ -177,43 +248,64 @@ internal static class ConnectionPoolExtensions
 	private static void DestroyConnectionAsync(this ConnectionPool connectionPool, IConnection connection)
 	{
 		// Code size: 82 (0x52)
-		if (connection.State != ConnectionState.Closed)	ThreadPool.QueueUserWorkItem(_ => { connection.Close(); connection.Dispose(); });
-		else connection.Dispose();
+		if (connection.State != ConnectionState.Closed)
+		{
+			ThreadPool.QueueUserWorkItem(static state =>
+			{
+				var conn = state!;
+				conn.Close();
+				conn.Dispose();
+			}, connection, preferLocal: false);
+		}
+		else
+		{
+			connection.Dispose();
+		}
+
 		Interlocked.Decrement(ref connectionPool.ConnectionCount);
 		Interlocked.Increment(ref connectionPool.DestroyCount);
 	}
 
 	private static IConnection CreateConnection(this ConnectionPool connectionPool)
 	{
-		// Code size: 56 (0x38)
+		// Code size: 82 (0x52)
 		var id = Interlocked.Increment(ref connectionPool.ConnectionCount);
 		Interlocked.Increment(ref connectionPool.CreationCount);
-		var connection = connectionPool.Connections[0];
+		var connections = connectionPool.Connections;
+		var connection = Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(connections), 0);
+
 		if (connection is not null)
 		{
 			var newConnection = connection.CreateInstance(id, SqlSendBufferSize);
 			newConnection.Open();
 			return newConnection;
 		}
-		throw new NotSupportedException();
+		// --> Initial base connection in pool is null.
+		throw new NotSupportedException(ResourceHelper.GetMessage(ResourceType.InitConnectionInPoolIsNull));
 	}
 
 	private static void Initialize(this ConnectionPool connectionPool, IConnection initialConnection)
 	{
-		// Code size: 102 (0x66)
+		// Code size: 119 (0x77)
 		connectionPool.ConnectionCount = 0;
 
-		// close reference connection
 		if (initialConnection.State == ConnectionState.Open) initialConnection.Close();
+
 		var provider = initialConnection.ProviderId.ToDatabaseProvider();
-		var minPoolSize = connectionPool.MinConnection;
+		int minPoolSize = connectionPool.MinConnection;
 
 		switch (provider)
 		{
 			case DatabaseProvider.SqlLite:
 			case DatabaseProvider.Oracle:
 			case DatabaseProvider.PostgreSql:
-				for (var i = 0; i < minPoolSize; ++i) connectionPool.Connections[i] = initialConnection.CreateInstance(i + 1, SqlSendBufferSize);
+				var connections = connectionPool.Connections;
+				ref var baseRef = ref MemoryMarshal.GetArrayDataReference(connections);
+
+				for (int i = 0; i < minPoolSize; ++i)
+				{
+					Unsafe.Add(ref baseRef, i) = initialConnection.CreateInstance(i + 1, SqlSendBufferSize);
+				}
 
 				connectionPool.ConnectionCount = minPoolSize;
 				connectionPool.CreationCount = minPoolSize;
@@ -225,9 +317,9 @@ internal static class ConnectionPoolExtensions
 
 	private static void ClearConnections(this ConnectionPool connectionPool)
 	{
-		// Code size: 42 (0x2a)
-		var span = new Span<IConnection?>(connectionPool.Connections);
-		for (var i = 0; i < span.Length; ++i) span[i] = null;
+		// Code size: 18 (0x12)
+		var connections = connectionPool.Connections;
+		Array.Clear(connections, 0, connections.Length);
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -243,9 +335,9 @@ internal static class ConnectionPoolExtensions
 	private static async ValueTask DestroyConnectionAsync(this ConnectionPool connectionPool, IConnection connection, CancellationToken cancellationToken)
 	{
 		// Code size: 71 (0x47)
-		if (connection.State != ConnectionState.Closed)	await connection.CloseAsync(cancellationToken).ConfigureAwait(false);
-		connection.Dispose(); // no DisposeAsync; may be should be implemented 
-		Interlocked.Decrement(ref connectionPool.ConnectionCount); // stat value is decremented synchronously, even if the actual close/dispose is done asynchronously, to avoid over-provisioning of connections in the pool
+		if (connection.State != ConnectionState.Closed) await connection.CloseAsync(cancellationToken).ConfigureAwait(false);
+		connection.Dispose();
+		Interlocked.Decrement(ref connectionPool.ConnectionCount);
 		Interlocked.Increment(ref connectionPool.DestroyCount);
 	}
 

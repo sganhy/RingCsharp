@@ -19,6 +19,7 @@ internal static class FieldExtensions
 	private static readonly Field DefaultPrimaryKeyInt16 =	new(1, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Short, 0, null, FieldType.Short.GetDefaultValue(), SearchableType.None, true, true, false, false, true);
 	private static readonly Field DefaultPrimaryKeyInt08 =	new(1, PrimaryKeyFieldName, PrimaryKeyDescription, FieldType.Byte, 0, null, FieldType.Byte.GetDefaultValue(), SearchableType.None, true, true, false, false, true);
 #pragma warning restore RCS1187
+	private const int StackallocThreshold = 128;
 
 	internal static bool IsValid(this Field field) => IsPrimaryKey(field) || field.Id > 0; 
 	internal static bool IsDateTime(this Field field) => field.Type == FieldType.DateTime || field.Type == FieldType.Date || field.Type == FieldType.DateTimeOffset;
@@ -39,16 +40,17 @@ internal static class FieldExtensions
 	/// <summary>
 	/// Calculate searchable field value (remove diacritic characters and value.ToUpper())
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static string? GetSearchableValue(this Field? _, SearchableType searchableType, string? value)
 	{
-		if (string.IsNullOrEmpty(value)) return value;
-
-		return searchableType switch
+		// Code size: 31 (0x1f)
+		if (value is null) return null;
+		switch (searchableType)
 		{
-			SearchableType.IgnoreCase => value.ToUpperInvariant(),
-			SearchableType.IgnoreDiacritic => RemoveDiacriticAndUpper(value),
-			_ => value,
-		};
+			case SearchableType.IgnoreCase:	return value.ToUpperInvariant();
+			case SearchableType.IgnoreDiacritic: return RemoveDiacriticAndUpper(value);
+		}
+		return value;
 	}
 
 	internal static Meta ToMeta(this Field field, int tableId, FieldType? newFieldType=null)
@@ -117,49 +119,48 @@ internal static class FieldExtensions
 	[SkipLocalsInit]
 	private static string RemoveDiacriticAndUpper(string value)
 	{
-		// Code size: 227 (0xe3)
+		// Code size: 233 (0xe9)
 		// 1. Fast Path: High-performance SIMD check available in .NET 8+
+		// Ultra-fast path: SIMD ASCII check (covers pure ASCII strings without diacritics)
 		if (Ascii.IsValid(value)) return value.ToUpperInvariant();
 
-		// 2. Normalize string to FormD (decomposes characters into base + diacritic marks)
+		// 2. Normalize to FormD (decomposes combined diacritics into base character + NonSpacingMark)
 		string normalized = value.Normalize(NormalizationForm.FormD);
 		int length = normalized.Length;
 
-		// Rent memory from pool or stack-allocate up to 256 chars (512 bytes on stack)
+		// Rent buffer or stack-allocate for small strings (<= 256 chars)
 		char[]? rented = null;
-		Span<char> buffer = length <= 128 ? stackalloc char[length]	: (rented = ArrayPool<char>.Shared.Rent(length));
+		Span<char> buffer = length <= StackallocThreshold ? stackalloc char[length] : (rented = ArrayPool<char>.Shared.Rent(length));
 
-		
-		int written = 0;
-		bool modified = false;
-
-		for (int i = 0; i < length; i++)
+		try
 		{
-			char c = normalized[i];
-			UnicodeCategory category = CharUnicodeInfo.GetUnicodeCategory(c);
+			int written = 0;
+			bool modified = false;
 
-			if (category != UnicodeCategory.NonSpacingMark)
+			for (int i = 0; i < length; i++)
 			{
-				char upperC = char.ToUpperInvariant(c);
-				buffer[written++] = upperC;
-
-				if (upperC != c)
+				char c = normalized[i];
+				if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+				{
+					char upperC = char.ToUpperInvariant(c);
+					buffer[written++] = upperC;
+					if (upperC != c) modified = true;
+				}
+				else
 				{
 					modified = true;
 				}
 			}
-			else
-			{
-				// Diacritic mark was dropped
-				modified = true;
-			}
-		}
-		Span<char> resultSpan = buffer[..written];
 
-		// If string was already uppercase and contained no diacritics, return original to avoid allocation
-		if (!modified && written == value.Length) return value;
-		if (rented is not null) ArrayPool<char>.Shared.Return(rented);
-		return new string(resultSpan);
+			// Return original string instance if no characters changed and length is unchanged
+			if (!modified && written == value.Length) return value;
+
+			return new string(buffer[..written]);
+		}
+		finally
+		{
+			if (rented is not null) ArrayPool<char>.Shared.Return(rented);
+		}
 	}
 
 	#endregion

@@ -9,15 +9,16 @@ public interface IConnection : IDisposable
 	int ProviderId { get; }
 	int BackendPid { get; }
 	long Id { get; }
-	
 	DateTime CreationTime { get; }
 	DateTime? LastConnectionTime { get; }
 	ConnectionState State { get; }
 	Encoding ClientEncoding { get; }
+
 	void Open();
 	Task OpenAsync(CancellationToken cancellationToken);
 	void Close();
 	Task CloseAsync(CancellationToken cancellationToken);
+
 	IConnection CreateInstance(int id, int sqlSendBufferSize);
 	OperationalError? Execute(ReadOnlySpan<byte> sql);
 	string?[] Execute(in RetrieveQuery query, ReadOnlySpan<byte> sql);

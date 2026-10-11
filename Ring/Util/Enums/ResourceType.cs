@@ -69,6 +69,11 @@ internal enum ResourceType : short
 	CreateTableOk = 246,
 
 	/// <summary>
+	/// Connection pool messages 271-280
+	/// </summary>	
+	InitConnectionInPoolIsNull = 271,
+
+	/// <summary>
 	/// IRingConnection messages 
 	/// </summary>
 	UnsuportedOperation = 294,
