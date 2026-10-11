@@ -35,5 +35,6 @@ internal static class OperationalErrorExtensions
 		=> new(OperationalErrorType.InvalidProtocol, message, string.Empty, string.Empty, null, null, null, null);
 	internal static OperationalError ConnectionClosed(this in OperationalError? _, string message)
 		=> new(OperationalErrorType.ConnectionClosed, message, string.Empty, string.Empty, null, null, null, null);
-
+	internal static OperationalError InvalidQuery(this in OperationalError? _, string message)
+		=> new(OperationalErrorType.InvalidQuery, message, string.Empty, string.Empty, null, null, null, null);
 }

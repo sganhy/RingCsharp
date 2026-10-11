@@ -90,6 +90,7 @@ internal enum ResourceType : short
 	ConnectionNotOpen=505,
 	InvalidMessageLength=506,
 	ClosedBeforeReadyForQuery=507,
+	SqlCommandTextTooLarge = 508,
 
 	/// <summary>
 	/// Reserved for unit tests

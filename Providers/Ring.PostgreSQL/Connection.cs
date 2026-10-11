@@ -32,6 +32,7 @@ public sealed class Connection : IConnection, IAsyncDisposable
 	private const int KeepAliveIntervalSeconds = 10;
 	private const int KeepAliveRetryCount = 3;
 	private const int MaxSqlLength = 0x3FFFFFFF - 16; // PostgreSQL caps a message at 1 GB - 1 (the length field counts its own 4 bytes).
+	private const int MaxSqlDriverLength = MaxSqlLength / 4; // 256 MB is a more reasonable limit for a single SQL command!
 	private static readonly byte[] TerminateMessage = { (byte)FrontendMessageCode.Terminate, 0, 0, 0, 4 };
 
 	private readonly long _id;
@@ -150,24 +151,13 @@ public Task OpenAsync(CancellationToken cancellationToken)
 
 	public OperationalError? Execute(ReadOnlySpan<byte> sql)
 	{
+		// Code size: 94 (0x5e) - no virtual calls!
+		if (sql.Length > MaxSqlDriverLength) return SqlCommandSizeTooLarge();
 		_state = ConnectionState.Open | ConnectionState.Executing;
-		try
-		{
-			_writer.SendQuery(sql);
-			var error = _reader.DrainToReadyForQuery();
-			_state = ConnectionState.Open;
-			return error;
-		}
-		catch (PgOperationalError)
-		{
-			_state = ConnectionState.Open;
-			throw;
-		}
-		catch
-		{
-			_state = ConnectionState.Broken;
-			throw;
-		}
+		_writer.SendQuery(sql);
+		var error = _reader.DrainToReadyForQuery();
+		_state = (error is not null && error.Value.Type != OperationalErrorType.PgError) ? ConnectionState.Broken : ConnectionState.Open;
+		return error;
 	}
 
 	public OperationalError? Execute(in AlterQuery query, ReadOnlySpan<byte> sql)
@@ -461,6 +451,9 @@ public Task OpenAsync(CancellationToken cancellationToken)
 	{
 		if (_disposed) ThrowDisposed();
 	}
+
+	[MethodImpl(MethodImplOptions.NoInlining)]
+	private static OperationalError SqlCommandSizeTooLarge() => OperationalErrorExtensions.InvalidQuery(null, ResourceHelper.GetMessage(ResourceType.SqlCommandTextTooLarge));
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
