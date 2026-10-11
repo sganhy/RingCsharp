@@ -1,7 +1,6 @@
-﻿using Ring.Data.Enums;
+﻿using Ring.Data;
 using Ring.Data.Models;
 using Ring.Schema.Models;
-using System.Data.Common;
 using System.Runtime.CompilerServices;
 using Index = Ring.Schema.Models.Index;
 
@@ -30,6 +29,22 @@ internal static class HashCodeExtensions
 		hashCode.Add(field.NotNull);
 		hashCode.Add(field.Multilingual);
 	}
+
+	internal static void AddOperationalError(this ref HashCode hashCode, in OperationalError operationalError)
+	{
+		/*
+			OperationalErrorType ErrorType;
+	 		string Message;
+			string SqlState;
+			string Severity;
+			string? Detail;
+			string? Hint;
+			string? TableName;
+			string? SchemaName;
+		 */
+
+	}
+
 
 	internal static void AddParameter(this ref HashCode hashCode, Parameter parameter)
 	{

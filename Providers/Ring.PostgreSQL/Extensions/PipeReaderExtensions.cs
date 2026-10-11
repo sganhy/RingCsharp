@@ -1,4 +1,5 @@
 ﻿using Ring.Data;
+using Ring.Data.Extensions;
 using Ring.PostgreSQL.Enums;
 using Ring.PostgreSQL.Models;
 using Ring.Schema.Models;
@@ -54,52 +55,63 @@ internal static class PipeReaderExtensions
 
 	internal static OperationalError? DrainToReadyForQuery(this PipeReader reader)
 	{
-		// Code size: 239 (0xef)
+		// Code size: 333 (0x14d)
 		OperationalError? error = null;
 
 		while (true)
 		{
-			// Fast path: data already buffered, no await machinery at all.
-			if (!reader.TryRead(out var result))
-			{
-				// Nothing buffered yet: block until the socket delivers something.
-				var vt = reader.ReadAsync();
-				result = vt.IsCompleted
-					? vt.GetAwaiter().GetResult()
-					: vt.AsTask().GetAwaiter().GetResult();
-			}
-
+			// Always call ReadAsync instead of TryRead so it waits for new data when an incomplete message is retained in the buffer.
+			// Safely handle the ValueTask by checking IsCompleted first, complying with CA2012 / ValueTask consumption rules.
+			var vt = reader.ReadAsync();
+			var result = vt.IsCompleted	? vt.GetAwaiter().GetResult() : vt.AsTask().GetAwaiter().GetResult();
 			var buffer = result.Buffer;
+			var consumed = buffer.Start;
+			var examined = buffer.End;
 
 			while (buffer.Length >= 5)
 			{
 				if (!buffer.TryReadHeader(out var rawCode, out var bodyLength))
-					ThrowInvalidMessageLength(); // corrupt length field
-				var code = rawCode.ToBackendMessageCode();
-				var total = 5 + bodyLength;
-				if (buffer.Length < total) break; // incomplete message, wait for more data
-
-				switch (code)
 				{
-					case BackendMessageCode.ReadyForQuery:
-						reader.AdvanceTo(buffer.GetPosition(total));
-						return error;
-
-					case BackendMessageCode.ErrorResponse:
-						error = buffer.Slice(5, bodyLength).ParseErrorFieldsFromSequence();
-						break;
+					reader.AdvanceTo(buffer.Start, buffer.End);
+					return error.InvalidProtocol(ResourceHelper.GetMessage(ResourceType.InvalidMessageLength));
 				}
 
-				buffer = buffer.Slice(total);
+				var code = rawCode.ToBackendMessageCode();
+				var totalLength = 5 + bodyLength;
+
+				if (buffer.Length < totalLength)
+				{
+					examined = buffer.End;
+					break;
+				}
+
+				var nextPosition = buffer.GetPosition(totalLength);
+
+				if (code == BackendMessageCode.ReadyForQuery)
+				{
+					reader.AdvanceTo(nextPosition, nextPosition);
+					return error;
+				}
+
+				if (code == BackendMessageCode.ErrorResponse)
+				{
+					error = buffer.Slice(5, bodyLength).ParseErrorFieldsFromSequence();
+				}
+
+				consumed = nextPosition;
+				buffer = buffer.Slice(totalLength);
 			}
 
-			// consumed = what we processed, examined = everything we saw (so TryRead/ReadAsync only return new data)
-			reader.AdvanceTo(buffer.Start, buffer.End);
+			reader.AdvanceTo(consumed, examined);
 
 			if (result.IsCompleted)
-				throw new InvalidOperationException("Connection closed before ReadyForQuery message was received.");
+			{
+				return error.ConnectionClosed(ResourceHelper.GetMessage(ResourceType.ClosedBeforeReadyForQuery));
+			}
 		}
 	}
+
+
 	/// <summary>
 	/// Reads from the pipe until a <see cref="BackendMessageCode.ReadyForQuery"/> message is encountered.
 	/// Accumulates operational errors and extracts final transaction status using zero-allocation sequence extensions.
@@ -112,53 +124,51 @@ internal static class PipeReaderExtensions
 		{
 			var result = await reader.ReadAsync(cancellationToken).ConfigureAwait(false);
 			var buffer = result.Buffer;
+			var consumed = buffer.Start;
+			var examined = buffer.End;
 
-			while (buffer.TryReadHeader(out byte rawCode, out int bodyLength))
+			while (buffer.Length >= 5)
 			{
-				var code = rawCode.ToBackendMessageCode();
-				var totalMessageLength = 5 + bodyLength;
-				if (buffer.Length < totalMessageLength)
+				if (!buffer.TryReadHeader(out var rawCode, out var bodyLength))
 				{
-					// Incomplete message body in buffer, wait for more network bytes
+					reader.AdvanceTo(buffer.Start, buffer.End);
+					return error.InvalidProtocol("Invalid message length received from server.");
+				}
+
+				var code = rawCode.ToBackendMessageCode();
+				var totalLength = 5 + bodyLength;
+
+				if (buffer.Length < totalLength)
+				{
+					examined = buffer.End;
 					break;
 				}
 
-				var payload = buffer.Slice(5, bodyLength);
+				var nextPosition = buffer.GetPosition(totalLength);
 
-				switch (code)
+				if (code == BackendMessageCode.ReadyForQuery)
 				{
-					case BackendMessageCode.ReadyForQuery:
-						if (!payload.IsEmpty)
-						{
-							// ReadyForQuery payload contains 1 byte representing transaction status ('I', 'T', 'E')
-							_ = payload.FirstSpan[0];
-						}
-						var readyPosition = buffer.GetPosition(totalMessageLength);
-						reader.AdvanceTo(readyPosition, readyPosition);
-						return error;
-
-					case BackendMessageCode.ErrorResponse:
-						// Zero-allocation error field parsing directly from ReadOnlySequence<byte>
-						error = payload.ParseErrorFieldsFromSequence();
-						break;
-
-					default:
-						// Skip non-error, non-ReadyForQuery payload bytes
-						break;
+					reader.AdvanceTo(nextPosition, nextPosition);
+					return error;
 				}
 
-				buffer = buffer.Slice(totalMessageLength);
+				if (code == BackendMessageCode.ErrorResponse)
+				{
+					error = buffer.Slice(5, bodyLength).ParseErrorFieldsFromSequence();
+				}
+
+				consumed = nextPosition;
+				buffer = buffer.Slice(totalLength);
 			}
 
-			reader.AdvanceTo(buffer.Start, buffer.End);
+			reader.AdvanceTo(consumed, examined);
 
 			if (result.IsCompleted)
 			{
-				throw new InvalidOperationException("Connection closed before ReadyForQuery message was received.");
+				return error.ConnectionClosed("Connection closed before ReadyForQuery message was received.");
 			}
 		}
 	}
-
 
 	// Refactored to accept a transaction status out reference instead of allocating an Action<byte> closure
 	[AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
@@ -232,7 +242,6 @@ internal static class PipeReaderExtensions
 
 	#region private methods
 
-	
 	[DoesNotReturn]
 	private static void ThrowConnectionWasClosedByServer() =>
 		throw new EndOfStreamException(ResourceHelper.GetMessage(ResourceType.ConnectionClosedByServer));

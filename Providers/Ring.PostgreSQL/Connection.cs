@@ -8,6 +8,7 @@ using Ring.PostgreSQL.Helpers;
 using Ring.PostgreSQL.Models;
 using Ring.Schema.Models;
 using Ring.Util.Enums;
+using Ring.Util.Extensions;
 using Ring.Util.Helpers;
 using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
@@ -66,6 +67,7 @@ public sealed class Connection : IConnection, IAsyncDisposable
 	public Encoding ClientEncoding => _encoding;
 	public ConnectionState State => _state;
 	public int BackendPid => _backendPid;
+	public int BackendSecret => _backendSecret;
 	public int ProviderId => (int)_parameters.DatabaseProvider;
 
 	/// <summary>
@@ -122,7 +124,7 @@ public Task OpenAsync(CancellationToken cancellationToken)
 	public string?[] Execute(in RetrieveQuery query, ReadOnlySpan<byte> sql)
 	{
 		_state = ConnectionState.Open | ConnectionState.Executing;
-		var token = AcquireToken(default, out var linked);
+		var token = CancellationTokenExtensions.AcquireToken(default, out var linked, CommandTimeout, _commandCts);
 		try
 		{
 			_writer.SendQuery(sql);
@@ -170,25 +172,18 @@ public Task OpenAsync(CancellationToken cancellationToken)
 
 	public OperationalError? Execute(in AlterQuery query, ReadOnlySpan<byte> sql)
 	{
+		// Code size: 109 (0x6d) - no virtual calls!
 		_state = ConnectionState.Open | ConnectionState.Executing;
-		try
+		_writer.SendQuery(sql);
+		var error = _reader.DrainToReadyForQuery();
+		if (error is not null)
 		{
-			_writer.SendQuery(sql);
-			var error = _reader.DrainToReadyForQuery();
-			error?.Set(query);
-			_state = ConnectionState.Open;
+			error = error.Value.Set(query);
+			 _state = error.Value.Type == OperationalErrorType.PgError ? ConnectionState.Open : ConnectionState.Broken;
 			return error;
 		}
-		catch (PgOperationalError)
-		{
-			_state = ConnectionState.Open;
-			throw;
-		}
-		catch
-		{
-			_state = ConnectionState.Broken;
-			throw;
-		}
+		_state = ConnectionState.Open;
+		return null;
 	}
 
 	// Pooled builder: no state-machine allocation when the call suspends.
@@ -197,29 +192,39 @@ public Task OpenAsync(CancellationToken cancellationToken)
 	public async ValueTask<OperationalError?> ExecuteAsync(AlterQuery query, ReadOnlyMemory<byte> sql, CancellationToken cancellationToken = default)
 	{
 		_state = ConnectionState.Open | ConnectionState.Executing;
-		var token = AcquireToken(cancellationToken, out var linked);
+
+		CancellationTokenSource? linked = null;
 		try
 		{
+			var token = cancellationToken.AcquireToken(out linked, CommandTimeout, _commandCts);
 			await _writer.SendQueryAsync(sql, token).ConfigureAwait(false);
 			var error = await _reader.DrainToReadyForQueryAsync(token).ConfigureAwait(false);
-			error?.Set(query);
+
+			if (error is not null)
+			{
+				if (error.Value.Type != OperationalErrorType.PgError)
+				{
+					_state = ConnectionState.Broken;
+				}
+				else
+				{
+					error = error.Value.Set(query);
+					_state = ConnectionState.Open;
+				}
+				return error;
+			}
+
 			_state = ConnectionState.Open;
-			return error;
-		}
-		catch (PgOperationalError)
-		{
-			_state = ConnectionState.Open;
-			throw;
-		}
-		catch
-		{
-			// includes cancellation and timeout: the response stream is half consumed, the connection cannot be reused
-			_state = ConnectionState.Broken;
-			throw;
+			return null;
 		}
 		finally
 		{
-			ReleaseToken(linked);
+			// Unconditional dispose on non-null local variable to satisfy CA2000
+			linked?.Dispose();
+			linked = null;
+
+			// Reset pooled CancellationTokenSource
+			ResetPooledCts();
 		}
 	}
 
@@ -322,26 +327,6 @@ public Task OpenAsync(CancellationToken cancellationToken)
 			_syncGate.Wait();
 		}
 		return awaiter.GetResult();
-	}
-
-	// Applies CommandTimeout. Reuses one CancellationTokenSource when the caller passes no token;
-	// a linked source is only created when both a caller token and a timeout exist.
-	private CancellationToken AcquireToken(CancellationToken external, out CancellationTokenSource? linked)
-	{
-		linked = null;
-		var timeout = CommandTimeout;
-		if (timeout <= TimeSpan.Zero) return external;
-
-		if (external.CanBeCanceled)
-		{
-			linked = CancellationTokenSource.CreateLinkedTokenSource(external);
-			linked.CancelAfter(timeout);
-			return linked.Token;
-		}
-
-		var cts = _commandCts ??= new CancellationTokenSource();
-		cts.CancelAfter(timeout);
-		return cts.Token;
 	}
 
 	private void ReleaseToken(CancellationTokenSource? linked)
@@ -449,7 +434,17 @@ public Task OpenAsync(CancellationToken cancellationToken)
 		try { reader.Complete(); } catch { }
 		try { stream?.Dispose(); } catch { }
 		try { socket?.Dispose(); } catch { }
-#pragma warning restore CA1031 // Do not catch general exception types
+#pragma warning restore CA1031
+	}
+
+	private void ResetPooledCts()
+	{
+		var cts = _commandCts;
+		if (cts is not null && !cts.TryReset())
+		{
+			cts.Dispose();
+			_commandCts = null;
+		}
 	}
 
 	private void ReleaseResources()

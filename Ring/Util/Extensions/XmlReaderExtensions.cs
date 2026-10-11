@@ -43,7 +43,7 @@ internal static class XmlReaderExtensions
 		// Code size: 28 (0x1c)
 		if (attributeName is null) return null;
 		var index = attributeName.LastIndexOf(':');
-		return index >= 0 ? attributeName.Substring(index) : attributeName;
+		return index >= 0 ? attributeName[index..] : attributeName;
 	}
 	#endregion 
 }

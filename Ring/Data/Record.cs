@@ -10,6 +10,7 @@ using Ring.Util.Helpers;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Ring.Data;
@@ -68,9 +69,30 @@ public struct Record : IEquatable<Record>
 	internal readonly string? this[int i]
 	{
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		get => _data[i + _offset]; // Code size: 16 (0x10)
+		get
+		{
+			// Code size: 40 (0x28)
+			var data = _data;
+			int index = i + _offset;
+			if ((uint)index < (uint)data.Length)
+			{
+				return Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(data), index);
+			}
+			return data[index]; // fallback to trigger standard exception if out-of-bounds
+		}
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		set => _data[i + _offset] = value; // Code size: 17 (0x11)
+		set
+		{
+			// Code size: 42 (0x2a)
+			var data = _data;
+			int index = i + _offset;
+			if ((uint)index < (uint)data.Length)
+			{
+				Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(data), index) = value;
+				return;
+			}
+			data[index] = value;
+		}
 	}
 	
 #pragma warning disable RCS1085 // Use auto-implemented property
@@ -345,27 +367,45 @@ public struct Record : IEquatable<Record>
     public readonly override bool Equals(object? obj) => obj is Record record && Equals(record); // Code size: 25 (0x19)
     public readonly bool Equals(Record other)
 	{
-		// Code size: 115 (0x73)
+		// Code size: 127 (0x7f)
 		var table = _type;
 		if (!ReferenceEquals(table, other._type)) return false;
-		var count = table.RecordSize - 1;
-		var span1 = new ReadOnlySpan<string?>(_data, _offset, count);
-		var span2 = new ReadOnlySpan<string?>(other._data, other._offset, count);
-		for (var i = 0; i < count; i++)	if (!string.Equals(span1[i], span2[i], StringComparison.Ordinal)) return false;
+
+		int count = table.RecordSize - 1;
+		var data1 = _data;
+		var data2 = other._data;
+		int off1 = _offset;
+		int off2 = other._offset;
+
+		ref var ref1 = ref MemoryMarshal.GetArrayDataReference(data1);
+		ref var ref2 = ref MemoryMarshal.GetArrayDataReference(data2);
+
+		for (int i = 0; i < count; i++)
+		{
+			string? val1 = Unsafe.Add(ref ref1, i + off1);
+			string? val2 = Unsafe.Add(ref ref2, i + off2);
+			if (!string.Equals(val1, val2, StringComparison.Ordinal)) return false;
+		}
 		return true;
 	}
 	public readonly override int GetHashCode()
 	{
-		// Code size: 122 (0x7a)
+		// Code size: 126 (0x7e)
 		var table = _type;
-		var data = new ReadOnlySpan<string?>(_data, _offset, table.RecordSize - 1);
-		var hash = new HashCode();
+		int count = table.RecordSize - 1;
+		var data = _data;
+		int offset = _offset;
 
-		hash.Add(table.Id); // pair of identification for a table
+		var hash = new HashCode();
+		hash.Add(table.Id);
 		hash.Add(table.SchemaId);
 
-		// Process each field
-		foreach (var value in data) hash.Add(value?? NullField);
+		ref var dataRef = ref MemoryMarshal.GetArrayDataReference(data);
+		for (int i = 0; i < count; i++)
+		{
+			string? val = Unsafe.Add(ref dataRef, i + offset);
+			hash.Add(val ?? NullField);
+		}
 		return hash.ToHashCode();
 	}
 	internal readonly bool EqualTo(SaveQuery obj) => ReferenceEquals(obj.Data, _data) && obj.Offset == _offset; // Code size: 31 (0x1f)

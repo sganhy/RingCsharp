@@ -8,6 +8,7 @@ public interface IConnection : IDisposable
 	bool IsConnectionAlive();
 	int ProviderId { get; }
 	int BackendPid { get; }
+	int BackendSecret { get; }
 	long Id { get; }
 	DateTime CreationTime { get; }
 	DateTime? LastConnectionTime { get; }

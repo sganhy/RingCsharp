@@ -15,16 +15,16 @@ internal static class ArrayExtensions
 	private const byte ErrorMessage = (byte)ErrorTypeCode.Message;
 	private const byte ErrorDetail = (byte)ErrorTypeCode.Detail;
 	private const byte ErrorHint = (byte)ErrorTypeCode.Hint;
+	private const byte ErrorTableName = (byte)ErrorTypeCode.TableName;
+	private const byte ErrorSchemaName = (byte)ErrorTypeCode.SchemaName;
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	internal static OperationalError ParseErrorFields(this Span<byte> body) => ParseErrorFields((ReadOnlySpan<byte>)body); // Code size: 12 (0xc)
+	internal static OperationalError ParseErrorFields(this Span<byte> body) => ParseErrorFields((ReadOnlySpan<byte>)body);
 
 	internal static OperationalError ParseErrorFields(this ReadOnlySpan<byte> body)
 	{
-		// Code size: 217 (0xd9)
-		string? severity = null, sqlState = null, message = null, detail = null, hint = null;
+		string? severity = null, sqlState = null, message = null, detail = null, hint = null, tableName = null, schemaName = null;
 
-		// ErrorResponse body: repeated (1-byte field code, NUL-terminated string), ended by a single 0 byte.
 		var offset = 0;
 		while (offset < body.Length)
 		{
@@ -40,18 +40,49 @@ internal static class ArrayExtensions
 				case ErrorMessage: message = Decode(value); break;
 				case ErrorDetail: detail = Decode(value); break;
 				case ErrorHint: hint = Decode(value); break;
-					// every other field (position, schema, table, file, line, routine...) is skipped
+				case ErrorTableName: tableName = Decode(value); break;
+				case ErrorSchemaName: schemaName = Decode(value); break;
 			}
 		}
 
-		return new OperationalError
+		return new OperationalError(
+			errorType: OperationalErrorType.PgError,
+			message: message ?? string.Empty,
+			sqlState: sqlState ?? string.Empty,
+			severity: severity ?? string.Empty,
+			detail: detail,
+			hint: hint,
+			tableName: tableName,
+			schemaName: schemaName
+		);
+	}
+
+	internal static OperationalError ParseErrorFieldsFromSequence(this ReadOnlySequence<byte> sequence)
+	{
+		if (sequence.IsSingleSegment)
 		{
-			Message = message ?? string.Empty,
-			SqlState = sqlState ?? string.Empty,
-			Severity = severity ?? string.Empty,
-			Detail = detail,
-			Hint = hint
-		};
+			return sequence.FirstSpan.ParseErrorFields();
+		}
+
+		var length = (int)sequence.Length;
+		if (length <= StackallocThreshold)
+		{
+			Span<byte> span = stackalloc byte[length];
+			sequence.CopyTo(span);
+			return span.ParseErrorFields();
+		}
+
+		var rented = ArrayPool<byte>.Shared.Rent(length);
+		try
+		{
+			var span = rented.AsSpan(0, length);
+			sequence.CopyTo(span);
+			return span.ParseErrorFields();
+		}
+		finally
+		{
+			ArrayPool<byte>.Shared.Return(rented);
+		}
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -61,7 +92,6 @@ internal static class ArrayExtensions
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	internal static string ParseByteaHexToBase64(this ReadOnlySpan<byte> body, int offset, int valueLength)
 	{
-		// Code size: 177 (0xb1)
 		if (valueLength < 2 || body[offset] != (byte)'\\' || body[offset + 1] != (byte)'x')
 			ThrowInvalidByteaFormat();
 
@@ -93,12 +123,12 @@ internal static class ArrayExtensions
 
 	#region Private Methods 
 
-	private static string Decode(ReadOnlySpan<byte> value) => value.IsEmpty ? string.Empty : Encoding.UTF8.GetString(value); // Code size: 27 (0x1b)
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static string Decode(ReadOnlySpan<byte> value) => value.IsEmpty ? string.Empty : Encoding.UTF8.GetString(value);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static ReadOnlySpan<byte> ReadCStringSpan(ReadOnlySpan<byte> data, ref int offset)
 	{
-		// Code size: 51 (0x33)	
 		var remaining = data[offset..];
 		var nullIdx = remaining.IndexOf((byte)0);
 
@@ -116,7 +146,6 @@ internal static class ArrayExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static void DecodeHex(ReadOnlySpan<byte> source, Span<byte> destination)
 	{
-		// Code size: 70 (0x46)
 		for (var i = 0; i < destination.Length; i++)
 		{
 			var hi = HexNibble(source[i * 2]);
@@ -128,7 +157,6 @@ internal static class ArrayExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static int HexNibble(byte c)
 	{
-		// Code size: 14 (0xe)
 		var cInt = (int)c;
 		return (cInt & 0xF) + (cInt >> 6) * 9;
 	}

@@ -87,7 +87,9 @@ internal enum ResourceType : short
 	ConnectionClosedByServer = 502,
 	InvalidMessageLengthFromServer = 503,
 	ConnectionAlreadyOpen=504,
-	ConnectionNotOpen = 505,
+	ConnectionNotOpen=505,
+	InvalidMessageLength=506,
+	ClosedBeforeReadyForQuery=507,
 
 	/// <summary>
 	/// Reserved for unit tests

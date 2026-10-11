@@ -1,12 +1,36 @@
-﻿namespace Ring.Data;
+﻿using Ring.Data.Extensions;
+using System.Runtime.InteropServices;
 
-public sealed class OperationalError
+namespace Ring.Data;
+
+[StructLayout(LayoutKind.Auto)]
+public readonly struct OperationalError: IEquatable<OperationalError>
 {
-	public string Message { get; internal set; } = string.Empty;
-	public string SqlState { get; internal set; } = string.Empty;
-	public string Severity { get; internal set; } = string.Empty;
-	public string? Detail { get; internal set; }
-	public string? Hint { get; internal set; }
-	public string? TableName { get; internal set; }
-	public string? SchemaName { get; internal set; }
+	// Total Size(Auto): 64 bytes
+	public readonly OperationalErrorType Type;
+	public readonly string Message;
+	public readonly string SqlState;
+	public readonly string Severity;
+	public readonly string? Detail;
+	public readonly string? Hint;
+	public readonly string? TableName;
+	public readonly string? SchemaName;
+
+	public OperationalError(OperationalErrorType errorType,	string message,	string sqlState, string severity, string? detail, string? hint, string? tableName,	string? schemaName)
+	{
+		Type = errorType;
+		Message = message;
+		SqlState = sqlState;
+		Severity = severity;
+		Detail = detail;
+		Hint = hint;
+		TableName = tableName;
+		SchemaName = schemaName;
+	}
+
+	public static bool operator ==(in OperationalError left, in OperationalError right) => left.Equals(right);
+	public static bool operator !=(in OperationalError left, in OperationalError right) => !left.Equals(right);
+	public override readonly bool Equals(object? obj) => obj is OperationalError operationalError && Equals(operationalError);
+	public readonly bool Equals(OperationalError other) => this.IsEquivalentTo(other);
+	public override readonly int GetHashCode() => this.Hash();
 }
