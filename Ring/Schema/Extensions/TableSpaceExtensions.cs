@@ -37,9 +37,11 @@ internal static class TableSpaceExtensions
 		return hash.ToHashCode();
 	}
 
-	internal static bool IsEquivalentTo(this TableSpace tableSpace, TableSpace? other)
+	internal static bool IsEquivalentTo(this TableSpace? tableSpace, TableSpace? other)
 	{
-		if (other is null) return false;
+		// Code size: 96 (0x60)
+		if (ReferenceEquals(tableSpace, other)) return true;
+		if (tableSpace is null || other is null) return false;
 		if (!tableSpace.BaseEntityEquals(other)) return false;
 		if (tableSpace.Index != other.Index) return false;
 		if (tableSpace.Table != other.Table) return false;

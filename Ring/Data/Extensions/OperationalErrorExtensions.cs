@@ -9,6 +9,10 @@ internal static class OperationalErrorExtensions
 	{
 		return operationalError;
 	}
+	internal static OperationalError Set(this in OperationalError operationalError, in SaveQuery query)
+	{
+		return operationalError;
+	}
 
 	internal static int Hash(this in OperationalError operationalError)
 	{
@@ -31,10 +35,10 @@ internal static class OperationalErrorExtensions
 			   operationalError.SchemaName == other.SchemaName;
 	}
 
-	internal static OperationalError InvalidProtocol(this in OperationalError? _, string message)
+	internal static OperationalError InvalidProtocol(this in OperationalError? _, string message) // Code size: 22 (0x16)
 		=> new(OperationalErrorType.InvalidProtocol, message, string.Empty, string.Empty, null, null, null, null);
-	internal static OperationalError ConnectionClosed(this in OperationalError? _, string message)
+	internal static OperationalError ConnectionClosed(this in OperationalError? _, string message) // Code size: 22 (0x16)
 		=> new(OperationalErrorType.ConnectionClosed, message, string.Empty, string.Empty, null, null, null, null);
-	internal static OperationalError InvalidQuery(this in OperationalError? _, string message)
+	internal static OperationalError InvalidQuery(this in OperationalError? _, string message) // Code size: 22 (0x16)
 		=> new(OperationalErrorType.InvalidQuery, message, string.Empty, string.Empty, null, null, null, null);
 }

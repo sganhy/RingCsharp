@@ -53,8 +53,12 @@ internal static class PipeWriterExtensions
 	/// </summary>
 	internal static void SendExtendedQuery(this PipeWriter writer, ReadOnlySpan<byte> sql, in SaveQuery query, Encoding encoding)
 	{
+		// Code size: 169 (0xa9)
 		var parseMsgLength = 9 + sql.Length;
-		var span = writer.GetSpan(parseMsgLength + query.GetVariablesPayloadSize(encoding));
+		var variablesPayloadSize = query.GetVariablesPayloadSize(encoding);
+		var totalMsgLength = parseMsgLength + variablesPayloadSize;
+
+		var span = writer.GetSpan(totalMsgLength);
 
 		// Parse: 'P', int32 length, unnamed statement \0, sql \0, int16 parameter type count (0)
 		span[0] = (byte)FrontendMessageCode.Parse;
@@ -68,7 +72,7 @@ internal static class PipeWriterExtensions
 		BinaryPrimitives.WriteInt16BigEndian(span.Slice(offset, 2), 0);
 		offset += 2;
 
-		// Bind + Execute + Sync
+		// Write variables payload directly into the remaining pipe buffer space
 		offset += query.WriteVariablesPayload(span[offset..], encoding);
 
 		writer.Advance(offset);

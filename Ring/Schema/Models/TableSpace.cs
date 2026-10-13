@@ -11,8 +11,7 @@ internal sealed class TableSpace : BaseEntity, IEquatable<TableSpace>
 	internal readonly bool Constraint;
     internal readonly string PhysicalName;
 
-    internal TableSpace(int id, string name, string physicalName, string? description, bool isIndex, bool isTable, bool isConstraint, string[] tableName,
-		string fileName, bool active, bool baseline)
+    internal TableSpace(int id, string name, string physicalName, string? description, bool isIndex, bool isTable, bool isConstraint, string[] tableName, string fileName, bool active, bool baseline)
 		: base(id, name, description, baseline, active)
 	{
 		Index = isIndex;
@@ -23,8 +22,8 @@ internal sealed class TableSpace : BaseEntity, IEquatable<TableSpace>
 		PhysicalName = physicalName;
     }
 
-	public static bool operator ==(TableSpace left, TableSpace right) => left.Equals(right);
-	public static bool operator !=(TableSpace left, TableSpace right) => !left.Equals(right);
+	public static bool operator ==(TableSpace left, TableSpace right) => left.IsEquivalentTo(right);
+	public static bool operator !=(TableSpace left, TableSpace right) => !left.IsEquivalentTo(right);
 	public override bool Equals(object? obj) => obj is TableSpace tableSpace && Equals(tableSpace);
 	public bool Equals(TableSpace? other) => this.IsEquivalentTo(other);
 	public override int GetHashCode() => this.Hash();

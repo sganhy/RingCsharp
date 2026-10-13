@@ -8,7 +8,7 @@ namespace Ring.Schema.Models;
 /// </summary>
 internal sealed class Parameter : BaseEntity, IEquatable<Parameter>
 {
-	internal readonly string Value;
+	internal readonly string? Value;
 	internal readonly FieldType ValueType;
 	internal readonly ParameterType Type;
 	internal readonly EntityType ReferenceType;
@@ -17,7 +17,7 @@ internal sealed class Parameter : BaseEntity, IEquatable<Parameter>
 	/// <summary>
 	/// 	Ctor
 	/// </summary>
-	internal Parameter(int id, string name, string? description, ParameterType type, FieldType valueType, string value, EntityType referenceType, int referenceId, bool baseline, bool active)
+	internal Parameter(int id, string name, string? description, ParameterType type, FieldType valueType, string? value, EntityType referenceType, int referenceId, bool baseline, bool active)
 		: base(id, name, description, baseline, active)
 	{
 		Value = value;
@@ -27,8 +27,8 @@ internal sealed class Parameter : BaseEntity, IEquatable<Parameter>
 		ReferenceId = referenceId;
 	}
 
-	public static bool operator ==(Parameter left, Parameter right) => left.Equals(right);
-	public static bool operator !=(Parameter left, Parameter right) => !left.Equals(right);
+	public static bool operator ==(Parameter left, Parameter right) => left.IsEquivalentTo(right);
+	public static bool operator !=(Parameter left, Parameter right) => !left.IsEquivalentTo(right);
 	public override bool Equals(object? obj) => obj is Parameter parameter && Equals(parameter);
 	public bool Equals(Parameter? other) => this.IsEquivalentTo(other);
 	public override int GetHashCode() => this.Hash();

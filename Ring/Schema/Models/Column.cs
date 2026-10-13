@@ -33,8 +33,8 @@ internal readonly struct Column : IEquatable<Column>
 		BinaryLength = binaryLength;
 	}
 
-	public static bool operator ==(in Column left, in Column right) => left.Equals(right);
-	public static bool operator !=(in Column left, in Column right) => !left.Equals(right);
+	public static bool operator ==(in Column left, in Column right) => left.IsEquivalentTo(right);
+	public static bool operator !=(in Column left, in Column right) => !left.IsEquivalentTo(right);
 	public override readonly bool Equals(object? obj) => obj is Column column && Equals(column);
 	public readonly bool Equals(Column other) => this.IsEquivalentTo(other);
 	public override readonly int GetHashCode() => this.Hash();

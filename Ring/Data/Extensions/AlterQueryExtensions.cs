@@ -1,5 +1,6 @@
 ﻿using Ring.Data.Enums;
 using Ring.Data.Models;
+using Ring.Schema.Extensions;
 using Ring.Util.Builders;
 using Ring.Util.Extensions;
 
@@ -37,12 +38,18 @@ internal static class AlterQueryExtensions
 	/// Determines if two AlterQuery instances have equivalent definitions,
 	/// regardless of whether they're the same object reference.
 	/// </summary>
-	internal static bool IsEquivalentTo(this in AlterQuery alterQuery, AlterQuery? other)
+	internal static bool IsEquivalentTo(this in AlterQuery? alterQuery, in AlterQuery? other)
 	{
-		// Code size: 85 (0x55)
-		if (!other.HasValue) return false;
+		// Code size: 236 (0xec)
+		if (!other.HasValue && !alterQuery.HasValue) return true;
+		if (!other.HasValue || !alterQuery.HasValue) return false;
+		if (!ConstraintExtensions.IsEquivalentTo(alterQuery.Value.Constraint, other.Value.Constraint)) return false;
+		if (!IndexExtensions.IsEquivalentTo(alterQuery.Value.Index, other.Value.Index)) return false;
+		if (!TableSpaceExtensions.IsEquivalentTo(alterQuery.Value.TableSpace, other.Value.TableSpace)) return false;
+
 		var otherValue = other.Value;
-        if (alterQuery.Type != otherValue.Type || alterQuery.Table.Id != otherValue.Table.Id || alterQuery.Table.SchemaId == otherValue.Table.SchemaId) return false;
-		return true;
+		var alterQueryValue = alterQuery.Value;
+		return alterQueryValue.Type == otherValue.Type && alterQueryValue.Table.Id == otherValue.Table.Id && alterQueryValue.Table.SchemaId == otherValue.Table.SchemaId &&
+			 alterQueryValue.Id == otherValue.Id && alterQueryValue.ColumnIndex == otherValue.ColumnIndex;
     }
 }

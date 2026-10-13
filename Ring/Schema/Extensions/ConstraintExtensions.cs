@@ -13,12 +13,17 @@ internal static class ConstraintExtensions
 	/// Determines if two Field instances have equivalent definitions,
 	/// regardless of whether they're the same object reference.
 	/// </summary>
-	internal static bool IsEquivalentTo(this Constraint constraint, Constraint? other)
+	internal static bool IsEquivalentTo(this Constraint? constraint, Constraint? other)
 	{
-		// Code size: 116 (0x74)
-		if (!constraint.BaseEntityEquals(other)) return false;
-		// other cannot be null here 
-		return constraint.Type == other!.Type;
+		// Code size: 168 (0xa8)
+		// Same reference, or both null
+		if (ReferenceEquals(constraint, other)) return true;
+
+		// Only one of them is null
+		if (constraint is null || other is null) return false;
+
+		return constraint.BaseEntityEquals(other) && constraint.Type == other.Type && constraint.MinValue == other.MinValue	&& constraint.MaxValue == other.MaxValue
+			&& constraint.Columns.AsSpan().SequenceEqual(other.Columns);
 	}
 
 	internal static int Hash(this Constraint constraint)

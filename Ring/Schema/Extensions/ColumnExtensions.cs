@@ -25,7 +25,7 @@ internal static class ColumnExtensions
 
 	internal static int Hash(this in Column column)
 	{
-		// Code size: 29 (0x1d)
+		// Code size: 29 (0x1d) - no virtual calls
 		var hash = new HashCode();
 		hash.AddColumn(column);
 		return hash.ToHashCode();
@@ -34,8 +34,8 @@ internal static class ColumnExtensions
 	/// <summary>
 	/// Determines if two Column instances have equivalent definitions, regardless of whether they're the same object reference.
 	/// </summary>
-	internal static bool IsEquivalentTo(this in Column column, in Column other) => // Code size: 121 (0x79)
-		column.Id == other.Id && column.Type == other.Type && column.FieldType == other.FieldType && column.SearchableType == other.SearchableType &&
+	internal static bool IsEquivalentTo(this in Column column, in Column other) // Code size: 121 (0x79) - no virtual calls, no heap allocations
+		=> column.Id == other.Id && column.Type == other.Type && column.FieldType == other.FieldType && column.SearchableType == other.SearchableType &&
 			string.Equals(column.PhysicalName, other.PhysicalName, StringComparison.Ordinal) && column.RecordIndex == other.RecordIndex && column.BinaryLength == other.BinaryLength && 
 			column.BinaryType == other.BinaryType;
 	

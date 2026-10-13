@@ -32,8 +32,9 @@ internal static class HashCodeExtensions
 
 	internal static void AddOperationalError(this ref HashCode hashCode, in OperationalError operationalError)
 	{
+		// Code size: 133 (0x85)
 		/*
-			OperationalErrorType ErrorType;
+			OperationalErrorType Type;
 	 		string Message;
 			string SqlState;
 			string Severity;
@@ -42,7 +43,14 @@ internal static class HashCodeExtensions
 			string? TableName;
 			string? SchemaName;
 		 */
-
+		hashCode.Add((int)operationalError.Type);
+		hashCode.Add(operationalError.Message);
+		hashCode.Add(operationalError.SqlState);
+		hashCode.Add(operationalError.Severity);
+		hashCode.Add(operationalError.Detail ?? string.Empty);
+		hashCode.Add(operationalError.Hint ?? string.Empty);
+		hashCode.Add(operationalError.TableName ?? string.Empty);
+		hashCode.Add(operationalError.SchemaName ?? string.Empty);
 	}
 
 

@@ -28,9 +28,6 @@ public sealed class Connection : IConnection, IAsyncDisposable
 	private const int ReaderBufferSize = 64 * 1024;
 	private const int ReaderMinimumReadSize = 8 * 1024;
 	private const int WriterMinimumBufferSize = 16 * 1024;
-	private const int KeepAliveTimeSeconds = 60;
-	private const int KeepAliveIntervalSeconds = 10;
-	private const int KeepAliveRetryCount = 3;
 	private const int MaxSqlLength = 0x3FFFFFFF - 16; // PostgreSQL caps a message at 1 GB - 1 (the length field counts its own 4 bytes).
 	private const int MaxSqlDriverLength = MaxSqlLength / 4; // 256 MB is a more reasonable limit for a single SQL command!
 	private static readonly byte[] TerminateMessage = { (byte)FrontendMessageCode.Terminate, 0, 0, 0, 4 };
@@ -79,7 +76,6 @@ public sealed class Connection : IConnection, IAsyncDisposable
 
 	// ConnectionState is a flags enum (Open | Executing): test bits, never compare with == / !=.
 	private bool IsOpenOrConnecting => (_state & (ConnectionState.Open | ConnectionState.Connecting)) != 0;
-
 	private bool HasPipeline => !ReferenceEquals(_writer, ClosedPipeWriter.Instance);
 
 	public Connection(string connectionString) : this(connectionString.ToConnectionParameters()) { }
@@ -169,7 +165,7 @@ public Task OpenAsync(CancellationToken cancellationToken)
 		if (error is not null)
 		{
 			error = error.Value.Set(query);
-			 _state = error.Value.Type == OperationalErrorType.PgError ? ConnectionState.Open : ConnectionState.Broken;
+			 _state = error.Value.Type != OperationalErrorType.PgError ?  ConnectionState.Broken : ConnectionState.Open;
 			return error;
 		}
 		_state = ConnectionState.Open;
@@ -182,7 +178,6 @@ public Task OpenAsync(CancellationToken cancellationToken)
 	public async ValueTask<OperationalError?> ExecuteAsync(AlterQuery query, ReadOnlyMemory<byte> sql, CancellationToken cancellationToken = default)
 	{
 		_state = ConnectionState.Open | ConnectionState.Executing;
-
 		CancellationTokenSource? linked = null;
 		try
 		{
@@ -211,7 +206,6 @@ public Task OpenAsync(CancellationToken cancellationToken)
 		{
 			// Unconditional dispose on non-null local variable to satisfy CA2000
 			linked?.Dispose();
-			linked = null;
 
 			// Reset pooled CancellationTokenSource
 			ResetPooledCts();
@@ -220,26 +214,19 @@ public Task OpenAsync(CancellationToken cancellationToken)
 
 	public OperationalError? Execute(in SaveQuery query, ReadOnlySpan<byte> sql)
 	{
+		// Code size: 123 (0x7b) - no virtual calls!
 		_state = ConnectionState.Open | ConnectionState.Executing;
-		try
+		_writer.SendExtendedQuery(sql, query, _encoding);
+		var error = _reader.DrainToReadyForQuery();
+		_state = ConnectionState.Open;
+		if (error is not null)
 		{
-			_writer.SendExtendedQuery(sql, query, _encoding);
-			var error = _reader.DrainToReadyForQuery();
-			_state = ConnectionState.Open;
+			error = error.Value.Set(query);
+			_state = error.Value.Type != OperationalErrorType.PgError ? ConnectionState.Broken : ConnectionState.Open;
 			return error;
 		}
-		catch (PgOperationalError)
-		{
-			_state = ConnectionState.Open;
-			throw;
-		}
-		catch
-		{
-			// A format/overflow error can happen after Parse/Bind bytes were already advanced in the writer:
-			// those bytes would be sent in front of the next query, so the connection must not be reused.
-			_state = ConnectionState.Broken;
-			throw;
-		}
+		_state = ConnectionState.Open;
+		return null;
 	}
 
 	public void Close()
@@ -344,7 +331,7 @@ public Task OpenAsync(CancellationToken cancellationToken)
 			var socket = await SocketHelper.ConnectSocketAsync(_host, _port, _timeout, cancellationToken).ConfigureAwait(false);
 			_socket = socket;
 			socket.NoDelay = true;
-			ConfigureKeepAlive(socket);
+			socket.ConfigureKeepAlive();
 
 			_networkStream = new NetworkStream(socket, ownsSocket: true);
 			_writer = PipeWriter.Create(_networkStream, new StreamPipeWriterOptions(minimumBufferSize: WriterMinimumBufferSize, leaveOpen: true));
@@ -374,34 +361,19 @@ public Task OpenAsync(CancellationToken cancellationToken)
 			DisposePipeline();
 			return;
 		}
-
 		if (HasPipeline)
 		{
+#pragma warning disable CA1031 // Do not catch general exception types
 			try
 			{
 				_writer.Write(TerminateMessage);
 				await _writer.FlushAsync(cancellationToken).ConfigureAwait(false);
 			}
 			catch { }
+#pragma warning restore CA1031
 		}
-
 		DisposePipeline();
 		_state = ConnectionState.Closed;
-	}
-
-	// Detects silently dropped connections (cable pulled, firewall idle timeout, crashed server host).
-	private static void ConfigureKeepAlive(Socket socket)
-	{
-		try
-		{
-			socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
-			socket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveTime, KeepAliveTimeSeconds);
-			socket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveInterval, KeepAliveIntervalSeconds);
-			socket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveRetryCount, KeepAliveRetryCount);
-		}
-		catch (SocketException) { }
-		catch (PlatformNotSupportedException) { }
-		catch (ArgumentException) { }
 	}
 
 	// Every step is independent: one failing Complete/Dispose never prevents the others from running.
@@ -441,7 +413,6 @@ public Task OpenAsync(CancellationToken cancellationToken)
 	{
 		DisposePipeline();
 		_state = ConnectionState.Closed;
-
 		_commandCts?.Dispose();
 		_commandCts = null;
 		_syncGate.Dispose();

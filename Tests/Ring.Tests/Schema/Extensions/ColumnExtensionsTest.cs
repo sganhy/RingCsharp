@@ -10,7 +10,7 @@ public sealed class ColumnExtensionsTest : BaseTest
     public ColumnExtensionsTest(ITestOutputHelper output) : base(output) => Expression.Empty();
 
     [Fact]
-    internal void GetHashCode_IndexHashEqual_False()
+    internal void GetHashCode_ColumnHashEqual_False()
     {
         // arrange 
         var id = _faker.Random.Number(int.MinValue, int.MaxValue);
@@ -31,7 +31,7 @@ public sealed class ColumnExtensionsTest : BaseTest
     }
 
     [Fact]
-    internal void Equals_2AnonymousIndexes_False()
+    internal void Equals_2AnonymousColumns_False()
     {
         // arrange 
         var id = _faker.Random.Number(int.MinValue, int.MaxValue);

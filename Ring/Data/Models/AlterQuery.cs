@@ -35,10 +35,10 @@ public readonly struct AlterQuery : IEquatable<AlterQuery>
 		TableSpace = tableSpace;
 	}
 
-	public static bool operator ==(AlterQuery left, AlterQuery right) => left.Equals(right);
-	public static bool operator !=(AlterQuery left, AlterQuery right) => !left.Equals(right);
+	public static bool operator ==(AlterQuery left, AlterQuery right) => AlterQueryExtensions.IsEquivalentTo(left, right);
+	public static bool operator !=(AlterQuery left, AlterQuery right) => !AlterQueryExtensions.IsEquivalentTo(left, right);
 	public override readonly bool Equals(object? obj) => obj is AlterQuery alterQuery && Equals(alterQuery);
-	public readonly bool Equals(AlterQuery other) => this.IsEquivalentTo(other);
+	public readonly bool Equals(AlterQuery other) => AlterQueryExtensions.IsEquivalentTo(this, other);
 	public override readonly int GetHashCode() => this.Hash();
 
 #if DEBUG

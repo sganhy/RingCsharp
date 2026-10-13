@@ -1,6 +1,8 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Models;
 using Ring.Util.Extensions;
+using System.Data;
+using System.Reflection.Metadata;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Index = Ring.Schema.Models.Index;
@@ -37,9 +39,11 @@ internal static class IndexExtensions
 	/// Determines if two Index instances have equivalent definitions,
 	/// regardless of whether they're the same object reference.
 	/// </summary>
-	internal static bool IsEquivalentTo(this Index index, Index? other)
+	internal static bool IsEquivalentTo(this Index? index, Index? other)
 	{
-		// Code size: 59 (0x3b)
+		// Code size: 73 (0x49) - no virtual calls
+		if (ReferenceEquals(index, other)) return true;
+		if (index is null || other is null) return false;
 		if (!index.BaseEntityEquals(other)) return false;
 		return index.Unique == other!.Unique && index.Bitmap == other.Bitmap && index.Columns.ArraysEqual(other.Columns);
 	}

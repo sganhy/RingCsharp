@@ -10,8 +10,8 @@ internal sealed class Constraint : BaseEntity, IEquatable<Constraint>
 	internal readonly long? MinValue;
 	internal readonly long? MaxValue;
 
-	internal Constraint(int id, string name,string? description, bool baseline, bool enabled, ConstraintType type, 
-		Column[] columns, long? minValue=null, long? maxValue=null) : base(id, name, description, baseline, enabled)
+	internal Constraint(int id, string name,string? description, bool baseline, bool enabled, ConstraintType type, Column[] columns, long? minValue=null, long? maxValue=null) 
+		: base(id, name, description, baseline, enabled)
 	{
 		Type = type;
 		Columns = columns;
@@ -19,8 +19,8 @@ internal sealed class Constraint : BaseEntity, IEquatable<Constraint>
 		MaxValue = maxValue;
 	}
 
-	public static bool operator ==(Constraint left, Constraint right) => left.Equals(right);
-	public static bool operator !=(Constraint left, Constraint right) => !left.Equals(right);
+	public static bool operator ==(Constraint left, Constraint right) => left.IsEquivalentTo(right);
+	public static bool operator !=(Constraint left, Constraint right) => !left.IsEquivalentTo(right);
 	public override bool Equals(object? obj) => obj is Constraint constraint && Equals(constraint);
 	public bool Equals(Constraint? other) => this.IsEquivalentTo(other);
 	public override int GetHashCode() => this.Hash();

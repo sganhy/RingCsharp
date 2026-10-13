@@ -1,14 +1,14 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Models;
 using Ring.Util.Extensions;
-using Ring.Util.Helpers;
 using System.Globalization;
 
 namespace Ring.Schema.Extensions;
 
 internal static class ParameterExtensions
 {
-	private readonly static string DefaultConnPoolSize = "1";
+	private const int DefaultConnPoolSize = 1;
+
 	private readonly static string CurrentTimestamp = "[CURRENT_TIMESTAMP]";
 
 	internal static Meta ToMeta(this Parameter parameter)
@@ -45,27 +45,25 @@ internal static class ParameterExtensions
 
 	internal static float GetVersion(this Parameter parameter)=> float.TryParse(parameter.Value, CultureInfo.InvariantCulture, out var version) ? version : 0f; // Code size: 28 (0x1c)
 
+	internal static string GetDbConnectionString(this Parameter[] parameters) => GetParameter(parameters, ParameterType.DbConnectionString)?.Value ?? string.Empty; // Code size: 30 (0x1e)
+
 	internal static int GetMaxPoolSize(this Parameter[] parameters)
 	{
-		// Code size: 63 (0x3f)
+		// Code size: 39 (0x27) - no virtual calls!
 		var param = GetParameter(parameters, ParameterType.MaxPoolSize);
-		var paramTemplate = ResourceHelper.GetParameter(ParameterType.MaxPoolSize);
-		return param is not null ? int.Parse(param.Value, CultureInfo.InvariantCulture) : int.Parse(DefaultConnPoolSize, CultureInfo.InvariantCulture);
+		return param is not null && param.Value is not null ? int.Parse(param.Value, CultureInfo.InvariantCulture) : DefaultConnPoolSize;
 	}
-
-	internal static string GetDbConnectionString(this Parameter[] parameters) => GetParameter(parameters, ParameterType.DbConnectionString)?.Value ?? string.Empty; // Code size: 30 (0x1e)
 
 	internal static int GetMinPoolSize(this Parameter[] parameters)
 	{
+		// Code size: 39 (0x27) - no virtual calls!
 		var param = GetParameter(parameters, ParameterType.MinPoolSize);
-		var paramTemplate = ResourceHelper.GetParameter(ParameterType.MinPoolSize);
-		return param is not null ? int.Parse(param.Value, CultureInfo.InvariantCulture) :
-			int.Parse(DefaultConnPoolSize, CultureInfo.InvariantCulture);
+		return param is not null && param.Value is not null ? int.Parse(param.Value, CultureInfo.InvariantCulture) : DefaultConnPoolSize;
 	}
 
 	internal static int Hash(this Parameter parameter)
 	{
-		// // Code size: 24 (0x18)
+		// Code size: 24 (0x18)
 		var hash = new HashCode();
 		hash.AddParameter(parameter);
 		return hash.ToHashCode();
@@ -75,12 +73,13 @@ internal static class ParameterExtensions
 	/// Determines if two Field instances have equivalent definitions,
 	/// regardless of whether they're the same object reference.
 	/// </summary>
-	internal static bool IsEquivalentTo(this Parameter parameter, Parameter? other)
+	internal static bool IsEquivalentTo(this Parameter? parameter, Parameter? other)
 	{
-		// Code size: 70 (0x46)
-		if (!parameter.BaseEntityEquals(other)) return false;
-		// other cannot be null here 
-		return parameter.Type == other!.Type && parameter.ValueType == other.ValueType && parameter.Type == other.Type && parameter.ReferenceType == other.ReferenceType;
+		// Code size: 100 (0x64) - no virtual calls!
+		if (ReferenceEquals(parameter, other)) return true;
+		if (parameter is null || other is null) return false;
+		return parameter.BaseEntityEquals(other) && parameter.Type == other.Type && parameter.ValueType == other.ValueType && parameter.ReferenceType == other.ReferenceType
+			&& parameter.ReferenceId == other.ReferenceId && string.Equals(parameter.Value, other.Value, StringComparison.Ordinal);
 	}
 
 }
