@@ -13,17 +13,19 @@ using ResourceType = Ring.Util.Enums.ResourceType;
 
 namespace Ring.Data;
 
-internal sealed class BulkAlter : IEquatable<BulkAlter>
+internal sealed class BulkAlter : IEquatable<BulkAlter>, IDisposable
 {
+	private bool _disposed;
 	private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
-	private SpanList<AlterQuery> _queries; // cannot set _queries as readonly!
+	private PooledList<AlterQuery> _queries; // cannot set _queries as readonly!
 	private readonly Database _schema;
 	private readonly Dictionary<EntityType, Dictionary<string, TableSpace>> _tablespaces; // <entityType, <tableName or default>, TableSpaceInfo>	
 
 	internal BulkAlter(Database schema)
 	{
-		// Code size: 33 (0x21)
-		_queries = new SpanList<AlterQuery>(16); // min bucket size = 16
+		// Code size: 46 (0x2e)
+		_disposed = false;
+		_queries = new PooledList<AlterQuery>(16); // min bucket size = 16
 		_schema = schema;
 		_tablespaces = GetTableSpaceDictionary(schema);
 	}
@@ -48,7 +50,7 @@ internal sealed class BulkAlter : IEquatable<BulkAlter>
 		foreach (var index in table.Indexes) AppendDdlCommand(AlterQueryType.CreateIndex, table, index);
 	}
 
-	internal SpanList<AlterQuery> Queries => _queries;
+	internal PooledList<AlterQuery> Queries => _queries;
 
 	internal void CreateIndex(string tableName, string indexName)
 	{
@@ -131,6 +133,13 @@ internal sealed class BulkAlter : IEquatable<BulkAlter>
 		&& _schema.Id == other._schema.Id
 		&& _queries.Count == other._queries.Count
 		&& this.Hash() == other.Hash(); // Code size: 68 (0x44)
+
+	public void Dispose()
+	{
+		if (_disposed) return;
+		_disposed = true;
+		_queries.Dispose();
+	}
 
 	#region private methods
 
@@ -254,7 +263,7 @@ internal sealed class BulkAlter : IEquatable<BulkAlter>
 	[DoesNotReturn]
 	private static void ThrowInvalidFieldName(string objectType, string fieldName) =>
 		throw new ArgumentException(string.Format(DefaultCulture, ResourceHelper.GetMessage(ResourceType.BulkAlterInvalidFieldName), fieldName, objectType));
-
+			
 	#endregion
 
 }

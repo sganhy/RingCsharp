@@ -18,16 +18,16 @@ namespace Ring.Data;
 public sealed class BulkSave : IBulkSave
 {
 	private static readonly SaveQuery EmptySaveQuery = new(GetDefaultType(), SaveQueryType.Undefined, Array.Empty<string?>(), 0);
-	private SpanList<SaveQuery> _queries; // cannot set _queries as readonly!
+	private PooledList<SaveQuery> _queries; // cannot set _queries as readonly!
 	private readonly Database _schema;
 	private int _idCount; // count of insert queries for each table, used to generate id before save
 
-	internal SpanList<SaveQuery> Queries => _queries;
+	internal PooledList<SaveQuery> Queries => _queries;
 
 	internal BulkSave(Database schema)
 	{
 		// Code size: 33 (0x21)
-		_queries = new SpanList<SaveQuery>(16); // min bucket size = 16
+		_queries = new PooledList<SaveQuery>(16); // min bucket size = 16
 		_schema = schema;
 		_idCount = 0;
 	}

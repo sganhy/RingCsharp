@@ -15,12 +15,12 @@ namespace Ring.Data;
 public sealed class BulkRetrieve
 {
 	private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
-	private SpanList<RetrieveQuery> _queries;
+	private PooledList<RetrieveQuery> _queries;
 	private Database? _schema;
 
     public BulkRetrieve()
     {
-        _queries = new SpanList<RetrieveQuery>();
+        _queries = new PooledList<RetrieveQuery>();
         _schema = null;
     }
 	

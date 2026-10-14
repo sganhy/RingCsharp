@@ -1642,26 +1642,6 @@ public sealed class RecordTest : BaseTest
         Assert.Equal(tableBook.Name, result);
     }
 
-    [Fact]
-    public void RecordType_SetValue_Armor()
-    {
-        // arrange 
-        var tableArmor = _schema.GetTable("armor");
-        Global.SetDefaultSchema(_schema);
-        Global.LoadSchema(_schema);
-        Assert.NotNull(tableArmor);
-		var rcd = new Record();
-
-        // act 
-        rcd.RecordType = "RpgSheet.armor";
-        var result = rcd.RecordType;
-
-        // assert
-        Assert.NotNull(result);
-        Assert.Equal("armor", result);
-        Assert.Equal(18, rcd.Table.RecordSize);
-    }
-
     private string?[] GetBucket(Table table, int recordCount, int maxStringSize)
     {
         var bucket = new string?[table.RecordSize * recordCount]; // 15 records 

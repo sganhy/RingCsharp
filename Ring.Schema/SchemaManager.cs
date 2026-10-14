@@ -41,6 +41,7 @@ public sealed class SchemaManager
 			if (table.PhysicalType == Enums.PhysicalType.Table) bulkAlter.CreateTable(table);
 		}
 		bulkAlter.Apply(_connection);
+		bulkAlter.Dispose();
 
 		var bulkSave = new BulkSave(initialSchema);
 		var startTime = DateTime.Now;

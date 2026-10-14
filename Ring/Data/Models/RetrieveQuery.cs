@@ -10,26 +10,25 @@ public struct RetrieveQuery : IEquatable<RetrieveQuery>
     internal readonly Table Table;
     internal readonly RetrieveQueryType Type;
     internal readonly int ParentQueryId;
-    internal readonly SpanList<RetrieveFilter> Filters;
-    internal readonly SpanList<RetrieveSort> Sorts;
-    internal PageInfo? Page;
+    internal readonly PooledList<RetrieveFilter> Filters;
+    internal readonly PooledList<RetrieveSort> Sorts;
+    internal readonly PageInfo? Page;
 
     /// <summary>
-    /// Ctor
+    ///     Ctor
     /// </summary>
     internal RetrieveQuery(Table table, RetrieveQueryType type, int parentQueryId)
     {
         Table = table;
         Type = type;
         ParentQueryId = parentQueryId;
-        Sorts = new SpanList<RetrieveSort>();
-		Filters = new SpanList<RetrieveFilter>();
+        Sorts = new PooledList<RetrieveSort>();
+		Filters = new PooledList<RetrieveFilter>();
         Page = null;
     }
 
 	public static bool operator ==(RetrieveQuery left, RetrieveQuery right) => left.Equals(right);
 	public static bool operator !=(RetrieveQuery left, RetrieveQuery right) => !left.Equals(right);
-	public override readonly bool Equals(object? obj) => obj is RetrieveQuery field && Equals(field);
 	public readonly bool Equals(RetrieveQuery other) => this.IsEquivalentTo(other);
 	public override readonly int GetHashCode() => this.Hash();
 

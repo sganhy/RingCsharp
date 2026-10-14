@@ -8,13 +8,13 @@ internal sealed class BulkSaveInfo
 {
 	private static readonly Database DefaultSchema = Meta.GetDefaultSchema(new Meta(-1, (byte)EntityType.Schema, 0, 0, 0L, string.Empty, null, null, true),
 					DatabaseProvider.Undefined);
-	internal SpanList<SaveQuery> Queries;
+	internal PooledList<SaveQuery> Queries;
 	internal Database Schema;
 	internal int IdCount;
 
 	public BulkSaveInfo(int initBucketSize, Database? schema=null)
 	{
-		Queries = new SpanList<SaveQuery>(initBucketSize);
+		Queries = new PooledList<SaveQuery>(initBucketSize);
 		Schema = schema ?? DefaultSchema;
 		IdCount = 0;
 	}
