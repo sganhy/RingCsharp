@@ -5,7 +5,7 @@ using Index = Ring.Schema.Models.Index;
 
 namespace Ring.Data.Models;
 
-public readonly struct AlterQuery : IEquatable<AlterQuery>
+public readonly struct AlterQuery : IEquatable<AlterQuery>, IComparer<AlterQuery>
 {
 	// Table(8) + Constraint(8) + Index(8) + TableSpace(8) + Id(4) + ColumnIndex(4) + Type(1) + [7 trailing padding] = 48 bytes
 	// 8-byte reference types (32 bytes total)
@@ -40,6 +40,7 @@ public readonly struct AlterQuery : IEquatable<AlterQuery>
 	public override readonly bool Equals(object? obj) => obj is AlterQuery alterQuery && Equals(alterQuery);
 	public readonly bool Equals(AlterQuery other) => AlterQueryExtensions.IsEquivalentTo(this, other);
 	public override readonly int GetHashCode() => this.Hash();
+	public int Compare(AlterQuery x, AlterQuery y) => x.Type.CompareTo(y.Type);
 
 #if DEBUG
 	public override string ToString() => $"{Id} - {Type}";

@@ -5,6 +5,7 @@ using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using Ring.Util.Helpers;
+using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using Database = Ring.Schema.Models.Schema;
@@ -15,17 +16,20 @@ namespace Ring.Data;
 
 internal sealed class BulkAlter : IEquatable<BulkAlter>, IDisposable
 {
+	private const int Buckets = 256;
+	private const int MinPooledListSize = 16;
 	private bool _disposed;
 	private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
 	private PooledList<AlterQuery> _queries; // cannot set _queries as readonly!
 	private readonly Database _schema;
 	private readonly Dictionary<EntityType, Dictionary<string, TableSpace>> _tablespaces; // <entityType, <tableName or default>, TableSpaceInfo>	
 
-	internal BulkAlter(Database schema)
+	internal BulkAlter(Database schema) : this(schema, new PooledList<AlterQuery>(MinPooledListSize)) {}
+	internal BulkAlter(Database schema, PooledList<AlterQuery> queries)
 	{
 		// Code size: 46 (0x2e)
 		_disposed = false;
-		_queries = new PooledList<AlterQuery>(16); // min bucket size = 16
+		_queries = queries;
 		_schema = schema;
 		_tablespaces = GetTableSpaceDictionary(schema);
 	}
@@ -51,6 +55,8 @@ internal sealed class BulkAlter : IEquatable<BulkAlter>, IDisposable
 	}
 
 	internal PooledList<AlterQuery> Queries => _queries;
+	internal Database Schema => _schema;
+	internal bool Disposed => _disposed;
 
 	internal void CreateIndex(string tableName, string indexName)
 	{
@@ -99,12 +105,9 @@ internal sealed class BulkAlter : IEquatable<BulkAlter>, IDisposable
 	internal void Apply(IConnection connection)
 	{
 		// Code size: 157 (0x9d)
-		// sort by Type - cost is high but we need to ensure that the order of execution is correct
-		_queries.Sort(static delegate (AlterQuery q1, AlterQuery q2)
-		{
-			if (q1.Type == q2.Type) return q1.Id.CompareTo(q2.Id);
-			return q1.Type.CompareTo(q2.Type);
-		});
+		
+		// sort by Type
+		Sort();
 
 		var encoding = connection.ClientEncoding;
 		var builder = _schema.DdlBuilder;
@@ -125,17 +128,67 @@ internal sealed class BulkAlter : IEquatable<BulkAlter>, IDisposable
 		}
 	}
 
-	public override int GetHashCode() => this.Hash();
+	internal void Sort()
+	{
+		// Code size: 350 (0x15e) - Linear Time Complexity O(n) + stability guarantee
+		var queries = _queries.AsSpan();
+		if (queries.Length < 2) return;
+
+		Span<int> count = stackalloc int[Buckets];
+
+		// Pass 1: count occurrences per Type and check if already sorted
+		var maxType = 0;
+		var previous = int.MinValue;
+		var sorted = true;
+		for (var i = 0; i < queries.Length; i++)
+		{
+			var type = (int)queries[i].Type;
+			if ((uint)type >= Buckets)
+			{
+				queries.Sort(); // Fallback for out-of-bounds types
+				return;
+			}
+			count[type]++;
+			if (type > maxType) maxType = type;
+			if (type < previous) sorted = false;
+			previous = type;
+		}
+		if (sorted) return; // nothing to move
+
+		// Pass 2: compute starting indices (prefix sums) for each bucket
+		Span<int> start = stackalloc int[Buckets];
+		var sum = 0;
+		for (var t = 0; t <= maxType; t++)
+		{
+			start[t] = sum;
+			sum += count[t];
+		}
+
+		// Pass 3: stably place elements into a temporary pooled buffer
+		var tempBuffer = ArrayPool<AlterQuery>.Shared.Rent(queries.Length);
+		Span<AlterQuery> temp = tempBuffer.AsSpan(0, queries.Length);
+
+		// Iterate forward through the original queries to guarantee stability
+		for (var i = 0; i < queries.Length; i++)
+		{
+			var query = queries[i];
+			var type = (int)query.Type;
+			temp[start[type]++] = query;
+		}
+
+		// Copy the sorted, stable sequence back to the original list
+		temp.CopyTo(queries);
+		ArrayPool<AlterQuery>.Shared.Return(tempBuffer);
+	}
+	public override int GetHashCode() => this.Hash(); // Code size: 7 (0x7)
 	public static bool operator ==(BulkAlter left, BulkAlter right) => left.Equals(right);
 	public static bool operator !=(BulkAlter left, BulkAlter right) => !left.Equals(right);
 	public override bool Equals(object? obj) => obj is BulkAlter bulkAlter && Equals(bulkAlter);
-	public bool Equals(BulkAlter? other) => other is not null
-		&& _schema.Id == other._schema.Id
-		&& _queries.Count == other._queries.Count
-		&& this.Hash() == other.Hash(); // Code size: 68 (0x44)
+	public bool Equals(BulkAlter? other) => other is not null && _schema.Id == other._schema.Id && _queries.Count == other._queries.Count && this.Hash() == other.Hash(); // Code size: 68 (0x44)
 
 	public void Dispose()
 	{
+		// Code size: 28 (0x1c)
 		if (_disposed) return;
 		_disposed = true;
 		_queries.Dispose();
@@ -245,7 +298,7 @@ internal sealed class BulkAlter : IEquatable<BulkAlter>, IDisposable
 		if (tablespace.Constraint && !dico[EntityType.Constraint].ContainsKey(tableName))
 			dico[EntityType.Constraint].Add(tableName, tablespace);
 	}
-
+	
 	// error handling
 	[DoesNotReturn]
 	private static void ThrowInvalidObjectType(string objectType) =>

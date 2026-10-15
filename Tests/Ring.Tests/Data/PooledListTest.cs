@@ -324,4 +324,20 @@ public sealed class PooledListTest : BaseTest
 		list.Dispose();
 	}
 
+	[Fact]
+	public void Sort_WithDefaultIComparer_OrdersItemsCorrectly()
+	{
+		// arrange
+		var list = new PooledList<int>(8);
+		foreach (var v in new[] { 3, 1, 4, 1, 5, 9, 2, 0 }) list.Add(v);
+
+		// act
+		list.Sort(Comparer<int>.Default);
+
+		// assert
+		int[] expected = new[] { 0, 1, 1, 2, 3, 4, 5, 9 };
+		Assert.Equal(expected, list.ToArray());
+		list.Dispose();
+	}
+
 }

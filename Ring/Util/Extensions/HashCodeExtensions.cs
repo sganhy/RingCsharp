@@ -145,7 +145,7 @@ internal static class HashCodeExtensions
 		hashCode.Add(parameters.ApplicationName);
 	}
 
-	internal static void AddColumn(this ref HashCode hashCode, Column column)
+	internal static void AddColumn(this ref HashCode hashCode, in Column column)
 	{
 		// Code size: 97 (0x61)
 		/*
@@ -168,7 +168,7 @@ internal static class HashCodeExtensions
 		hashCode.Add(column.PhysicalName);
 	}
 
-	internal static void AddSaveQuery(this ref HashCode hashCode, SaveQuery saveQuery)
+	internal static void AddSaveQuery(this ref HashCode hashCode, in SaveQuery saveQuery)
 	{
 		// Code size: 76 (0x4c)
 		/*
@@ -184,7 +184,7 @@ internal static class HashCodeExtensions
 		hashCode.Add(saveQuery.Offset);
 	}
 
-	internal static void AddAlterQuery(this ref HashCode hashCode, AlterQuery alterQuery)
+	internal static void AddAlterQuery(this ref HashCode hashCode, in AlterQuery alterQuery)
     {
 		// Code size: 91 (0x5b)
 		/*
@@ -204,7 +204,7 @@ internal static class HashCodeExtensions
 		if (alterQuery.Index is not null) AddIndex(ref hashCode, alterQuery.Index);
     }
 
-	internal static void AddRetrieveQuery(this ref HashCode hashCode, RetrieveQuery retrieveQuery)
+	internal static void AddRetrieveQuery(this ref HashCode hashCode, in RetrieveQuery retrieveQuery)
 	{
 		/*
 			Table Table;
@@ -266,6 +266,20 @@ internal static class HashCodeExtensions
 		hashCode.Add(table.AllowAttributeExtension); // ok 
 	}
 
+	internal static void AddBulkAlter(this ref HashCode hashCode, BulkAlter bulkAlter)
+	{
+		// Code size: 55 (0x37)
+		/*
+			bool _disposed;
+			PooledList<AlterQuery> _queries;
+			Database _schema;
+			Dictionary<EntityType, Dictionary<string, TableSpace>> _tablespaces;
+		*/
+		hashCode.Add(bulkAlter.Schema.Id);
+		hashCode.Add(bulkAlter.Disposed);
+		AddAlterQueries(ref hashCode, bulkAlter.Queries.ToArray());
+	}
+
 	#region private methods 
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -289,6 +303,12 @@ internal static class HashCodeExtensions
 	{
 		// Code size: 38 (0x26)
 		foreach (var relation in relations) AddRelation(ref hashCode, relation);
+	}
+
+	private static void AddAlterQueries(ref HashCode hashCode, ReadOnlySpan<AlterQuery> queries)
+	{
+		// Code size: 38 (0x26)
+		foreach (var query in queries) AddAlterQuery(ref hashCode, query);
 	}
 
 	private static void AddIndexes(ref HashCode hashCode, ReadOnlySpan<Index> indexes)

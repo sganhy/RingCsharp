@@ -3,7 +3,6 @@ using Ring.Data.Extensions;
 using Ring.Data.Models;
 using Ring.Schema.Builders;
 using Ring.Schema.Enums;
-using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using System.Linq.Expressions;
 
@@ -93,6 +92,28 @@ public sealed class AlterQueryExtensionsTest : BaseTest
 		Assert.False(result3);
 		Assert.False(result4);
 		Assert.False(result5);
+	}
+
+	[Theory]
+	[InlineData(AlterQueryType.CreateSchema, AlterQueryType.CreateTable, -1)]
+	[InlineData(AlterQueryType.CreateTable, AlterQueryType.CreateSchema, 1)]
+	[InlineData(AlterQueryType.CreateTable, AlterQueryType.CreateTable, 0)]
+	[InlineData(AlterQueryType.CreatePrimaryKey, AlterQueryType.CreateIndex, -1)]
+	[InlineData(AlterQueryType.Undefined, AlterQueryType.CreateIndex, 1)]
+	internal void Compare_RandomAlterQueryType_ExpectedSign(AlterQueryType typeX, AlterQueryType typeY, int expectedSign)
+	{
+		// Arrange
+		var comparer = default(AlterQuery);
+		var x = new AlterQuery(id: 1, table: null!, type: typeX, columnIndex: -1, constraint: null, index: null, tableSpace: null);
+		var y = new AlterQuery(id: 2, table: null!, type: typeY, columnIndex: -1, constraint: null, index: null, tableSpace: null);
+
+		// Act
+		int result = comparer.Compare(x, y);
+
+		// Assert
+		if (expectedSign < 0) Assert.True(result < 0);
+		else if (expectedSign > 0) Assert.True(result > 0);
+		else Assert.Equal(0, result);
 	}
 
 }

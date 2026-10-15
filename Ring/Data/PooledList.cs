@@ -22,7 +22,7 @@ internal struct PooledList<T> : IDisposable where T : struct
 	}
 
 	internal readonly int Count => _count;
-	internal readonly int Capacity => _buffer.Length; // Code size: 15 (0xf)
+	internal readonly int Capacity => _buffer is null ? 0 : _buffer.Length; // Code size: 19 (0x13)
 	internal readonly bool IsEmpty => _count == 0;
 
 	internal readonly ref T this[int index]
@@ -79,28 +79,28 @@ internal struct PooledList<T> : IDisposable where T : struct
 
 	internal void Clear()
 	{
-		// Code size: 42 (0x2a)
-		if (RuntimeHelpers.IsReferenceOrContainsReferences<T>() && _count > 0) Array.Clear(_buffer, 0, _count);
+		// Code size: 8 (0x8)
 		_count = 0;
 	}
 
 	internal readonly void Sort(Comparison<T> comparison) => AsSpan().Sort(comparison);
+	internal readonly void Sort<TComparer>(TComparer comparer) where TComparer : IComparer<T> => AsSpan().Sort(comparer);
 	internal readonly T[] ToArray() => AsReadOnlySpan().ToArray();
 
 	public readonly Span<T> AsSpan() => new(_buffer, 0, _count);
 	public readonly ReadOnlySpan<T> AsReadOnlySpan() => new(_buffer, 0, _count);
 
+	public readonly SpanEnumerator<T> GetEnumerator() => new(AsSpan());
+
 	/// <summary>Returns the buffer to the pool. Safe to call twice on the same instance, NOT safe on copies.</summary>
 	public void Dispose()
 	{
-		// Code size: 35 (0x23) - no virtual calls
+		// Code size: 39 (0x27) - no virtual calls
 		var buffer = _buffer;
 		_buffer = Array.Empty<T>();
 		_count = 0;
-		if (buffer is not null) ReturnBuffer(buffer);
+		if (buffer?.Length > 0) ReturnBuffer(buffer);
 	}
-
-	public readonly SpanEnumerator<T> GetEnumerator() => new(AsSpan());
 
 	#region private methods
 
@@ -114,9 +114,9 @@ internal struct PooledList<T> : IDisposable where T : struct
 
 	private void Grow(int required)
 	{
-		// Code size: 97 (0x61)
+		// Code size: 103 (0x67)
 		var old = _buffer;
-		var current = old.Length;
+		var current = old?.Length ?? 0;
 		var newCapacity = current == 0 ? DefaultCapacity : (int)Math.Min((long)current << 1, MaxCapacity);
 		if (newCapacity < required) newCapacity = required;
 		var next = ArrayPool<T>.Shared.Rent(newCapacity);
