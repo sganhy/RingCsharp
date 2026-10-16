@@ -105,9 +105,7 @@ internal sealed class BulkAlter : IEquatable<BulkAlter>, IDisposable
 	internal void Apply(IConnection connection)
 	{
 		// Code size: 157 (0x9d)
-		
-		// sort by Type
-		Sort();
+		Sort(); // sort by Type
 
 		var encoding = connection.ClientEncoding;
 		var builder = _schema.DdlBuilder;

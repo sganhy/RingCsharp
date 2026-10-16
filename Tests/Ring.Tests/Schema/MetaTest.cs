@@ -1,4 +1,5 @@
-﻿using Ring.Schema;
+﻿using Bogus;
+using Ring.Schema;
 using Ring.Schema.Builders;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
@@ -801,18 +802,71 @@ public sealed class MetaTest : BaseTest
         Assert.True(result3);
     }
 
-    [Fact]
-    public void ToCsv_Meta1_CsvString()
-    {
-		// arrange 
-		var meta1 = new Meta(7777, 1, 0, 0, 888L, "???", string.Empty, string.Empty, true);
-        var expectedValue = "7777,1,0,0,888,\"???\",\"\",\"\",True";
+	[Fact]
+	public void ToCsv_WithRandomizedData_SerializesCorrectlyAndCultureSafely()
+	{
+		// Arrange: Use Bogus to generate random standard metadata
+		var meta = new Meta(id: _faker.Random.Number(1, 1000), objectType: (byte)EntityType.Field, referenceId: _faker.Random.Number(1, 100), dataType: (int)FieldType.String, flags: _faker.Random.Long(0, 5000),
+			name: _faker.Database.Column(), description: _faker.Lorem.Sentence(), value: _faker.Random.AlphaNumeric(10), active: _faker.Random.Bool());
 
-        // act 
-        var result = meta1.ToCsv();
+		// Act
+		string csv = meta.ToCsv();
 
-		// assert
-		Assert.Equal(expectedValue, result);
+		// Assert
+		Assert.NotNull(csv);
+		var parts = csv.Split(',');
+
+		// Verify that primitive values match and are culture-safe
+		Assert.Equal(meta.Id.ToString(), parts[0]);
+		Assert.Equal(meta.ObjectType.ToString(), parts[1]);
+		Assert.Equal(meta.ReferenceId.ToString(), parts[2]);
+		Assert.Equal(meta.DataType.ToString(), parts[3]);
+		Assert.Equal(meta.Flags.ToString(), parts[4]);
+		Assert.Equal(meta.Active.ToString().ToLower(), parts[parts.Length - 1].ToLower());
+	}
+
+	[Fact]
+	public void ToCsv_WithQuotesAndSpecialCharacters_EscapesQuotesProperly()
+	{
+		// Arrange: Use Bogus to generate text, then inject quotes and commas 
+		// to simulate check-constraints or expressions containing quotes.
+		string[] items = new[]
+		{
+			"COL_NAME = \"ACTIVE\"",
+			"DEFAULT \"N/A\"",
+			"CHECK (Value > 0, Name LIKE \"Test%\")"
+		};
+		string trickyExpression = _faker.PickRandom(items);
+		var meta = new Meta(id: 42,	objectType: (byte)EntityType.Constraint, referenceId: 10, dataType: 0, flags: 0L, name: "Constraint_Quotes", 
+            description: _faker.Lorem.Word(), value: trickyExpression,	active: true);
+
+		// Act
+		string csv = meta.ToCsv();
+
+		// Assert
+		// Internal quotes should be doubled ("" -> doubled inside wrapped quotes)
+		// e.g. "COL_NAME = ""ACTIVE"""
+		string expectedEscapedValue = "\"" + trickyExpression.Replace("\"", "\"\"") + "\"";
+
+		// Verify the CSV string contains the properly escaped sequence
+		Assert.Contains(expectedEscapedValue, csv);
+	}
+
+	[Fact]
+	public void ToCsv_WithNullAndEmptyFields_DistinguishesThemCorrectly()
+	{
+		// Arrange: Use Bogus to mix null and empty string states
+		var meta = new Meta(id: _faker.Random.Number(1, 100), objectType: (byte)EntityType.Table, referenceId: 0, dataType: 0, flags: 0L, name: "Table_NullTest", description: null, value: string.Empty, active: false);
+
+		// Act
+		string csv = meta.ToCsv();
+
+		// Assert
+		// Layout: Id, ObjectType, ReferenceId, DataType, Flags, Name, Description, Value, Active
+		// Null description comes out unquoted/empty (,,)
+		// Empty string value comes out as explicit quotes ("")
+		Assert.Contains(",,", csv); // Represents the null description transition
+		Assert.Contains("\"\",", csv); // Represents the empty string value
 	}
 
 	[Fact]

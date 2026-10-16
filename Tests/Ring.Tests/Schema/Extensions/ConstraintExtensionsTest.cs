@@ -16,7 +16,7 @@ public sealed class ConstraintExtensionsTest : BaseTest
 		var id = _faker.Random.Number(int.MinValue, int.MaxValue);
 		var builder = new TableBuilder();
 		var meta = builder.GetMeta("@test",DatabaseProvider.PostgreSql);
-		var name = "name";
+		var name = "na\"me";
 		var description = "description";
 		var defaultCol = new Column(EntityType.Field, FieldType.Long, "???", SearchableType.None, 2, 7, 20, true);
 		var col1 = meta.GetColumn("id") ?? defaultCol;
@@ -24,7 +24,7 @@ public sealed class ConstraintExtensionsTest : BaseTest
 		// int id, string name,string? description, bool baseline, bool enabled, ConstraintType type,  Column[] columns, long? minValue = null, long? maxValue = null) : base(id, name, description, baseline, enabled
 		var constraint = new Constraint(id, name, description, true, true, ConstraintType.PrimaryKey, new Column[] { col1, col2 }, 0, 100);
 		var expectedValue = "0;100;id;reference_id";
-		var expectedCsv = $"{id},19,13,1,8192,\"name\",\"description\",\"0;100;id;reference_id\",True";
+		var expectedCsv = $"{id},19,13,1,8192,\"na\"\"me\",description,0;100;id;reference_id,True";
 
 		// act 
 		var subresult = constraint.ToMeta(meta);

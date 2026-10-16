@@ -19,7 +19,7 @@ namespace Ring.Schema;
 /// <summary>
 /// 	The Meta struct is a compact, memory-optimized data structure that serves as a universal container for database logical schema metadata. 
 /// </summary>
-[StructLayout(LayoutKind.Sequential)]
+[StructLayout(LayoutKind.Auto)]
 internal readonly struct Meta : IEquatable<Meta>
 {
 
@@ -64,6 +64,8 @@ internal readonly struct Meta : IEquatable<Meta>
 	private const long MaskSearchableType = ((1L << BitCountFieldSearchableType) - 1L) << BitPositionFieldSearchableType;
 	private const byte BitPositionFirstPositionRelType = 20;
 	private const long MaskRelationType = 127L << BitPositionFirstPositionRelType;
+	private const int FieldTypeMask = 127; // DataType bits 0..6 hold the field type
+	private const int DataTypeKeepMask = 0x7FFFFF80; // every other bit, except the sign bit
 	private static readonly FieldType DefaultColumnFieldType = FieldType.Long;
 	private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
 	private static readonly CacheId DefaultCacheId = new(-1L, long.MinValue, 0);
@@ -132,16 +134,17 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal int GetFieldSize() => (int)((Flags >> BitShiftFieldSize) & ((1L << BitCountFieldSize) - 1L)); // Code size: 18 (0x12)
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	
 	internal SearchableType GetSearchableType() => ((int)((Flags >> BitPositionFieldSearchableType) & ((1L << BitCountFieldSearchableType) - 1L))).ToSearchableType(); // Code size: 19 (0x13)
-
+	
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static int SetFieldType(int dataType, FieldType fieldType)
 	{
-		// Code size: 16 (0x10)
-		dataType &= 0x7FFFFF80; // clear 7 first bits
-		dataType += (int)fieldType;
-		return dataType;
+		// Code size: 20 (0x14)
+		// FieldType is a byte enum, so v is 0..255. For v >= 128, (v >> 7) is 1, -1 is all ones, so the result is 127 (Undefined).
+		// For v < 128, (v >> 7) is 0 and the value passes through unchanged.
+		var v = (int)fieldType;
+		return (dataType & DataTypeKeepMask) | ((v | -(v >> 7)) & FieldTypeMask);
 	}
 	// field flags 
 	internal static long SetFieldNotNull(long flags, bool value) => WriteFlag(flags, MetaFlag.FieldNotNull, value); // Code size: 10 (0xa)
@@ -282,28 +285,32 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	#region convertors 
 
+	[SkipLocalsInit]
 	internal string ToCsv()
 	{
-		// Code size: 260 (0x104)
+		// Code size: 295 (0x127)
 		// Calculate total length:
 		// Fixed character count: 6 commas + 6 quotes = 12 chars
 		// Max primitive string lengths: Id(11) + ObjectType(3) + ReferenceId(11) + DataType(11) + Flags(20) + Active(5) = 61 chars
-		var estimatedCapacity = 73
-			+ Name.Length
-			+ (Description?.Length ?? 0)
-			+ (Value?.Length ?? 0);
-		// allow memory allocation for the string builder to avoid resizing during append operations
-		return new StringBuilder(estimatedCapacity)
-			.Append(Id).Append(CsvSeparator)
-			.Append(ObjectType).Append(CsvSeparator)
-			.Append(ReferenceId).Append(CsvSeparator)
-			.Append(DataType).Append(CsvSeparator)
-			.Append(Flags).Append(CsvSeparator)
-			.Append(CsvStringTag).Append(Name).Append(CsvStringTag).Append(CsvSeparator)
-			.Append(CsvStringTag).Append(Description).Append(CsvStringTag).Append(CsvSeparator)
-			.Append(CsvStringTag).Append(Value).Append(CsvStringTag).Append(CsvSeparator)
-			.Append(Active)
-			.ToString();
+		// Calculate estimated capacity
+		var estimatedCapacity = 73 + Name.Length + (Description?.Length ?? 0) + (Value?.Length ?? 0);
+		var sb = new StringBuilder(estimatedCapacity);
+		// Use CultureInfo.InvariantCulture for numbers to avoid localized minus signs (e.g. sv-SE)
+		sb.Append(Id.ToString(DefaultCulture)).Append(CsvSeparator)
+		  .Append(ObjectType.ToString(DefaultCulture)).Append(CsvSeparator)
+		  .Append(ReferenceId.ToString(DefaultCulture)).Append(CsvSeparator)
+		  .Append(DataType.ToString(DefaultCulture)).Append(CsvSeparator)
+		  .Append(Flags.ToString(DefaultCulture)).Append(CsvSeparator);
+
+		// String fields with proper quoting and quote escaping
+		AppendCsvField(sb, Name);
+		sb.Append(CsvSeparator);
+		AppendCsvField(sb, Description);
+		sb.Append(CsvSeparator);
+		AppendCsvField(sb, Value);
+		sb.Append(CsvSeparator);
+		sb.Append(Active ? BooleanTrue : BooleanFalse);
+		return sb.ToString();
 	}
 
 	internal Relation? ToRelation(Table to)
@@ -1050,6 +1057,7 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	private static long? GetLongValue(string? value, int index, char separator)
 	{
+		// Code size: 116 (0x74)
 		if (value is null) return null;
 		var endIndex = value.IndexOfOccurrence(separator, index);
 		var startIndex = value.IndexOfOccurrence(separator, index - 1);
@@ -1058,7 +1066,7 @@ internal readonly struct Meta : IEquatable<Meta>
 		if (index > 1 && startIndex < 0) return null;
 		var span = value.AsSpan(startIndex + 1);
 		var slice = endIndex >= 0 ? span[..(endIndex - startIndex - 1)] : span;
-		return long.TryParse(slice, out var result) ? result : null;
+		return long.TryParse(slice, NumberStyles.Integer, CultureInfo.InvariantCulture, out var result) ? result : null;
 	}
 
 	private static Table GetMtm(Table partialTable, IDdlBuilder ddlBuilder, string physicalName, int objectIndex, Relation relation1, Relation relation2)
@@ -1080,6 +1088,27 @@ internal readonly struct Meta : IEquatable<Meta>
 		result.Relations[0] = relation1;
 		result.Relations[1] = relation2;
 		return result;
+	}
+
+	private static void AppendCsvField(StringBuilder sb, string? value)
+	{
+		// Code size: 171 (0xab)
+		if (value is null) return; // Null comes out as empty (no quotes)
+
+		// Determine if the field needs quotes (empty string, or contains separator, quotes, or newlines)
+		bool needsQuotes = value.Length == 0 || value.AsSpan().IndexOfAny(stackalloc char[] { CsvSeparator, CsvStringTag, '\r', '\n' }) >= 0;
+
+		if (needsQuotes)
+		{
+			sb.Append(CsvStringTag);
+			foreach (char c in value)
+			{
+				if (c == CsvStringTag) sb.Append(CsvStringTag); // Escape internal quote by doubling it ("")
+				sb.Append(c);
+			}
+			sb.Append(CsvStringTag);
+		}
+		else sb.Append(value);
 	}
 
 	#endregion

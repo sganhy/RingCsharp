@@ -86,8 +86,7 @@ internal static class ArrayExtensions
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	internal static string ParseByteaHexToBase64(this Span<byte> body, int offset, int valueLength) =>
-		ParseByteaHexToBase64((ReadOnlySpan<byte>)body, offset, valueLength);
+	internal static string ParseByteaHexToBase64(this Span<byte> body, int offset, int valueLength) => ParseByteaHexToBase64((ReadOnlySpan<byte>)body, offset, valueLength); // Code size: 14 (0xe)
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	internal static string ParseByteaHexToBase64(this ReadOnlySpan<byte> body, int offset, int valueLength)

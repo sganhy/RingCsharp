@@ -8,12 +8,6 @@ namespace Ring.Util.Helpers;
 internal sealed class CsvEnumerator : IEnumerator<string?[]>
 {
 
-	// BUGS (Claude source 4.6):
-	//     1) Current property: _row is returned by reference from Current: High (not really a bug the aim is to redure allocations at initialization)
-	//     2) Current property: re-parses on every access; Medium (Not a bug: Access is unique to simply source code)
-	//     3) ParseLine(): current += c string concatenation inside a loop; Medium (Fixed)
-	//     4) MoveNext(): Empty lines are not skipped; Low (Fixed)
-
 	private readonly Stream _stream;
 	private readonly GZipStream? _decompressionStream;
 	private readonly StreamReader _reader;
@@ -25,12 +19,12 @@ internal sealed class CsvEnumerator : IEnumerator<string?[]>
 	/// <summary>
 	///		Gets the parsed fields of the current input line.
 	/// </summary>
-	/// <remarks>Elements may be null to represent missing fields. The array is produced by parsing the current line when available.</remarks>
+	/// <remarks>Elements may be null to represent missing fields. The array is produced by parsing the current line when available[cite: 4]. Note: The underlying array instance is reused across iterations for performance optimization.</remarks>
 	public string?[] Current => _currentLine != null ? ParseLine(_currentLine) : Array.Empty<string?>();
-    object IEnumerator.Current => Current;
-    public CsvEnumerator(Assembly assembly, string resourceNameSpace, string resourceFile, int columnCount, bool compressed)
+	object IEnumerator.Current => Current;
+
+	public CsvEnumerator(Assembly assembly, string resourceNameSpace, string resourceFile, int columnCount, bool compressed)
 	{
-		// Code size: 144 (0x90)
 		var resource = resourceNameSpace + resourceFile;
 		ArgumentNullException.ThrowIfNull(assembly);
 		var stream = assembly?.GetManifestResourceStream(resource);
@@ -51,29 +45,30 @@ internal sealed class CsvEnumerator : IEnumerator<string?[]>
 		_disposed = false;
 	}
 
-
 	/// <summary>
-	/// Advances the enumerator to the next CSV record.
+	/// Advances the enumerator to the next non-empty CSV record.
 	/// </summary>
 	/// <returns>
-	/// <c>true</c> if a record was found; otherwise, <c>false</c> when the end of the stream is reached.
+	/// <c>true</c> if a record was found; otherwise, <c>false</c> when the end of the stream is reached[cite: 4].
 	/// </returns>
 	public bool MoveNext()
 	{
-		// Code size: 27 (0x1b)
-		_currentLine = _reader.ReadLine();
-		return _currentLine != null;
+		// Skip empty or whitespace-only lines automatically
+		while ((_currentLine = _reader.ReadLine()) != null)
+		{
+			if (!string.IsNullOrWhiteSpace(_currentLine)) return true;
+		}
+		return false;
 	}
 
 	/// <remarks>
 	/// The underlying resource stream must support seeking. For compressed resources, the decompression stream and reader are recreated because
-	/// a <see cref="GZipStream"/> cannot be repositioned. Reset() method is disabled.
+	/// a <see cref="GZipStream"/> cannot be repositioned[cite: 4]. Reset() method is disabled[cite: 4].
 	/// </remarks>
-	public void Reset() => throw new NotSupportedException(); 
+	public void Reset() => throw new NotSupportedException();
 
 	public void Dispose()
 	{
-		// Code size: 55 (0x37)
 		if (!_disposed)
 		{
 			_reader.Dispose();
@@ -87,7 +82,6 @@ internal sealed class CsvEnumerator : IEnumerator<string?[]>
 
 	private string?[] ParseLine(string line)
 	{
-		// Code size: 213 (0xd5)
 		StringBuilder current = new();
 		bool inQuotes = false;
 		var i = 0;
@@ -114,7 +108,7 @@ internal sealed class CsvEnumerator : IEnumerator<string?[]>
 			}
 			else
 			{
-				current.Append(c); // ← O(n²) allocation for each field character
+				current.Append(c);
 			}
 		}
 
@@ -122,7 +116,6 @@ internal sealed class CsvEnumerator : IEnumerator<string?[]>
 		if (elementIndex < _columnCount) _row[elementIndex++] = current.ToString();
 
 		// Differential clear: only clear unused columns from elementIndex onwards
-		// This avoids clearing the entire array when we just parsed data into it
 		for (var j = elementIndex; j < _columnCount; j++) _row[j] = null;
 
 		return _row;

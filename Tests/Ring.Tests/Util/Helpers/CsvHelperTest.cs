@@ -5,9 +5,7 @@ namespace Ring.Tests.Util.Helpers;
 
 public sealed class CsvHelperTest : BaseTest
 {
-	public CsvHelperTest(ITestOutputHelper output) : base(output)
-	{
-	}
+	public CsvHelperTest(ITestOutputHelper output) : base(output) {}
 
 	[Fact]
 	public void GetEnumerator_TestCsv_TestRows()

@@ -35,10 +35,8 @@ internal sealed class TableBuilder
 		var metaArr = new[] { fieldName, GetField(FieldName, FieldType.String)	};
 		var catalog = GetTable((int)tableType, tableType.GetLogicalName(), tableType);
 		var tableObject = GetTable(string.Empty, provider, metaArr, catalog, PhysicalType.View);
-		tableObject.Columns[0] = tableObject.Columns[0].SetPhysicalName(
-			ddlBuilder.GetPhysicalName(tableObject.GetField(FieldSchemaName) ?? defaultField, tableObject));
-		tableObject.Columns[1] = tableObject.Columns[1].SetPhysicalName(
-			ddlBuilder.GetPhysicalName(tableObject.GetField(FieldName) ?? defaultField, tableObject));
+		tableObject.Columns[0] = tableObject.Columns[0].SetPhysicalName(ddlBuilder.GetPhysicalName(tableObject.GetField(FieldSchemaName) ?? defaultField, tableObject));
+		tableObject.Columns[1] = tableObject.Columns[1].SetPhysicalName(ddlBuilder.GetPhysicalName(tableObject.GetField(FieldName) ?? defaultField, tableObject));
 		return tableObject;
 	}
 
