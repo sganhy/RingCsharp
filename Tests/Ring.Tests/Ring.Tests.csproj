@@ -14,11 +14,13 @@
 
 	<ItemGroup>
 		<None Remove="Resources\meta.csv" />
+		<None Remove="Resources\test_csv_helper.csv" />
 		<None Remove="Util\Resources\Test.gz" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<EmbeddedResource Include="Resources\meta.csv" />
+		<EmbeddedResource Include="Resources\test_csv_helper.csv" />
 		<EmbeddedResource Include="Util\Resources\Test.gz" />
 	</ItemGroup>
 

@@ -7,10 +7,10 @@ namespace Ring.Util.Helpers;
 
 internal sealed class CsvEnumerator : IEnumerator<string?[]>
 {
-
+	private readonly bool _compressed;
 	private readonly Stream _stream;
-	private readonly GZipStream? _decompressionStream;
-	private readonly StreamReader _reader;
+	private GZipStream? _decompressionStream;
+	private StreamReader _reader;
 	private string? _currentLine;
 	private readonly int _columnCount;
 	private readonly string?[] _row;
@@ -25,24 +25,13 @@ internal sealed class CsvEnumerator : IEnumerator<string?[]>
 
 	public CsvEnumerator(Assembly assembly, string resourceNameSpace, string resourceFile, int columnCount, bool compressed)
 	{
-		var resource = resourceNameSpace + resourceFile;
-		ArgumentNullException.ThrowIfNull(assembly);
-		var stream = assembly?.GetManifestResourceStream(resource);
-		ArgumentNullException.ThrowIfNull(stream);
+		// Code size: 84 (0x54)
+		var stream = assembly.GetManifestResourceStream(resourceNameSpace + resourceFile) ?? throw new ArgumentNullException(string.Empty);
 		_stream = stream;
-
-		if (compressed)
-		{
-			_decompressionStream = new GZipStream(_stream, CompressionMode.Decompress);
-			_reader = new StreamReader(_decompressionStream);
-		}
-		else
-		{
-			_reader = new StreamReader(_stream);
-		}
-		_row = new string?[columnCount];
+		_compressed = compressed;
 		_columnCount = columnCount;
-		_disposed = false;
+		_row = new string?[columnCount];
+		_reader = CreateReader();
 	}
 
 	/// <summary>
@@ -53,6 +42,7 @@ internal sealed class CsvEnumerator : IEnumerator<string?[]>
 	/// </returns>
 	public bool MoveNext()
 	{
+		// Code size: 41 (0x29)
 		// Skip empty or whitespace-only lines automatically
 		while ((_currentLine = _reader.ReadLine()) != null)
 		{
@@ -61,14 +51,24 @@ internal sealed class CsvEnumerator : IEnumerator<string?[]>
 		return false;
 	}
 
-	/// <remarks>
-	/// The underlying resource stream must support seeking. For compressed resources, the decompression stream and reader are recreated because
-	/// a <see cref="GZipStream"/> cannot be repositioned[cite: 4]. Reset() method is disabled[cite: 4].
-	/// </remarks>
-	public void Reset() => throw new NotSupportedException();
+	/// <summary>
+	/// Rewinds to the first record. The raw resource stream is seeked back to 0; the GZipStream (not repositionable) and the StreamReader are recreated on top of it.
+	/// </summary>
+	public void Reset()
+	{
+		// Code size: 82 (0x52)
+		ObjectDisposedException.ThrowIf(_disposed, this);
+		_reader.Dispose();                // leaveOpen: true, so _stream stays open
+		_decompressionStream?.Dispose();  // idem
+		_decompressionStream = null;
+		_stream.Seek(0, SeekOrigin.Begin);
+		_currentLine = null;
+		_reader = CreateReader();
+	}
 
 	public void Dispose()
 	{
+		// Code size: 55 (0x37)
 		if (!_disposed)
 		{
 			_reader.Dispose();
@@ -80,8 +80,21 @@ internal sealed class CsvEnumerator : IEnumerator<string?[]>
 
 	#region private methods 
 
+	private StreamReader CreateReader()
+	{
+		// Code size: 60 (0x3c)
+		Stream source = _stream;
+		if (_compressed)
+		{
+			_decompressionStream = new GZipStream(_stream, CompressionMode.Decompress, leaveOpen: true);
+			source = _decompressionStream;
+		}
+		return new StreamReader(source, Encoding.UTF8, detectEncodingFromByteOrderMarks: true, bufferSize: 1024, leaveOpen: true);
+	}
+
 	private string?[] ParseLine(string line)
 	{
+		// Code size: 213 (0xd5)
 		StringBuilder current = new();
 		bool inQuotes = false;
 		var i = 0;

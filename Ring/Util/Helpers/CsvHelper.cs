@@ -14,10 +14,11 @@ internal sealed class CsvHelper : IEnumerable<string?[]>, IDisposable
 	private CsvEnumerator? _currentEnumerator;
 
 	public CsvHelper(string resourceNameSpace, string resourceFile, int columnCount, bool compressed = true)
-		: this(Assembly.GetExecutingAssembly(), resourceNameSpace, resourceFile, columnCount, compressed) { }
+		: this(Assembly.GetExecutingAssembly(), resourceNameSpace, resourceFile, columnCount, compressed) {}
 
 	public CsvHelper(Assembly assembly, string resourceNameSpace, string resourceFile, int columnCount, bool compressed = true)
 	{
+		// Code size: 51 (0x33)
 		_columnCount = columnCount;
 		_resourceNameSpace = resourceNameSpace;
 		_resourceFile = resourceFile;
@@ -28,6 +29,7 @@ internal sealed class CsvHelper : IEnumerable<string?[]>, IDisposable
 
 	public IEnumerator<string?[]> GetEnumerator()
 	{
+		// Code size: 65 (0x41)
 		// Clean up any previous enumerator before creating a new one
 		_currentEnumerator?.Dispose();
 		_currentEnumerator = new CsvEnumerator(_assembly, _resourceNameSpace, _resourceFile, _columnCount, _compressed);
@@ -38,6 +40,7 @@ internal sealed class CsvHelper : IEnumerable<string?[]>, IDisposable
 
 	public void Dispose()
 	{
+		// Code size: 40 (0x28)
 		if (!_disposed)
 		{
 			_currentEnumerator?.Dispose();
