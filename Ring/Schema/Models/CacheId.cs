@@ -6,26 +6,28 @@ internal sealed class CacheId
 	internal long CurrentId;
 	internal long MaximumId;
 	internal int ReservedRange; // cache a range of id 
+	readonly internal int Increment;
 
 	/// <summary>
 	/// 	Ctor
 	/// </summary>
-	internal CacheId()
+	internal CacheId(int idIncrement)
 	{
 		CurrentId = 0L;
 		MaximumId = long.MaxValue;
 		ReservedRange = 1;
 		SyncRoot = new object();
 	}
-	internal CacheId(long currentId, long maximumId, int reservedRange)
+	internal CacheId(long currentId, long maximumId, int reservedRange, int idIncrement)
 	{
 		CurrentId = currentId;
 		MaximumId = maximumId;
 		ReservedRange = reservedRange;
+		Increment = idIncrement;
 		SyncRoot = new object();
 	}
 
 #if DEBUG
-	public override string ToString() => $"{CurrentId} / {MaximumId} (reserved: {ReservedRange})";
+	public override string ToString() => $"{CurrentId} / {MaximumId} (reserved: {ReservedRange}, increment: {Increment})";
 #endif
 }

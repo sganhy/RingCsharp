@@ -260,7 +260,7 @@ internal static class HashCodeExtensions
 		hashCode.Add((int)table.Type); // ok 
 		// hashCode.Add((int)table.CacheId); // nok 
 		// hashCode.Add((int)table.PhysicalName); // computed => nok
-		hashCode.Add(table.AllowHardDeletion); // ok 
+		hashCode.Add(table.PhysicalDeletion); // ok 
 		hashCode.Add(table.Readonly); // ok 
 		hashCode.Add(table.UsePreparedStatement); // ok 
 		hashCode.Add(table.AllowAttributeExtension); // ok 

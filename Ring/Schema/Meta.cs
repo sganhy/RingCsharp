@@ -68,7 +68,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	private const int DataTypeKeepMask = 0x7FFFFF80; // every other bit, except the sign bit
 	private static readonly FieldType DefaultColumnFieldType = FieldType.Long;
 	private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
-	private static readonly CacheId DefaultCacheId = new(-1L, long.MinValue, 0);
+	private static readonly CacheId DefaultCacheId = new(-1L, long.MinValue, 0, 0);
 	private static readonly string BooleanTrue = true.ToString(DefaultCulture);
 	private static readonly string BooleanFalse = false.ToString(DefaultCulture);
 	private static readonly string MetaSchemaId = "0";
@@ -414,8 +414,8 @@ internal readonly struct Meta : IEquatable<Meta>
 			var recordSize = physRelationCount + fields.Length + 1;
 
 			// sort arrays (warn: relations not yet loaded here)
-			fields.AsSpan().Sort((x, y) => string.CompareOrdinal(x.Name, y.Name));
-			indexes.AsSpan().Sort((x, y) => string.CompareOrdinal(x.Name, y.Name));
+			fields.AsSpan().Sort(static (x, y) => string.CompareOrdinal(x.Name, y.Name));
+			indexes.AsSpan().Sort(static (x, y) => string.CompareOrdinal(x.Name, y.Name));
 
 			var table = new Table(Id, Name, Description, Value, physicalName, tableType, relations, fields, new Column[colCount], indexes, new Constraint[constraintCount],
 				ReferenceId, physicalType, objectIndex, recordSize, GetCacheId(tableType), IsEntityBaseline(), Active, IsTableCached(), IsPhysicalDeletion(), IsTableReadonly(),
@@ -1039,7 +1039,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	private static CacheId GetCacheId(TableType tableType)
 	{
 		// Code size: 16 (0x10)
-		return tableType == TableType.Business ? new CacheId() : DefaultCacheId;
+		return tableType == TableType.Business ? new CacheId(1) : DefaultCacheId;
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveOptimization)]

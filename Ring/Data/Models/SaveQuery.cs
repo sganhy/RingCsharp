@@ -6,14 +6,15 @@ namespace Ring.Data.Models;
 
 public readonly struct SaveQuery : IEquatable<SaveQuery>
 {
-    // 40 bytes
-    internal readonly Table Table;
+	// Total: 21 bytes + 3 bytes padding => With 8-byte alignment: 24 bytes
+	// No attribute is worth adding here, neither Sequential nor Auto nor Explicit!
+	internal readonly Table Table;
     internal readonly SaveQueryType Type;
     internal readonly string?[] Data;
     internal readonly int Offset;
 
 	/// <summary>
-	/// 	Ctor
+	///		Ctor
 	/// </summary>
 	internal SaveQuery(Table table, SaveQueryType type, string?[] data, int offset)
     {
@@ -23,8 +24,8 @@ public readonly struct SaveQuery : IEquatable<SaveQuery>
         Offset = offset;
     }
 
-	public static bool operator ==(SaveQuery left, SaveQuery right) => left.Equals(right);
-	public static bool operator !=(SaveQuery left, SaveQuery right) => !left.Equals(right);
+	public static bool operator ==(in SaveQuery left, in SaveQuery right) => left.Equals(right);
+	public static bool operator !=(in SaveQuery left, in SaveQuery right) => !left.Equals(right);
 	public override readonly bool Equals(object? obj) => obj is SaveQuery saveQuery && Equals(saveQuery);
 	public readonly bool Equals(SaveQuery other) => this.IsEquivalentTo(other);
 	public override readonly int GetHashCode() => this.Hash();

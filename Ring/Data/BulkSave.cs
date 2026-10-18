@@ -21,7 +21,6 @@ public sealed class BulkSave : IBulkSave
 	private PooledList<SaveQuery> _queries; // cannot set _queries as readonly!
 	private readonly Database _schema;
 	private int _idCount; // count of insert queries for each table, used to generate id before save
-
 	internal PooledList<SaveQuery> Queries => _queries;
 
 	internal BulkSave(Database schema)
@@ -118,15 +117,15 @@ public sealed class BulkSave : IBulkSave
 		return null;
 	}
 
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public void InsertRecord(Record record)
 	{
-		if (record.Table is null) ThrowRecordUnknownRecordType();
-		if (record.Table.Readonly) return; // throw exception here ??
-		if (record.Table.Type == TableType.Business) ++_idCount;
-		if (record.IsNew) _queries.Add(new SaveQuery(record.Table, SaveQueryType.InsertRecord, record.Data, record.Offset));
+		// Code size: 110 (0x6e) - no virtual calls
+		var table = record.Table;
+		if (table is null) ThrowRecordUnknownRecordType();
+		if (table.Readonly || !record.IsNew) ThrowIllicteOperation(); // throw exception here ??
+		_idCount += table.CacheId.Increment;
+		_queries.Add(new SaveQuery(table, table.UsePreparedStatement ? SaveQueryType.PreparedInsertRecord : SaveQueryType.InsertRecord, record.Data, record.Offset));
 	}
-
 	internal void ForceInsert(Record record) =>	_queries.Add(new SaveQuery(record.Table, SaveQueryType.InsertRecord, record.Data, record.Offset));
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -190,9 +189,7 @@ public sealed class BulkSave : IBulkSave
 		_queries[index] = new SaveQuery(prevQuery.Table, saveQueryType, prevQuery.Data, prevQuery.Offset);
 	}
 
-	[MethodImpl(MethodImplOptions.NoInlining)]
-	[DoesNotReturn]
-	private static void ThrowRecordUnknownRecordType() => throw new ArgumentException(ResourceHelper.GetMessage(ResourceType.RecordUnkownRecordType));
+	
 
 	private void GenerateId(IConnection connection)
 	{ 
@@ -266,6 +263,23 @@ public sealed class BulkSave : IBulkSave
 #pragma warning disable CA1859 // Use concrete types when possible for improved performance
 	private static IDdlBuilder GetDefaultDdlBuilder() => new Util.Builders.PostgreSQL.DdlBuilder(Encoding.UTF8, false);
 #pragma warning restore CA1859
+
+	[MethodImpl(MethodImplOptions.NoInlining)]
+	[DoesNotReturn]
+	private static void ThrowInvalidInsert(Table? table)
+	{
+		if (table is null) ThrowRecordUnknownRecordType();
+		ThrowIllicteOperation();
+	}
+
+	[MethodImpl(MethodImplOptions.NoInlining)]
+	[DoesNotReturn]
+	private static void ThrowRecordUnknownRecordType() => throw new ArgumentException(ResourceHelper.GetMessage(ResourceType.RecordUnkownRecordType));
+
+
+	[MethodImpl(MethodImplOptions.NoInlining)]
+	[DoesNotReturn]
+	private static void ThrowIllicteOperation() => throw new ArgumentException(ResourceHelper.GetMessage(ResourceType.RecordUnkownRecordType));
 
 	#endregion
 }

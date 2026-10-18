@@ -5,6 +5,7 @@ namespace Ring.Schema.Models;
 
 internal sealed class Table : BaseEntity, IEquatable<Table>
 {
+	// 16 Header + 24 BaseEntity + 80 Table + 2 bytes padding = 120
 	internal readonly int ObjectIndex;
 	internal readonly Field[] Fields; // sorted by name.
 	internal readonly Relation[] Relations; // sorted by name.
@@ -19,7 +20,7 @@ internal sealed class Table : BaseEntity, IEquatable<Table>
 	internal readonly CacheId CacheId;
 	internal readonly string PhysicalName;
 	internal readonly bool Cached;
-	internal readonly bool AllowHardDeletion;
+	internal readonly bool PhysicalDeletion;
 	internal readonly bool Readonly;
 	internal readonly bool UsePreparedStatement;
 	internal readonly bool AllowAttributeExtension;
@@ -28,7 +29,7 @@ internal sealed class Table : BaseEntity, IEquatable<Table>
 	/// 	Ctor
 	/// </summary>
 	internal Table(int id, string name, string? description, string? subject, string physicalName, TableType type, Relation[] relations,
-		Field[] fields, Column[] columns, Index[] indexes, Constraint[] constraints, int schemaId, PhysicalType physicalType, int objectIndex, int recordSize, CacheId cacheId,
+		Field[] fields, Column[] columns, Index[] indexes, Constraint[] constraints, int schemaId, PhysicalType physicalType, int objectIndex, int recordSize, CacheId cacheId, 
 		bool baseline, bool active, bool cached, bool allowHardDeletion, bool readonlyTable, bool usePreparedStatement, bool allowAttributeExtension) 
 		: base(id, name, description, baseline, active)
 	{
@@ -47,7 +48,7 @@ internal sealed class Table : BaseEntity, IEquatable<Table>
 		Cached = cached;
 		PhysicalName = physicalName;
 		ObjectIndex = objectIndex;
-		AllowHardDeletion = allowHardDeletion;
+		PhysicalDeletion = allowHardDeletion;
 		UsePreparedStatement = usePreparedStatement;
 		AllowAttributeExtension = allowAttributeExtension;
 	}

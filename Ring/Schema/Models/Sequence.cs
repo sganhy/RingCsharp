@@ -10,7 +10,7 @@ internal sealed class Sequence : BaseEntity
 		: base(id, name, description, baseline, active)
 	{
 		SchemaId = schemaId;
-		Value = new CacheId();
+		Value = new CacheId(1);
 		MaxValue = maxValue;
 	}
 }

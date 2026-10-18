@@ -1,13 +1,11 @@
 ﻿using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
-using System.Runtime.InteropServices;
 
 namespace Ring.Schema.Models;
 
-[StructLayout(LayoutKind.Sequential)]
 internal readonly struct Column : IEquatable<Column>
 {
-	// Size per instance: 40 bytes as a class, 24 bytes as a struct.
+	// Size per instance: 40 bytes as a class, 24 bytes as a struct. Given by Unsafe.SizeOf<Column>().
 	// As a struct array, a table's 30–40 columns sit in one contiguous block, so iterating them is a linear memory scan that the CPU prefetcher handles efficiently.
 	internal readonly int Id;
 	internal readonly int RecordIndex;

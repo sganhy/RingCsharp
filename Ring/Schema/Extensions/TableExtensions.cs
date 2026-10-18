@@ -408,26 +408,23 @@ internal static class TableExtensions
 
 	internal static Meta[] ToMeta(this Table table, int schemaId) 
 	{
-		// Code size: 322 (0x142)
-		var result = new List<Meta>(table.Fields.Length+table.Relations.Length+table.Indexes.Length+1);
-		int i;
-		for (i=0; i < table.Fields.Length; ++i) result.Add(table.Fields[i].ToMeta(table.Id));
-		for (i=0; i < table.Relations.Length; ++i) result.Add(table.Relations[i].ToMeta(table.Id));
-		for (i=0; i < table.Indexes.Length; ++i) result.Add(table.Indexes[i].ToMeta(table));
-		var flags = 0L;
+		// Code size: 328 (0x148)
+		var result = new List<Meta>(table.Fields.Length + table.Relations.Length + table.Indexes.Length + 1);
 
-		// set Table Flags
+		var flags = 0L;
 		flags = Meta.SetTableCached(flags, table.Cached);
 		flags = Meta.SetTableReadonly(flags, table.Readonly);
 		flags = Meta.SetTableAllowAttributeExtension(flags, table.AllowAttributeExtension);
-		flags = Meta.SetPhysicalDeletion(flags, table.AllowHardDeletion);
+		flags = Meta.SetPhysicalDeletion(flags, table.PhysicalDeletion);
 		flags = Meta.SetPreparedStatement(flags, table.UsePreparedStatement);
-		// set BaseEntity Flags
 		flags = Meta.SetEntityBaseline(flags, table.Baseline);
 
-		var meta = new Meta(table.Id, (byte)EntityType.Table, schemaId, (int)table.Type, flags, table.Name, table.Description, null, table.Active);
-		// first - define an object type
-		result.Add(meta);
+		// first - the table meta defines the object type, same order as Meta.csv
+		result.Add(new Meta(table.Id, (byte)EntityType.Table, schemaId, (int)table.Type, flags, table.Name, table.Description, table.Subject, table.Active));
+
+		for (var i = 0; i < table.Fields.Length; ++i) result.Add(table.Fields[i].ToMeta(table.Id));
+		for (var i = 0; i < table.Relations.Length; ++i) result.Add(table.Relations[i].ToMeta(table.Id));
+		for (var i = 0; i < table.Indexes.Length; ++i) result.Add(table.Indexes[i].ToMeta(table));
 		return result.ToArray();
 	}
 
@@ -478,7 +475,7 @@ internal static class TableExtensions
 
 		// other cannot be null here !!
 		return table.Cached == other!.Cached && table.RecordSize == other.RecordSize && table.PhysicalType == other.PhysicalType && table.SchemaId == other.SchemaId &&
-			string.Equals(table.Subject, other.Subject, StringComparison.Ordinal) && table.Type == other.Type && table.AllowHardDeletion == other.AllowHardDeletion &&
+			string.Equals(table.Subject, other.Subject, StringComparison.Ordinal) && table.Type == other.Type && table.PhysicalDeletion == other.PhysicalDeletion &&
 			table.Readonly == other.Readonly && table.UsePreparedStatement == other.UsePreparedStatement && table.AllowAttributeExtension == other.AllowAttributeExtension &&
 			table.Fields.ArraysEqual(other.Fields) && table.Relations.ArraysEqual(other.Relations) && table.Indexes.ArraysEqual(other.Indexes);
 	}

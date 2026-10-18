@@ -1,5 +1,4 @@
-﻿using Bogus;
-using Ring.Schema.Builders;
+﻿using Ring.Schema.Builders;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 
@@ -18,9 +17,13 @@ public class TableBuilderTest
 
         // act 
         var metaTablePostGre = _sut.GetMeta(schemaName, DatabaseProvider.PostgreSql);
-
-		// assert
 		Assert.NotNull(metaTablePostGre);
+
+		var metaMetaList = metaTablePostGre.ToMeta(0);
+		var flags = metaMetaList[0].Flags;
+
+        // assert
+        Assert.Equal(9024L, flags);
 		Assert.Equal("@meta", metaTablePostGre.Name);
 		Assert.Equal("test1.\"@meta\"", metaTablePostGre.PhysicalName);
 		Assert.Equal("Central catalog that describes every structural element of the database.", metaTablePostGre.Description);
@@ -31,8 +34,8 @@ public class TableBuilderTest
         Assert.True(metaTablePostGre.Cached);
         Assert.True(metaTablePostGre.Readonly);
         Assert.True(metaTablePostGre.Active);
-        Assert.False(metaTablePostGre.AllowHardDeletion);
-        Assert.False(metaTablePostGre.UsePreparedStatement);
+        Assert.False(metaTablePostGre.PhysicalDeletion);
+        Assert.True(metaTablePostGre.UsePreparedStatement);
         Assert.False(metaTablePostGre.AllowAttributeExtension);
         Assert.NotNull(metaTablePostGre.GetField("id"));
         Assert.NotNull(metaTablePostGre.GetField("schema_id"));
@@ -61,9 +64,10 @@ public class TableBuilderTest
         Assert.Equal("value", metaTablePostGre.Fields[metaTablePostGre.Columns[8].RecordIndex].Name);
         Assert.Equal("active", metaTablePostGre.Fields[metaTablePostGre.Columns[9].RecordIndex].Name);
 		Assert.Equal(0, metaTablePostGre.Indexes?.Length ?? -1);
+		Assert.Equal(0, metaTablePostGre.CacheId.Increment);
 		Assert.Equal(15, metaTablePostGre.Constraints?.Length ?? -1);
 	}
-
+	
 	[Fact]
     internal void GetMetaId_PostgreSqlSchema_MetaIdTableObject()
     {
@@ -79,7 +83,7 @@ public class TableBuilderTest
         Assert.True(metaIdTablePostGre.Cached);
         Assert.True(metaIdTablePostGre.Readonly);
         Assert.True(metaIdTablePostGre.Active);
-        Assert.False(metaIdTablePostGre.AllowHardDeletion);
+        Assert.False(metaIdTablePostGre.PhysicalDeletion);
         Assert.True(metaIdTablePostGre.UsePreparedStatement);
         Assert.False(metaIdTablePostGre.AllowAttributeExtension);
         Assert.Equal("test2.\"@meta_id\"", metaIdTablePostGre.PhysicalName);
@@ -98,6 +102,7 @@ public class TableBuilderTest
         Assert.Equal(FieldType.Int, metaIdTablePostGre.Fields[metaIdTablePostGre.Columns[1].RecordIndex].Type);
         Assert.Equal(FieldType.Byte, metaIdTablePostGre.Fields[metaIdTablePostGre.Columns[2].RecordIndex].Type);
         Assert.Equal(FieldType.Long, metaIdTablePostGre.Fields[metaIdTablePostGre.Columns[3].RecordIndex].Type);
+		Assert.Equal(0, metaIdTablePostGre.CacheId.Increment);
 		Assert.Equal(0, metaIdTablePostGre?.Indexes.Length);
 	}
 
@@ -147,14 +152,22 @@ public class TableBuilderTest
 
         // act 
         var logTable = _sut.GetLog(schemaName, DatabaseProvider.PostgreSql);
+		Assert.NotNull(logTable);
+		var metaMetaList = logTable.ToMeta(0);
+		var flags = metaMetaList[0].Flags;
 
 		// assert
-		Assert.NotNull(logTable);
+		Assert.Equal(8768L, flags);
 		Assert.Equal("test.\"@log\"", logTable.PhysicalName);
         Assert.Equal(TableType.Log, logTable.Type);
         Assert.Equal(11, logTable.Fields.Length);
-        Assert.True(logTable.Baseline);
-        Assert.NotNull(logTable.GetField("id"));
+		Assert.True(logTable.Baseline);
+		Assert.False(logTable.Cached);
+		Assert.True(logTable.Readonly);
+		Assert.True(logTable.Active);
+		Assert.False(logTable.PhysicalDeletion);
+		Assert.True(logTable.UsePreparedStatement);
+		Assert.NotNull(logTable.GetField("id"));
         Assert.NotNull(logTable.GetField("entry_time"));
         Assert.NotNull(logTable.GetField("level_id"));
         Assert.NotNull(logTable.GetField("schema_id"));
@@ -180,6 +193,8 @@ public class TableBuilderTest
 		Assert.Equal(1, logTable?.Indexes.Length);
 		Assert.Equal(1, logTable?.Indexes[0].Columns.Length);
 		Assert.Equal("entry_time", logTable?.Indexes[0].Columns[0].PhysicalName);
+		Assert.NotNull(logTable);
+		Assert.Equal(0, logTable.CacheId.Increment);
 	}
 
 

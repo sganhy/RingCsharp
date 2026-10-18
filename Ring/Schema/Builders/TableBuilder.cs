@@ -24,7 +24,6 @@ internal sealed class TableBuilder
 		=> GetTable(schemaName, provider, ResourceHelper.GetMetaRows(TableType.Log), ResourceHelper.GetMetaTable(TableType.Log) ?? Meta.GetDefaultMeta(EntityType.Table), PhysicalType.Table);
 	internal Table GetTest(string schemaName, DatabaseProvider provider, PhysicalType physicalType) // Code size: 49 (0x31)
 		=> GetTable(schemaName, provider, ResourceHelper.GetMetaRows(TableType.Test), ResourceHelper.GetMetaTable(TableType.Test) ?? Meta.GetDefaultMeta(EntityType.Table), physicalType);
-
 	internal Table GetCatalog(EntityType entityType, DatabaseProvider provider) 
 	{
 		// Code size: 231 (0xe7)
