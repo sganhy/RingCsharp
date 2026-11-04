@@ -8,7 +8,7 @@ public interface IBulkSave : IEquatable<BulkSave>
 	void DeleteRecord(Record record);
 	void DeleteRecordById(string recordType, long id);
 	Record? GetRecordByIndex(int index, string objectType);
-	void InsertRecord(Record record);
-	void UpdateRecord(Record record);
+	void InsertRecord(in Record record);
+	void UpdateRecord(in Record record);
 	void Save(IsolationLevel? isolationLevel=null);
 }

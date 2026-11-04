@@ -1,4 +1,5 @@
 ﻿using Ring.Data;
+using Ring.Data.Enums;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
@@ -257,8 +258,8 @@ internal readonly struct Meta : IEquatable<Meta>
 	internal static Table GetDefaultTable(in Meta meta) // Code size: 103 (0x67)
 		=> new(meta.Id, meta.Name, meta.Description, meta.Value, string.Empty,
 			meta.DataType.ToTableType(), Array.Empty<Relation>(), Array.Empty<Field>(), Array.Empty<Column>(),
-			Array.Empty<Index>(), Array.Empty<Constraint>(), meta.ReferenceId, PhysicalType.Table, -1, 0, DefaultCacheId, meta.IsEntityBaseline(), meta.Active,
-			meta.IsTableCached(), true, meta.IsTableReadonly(), meta.HasPreparedStatement(), meta.IsTableAllowAttributeExtension());
+			Array.Empty<Index>(), Array.Empty<Constraint>(), meta.ReferenceId, PhysicalType.Table, -1, 0, DefaultCacheId, SaveQueryType.InsertRecord ,meta.IsEntityBaseline(), 
+			meta.Active, meta.IsTableCached(), true, meta.IsTableReadonly(), meta.HasPreparedStatement(), meta.IsTableAllowAttributeExtension());
 	internal static Constraint GetDefaultConstraint(in Meta meta, ConstraintType constraintType) // Code size: 103 (0x67)
 		=> new(meta.Id, meta.Name, meta.Description, meta.IsEntityBaseline(), meta.Active, constraintType, Array.Empty<Column>(), null, null);
 
@@ -412,14 +413,16 @@ internal readonly struct Meta : IEquatable<Meta>
 			var indexes = GetIndexes(tableItems);
 			var (colCount, physRelationCount, constraintCount) = GetCount(fields, tableItems, ddlBuilder);
 			var recordSize = physRelationCount + fields.Length + 1;
+			var usePreparedStatement = HasPreparedStatement();
+			var insertQueryType = usePreparedStatement ? SaveQueryType.InsertRecord : SaveQueryType.PreparedInsertRecord;
 
 			// sort arrays (warn: relations not yet loaded here)
 			fields.AsSpan().Sort(static (x, y) => string.CompareOrdinal(x.Name, y.Name));
 			indexes.AsSpan().Sort(static (x, y) => string.CompareOrdinal(x.Name, y.Name));
 
 			var table = new Table(Id, Name, Description, Value, physicalName, tableType, relations, fields, new Column[colCount], indexes, new Constraint[constraintCount],
-				ReferenceId, physicalType, objectIndex, recordSize, GetCacheId(tableType), IsEntityBaseline(), Active, IsTableCached(), IsPhysicalDeletion(), IsTableReadonly(),
-				HasPreparedStatement(), IsTableAllowAttributeExtension());
+				ReferenceId, physicalType, objectIndex, recordSize, GetCacheId(tableType), insertQueryType, IsEntityBaseline(), Active, IsTableCached(), 
+				IsPhysicalDeletion(), IsTableReadonly(), usePreparedStatement, IsTableAllowAttributeExtension());
 
 			// load relations later, we need full schema to create relations
 			// load columns

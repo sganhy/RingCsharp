@@ -6,6 +6,7 @@ using Index = Ring.Schema.Models.Index;
 using Ring.Schema;
 using Bogus;
 using Ring.Util.Builders;
+using Ring.Data.Enums;
 
 namespace Ring.Tests;
 
@@ -80,7 +81,8 @@ public abstract class BaseTest
     {
         var toTable = new Table(_faker.Random.Number(int.MinValue, int.MaxValue), _faker.Random.String(null, minChar, maxChar), _faker.Random.String(),
             _faker.Random.String(), _faker.Random.String(), TableType.Business, Array.Empty<Relation>(), Array.Empty<Field>(),
-            Array.Empty<Column>(), Array.Empty<Index>(), Array.Empty<Constraint>(), 12, PhysicalType.Table, 0, 0, new CacheId(1), true, true, true, true, _faker.Random.Bool(), true, _faker.Random.Bool());
+            Array.Empty<Column>(), Array.Empty<Index>(), Array.Empty<Constraint>(), 12, PhysicalType.Table, 0, 0, new CacheId(1), SaveQueryType.InsertRecord, true, true, true, true, 
+            _faker.Random.Bool(), true, _faker.Random.Bool());
         return new Relation(_faker.Random.Number(100, int.MaxValue), name ?? _faker.Random.String(null, minChar, maxChar), 
             _faker.Random.String(),  _faker.PickRandom<RelationType>(), toTable, FieldType.Long, _faker.Random.Bool(), _faker.Random.Bool(),
             _faker.Random.Bool(), _faker.Random.Bool());

@@ -1,4 +1,5 @@
 ﻿using Bogus;
+using Ring.Data.Enums;
 using Ring.Schema;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
@@ -28,7 +29,7 @@ public class BaseBuilderTest
         var result = new Table(_faker.Random.Number(int.MinValue,int.MaxValue), _faker.Random.String(), _faker.Random.String(), _faker.Random.String(),
             _faker.Random.String(), TableType.Business, relations.ToArray(), fields.ToArray(),
             new Column[fields.Count + relations.Count], Array.Empty<Index>(), Array.Empty<Constraint>(), 12, 
-            PhysicalType.Table, 0, 0, new CacheId(1), true, true, true, true, true, true, true).ToMeta(0);
+            PhysicalType.Table, 0, 0, new CacheId(1), SaveQueryType.InsertRecord, true, true, true, true, true, true, true).ToMeta(0);
         var metaTable = GetFirstMeta(result, EntityType.Table);
         var table = metaTable.ToTable(new ArraySegment<Meta>(result), PhysicalType.Table, builder, _faker.Random.String(), 0); // load Columns
 
@@ -64,7 +65,7 @@ public class BaseBuilderTest
         var toTable = new Table(_faker.Random.Number(int.MinValue,int.MaxValue), _faker.Random.String(), _faker.Random.String(), _faker.Random.String(),
             _faker.Random.String(), TableType.Business, Array.Empty<Relation>(), fieldList.ToArray(),
             new Column[fieldList.Count], Array.Empty<Index>(), Array.Empty<Constraint>(), 12, PhysicalType.Table, 0, 0, new CacheId(1),
-            true, true, true, true, true, true, true);
+            SaveQueryType.InsertRecord, true, true, true, true, true, true, true);
         // generate primary key 
         var result = new Relation(id, relationName, _faker.Random.String(), relationType, toTable, primaryKey.Type, 
             notNull, _faker.Random.Bool(), _faker.Random.Bool(), _faker.Random.Bool());

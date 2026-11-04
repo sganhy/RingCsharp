@@ -55,16 +55,18 @@ public sealed class BulkSave : IBulkSave
 	/// <returns>This method returns an integer value indicating the number of records of the specified type in this object</returns>
 	public int CountByType(string? objectType)
 	{
+		// Code size: 88 (0x58)
 		var result = 0;
 		if (objectType is not null)
 		{
 			var count = _queries.Count;
+			var type = _schema.GetTable(objectType);
+			if (type is null) return 0; // exception here!
 			for (var i = 0; i < count; ++i)
 			{
 				// may be compare schema too ? 
 				var query = _queries[i];
-				if ((query.Type == SaveQueryType.InsertRecord || query.Type == SaveQueryType.UpdateRecord || query.Type == SaveQueryType.DeleteRecord) &&
-					string.Equals(query.Table.Name, objectType, StringComparison.OrdinalIgnoreCase)) ++result;
+				if (query.Table.Id == type.Id) ++result;
 			}
 		}
 		return result;
@@ -117,19 +119,18 @@ public sealed class BulkSave : IBulkSave
 		return null;
 	}
 
-	public void InsertRecord(Record record)
+	public void InsertRecord(in Record record)
 	{
-		// Code size: 110 (0x6e) - no virtual calls
+		// Code size: 96 (0x60) - no virtual calls - Under the limit. The normal size limit is about 100 IL bytes: so candidate for inlining.
 		var table = record.Table;
-		if (table is null) ThrowRecordUnknownRecordType();
-		if (table.Readonly || !record.IsNew) ThrowIllicteOperation(); // throw exception here ??
+		if (table is null || table.Readonly || !record.IsNew) ThrowInvalidInsert(table, record);
 		_idCount += table.CacheId.Increment;
-		_queries.Add(new SaveQuery(table, table.UsePreparedStatement ? SaveQueryType.PreparedInsertRecord : SaveQueryType.InsertRecord, record.Data, record.Offset));
+		_queries.Add(new SaveQuery(table, table.InsertQueryType, record.Data, record.Offset));
 	}
-	internal void ForceInsert(Record record) =>	_queries.Add(new SaveQuery(record.Table, SaveQueryType.InsertRecord, record.Data, record.Offset));
+	internal void ForceInsert(in Record record) => _queries.Add(new SaveQuery(record.Table, record.Table.InsertQueryType, record.Data, record.Offset)); // Code size: 49 (0x31) - no virtual calls!
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public void UpdateRecord(Record record)
+	public void UpdateRecord(in Record record)
 	{
 		if (record.Table is null) ThrowRecordUnknownRecordType();
 		if (record.Table.Readonly) return; // throw exception here !!
@@ -266,9 +267,10 @@ public sealed class BulkSave : IBulkSave
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
-	private static void ThrowInvalidInsert(Table? table)
+	private static void ThrowInvalidInsert(Table? table, in Record record)
 	{
-		if (table is null) ThrowRecordUnknownRecordType();
+		if (record.IsNew) ThrowIllicteOperation();
+		if (table is null) throw new ArgumentException(ResourceHelper.GetMessage(ResourceType.RecordUnkownRecordType));
 		ThrowIllicteOperation();
 	}
 

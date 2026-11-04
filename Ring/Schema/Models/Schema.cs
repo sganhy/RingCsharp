@@ -43,7 +43,7 @@ internal sealed class Schema : BaseEntity
 		Provider = provider;
 		ObjectCount = objectCount;
 		PhysicalName = physicalName;
-		DmlBuilder = provider.GetDmlBuilder(clientEncoding, false);
+		DmlBuilder = provider.GetDmlBuilder(clientEncoding, true);
 		DdlBuilder = provider.GetDdlBuilder(clientEncoding, false);
 		DqlBuilder = provider.GetDqlBuilder(clientEncoding, false);
 		TclBuilder = provider.GetTclBuilder(clientEncoding, false);

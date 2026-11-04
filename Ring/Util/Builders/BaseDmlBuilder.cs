@@ -1,5 +1,4 @@
-﻿using Ring.Data.Enums;
-using Ring.Schema.Enums;
+﻿using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 using Ring.Schema.Models;
 using Ring.Util.Models;

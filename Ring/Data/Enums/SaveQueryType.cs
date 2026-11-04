@@ -8,10 +8,6 @@ internal enum SaveQueryType : byte
 	UpdateReturningRecord = 3,
 	PreparedInsertRecord = 11,
 
-	StartTransaction = 51,
-	CommitTransaction = 52,
-	RollbackTransaction = 53,
-
 	// above 100, reserved for cancel operations
 	FirstCancelOperation = 101,
 	CancelledDeleteRecord = 105,

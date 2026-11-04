@@ -1,3 +1,4 @@
+using Ring.Data.Enums;
 using Ring.Schema.Enums;
 using Ring.Schema.Extensions;
 
@@ -5,7 +6,7 @@ namespace Ring.Schema.Models;
 
 internal sealed class Table : BaseEntity, IEquatable<Table>
 {
-	// 16 Header + 24 BaseEntity + 80 Table + 2 bytes padding = 120
+	// 16 Header + 24 BaseEntity + 80 Table + 2 bytes padding = 120 bytes
 	internal readonly int ObjectIndex;
 	internal readonly Field[] Fields; // sorted by name.
 	internal readonly Relation[] Relations; // sorted by name.
@@ -19,6 +20,7 @@ internal sealed class Table : BaseEntity, IEquatable<Table>
 	internal readonly TableType Type;
 	internal readonly CacheId CacheId;
 	internal readonly string PhysicalName;
+	internal readonly SaveQueryType InsertQueryType;
 	internal readonly bool Cached;
 	internal readonly bool PhysicalDeletion;
 	internal readonly bool Readonly;
@@ -29,8 +31,8 @@ internal sealed class Table : BaseEntity, IEquatable<Table>
 	/// 	Ctor
 	/// </summary>
 	internal Table(int id, string name, string? description, string? subject, string physicalName, TableType type, Relation[] relations,
-		Field[] fields, Column[] columns, Index[] indexes, Constraint[] constraints, int schemaId, PhysicalType physicalType, int objectIndex, int recordSize, CacheId cacheId, 
-		bool baseline, bool active, bool cached, bool allowHardDeletion, bool readonlyTable, bool usePreparedStatement, bool allowAttributeExtension) 
+		Field[] fields, Column[] columns, Index[] indexes, Constraint[] constraints, int schemaId, PhysicalType physicalType, int objectIndex, int recordSize, CacheId cacheId,
+		SaveQueryType insertQueryType, bool baseline, bool active, bool cached, bool allowHardDeletion, bool readonlyTable, bool usePreparedStatement, bool allowAttributeExtension) 
 		: base(id, name, description, baseline, active)
 	{
 		Type = type;
@@ -51,6 +53,7 @@ internal sealed class Table : BaseEntity, IEquatable<Table>
 		PhysicalDeletion = allowHardDeletion;
 		UsePreparedStatement = usePreparedStatement;
 		AllowAttributeExtension = allowAttributeExtension;
+		InsertQueryType = insertQueryType;
 	}
 
 	public static bool operator ==(Table left, Table right) => left.Equals(right);
