@@ -37,7 +37,8 @@ public class TableBuilderTest
         Assert.False(metaTablePostGre.PhysicalDeletion);
         Assert.True(metaTablePostGre.UsePreparedStatement);
         Assert.False(metaTablePostGre.AllowAttributeExtension);
-        Assert.NotNull(metaTablePostGre.GetField("id"));
+		Assert.Equal(0, metaTablePostGre.Increment);
+		Assert.NotNull(metaTablePostGre.GetField("id"));
         Assert.NotNull(metaTablePostGre.GetField("schema_id"));
         Assert.NotNull(metaTablePostGre.GetField("object_type"));
         Assert.NotNull(metaTablePostGre.GetField("reference_id"));
@@ -90,7 +91,8 @@ public class TableBuilderTest
 		Assert.Equal("Provides controlled, scoped id generation.", metaIdTablePostGre.Description);
 		Assert.Equal(TableType.MetaId, metaIdTablePostGre.Type);
         Assert.Equal(4, metaIdTablePostGre.Fields.Length);
-        Assert.NotNull(metaIdTablePostGre.GetField("id"));
+		Assert.Equal(0, metaIdTablePostGre.Increment);
+		Assert.NotNull(metaIdTablePostGre.GetField("id"));
         Assert.NotNull(metaIdTablePostGre.GetField("schema_id"));
         Assert.NotNull(metaIdTablePostGre.GetField("object_type"));
         Assert.NotNull(metaIdTablePostGre.GetField("value"));
@@ -118,6 +120,7 @@ public class TableBuilderTest
         Assert.Equal(PhysicalType.View, catalog.PhysicalType);
         Assert.Equal(2, catalog.Fields.Length);
 		Assert.Equal(34, catalog.Id);
+		Assert.Equal(0, catalog.Increment);
 		Assert.Equal("schema_name", catalog.Fields[catalog.Columns[0].RecordIndex].Name);
         Assert.Equal("name", catalog.Fields[catalog.Columns[1].RecordIndex].Name);
 		Assert.Equal(2, catalog.Columns.Length);
@@ -137,6 +140,7 @@ public class TableBuilderTest
 		Assert.Equal(PhysicalType.View, catalog.PhysicalType);
 		Assert.Equal(2, catalog.Fields.Length);
 		Assert.Equal(34, catalog.Id);
+		Assert.Equal(0, catalog.Increment);
 		Assert.Equal("schema_name", catalog.Fields[catalog.Columns[0].RecordIndex].Name);
 		Assert.Equal("name", catalog.Fields[catalog.Columns[1].RecordIndex].Name);
 		Assert.Equal(2, catalog.Columns.Length);
@@ -161,6 +165,7 @@ public class TableBuilderTest
 		Assert.Equal("test.\"@log\"", logTable.PhysicalName);
         Assert.Equal(TableType.Log, logTable.Type);
         Assert.Equal(11, logTable.Fields.Length);
+		Assert.Equal(0, logTable.Increment);
 		Assert.True(logTable.Baseline);
 		Assert.False(logTable.Cached);
 		Assert.True(logTable.Readonly);

@@ -121,12 +121,13 @@ public sealed class BulkSave : IBulkSave
 
 	public void InsertRecord(in Record record)
 	{
-		// Code size: 96 (0x60) - no virtual calls - Under the limit. The normal size limit is about 100 IL bytes: so candidate for inlining.
+		// Code size: 91 (0x5b) - no virtual calls - Under the limit. The normal size limit is about 100 IL bytes: so candidate for inlining.
 		var table = record.Table;
 		if (table is null || table.Readonly || !record.IsNew) ThrowInvalidInsert(table, record);
-		_idCount += table.CacheId.Increment;
+		_idCount += table.Increment;
 		_queries.Add(new SaveQuery(table, table.InsertQueryType, record.Data, record.Offset));
 	}
+
 	internal void ForceInsert(in Record record) => _queries.Add(new SaveQuery(record.Table, record.Table.InsertQueryType, record.Data, record.Offset)); // Code size: 49 (0x31) - no virtual calls!
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -11,13 +11,7 @@ internal sealed class CacheId
 	/// <summary>
 	/// 	Ctor
 	/// </summary>
-	internal CacheId(int idIncrement)
-	{
-		CurrentId = 0L;
-		MaximumId = long.MaxValue;
-		ReservedRange = 1;
-		SyncRoot = new object();
-	}
+	internal CacheId(int idIncrement) : this (0L, long.MaxValue, 1, idIncrement) {}
 	internal CacheId(long currentId, long maximumId, int reservedRange, int idIncrement)
 	{
 		CurrentId = currentId;

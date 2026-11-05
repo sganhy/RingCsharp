@@ -16,6 +16,7 @@ internal sealed class Table : BaseEntity, IEquatable<Table>
 	internal readonly Constraint[] Constraints; // list of constraints for the table, sorted by id.
 	internal readonly PhysicalType PhysicalType;
 	internal readonly int SchemaId;
+	internal readonly int Increment; // copy of CacheId.Increment, used for quick access to the increment value of the table.
 	internal readonly string? Subject;
 	internal readonly TableType Type;
 	internal readonly CacheId CacheId;
@@ -30,8 +31,8 @@ internal sealed class Table : BaseEntity, IEquatable<Table>
 	/// <summary>
 	/// 	Ctor
 	/// </summary>
-	internal Table(int id, string name, string? description, string? subject, string physicalName, TableType type, Relation[] relations,
-		Field[] fields, Column[] columns, Index[] indexes, Constraint[] constraints, int schemaId, PhysicalType physicalType, int objectIndex, int recordSize, CacheId cacheId,
+	internal Table(int id, string name, string? description, string? subject, string physicalName, TableType type, Relation[] relations, Field[] fields, 
+		Column[] columns, Index[] indexes, Constraint[] constraints, int schemaId, PhysicalType physicalType, int objectIndex, int recordSize, CacheId cacheId,
 		SaveQueryType insertQueryType, bool baseline, bool active, bool cached, bool allowHardDeletion, bool readonlyTable, bool usePreparedStatement, bool allowAttributeExtension) 
 		: base(id, name, description, baseline, active)
 	{
@@ -54,6 +55,7 @@ internal sealed class Table : BaseEntity, IEquatable<Table>
 		UsePreparedStatement = usePreparedStatement;
 		AllowAttributeExtension = allowAttributeExtension;
 		InsertQueryType = insertQueryType;
+		Increment = cacheId.Increment;
 	}
 
 	public static bool operator ==(Table left, Table right) => left.Equals(right);
