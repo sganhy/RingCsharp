@@ -27,8 +27,8 @@ internal sealed class Parameter : BaseEntity, IEquatable<Parameter>
 		ReferenceId = referenceId;
 	}
 
-	public static bool operator ==(Parameter left, Parameter right) => left.IsEquivalentTo(right);
-	public static bool operator !=(Parameter left, Parameter right) => !left.IsEquivalentTo(right);
+	public static bool operator ==(Parameter? left, Parameter? right) => left.IsEquivalentTo(right);
+	public static bool operator !=(Parameter? left, Parameter? right) => !left.IsEquivalentTo(right);
 	public override bool Equals(object? obj) => obj is Parameter parameter && Equals(parameter);
 	public bool Equals(Parameter? other) => this.IsEquivalentTo(other);
 	public override int GetHashCode() => this.Hash();

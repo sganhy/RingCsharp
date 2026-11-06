@@ -78,8 +78,13 @@ internal static class ParameterExtensions
 		// Code size: 100 (0x64) - no virtual calls!
 		if (ReferenceEquals(parameter, other)) return true;
 		if (parameter is null || other is null) return false;
-		return parameter.BaseEntityEquals(other) && parameter.Type == other.Type && parameter.ValueType == other.ValueType && parameter.ReferenceType == other.ReferenceType
-			&& parameter.ReferenceId == other.ReferenceId && string.Equals(parameter.Value, other.Value, StringComparison.Ordinal);
+
+		return parameter.Type == other.Type
+			&& parameter.ReferenceType == other.ReferenceType
+			&& parameter.ReferenceId == other.ReferenceId
+			&& parameter.ValueType == other.ValueType
+			&& parameter.BaseEntityEquals(other)
+			&& string.Equals(parameter.Value, other.Value, StringComparison.Ordinal);
 	}
 
 }

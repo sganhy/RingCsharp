@@ -57,8 +57,8 @@ internal sealed class Table : BaseEntity, IEquatable<Table>
 		Increment = cacheId.Increment;
 	}
 
-	public static bool operator ==(Table? left, Table? right) => ReferenceEquals(left, right) || (left is not null && left.Equals(right)); // Code size: 19 (0x13) 
-	public static bool operator !=(Table? left, Table? right) => !(left == right); // Code size: 11 (0xb)
+	public static bool operator ==(Table? left, Table? right) => left.IsEquivalentTo(right); // Code size: 8 (0x8)
+	public static bool operator !=(Table? left, Table? right) => !left.IsEquivalentTo(right); // Code size: 11 (0xb)
 	public override bool Equals(object? obj) => obj is Table table && Equals(table);
 	public bool Equals(Table? other) => this.IsEquivalentTo(other);
 	public override int GetHashCode() => this.Hash();

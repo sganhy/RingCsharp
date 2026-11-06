@@ -9,8 +9,6 @@ namespace Ring.Schema.Extensions;
  
 internal static class TableExtensions
 {
-	// Rider check 2025-07-23
-
 	/// <summary>
 	/// 	Get field by name, case-sensitive search ==> O(log n) complexity
 	/// </summary>
@@ -52,7 +50,8 @@ internal static class TableExtensions
 	/// <returns>Field object</returns>
 	internal static Field? GetField(this Table table, string name, StringComparison comparisonType)
 	{
-		// Code size: 57 (0x39) - no virtual calls
+		// Code size: 69 (0x45) - no virtual calls
+		if (comparisonType == StringComparison.Ordinal) return table.GetField(name);
 		var fields = table.Fields;
 		ref Field baseRef = ref MemoryMarshal.GetArrayDataReference(fields);
 		int length = fields.Length;
@@ -69,14 +68,13 @@ internal static class TableExtensions
 	/// </summary>
 	internal static Field? GetField(this Table table, int id)
 	{
-		// Code size: 62 (0x3e)
-		var column = table.GetColumn(id, EntityType.Field);
-		if (!column.HasValue) return null;
-		var index = column.Value.RecordIndex;
-		var fields = table.Fields;
+		// Code size: 67 (0x43) - no virtual calls
+		var columnIndex = table.GetColumnIndex(id, EntityType.Field);
+		if (columnIndex < 0) return null;
 
-		// Zero-cost direct reference access with single-instruction unsigned bounds check
-		return (uint)index < (uint)fields.Length ? Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(fields), index) : null;
+		var recordIndex = Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(table.Columns), columnIndex).RecordIndex;
+		var fields = table.Fields;
+		return (uint)recordIndex < (uint)fields.Length ? Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(fields), recordIndex) : null;
 	}
 
 	/// <summary>
@@ -151,7 +149,8 @@ internal static class TableExtensions
 	/// <returns>Relation object</returns>
 	internal static Relation? GetRelation(this Table table, string name, StringComparison comparisonType)
 	{
-		// Code size: 57 (0x39) - no virtual calls
+		// Code size: 69 (0x45) - no virtual calls
+		if (comparisonType == StringComparison.Ordinal) return table.GetRelation(name);
 		var relations = table.Relations;
 		ref Relation baseRef = ref MemoryMarshal.GetArrayDataReference(relations);
 		int length = relations.Length;
@@ -241,12 +240,13 @@ internal static class TableExtensions
 
 	internal static string? GetDescription(this Table table,in Column column)
 	{
-		// Code size: 110 (0x6e) - no virtual calls
+		// Code size: 113 (0x71) - no virtual calls
 		var type = column.Type;
 		int index;
 		switch (type)
 		{
 			case EntityType.Field:
+			case EntityType.SearchableColumn:
 				var fields = table.Fields;
 				index = column.RecordIndex;
 				return (uint)index < (uint)fields.Length ? Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(fields), index).Description : null;
@@ -304,35 +304,9 @@ internal static class TableExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static Column? GetColumn(this Table table, int id, EntityType type)
 	{
-		// Code size: 145 (0x91) - no virtual calls
-		var columns = table.Columns;
-		var colWeight = Meta.ColumnTypeWeight(type);
-
-		// Direct reference to the array payload base (bypasses array bounds checking entirely)
-		ref Column baseRef = ref MemoryMarshal.GetArrayDataReference(columns);
-		int left = 0, right = columns.Length - 1;
-
-		while (left <= right)
-		{
-			int middle = (left + right) >> 1;
-
-			// Aliased reference to middle element: zero array bounds check, zero double-indexing
-			ref readonly var candidate = ref Unsafe.Add(ref baseRef, middle);
-
-			int compare = id - candidate.Id;
-			if (compare == 0)
-			{
-				// Sub-search on Column.Type weight
-				int weightCompare = colWeight - Meta.ColumnTypeWeight(candidate.Type);
-				if (weightCompare == 0) return candidate;
-				if (weightCompare > 0) left = middle + 1;
-				else right = middle - 1;
-			}
-			else if (compare > 0) left = middle + 1;
-			else right = middle - 1;
-		}
-
-		return null;
+		// Code size: 41 (0x29) - no virtual calls
+		var index = table.GetColumnIndex(id, type);
+		return index >= 0 ? table.Columns[index] : null;
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -439,16 +413,39 @@ internal static class TableExtensions
 	/// Determines if two Table instances have equivalent definitions,
 	/// regardless of whether they're the same object reference.
 	/// </summary>
-	internal static bool IsEquivalentTo(this Table table, Table? other)
+	internal static bool IsEquivalentTo(this Table? table, Table? other)
 	{
-		// Code size: 239 (0xef)
+		// Code size: 278 (0x116)
 		if (ReferenceEquals(table, other)) return true;
-		if (other is null || !table.BaseEntityEquals(other)) return false;
+		if (table is null || other is null) return false;
 
-		return table.Type == other.Type	&& table.SchemaId == other.SchemaId	&& table.PhysicalType == other.PhysicalType	&& table.RecordSize == other.RecordSize	
-			&& table.Cached == other.Cached	&& table.PhysicalDeletion == other.PhysicalDeletion	&& table.Readonly == other.Readonly	&& table.UsePreparedStatement == other.UsePreparedStatement	
-			&& table.AllowAttributeExtension == other.AllowAttributeExtension && string.Equals(table.Subject, other.Subject, StringComparison.Ordinal) && table.Fields.ArraysEqual(other.Fields) 
-			&& table.Relations.ArraysEqual(other.Relations)	&& table.Indexes.ArraysEqual(other.Indexes);
+		// 1. Cheap scalar checks (no memory indirection, no string compare)
+		if (table.Type != other.Type
+			|| table.SchemaId != other.SchemaId
+			|| table.PhysicalType != other.PhysicalType
+			|| table.RecordSize != other.RecordSize
+			|| table.Cached != other.Cached
+			|| table.PhysicalDeletion != other.PhysicalDeletion
+			|| table.Readonly != other.Readonly
+			|| table.UsePreparedStatement != other.UsePreparedStatement
+			|| table.AllowAttributeExtension != other.AllowAttributeExtension) return false;
+
+		// 2. Array lengths: a mismatch rejects without touching any element
+		var fields = table.Fields;
+		var relations = table.Relations;
+		var indexes = table.Indexes;
+		if (fields.Length != other.Fields.Length
+			|| relations.Length != other.Relations.Length
+			|| indexes.Length != other.Indexes.Length) return false;
+
+		// 3. String comparisons (Name via BaseEntityEquals, Subject)
+		if (!table.BaseEntityEquals(other)
+			|| !string.Equals(table.Subject, other.Subject, StringComparison.Ordinal)) return false;
+
+		// 4. Deep comparisons last, smallest arrays first
+		return indexes.ArraysEqual(other.Indexes)
+			&& relations.ArraysEqual(other.Relations)
+			&& fields.ArraysEqual(other.Fields);
 	}
 
 }

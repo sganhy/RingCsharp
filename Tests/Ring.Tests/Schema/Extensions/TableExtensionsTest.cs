@@ -179,7 +179,6 @@ public class TableExtensionsTest : BaseTest
     {
         // arrange 
         var table = GetAnonymousTable(_builder, 2, 25);
-
         foreach (var relation in table.Relations)
         {
             // act 
