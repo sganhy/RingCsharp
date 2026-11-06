@@ -10,20 +10,22 @@ internal static class ConstraintExtensions
 	private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
 
 	/// <summary>
-	/// Determines if two Field instances have equivalent definitions,
-	/// regardless of whether they're the same object reference.
+	///		Determines if two Field instances have equivalent definitions, regardless of whether they're the same object reference.
 	/// </summary>
 	internal static bool IsEquivalentTo(this Constraint? constraint, Constraint? other)
 	{
-		// Code size: 168 (0xa8)
-		// Same reference, or both null
+		// Code size: 208 (0xd0)
 		if (ReferenceEquals(constraint, other)) return true;
-
-		// Only one of them is null
 		if (constraint is null || other is null) return false;
 
-		return constraint.BaseEntityEquals(other) && constraint.Type == other.Type && constraint.MinValue == other.MinValue	&& constraint.MaxValue == other.MaxValue
-			&& constraint.Columns.AsSpan().SequenceEqual(other.Columns);
+		if (constraint.Type != other.Type || constraint.MinValue != other.MinValue || constraint.MaxValue != other.MaxValue) return false;
+		if (!constraint.BaseEntityEquals(other)) return false;
+
+		var a = constraint.Columns;
+		var b = other.Columns;
+		if (a.Length != b.Length) return false;
+		for (var i = 0; i < a.Length; i++) if (!a[i].IsEquivalentTo(in b[i])) return false;
+		return true;
 	}
 
 	internal static int Hash(this Constraint constraint)

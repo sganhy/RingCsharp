@@ -106,11 +106,17 @@ internal static class FieldExtensions
 	/// </summary>
 	internal static bool IsEquivalentTo(this Field field, Field? other)
 	{
-        // Code size: 116 (0x74)
-        if (!field.BaseEntityEquals(other)) return false;
-		// other cannot be null here 
-		return field.Type == other!.Type && field.Size == other.Size && field.NotNull == other.NotNull && field.Multilingual == other.Multilingual && field.AllowTruncation == other.AllowTruncation
-            && field.SearchableType == other.SearchableType && string.Equals(field.DefaultValue, other.DefaultValue, StringComparison.Ordinal);
+		// Code size: 116 (0x74)
+		if (ReferenceEquals(field, other)) return true;
+		if (other is null || !field.BaseEntityEquals(other)) return false;
+
+		return field.Type == other.Type
+			&& field.Size == other.Size
+			&& field.NotNull == other.NotNull
+			&& field.Multilingual == other.Multilingual
+			&& field.AllowTruncation == other.AllowTruncation
+			&& field.SearchableType == other.SearchableType
+			&& string.Equals(field.DefaultValue, other.DefaultValue, StringComparison.Ordinal);
 	}
 
 	#region private methods 

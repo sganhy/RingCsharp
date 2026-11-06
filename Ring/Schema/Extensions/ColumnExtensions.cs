@@ -32,11 +32,10 @@ internal static class ColumnExtensions
 	}
 
 	/// <summary>
-	/// Determines if two Column instances have equivalent definitions, regardless of whether they're the same object reference.
+	///		Determines if two Column instances have equivalent definitions, regardless of whether they're the same object reference.
 	/// </summary>
-	internal static bool IsEquivalentTo(this in Column column, in Column other) // Code size: 121 (0x79) - no virtual calls, no heap allocations
-		=> column.Id == other.Id && column.Type == other.Type && column.FieldType == other.FieldType && column.SearchableType == other.SearchableType &&
-			string.Equals(column.PhysicalName, other.PhysicalName, StringComparison.Ordinal) && column.RecordIndex == other.RecordIndex && column.BinaryLength == other.BinaryLength && 
-			column.BinaryType == other.BinaryType;
-	
+	internal static bool IsEquivalentTo(this in Column column, in Column other) // Code size: 119 (0x77) - cheap comparisons first. 
+		=> column.Id == other.Id && column.RecordIndex == other.RecordIndex	&& column.Type == other.Type && column.FieldType == other.FieldType	&& column.SearchableType == other.SearchableType
+		&& column.BinaryLength == other.BinaryLength && column.BinaryType == other.BinaryType && string.Equals(column.PhysicalName, other.PhysicalName, StringComparison.Ordinal);
+
 }

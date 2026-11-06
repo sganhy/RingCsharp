@@ -21,8 +21,8 @@ internal sealed class Index : BaseEntity, IEquatable<Index>
 		Bitmap = bitmap;
 	}
 
-	public static bool operator ==(Index left, Index right) => left.IsEquivalentTo(right);
-	public static bool operator !=(Index left, Index right) => !left.IsEquivalentTo(right);
+	public static bool operator ==(Index? left, Index? right) => left.IsEquivalentTo(right);
+	public static bool operator !=(Index? left, Index? right) => !left.IsEquivalentTo(right);
 	public override bool Equals(object? obj) => obj is Index index && Equals(index);
 	public bool Equals(Index? other) => this.IsEquivalentTo(other);
 	public override int GetHashCode() => this.Hash();

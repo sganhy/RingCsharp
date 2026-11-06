@@ -19,8 +19,8 @@ internal sealed class Constraint : BaseEntity, IEquatable<Constraint>
 		MaxValue = maxValue;
 	}
 
-	public static bool operator ==(Constraint left, Constraint right) => left.IsEquivalentTo(right);
-	public static bool operator !=(Constraint left, Constraint right) => !left.IsEquivalentTo(right);
+	public static bool operator ==(Constraint? left, Constraint? right) => left.IsEquivalentTo(right);
+	public static bool operator !=(Constraint? left, Constraint? right) => !left.IsEquivalentTo(right);
 	public override bool Equals(object? obj) => obj is Constraint constraint && Equals(constraint);
 	public bool Equals(Constraint? other) => this.IsEquivalentTo(other);
 	public override int GetHashCode() => this.Hash();

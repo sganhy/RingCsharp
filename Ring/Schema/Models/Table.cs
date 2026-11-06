@@ -31,10 +31,9 @@ internal sealed class Table : BaseEntity, IEquatable<Table>
 	/// <summary>
 	/// 	Ctor
 	/// </summary>
-	internal Table(int id, string name, string? description, string? subject, string physicalName, TableType type, Relation[] relations, Field[] fields, 
-		Column[] columns, Index[] indexes, Constraint[] constraints, int schemaId, PhysicalType physicalType, int objectIndex, int recordSize, CacheId cacheId,
-		SaveQueryType insertQueryType, bool baseline, bool active, bool cached, bool allowHardDeletion, bool readonlyTable, bool usePreparedStatement, bool allowAttributeExtension) 
-		: base(id, name, description, baseline, active)
+	internal Table(int id, string name, string? description, string? subject, string physicalName, TableType type, Relation[] relations, Field[] fields, Column[] columns, Index[] indexes, 
+		Constraint[] constraints, int schemaId, PhysicalType physicalType, int objectIndex, int recordSize, CacheId cacheId, SaveQueryType insertQueryType, bool baseline, bool active, 
+		bool cached, bool allowHardDeletion, bool readonlyTable, bool usePreparedStatement, bool allowAttributeExtension) : base(id, name, description, baseline, active)
 	{
 		Type = type;
 		Fields = fields;
@@ -58,8 +57,8 @@ internal sealed class Table : BaseEntity, IEquatable<Table>
 		Increment = cacheId.Increment;
 	}
 
-	public static bool operator ==(Table left, Table right) => left.Equals(right);
-	public static bool operator !=(Table left, Table right) => !left.Equals(right);
+	public static bool operator ==(Table? left, Table? right) => ReferenceEquals(left, right) || (left is not null && left.Equals(right)); // Code size: 19 (0x13) 
+	public static bool operator !=(Table? left, Table? right) => !(left == right); // Code size: 11 (0xb)
 	public override bool Equals(object? obj) => obj is Table table && Equals(table);
 	public bool Equals(Table? other) => this.IsEquivalentTo(other);
 	public override int GetHashCode() => this.Hash();

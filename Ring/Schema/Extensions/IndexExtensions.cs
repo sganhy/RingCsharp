@@ -41,11 +41,18 @@ internal static class IndexExtensions
 	/// </summary>
 	internal static bool IsEquivalentTo(this Index? index, Index? other)
 	{
-		// Code size: 73 (0x49) - no virtual calls
+		// Code size: 118 (0x76)
 		if (ReferenceEquals(index, other)) return true;
 		if (index is null || other is null) return false;
+
+		if (index.Unique != other.Unique || index.Bitmap != other.Bitmap) return false;
 		if (!index.BaseEntityEquals(other)) return false;
-		return index.Unique == other!.Unique && index.Bitmap == other.Bitmap && index.Columns.ArraysEqual(other.Columns);
+
+		var a = index.Columns;
+		var b = other.Columns;
+		if (a.Length != b.Length) return false;
+		for (var i = 0; i < a.Length; i++) if (!a[i].IsEquivalentTo(in b[i])) return false;
+		return true;
 	}
 
 

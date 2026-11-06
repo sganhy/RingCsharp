@@ -34,9 +34,9 @@ internal sealed class Field : BaseEntity, IEquatable<Field>
 		AllowTruncation = allowTruncation;
 	}
 
-	public static bool operator ==(Field left, Field right) => left.Equals(right);
-	public static bool operator !=(Field left, Field right) => !left.Equals(right);
-	public override bool Equals(object? obj) => obj is Field field && Equals(field);
+	public static bool operator ==(Field? left, Field? right) => ReferenceEquals(left, right) || (left is not null && left.Equals(right)); // Code size: 19 (0x13)
+	public static bool operator !=(Field? left, Field? right) => !(left == right); // Code size: 11 (0xb)
+	public override bool Equals(object? obj) => obj is Field field && Equals(field); // Code size: 20 (0x14)
 	public bool Equals(Field? other) => this.IsEquivalentTo(other);
 	public override int GetHashCode() => this.Hash();
 

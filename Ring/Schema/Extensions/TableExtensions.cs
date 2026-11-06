@@ -441,43 +441,14 @@ internal static class TableExtensions
 	/// </summary>
 	internal static bool IsEquivalentTo(this Table table, Table? other)
 	{
-		// Code size: 227 (0xe3)
-		if (!table.BaseEntityEquals(other)) return false;
-		// other cannot be null here 
-		/*
-		int ObjectIndex; ==> nok - not considered
-		bool Cached; 
-		Field[] Fields;
-		Relation[] Relations;
-		Index[] Indexes;
-		int RecordSize;
-		Column[] Columns; ==> nok - not considered
-		PhysicalType PhysicalType;
-		int SchemaId;
-		string? Subject;
-		TableType Type;
-		CacheId CacheId;  ==> nok - not considered
-		string PhysicalName;  ==> nok - not considered
-		bool AllowHardDeletion;
-		bool Readonly;
-		bool UsePreparedStatement;
-		bool AllowAttributeExtension;
-		*/
-		
-		/*
-		❌ What's intentionally excluded (as per your comments):
+		// Code size: 239 (0xef)
+		if (ReferenceEquals(table, other)) return true;
+		if (other is null || !table.BaseEntityEquals(other)) return false;
 
-			ObjectIndex - instance - specific identifier
-			Columns[] -derived from Fields and Relations
-			CacheId - runtime cache identifier
-			PhysicalName - physical / implementation detail, not logical definition
-		*/
-
-		// other cannot be null here !!
-		return table.Cached == other!.Cached && table.RecordSize == other.RecordSize && table.PhysicalType == other.PhysicalType && table.SchemaId == other.SchemaId &&
-			string.Equals(table.Subject, other.Subject, StringComparison.Ordinal) && table.Type == other.Type && table.PhysicalDeletion == other.PhysicalDeletion &&
-			table.Readonly == other.Readonly && table.UsePreparedStatement == other.UsePreparedStatement && table.AllowAttributeExtension == other.AllowAttributeExtension &&
-			table.Fields.ArraysEqual(other.Fields) && table.Relations.ArraysEqual(other.Relations) && table.Indexes.ArraysEqual(other.Indexes);
+		return table.Type == other.Type	&& table.SchemaId == other.SchemaId	&& table.PhysicalType == other.PhysicalType	&& table.RecordSize == other.RecordSize	
+			&& table.Cached == other.Cached	&& table.PhysicalDeletion == other.PhysicalDeletion	&& table.Readonly == other.Readonly	&& table.UsePreparedStatement == other.UsePreparedStatement	
+			&& table.AllowAttributeExtension == other.AllowAttributeExtension && string.Equals(table.Subject, other.Subject, StringComparison.Ordinal) && table.Fields.ArraysEqual(other.Fields) 
+			&& table.Relations.ArraysEqual(other.Relations)	&& table.Indexes.ArraysEqual(other.Indexes);
 	}
 
 }
