@@ -104,11 +104,11 @@ internal static class FieldExtensions
 	/// Determines if two Field instances have equivalent definitions,
 	/// regardless of whether they're the same object reference.
 	/// </summary>
-	internal static bool IsEquivalentTo(this Field field, Field? other)
+	internal static bool IsEquivalentTo(this Field? field, Field? other)
 	{
-		// Code size: 116 (0x74)
+		// Code size: 128 (0x80) - no virtual calls
 		if (ReferenceEquals(field, other)) return true;
-		if (other is null || !field.BaseEntityEquals(other)) return false;
+		if (field is null || other is null || !field.BaseEntityEquals(other)) return false;
 
 		return field.Type == other.Type
 			&& field.Size == other.Size

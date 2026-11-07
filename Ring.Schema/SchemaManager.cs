@@ -35,9 +35,12 @@ public sealed class SchemaManager
 		var initialSchema = schemaBuilder.GetMeta(dbProvider, GetInitSchemaConfiguration(physicalSchema, "meta_table", "meta_index"), _connection.ClientEncoding);
 		var initialMetaSchema = initialSchema.ToMeta();
 		var bulkAlter =  new BulkAlter(initialSchema);
-		var size = Unsafe.SizeOf<Column>();
+		var before = GC.GetAllocatedBytesForCurrentThread();
+		var o = new CacheId(1);
+		var size = GC.GetAllocatedBytesForCurrentThread() - before;  // expect 40 on 64-bit
 		foreach (var table in initialSchema.TablesById)
 		{
+			
 			if (table.PhysicalType == Enums.PhysicalType.Table) bulkAlter.CreateTable(table);
 		}
 		bulkAlter.Apply(_connection);

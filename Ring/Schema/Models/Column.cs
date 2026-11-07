@@ -31,8 +31,8 @@ internal readonly struct Column : IEquatable<Column>
 		BinaryLength = binaryLength;
 	}
 
-	public static bool operator ==(in Column left, in Column right) => left.IsEquivalentTo(right);
-	public static bool operator !=(in Column left, in Column right) => !left.IsEquivalentTo(right);
+	public static bool operator ==(in Column left, in Column right) => left.IsEquivalentTo(right); // Code size: 8 (0x8)
+	public static bool operator !=(in Column left, in Column right) => !left.IsEquivalentTo(right); // Code size: 11 (0xb)
 	public override readonly bool Equals(object? obj) => obj is Column column && Equals(column);
 	public readonly bool Equals(Column other) => this.IsEquivalentTo(other);
 	public override readonly int GetHashCode() => this.Hash();

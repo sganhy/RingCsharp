@@ -8,6 +8,7 @@ namespace Ring.Schema.Models;
 /// </summary>
 internal sealed class Relation : BaseEntity, IEquatable<Relation>
 {
+	// 22 bytes data + 16 bytes header = 38 bytes → rounded to 40 bytes with 2 bytes padding.
 	internal Relation InverseRelation { get; private set; } // assigned after initialization
 	internal readonly bool HasConstraint;
 	internal readonly bool NotNull;
@@ -18,8 +19,8 @@ internal sealed class Relation : BaseEntity, IEquatable<Relation>
 	/// <summary>
 	/// 	Ctor
 	/// </summary>
-	internal Relation(int id, string name, string? description, RelationType type, Table toObject, FieldType fieldType, 
-		bool notnull, bool constraint, bool baseline, bool active) : base(id, name, description, baseline, active)
+	internal Relation(int id, string name, string? description, RelationType type, Table toObject, FieldType fieldType, bool notnull, bool constraint, bool baseline, bool active) 
+		: base(id, name, description, baseline, active)
 	{
 		Type = type;
 		ToTable = toObject;
@@ -33,8 +34,8 @@ internal sealed class Relation : BaseEntity, IEquatable<Relation>
 	/// 	Assign only once the property 
 	/// </summary>
 	internal void SetInverseRelation(Relation relation) => InverseRelation = ReferenceEquals(InverseRelation,this) ? relation : InverseRelation;
-	public static bool operator ==(Relation? left, Relation? right) =>ReferenceEquals(left, right) || (left is not null && left.Equals(right)); // Code size: 19 (0x13)
-	public static bool operator !=(Relation? left, Relation? right) => !(left == right); // Code size: 11 (0xb)
+	public static bool operator ==(Relation? left, Relation? right) => left.IsEquivalentTo(right); // Code size: 8 (0x8)
+	public static bool operator !=(Relation? left, Relation? right) => !left.IsEquivalentTo(right); // Code size: 11 (0xb)
 	public override bool Equals(object? obj) => obj is Relation relation && Equals(relation); // Code size: 20 (0x14)
 	public bool Equals(Relation? other) => this.IsEquivalentTo(other);
 	public override int GetHashCode() => this.Hash();

@@ -420,14 +420,8 @@ internal static class TableExtensions
 		if (table is null || other is null) return false;
 
 		// 1. Cheap scalar checks (no memory indirection, no string compare)
-		if (table.Type != other.Type
-			|| table.SchemaId != other.SchemaId
-			|| table.PhysicalType != other.PhysicalType
-			|| table.RecordSize != other.RecordSize
-			|| table.Cached != other.Cached
-			|| table.PhysicalDeletion != other.PhysicalDeletion
-			|| table.Readonly != other.Readonly
-			|| table.UsePreparedStatement != other.UsePreparedStatement
+		if (table.Type != other.Type || table.SchemaId != other.SchemaId || table.PhysicalType != other.PhysicalType || table.RecordSize != other.RecordSize || table.Cached != other.Cached
+			|| table.PhysicalDeletion != other.PhysicalDeletion	|| table.Readonly != other.Readonly || table.UsePreparedStatement != other.UsePreparedStatement 
 			|| table.AllowAttributeExtension != other.AllowAttributeExtension) return false;
 
 		// 2. Array lengths: a mismatch rejects without touching any element

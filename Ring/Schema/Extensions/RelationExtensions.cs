@@ -71,11 +71,11 @@ internal static class RelationExtensions
         return hash.ToHashCode();
     }
 
-    internal static bool IsEquivalentTo(this Relation relation, Relation? other)
+    internal static bool IsEquivalentTo(this Relation? relation, Relation? other)
     {
-		// Code size: 127 (0x7f)
+		// Code size: 130 (0x82) - no virtual calls
 		if (ReferenceEquals(relation, other)) return true;
-		if (other is null || !relation.BaseEntityEquals(other)) return false;
+		if (relation is null || other is null || !relation.BaseEntityEquals(other)) return false;
 		return relation.HasConstraint == other.HasConstraint
 			&& relation.NotNull == other.NotNull
 			&& relation.Type == other.Type

@@ -53,10 +53,10 @@ internal readonly struct Meta : IEquatable<Meta>
 
 
 	// flags bit positions
-	private const byte BitPositionFieldSearchableType = 5; // bits 4-9  (6 bits, positions 4..9)
+	private const byte BitPositionFieldSearchableType = 5; 
 	private const byte BitPositionFirstPositionSize = 18; // bits 17.. (used as shift - 1 = 17)
 	private const byte BitCountFieldSize = 31; // max size = 2147483647 ( (2^31) - 1)
-	private const byte BitCountConstraintProvider = 9; // max size = 2147483647 ( (2^31) - 1)
+	private const byte BitCountConstraintProvider = 9;
 	private const byte BitShiftFieldSize = BitPositionFirstPositionSize - 1; // = 17
 	private const byte BitShiftConstraintProvider = 16; // should be greater than baseline(14)
 	private const long MaskFieldSize = ((1L << BitCountFieldSize) - 1L) << BitShiftFieldSize;
@@ -75,7 +75,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	private static readonly string MetaSchemaId = "0";
 	#endregion
 
-	// minimizing data padding by field reordering - total: ~46 bytes + heap allocations for strings
+	// 46 bytes → rounded to 48 bytes - 2 bytes padding
 	internal readonly long Flags;           // 8 bytes (offset 0) --> 
 	internal readonly string Name;
 	internal readonly string? Description;
@@ -85,6 +85,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	internal readonly int DataType;
 	internal readonly byte ObjectType;      // 1 byte  (offset 44) -->
 	internal readonly bool Active;
+
 
 	/// <summary>
 	/// 	Ctor
@@ -122,7 +123,7 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	#region field methods
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	internal FieldType GetFieldType() => (DataType & 127).ToFieldType(); // Code size: 15 (0xf)
+	internal FieldType GetFieldType() => (DataType & FieldTypeMask).ToFieldType(); // Code size: 15 (0xf)
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal bool IsFieldNotNull() => (Flags & (long)MetaFlag.FieldNotNull) != 0; // Code size: 14 (0xe)
@@ -286,7 +287,6 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	#region convertors 
 
-	[SkipLocalsInit]
 	internal string ToCsv()
 	{
 		// Code size: 295 (0x127)
@@ -317,7 +317,6 @@ internal readonly struct Meta : IEquatable<Meta>
 	internal Relation? ToRelation(Table to)
 	{
 		// Code size: 114 (0x72)
-		// BUG : Unsafe array access without bounds check — Line 255 — High Severity
 		if (IsRelation)
 		{
 			var fieldType = FieldType.Undefined;
@@ -357,8 +356,7 @@ internal readonly struct Meta : IEquatable<Meta>
 	/// <summary>
 	///		The static method orchestrates the complex process of building a complete database schema object.
 	/// </summary>
-	internal static DbSchema? ToSchema(Meta[] schema, DatabaseProvider provider, Encoding clientEncoding, SchemaType type = SchemaType.Static, SchemaLoadType loadType = SchemaLoadType.Full, 
-		Table[]? prebuiltTables = null)
+	internal static DbSchema? ToSchema(Meta[] schema, DatabaseProvider provider, Encoding clientEncoding, SchemaType type = SchemaType.Static, SchemaLoadType loadType = SchemaLoadType.Full, Table[]? prebuiltTables = null)
 	{
 		// Code size: 379 (0x17b)
 		// sort ASC by reference_id, name
@@ -414,7 +412,7 @@ internal readonly struct Meta : IEquatable<Meta>
 			var (colCount, physRelationCount, constraintCount) = GetCount(fields, tableItems, ddlBuilder);
 			var recordSize = physRelationCount + fields.Length + 1;
 			var usePreparedStatement = HasPreparedStatement();
-			var insertQueryType = usePreparedStatement ? SaveQueryType.InsertRecord : SaveQueryType.PreparedInsertRecord;
+			var insertQueryType = usePreparedStatement ? SaveQueryType.PreparedInsertRecord : SaveQueryType.InsertRecord;
 
 			// sort arrays (warn: relations not yet loaded here)
 			fields.AsSpan().Sort(static (x, y) => string.CompareOrdinal(x.Name, y.Name));
@@ -955,39 +953,45 @@ internal readonly struct Meta : IEquatable<Meta>
 
 	private static void LoadMtm(DbSchema schema, int mtmCount)
 	{
-		// Code size: 342 (0x156) - boxing removed
-		var ddlBuilder = schema.Provider.GetDdlBuilder(Encoding.UTF8, false);
+		// Code size: 321 (0x141)
+		// same builder (and client encoding) as the rest of the schema, instead of a new UTF-8 one
+		var ddlBuilder = schema.DdlBuilder;
 		var mtm = new Dictionary<string, Table>(mtmCount * 2);
 
 		foreach (var table in schema.TablesById)
 		{
-			for (var j = table.Relations.Length - 1; j >= 0; --j)
+			var relations = table.Relations;
+			for (var j = relations.Length - 1; j >= 0; --j)
 			{
-				var relation = table.Relations[j];
-				if (relation.Type == RelationType.Mtm)
-				{
-					// step 1 - generate physical name
-					var metaTable = new Meta(0, (byte)EntityType.Relation, 0, (int)TableType.Mtm, 0L, TableType.Mtm.GetLogicalName(relation.GetMtmName()), null, null, true);
-					var emptyTable = GetDefaultTable(metaTable);
-					var physicalName = ddlBuilder.GetPhysicalName(emptyTable, schema);
-					var inverseRelation = relation.InverseRelation;
-					// InverseRelation defaults to a self-reference (see Relation ctor) and SetInverseRelation only
-					// overwrites it once; if LoadInverseRelations never resolved it, it's still self-referencing here —
-					// it is never null, so that's the failure this must detect.
-					if (ReferenceEquals(inverseRelation, relation)) ThrowMissingInverseRelation(relation, table);
+				var relation = relations[j];
+				if (relation.Type != RelationType.Mtm) continue;
 
-					if (!mtm.TryGetValue(physicalName, out var mtmTable))
-					{
-						var compareLessThan0 = string.CompareOrdinal(relation.Name, inverseRelation.Name) < 0;
-						mtmTable = GetMtm(emptyTable, ddlBuilder, physicalName, mtm.Count,
-							compareLessThan0 ? relation.SetTypeAndId(RelationType.Mto, 1, true) : inverseRelation.SetTypeAndId(RelationType.Mto, 1, true),
-							compareLessThan0 ? inverseRelation.SetTypeAndId(RelationType.Mto, 2, true) : relation.SetTypeAndId(RelationType.Mto, 2, true));
-						mtm.Add(physicalName, mtmTable);
-					}
-					// step 2 - create two new relations -- mtmTable cannot be null here
-					table.Relations[j] = CreateMtmRelation(relation, mtmTable);
-					table.Relations[j].SetInverseRelation(inverseRelation);
+				// step 1 - generate physical name
+				var metaTable = new Meta(0, (byte)EntityType.Relation, 0, (int)TableType.Mtm, 0L, TableType.Mtm.GetLogicalName(relation.GetMtmName()), null, null, true);
+				var emptyTable = GetDefaultTable(metaTable);
+				var physicalName = ddlBuilder.GetPhysicalName(emptyTable, schema);
+				var inverseRelation = relation.InverseRelation;
+				// InverseRelation defaults to a self-reference (see Relation ctor) and SetInverseRelation only
+				// overwrites it once; if LoadInverseRelations never resolved it, it's still self-referencing here —
+				// it is never null, so that's the failure this must detect.
+				if (ReferenceEquals(inverseRelation, relation)) ThrowMissingInverseRelation(relation, table);
+
+				if (!mtm.TryGetValue(physicalName, out var mtmTable))
+				{
+					// deterministic side order: the relation with the smaller name is always #1
+					var (first, second) = string.CompareOrdinal(relation.Name, inverseRelation.Name) < 0
+						? (relation, inverseRelation)
+						: (inverseRelation, relation);
+					mtmTable = GetMtm(emptyTable, ddlBuilder, physicalName, mtm.Count,
+						first.SetTypeAndId(RelationType.Mto, 1, true),
+						second.SetTypeAndId(RelationType.Mto, 2, true));
+					mtm.Add(physicalName, mtmTable);
 				}
+
+				// step 2 - replace the relation; its inverse deliberately stays the original (pre-replacement) relation
+				var mtmRelation = CreateMtmRelation(relation, mtmTable);
+				mtmRelation.SetInverseRelation(inverseRelation);
+				relations[j] = mtmRelation;
 			}
 		}
 	}
