@@ -56,7 +56,6 @@ public sealed class Connection : IConnection, IAsyncDisposable
 	private readonly ManualResetEventSlim _syncGate = new(false);
 	private readonly Action _signal;
 	private CancellationTokenSource? _commandCts;
-
 	public long Id => _id;
 	public DateTime CreationTime => _creationTime;
 	public DateTime? LastConnectionTime => _lastConnectionTime;
@@ -108,10 +107,10 @@ public sealed class Connection : IConnection, IAsyncDisposable
 		catch (ObjectDisposedException) { return false; }
 	}
 
-	// Fully synchronous: no sync-over-async, no thread-pool hop, no risk of deadlock under a SynchronizationContext.
 	public void Open()
 	{
-		ThrowIfDisposed();
+		// Code size: 159 (0x9f) - no virtual calls!
+		// Fully synchronous: no sync-over - async, no thread - pool hop, no risk of deadlock under a SynchronizationContext.
 		if ((_state & ConnectionState.Open) == ConnectionState.Open) ThrowConnectionAlreadyOpen();
 		_state = ConnectionState.Connecting;
 		try
@@ -129,12 +128,7 @@ public sealed class Connection : IConnection, IAsyncDisposable
 		}
 	}
 
-	// OpenAsyncImpl always suspends (socket connect + authentication): the ValueTask wrapper is a plain struct around the Task, no allocation.
-	public ValueTask OpenAsync(CancellationToken cancellationToken)
-	{
-		ThrowIfDisposed();
-		return new ValueTask(OpenAsyncImpl(cancellationToken));
-	}
+	public ValueTask OpenAsync(CancellationToken cancellationToken) => new(OpenAsyncImpl(cancellationToken));
 
 	public string?[] Execute(in RetrieveQuery query, ReadOnlySpan<byte> sql)
 	{
@@ -249,6 +243,7 @@ public sealed class Connection : IConnection, IAsyncDisposable
 
 	public void Close()
 	{
+		// Code size: 91 (0x5b) - no virtual calls!
 		if (!IsOpenOrConnecting)
 		{
 			_state = ConnectionState.Closed;
@@ -402,9 +397,12 @@ public sealed class Connection : IConnection, IAsyncDisposable
 		_state = ConnectionState.Closed;
 	}
 
-	// Every step is independent: one failing Complete/Dispose never prevents the others from running.
+	/// <summary>
+	/// Every step is independent: one failing Complete/Dispose never prevents the others from running. 
+	/// </summary>
 	private void DisposePipeline()
 	{
+		// Code size: 134 (0x86)
 		var writer = _writer;
 		var reader = _reader;
 		var stream = _networkStream;
@@ -444,17 +442,8 @@ public sealed class Connection : IConnection, IAsyncDisposable
 		_syncGate.Dispose();
 	}
 
-	private void ThrowIfDisposed()
-	{
-		if (_disposed) ThrowDisposed();
-	}
-
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	private static OperationalError SqlCommandSizeTooLarge() => OperationalErrorExtensions.InvalidQuery(null, ResourceHelper.GetMessage(ResourceType.SqlCommandTextTooLarge));
-
-	[MethodImpl(MethodImplOptions.NoInlining)]
-	[DoesNotReturn]
-	private static void ThrowDisposed() => throw new ObjectDisposedException(nameof(Connection));
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]

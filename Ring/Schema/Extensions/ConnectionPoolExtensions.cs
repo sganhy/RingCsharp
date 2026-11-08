@@ -16,34 +16,23 @@ internal static class ConnectionPoolExtensions
 
 	internal static int GetId(this ConnectionPool? _) => Interlocked.Increment(ref _connectionPoolId); // Code size: 11 (0xb) - first ConnectionPool id is equal to 1
 
-	internal static ValueTask InitAsync(this ConnectionPool connectionPool, IConnection initialConnection, CancellationToken cancellationToken=default)
+	internal static async ValueTask InitAsync(this ConnectionPool connectionPool, IConnection initialConnection, CancellationToken cancellationToken=default)
 	{
-		// Code size: 147 (0x93)
+		// Code size: 71 (0x47)
 		// InitAsync() builds a Task[] with potentially null entries
 		Initialize(connectionPool, initialConnection);
 
 		int minPoolSize = connectionPool.MinConnection;
-		if (minPoolSize == 0) return ValueTask.CompletedTask;
-
+		if (minPoolSize == 0) return;
 		var connections = connectionPool.Connections;
-		ref var baseRef = ref MemoryMarshal.GetArrayDataReference(connections);
 
-		// If minPoolSize == 1, avoid array allocations entirely
-		if (minPoolSize == 1)
+		// Runs OpenAsync concurrently for all connections up to minPoolSize without requiring a Task[] array
+		// Explicitly specifying the type argument <IConnection> resolves the CS0411 inference error
+		// .OfType<IConnection>() filters out nulls and provides a non-nullable IEnumerable<IConnection> to satisfy CS8620
+		await Parallel.ForEachAsync(connections.Take(minPoolSize).OfType<IConnection>(), cancellationToken, async (conn, ct) =>
 		{
-			var conn = Unsafe.Add(ref baseRef, 0);
-			return conn is not null ? conn.OpenAsync(cancellationToken) : ValueTask.CompletedTask;
-		}
-
-		var tasks = new Task[minPoolSize];
-		ref var taskRef = ref MemoryMarshal.GetArrayDataReference(tasks);
-
-		for (int i = 0; i < minPoolSize; ++i)
-		{
-			var conn = Unsafe.Add(ref baseRef, i);
-			Unsafe.Add(ref taskRef, i) = conn is not null ? conn.OpenAsync(cancellationToken).AsTask() : Task.CompletedTask;
-		}
-		return new ValueTask(Task.WhenAll(tasks));
+			await conn.OpenAsync(ct).ConfigureAwait(false);
+		}).ConfigureAwait(false);
 	}
 
 	internal static void Init(this ConnectionPool connectionPool, IConnection initialConnection)

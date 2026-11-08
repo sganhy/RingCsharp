@@ -8,53 +8,53 @@ namespace Ring.Tests.MockUps;
 
 internal class ConnectionMock : IConnection
 {
-    private readonly long _id;
-    private ConnectionState _connectionState;
-    private DateTime? _lastConnectionTime;
-    private DatabaseProvider _databaseProvider;
-    private string _connectionString;
+	private readonly long _id;
+	private ConnectionState _connectionState;
+	private DateTime? _lastConnectionTime;
+	private DatabaseProvider _databaseProvider;
+	private string _connectionString;
 
-    public ConnectionMock(int id, DatabaseProvider databaseProvider, string connectionString)
-    {
-        _connectionState = ConnectionState.Closed;
-        _databaseProvider = databaseProvider;
-        _id = id;
-        _connectionString = connectionString;
-    }
+	public ConnectionMock(int id, DatabaseProvider databaseProvider, string connectionString)
+	{
+		_connectionState = ConnectionState.Closed;
+		_databaseProvider = databaseProvider;
+		_id = id;
+		_connectionString = connectionString;
+	}
 
-    public long Id => _id;
-    public string ConnectionString => _connectionString;
-    public DateTime CreationTime => DateTime.Now;
-    public DateTime? LastConnectionTime => _lastConnectionTime;
-    public ConnectionState State => _connectionState;
-    public Encoding ClientEncoding => Encoding.UTF8;
-    public int ProviderId => (int)_databaseProvider;
+	public long Id => _id;
+	public string ConnectionString => _connectionString;
+	public DateTime CreationTime => DateTime.Now;
+	public DateTime? LastConnectionTime => _lastConnectionTime;
+	public ConnectionState State => _connectionState;
+	public Encoding ClientEncoding => Encoding.UTF8;
+	public int ProviderId => (int)_databaseProvider;
 	public int BackendPid => 88;
 
 	public int BackendSecret => throw new NotImplementedException();
 
-	public bool HasDeclaredStmts => throw new NotImplementedException();
+	public bool HasDeclaredStmts => false;
 
 	public void Close() => _connectionState = ConnectionState.Closed;
-    public Task CloseAsync(CancellationToken cancellationToken) => 
-        Task.Run(() =>
-        {
-            _connectionState = ConnectionState.Closed;
-            // do nothing 
-        });
+	public ValueTask CloseAsync(CancellationToken cancellationToken) =>
+		new(Task.Run(() =>
+		{
+			_connectionState = ConnectionState.Closed;
+			// do nothing 
+		}));
 
-    public IConnection CreateInstance(int id, int sqlSendBufferSize) => new ConnectionMock(id, _databaseProvider, _connectionString);
-    public void Dispose() => Expression.Empty();
+	public IConnection CreateInstance(int id, int sqlSendBufferSize) => new ConnectionMock(id, _databaseProvider, _connectionString);
+	public void Dispose() => Expression.Empty();
 
-    public OperationalError? Execute(in AlterQuery query, ReadOnlySpan<byte> sql)
-    {
-        throw new NotImplementedException();
-    }
+	public OperationalError? Execute(in AlterQuery query, ReadOnlySpan<byte> sql)
+	{
+		throw new NotImplementedException();
+	}
 
-    public long Execute(in SaveQuery query)
-    {
-        throw new NotImplementedException();
-    }
+	public long Execute(in SaveQuery query)
+	{
+		throw new NotImplementedException();
+	}
 
 	public string?[] Execute(in RetrieveQuery query, ReadOnlySpan<byte> sql)
 	{
@@ -73,24 +73,24 @@ internal class ConnectionMock : IConnection
 
 	public ValueTask<OperationalError?> ExecuteAsync(AlterQuery query, ReadOnlyMemory<byte> sql, CancellationToken cancellationToken = default)
 	{
-        throw new NotImplementedException();
-    }
+		throw new NotImplementedException();
+	}
 
-    public bool IsConnectionAlive() => true;
+	public bool IsConnectionAlive() => true;
 
 	public void Open()
-    {
-        _lastConnectionTime = DateTime.Now;
-        _connectionState = ConnectionState.Open;
-    }
+	{
+		_lastConnectionTime = DateTime.Now;
+		_connectionState = ConnectionState.Open;
+	}
 
-    public Task OpenAsync(CancellationToken cancellationToken) => 
-        Task.Run(() =>
-        {
-            _lastConnectionTime = DateTime.Now;
-            _connectionState = ConnectionState.Open;
-        });
+	public ValueTask OpenAsync(CancellationToken cancellationToken) =>
+		new(Task.Run(() =>
+		{
+			_lastConnectionTime = DateTime.Now;
+			_connectionState = ConnectionState.Open;
+		}));
 
-    public sealed override string ToString() => $"{Id} - {_connectionState}";
+	public sealed override string ToString() => $"{Id} - {_connectionState}";
 
 }
