@@ -27,9 +27,9 @@ internal sealed class Schema : BaseEntity
 	/// <summary>
 	/// 	Ctor
 	/// </summary>
-	internal Schema(int id, string name, string physicalName, string? description, Parameter[] parameters, Lexicon[] lexicons, SchemaLoadType loadType,
-		SchemaType type, Sequence[] sequences, Table[] tablesById, Table[] tablesByName, TableSpace[] tableSpaces, DatabaseProvider provider, Encoding clientEncoding,
-		int objectCount, bool active, bool baseline) : base(id, name, description, baseline, active)
+	internal Schema(int id, string name, string physicalName, string? description, Parameter[] parameters, Lexicon[] lexicons, SchemaLoadType loadType,	SchemaType type, Sequence[] sequences, 
+		Table[] tablesById, Table[] tablesByName, TableSpace[] tableSpaces, DatabaseProvider provider, Encoding clientEncoding, int objectCount, bool active, bool baseline) 
+		: base(id, name, description, baseline, active)
 	{
 		Connections = new ConnectionPool(ConnectionPoolExtensions.GetId(null), parameters.GetMinPoolSize(), parameters.GetMaxPoolSize(), 0, parameters.GetDbConnectionString());
 		Lexicons = lexicons;

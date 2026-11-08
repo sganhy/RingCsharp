@@ -32,7 +32,7 @@ internal static class ConnectionPoolExtensions
 		if (minPoolSize == 1)
 		{
 			var conn = Unsafe.Add(ref baseRef, 0);
-			return conn is not null	? new ValueTask(conn.OpenAsync(cancellationToken)) : ValueTask.CompletedTask;
+			return conn is not null ? conn.OpenAsync(cancellationToken) : ValueTask.CompletedTask;
 		}
 
 		var tasks = new Task[minPoolSize];
@@ -41,7 +41,7 @@ internal static class ConnectionPoolExtensions
 		for (int i = 0; i < minPoolSize; ++i)
 		{
 			var conn = Unsafe.Add(ref baseRef, i);
-			if (conn is not null) Unsafe.Add(ref taskRef, i) = conn.OpenAsync(cancellationToken);
+			Unsafe.Add(ref taskRef, i) = conn is not null ? conn.OpenAsync(cancellationToken).AsTask() : Task.CompletedTask;
 		}
 		return new ValueTask(Task.WhenAll(tasks));
 	}

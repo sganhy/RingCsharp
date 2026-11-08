@@ -16,7 +16,6 @@ internal static class PipeWriterExtensions
 	//private const int MaxSqlLength = 0x3FFFFFFF - 16; // 1073741801
 	private const int StackallocThreshold = 128;
 
-
 	internal static ValueTask<FlushResult> SendQueryAsync(this PipeWriter writer, ReadOnlyMemory<byte> sql, CancellationToken cancellationToken = default)
 	{
 		var msgLength = 6 + sql.Length;
@@ -81,6 +80,20 @@ internal static class PipeWriterExtensions
 
 	internal static ValueTask<FlushResult> SendStartupAsync(this PipeWriter writer, ConnectionParameters connParameters, CancellationToken cancellationToken = default)
 	{
+		WriteStartup(writer, connParameters);
+		return writer.FlushAsync(cancellationToken);
+	}
+
+	/// <summary>Writes the StartupMessage and flushes (blocking).</summary>
+	internal static void SendStartup(this PipeWriter writer, ConnectionParameters connParameters)
+	{
+		WriteStartup(writer, connParameters);
+		writer.FlushBlocking();
+	}
+
+	// The message building is shared by SendStartupAsync and SendStartup: only the flush differs.
+	private static void WriteStartup(PipeWriter writer, ConnectionParameters connParameters)
+	{
 		const int protocolVersion3 = 0x00030000;
 
 		var userParam = connParameters.GetParameterName(ConnectionParametersType.UserName);
@@ -126,8 +139,6 @@ internal static class PipeWriterExtensions
 
 		span[offset] = 0;
 		writer.Advance(length);
-
-		return writer.FlushAsync(cancellationToken);
 
 		static int WriteKeyValuePair(Span<byte> destination, string key, string value)
 		{

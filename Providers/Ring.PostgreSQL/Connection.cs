@@ -31,7 +31,6 @@ public sealed class Connection : IConnection, IAsyncDisposable
 	private const int MaxSqlLength = 0x3FFFFFFF - 16; // PostgreSQL caps a message at 1 GB - 1 (the length field counts its own 4 bytes).
 	private const int MaxSqlDriverLength = MaxSqlLength / 4; // 256 MB is a more reasonable limit for a single SQL command!
 	private static readonly byte[] TerminateMessage = { (byte)FrontendMessageCode.Terminate, 0, 0, 0, 4 };
-
 	private readonly long _id;
 	private readonly DateTime _creationTime;
 	private DateTime? _lastConnectionTime;
@@ -39,10 +38,9 @@ public sealed class Connection : IConnection, IAsyncDisposable
 	private readonly int _port;
 	private readonly ConnectionParameters _parameters;
 	private ConnectionState _state;
-
 	private readonly int _timeout;
 	private readonly Encoding _encoding;
-
+	private bool _hasDeclaredStmts;
 	private Socket? _socket;
 	private NetworkStream? _networkStream;
 
@@ -78,6 +76,8 @@ public sealed class Connection : IConnection, IAsyncDisposable
 	private bool IsOpenOrConnecting => (_state & (ConnectionState.Open | ConnectionState.Connecting)) != 0;
 	private bool HasPipeline => !ReferenceEquals(_writer, ClosedPipeWriter.Instance);
 
+	public bool HasDeclaredStmts => _hasDeclaredStmts;
+
 	public Connection(string connectionString) : this(connectionString.ToConnectionParameters()) { }
 
 	internal Connection(ConnectionParameters parameters)
@@ -93,6 +93,7 @@ public sealed class Connection : IConnection, IAsyncDisposable
 		_port = parameters.Port;
 		_encoding = Encoding.GetEncoding(parameters.ClientEncoding);
 		_signal = _syncGate.Set;
+		_hasDeclaredStmts = false;
 	}
 
 	public bool IsConnectionAlive()
@@ -107,17 +108,34 @@ public sealed class Connection : IConnection, IAsyncDisposable
 		catch (ObjectDisposedException) { return false; }
 	}
 
+	// Fully synchronous: no sync-over-async, no thread-pool hop, no risk of deadlock under a SynchronizationContext.
 	public void Open()
 	{
 		ThrowIfDisposed();
-		OpenAsyncImpl(CancellationToken.None).GetAwaiter().GetResult();
+		if ((_state & ConnectionState.Open) == ConnectionState.Open) ThrowConnectionAlreadyOpen();
+		_state = ConnectionState.Connecting;
+		try
+		{
+			AttachSocket(SocketHelper.ConnectSocket(_host, _port, _timeout));
+			_writer.SendStartup(_parameters);
+			var (pid, secret) = AuthenticationHelper.HandleAuthentication(_reader, _writer, _host, _parameters.UserName, _parameters.Password, string.Empty);
+			CompleteOpen(pid, secret);
+		}
+		catch
+		{
+			DisposePipeline();
+			_state = ConnectionState.None;
+			throw;
+		}
 	}
 
-public Task OpenAsync(CancellationToken cancellationToken)
-{
-    ThrowIfDisposed();
-    return OpenAsyncImpl(cancellationToken);
-}
+	// OpenAsyncImpl always suspends (socket connect + authentication): the ValueTask wrapper is a plain struct around the Task, no allocation.
+	public ValueTask OpenAsync(CancellationToken cancellationToken)
+	{
+		ThrowIfDisposed();
+		return new ValueTask(OpenAsyncImpl(cancellationToken));
+	}
+
 	public string?[] Execute(in RetrieveQuery query, ReadOnlySpan<byte> sql)
 	{
 		_state = ConnectionState.Open | ConnectionState.Executing;
@@ -165,7 +183,7 @@ public Task OpenAsync(CancellationToken cancellationToken)
 		if (error is not null)
 		{
 			error = error.Value.Set(query);
-			 _state = error.Value.Type != OperationalErrorType.PgError ?  ConnectionState.Broken : ConnectionState.Open;
+			_state = error.Value.Type != OperationalErrorType.PgError ? ConnectionState.Broken : ConnectionState.Open;
 			return error;
 		}
 		_state = ConnectionState.Open;
@@ -258,7 +276,7 @@ public Task OpenAsync(CancellationToken cancellationToken)
 		}
 	}
 
-	public Task CloseAsync(CancellationToken cancellationToken = default) => CloseAsyncImpl(cancellationToken);
+	public ValueTask CloseAsync(CancellationToken cancellationToken = default) => new(CloseAsyncImpl(cancellationToken));
 
 	public void Dispose()
 	{
@@ -322,28 +340,36 @@ public Task OpenAsync(CancellationToken cancellationToken)
 		}
 	}
 
+	// The non-I/O part of opening, shared by Open() and OpenAsyncImpl().
+	private void AttachSocket(Socket socket)
+	{
+		_socket = socket;
+		socket.NoDelay = true;
+		socket.ConfigureKeepAlive();
+
+		_networkStream = new NetworkStream(socket, ownsSocket: true);
+		_writer = PipeWriter.Create(_networkStream, new StreamPipeWriterOptions(minimumBufferSize: WriterMinimumBufferSize, leaveOpen: true));
+		_reader = PipeReader.Create(_networkStream, new StreamPipeReaderOptions(bufferSize: ReaderBufferSize, minimumReadSize: ReaderMinimumReadSize, leaveOpen: true, useZeroByteReads: true));
+	}
+
+	private void CompleteOpen(int? pid, int? secret)
+	{
+		_backendPid = pid ?? 0;
+		_backendSecret = secret ?? 0;
+		_lastConnectionTime = DateTime.Now;
+		_state = ConnectionState.Open;
+	}
+
 	private async Task OpenAsyncImpl(CancellationToken cancellationToken)
 	{
 		if ((_state & ConnectionState.Open) == ConnectionState.Open) ThrowConnectionAlreadyOpen();
 		_state = ConnectionState.Connecting;
 		try
 		{
-			var socket = await SocketHelper.ConnectSocketAsync(_host, _port, _timeout, cancellationToken).ConfigureAwait(false);
-			_socket = socket;
-			socket.NoDelay = true;
-			socket.ConfigureKeepAlive();
-
-			_networkStream = new NetworkStream(socket, ownsSocket: true);
-			_writer = PipeWriter.Create(_networkStream, new StreamPipeWriterOptions(minimumBufferSize: WriterMinimumBufferSize, leaveOpen: true));
-			_reader = PipeReader.Create(_networkStream, new StreamPipeReaderOptions(bufferSize: ReaderBufferSize, minimumReadSize: ReaderMinimumReadSize, leaveOpen: true, useZeroByteReads: true));
-
+			AttachSocket(await SocketHelper.ConnectSocketAsync(_host, _port, _timeout, cancellationToken).ConfigureAwait(false));
 			await _writer.SendStartupAsync(_parameters, cancellationToken).ConfigureAwait(false);
 			var (pid, secret) = await AuthenticationHelper.HandleAuthenticationAsync(_reader, _writer, _host, _parameters.UserName, _parameters.Password, string.Empty, cancellationToken).ConfigureAwait(false);
-
-			_backendPid = pid ?? 0;
-			_backendSecret = secret ?? 0;
-			_lastConnectionTime = DateTime.Now;
-			_state = ConnectionState.Open;
+			CompleteOpen(pid, secret);
 		}
 		catch
 		{
@@ -428,11 +454,11 @@ public Task OpenAsync(CancellationToken cancellationToken)
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
-	private static void ThrowDisposed() =>	throw new ObjectDisposedException(nameof(Connection));
+	private static void ThrowDisposed() => throw new ObjectDisposedException(nameof(Connection));
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
-	private static void ThrowConnectionAlreadyOpen() =>	throw new InvalidOperationException(ResourceHelper.GetMessage(ResourceType.ConnectionAlreadyOpen));
+	private static void ThrowConnectionAlreadyOpen() => throw new InvalidOperationException(ResourceHelper.GetMessage(ResourceType.ConnectionAlreadyOpen));
 
 	#endregion
 }

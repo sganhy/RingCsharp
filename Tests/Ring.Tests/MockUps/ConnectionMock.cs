@@ -33,6 +33,8 @@ internal class ConnectionMock : IConnection
 
 	public int BackendSecret => throw new NotImplementedException();
 
+	public bool HasDeclaredStmts => throw new NotImplementedException();
+
 	public void Close() => _connectionState = ConnectionState.Closed;
     public Task CloseAsync(CancellationToken cancellationToken) => 
         Task.Run(() =>

@@ -16,7 +16,7 @@ namespace Ring.PostgreSQL.Helpers;
 internal static class AuthenticationHelper
 {
 
-	internal static async ValueTask<(int? BackendPid, int? BackendSecret)> HandleAuthenticationAsync(PipeReader reader, PipeWriter writer, string host, string username, string password, 
+	internal static async ValueTask<(int? BackendPid, int? BackendSecret)> HandleAuthenticationAsync(PipeReader reader, PipeWriter writer, string host, string username, string password,
 		string kerberosServiceName, CancellationToken cancellationToken = default)
 	{
 		int? backendPid = null;
@@ -56,6 +56,63 @@ internal static class AuthenticationHelper
 			}
 		}
 	}
+
+	/// <summary>
+	/// Synchronous counterpart of <see cref="HandleAuthenticationAsync"/>. The message handling (SCRAM, MD5, GSS...) is shared:
+	/// only the read loop is different, and the writes complete inline in practice (the socket send buffer has room).
+	/// </summary>
+	internal static (int? BackendPid, int? BackendSecret) HandleAuthentication(PipeReader reader, PipeWriter writer, string host, string username, string password, string kerberosServiceName)
+	{
+		int? backendPid = null;
+		int? backendSecret = null;
+
+		using var session = new AuthSession(writer, host, username, password, kerberosServiceName);
+
+		while (true)
+		{
+			var result = ReadBlocking(reader);
+			var buffer = result.Buffer;
+
+			if (buffer.IsEmpty && result.IsCompleted)
+			{
+				ThrowUnexpectedEof();
+			}
+
+			if (!TryProcessAuthMessage(buffer, out var messageLength))
+			{
+				// a partial message that will never be completed would otherwise spin forever
+				if (result.IsCompleted) ThrowUnexpectedEof();
+
+				reader.AdvanceTo(buffer.Start, buffer.End);
+				continue;
+			}
+
+			var (consumed, isComplete, pid, secret) = Wait(ProcessAuthMessageDetailsAsync(buffer, messageLength, session, CancellationToken.None));
+
+			if (pid.HasValue) backendPid = pid;
+			if (secret.HasValue) backendSecret = secret;
+
+			reader.AdvanceTo(consumed);
+
+			if (isComplete)
+			{
+				return (backendPid, backendSecret);
+			}
+		}
+	}
+
+	// PipeReader has no blocking read: use the data already buffered when there is some, wait only when there is not.
+	private static ReadResult ReadBlocking(PipeReader reader)
+	{
+		if (reader.TryRead(out var ready)) return ready;
+
+		var read = reader.ReadAsync();
+		return read.IsCompleted ? read.GetAwaiter().GetResult() : read.AsTask().GetAwaiter().GetResult();
+	}
+
+	// Completed ValueTask (the usual case): no Task is created. Exceptions are rethrown as is, not wrapped.
+	private static T Wait<T>(ValueTask<T> task)
+		=> task.IsCompleted ? task.GetAwaiter().GetResult() : task.AsTask().GetAwaiter().GetResult();
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static bool TryProcessAuthMessage(ReadOnlySequence<byte> buffer, out int messageLength)
@@ -116,10 +173,7 @@ internal static class AuthenticationHelper
 		return (nextPosition, isComplete, pid, secret);
 	}
 
-	private static async ValueTask ProcessAuthenticationRequestAsync(
-		ReadOnlySequence<byte> payload,
-		AuthSession session,
-		CancellationToken cancellationToken)
+	private static async ValueTask ProcessAuthenticationRequestAsync(ReadOnlySequence<byte> payload, AuthSession session, CancellationToken cancellationToken)
 	{
 		Span<byte> authTypeBuffer = stackalloc byte[4];
 		payload.Slice(0, 4).CopyTo(authTypeBuffer);

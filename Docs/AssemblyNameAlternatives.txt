@@ -296,3 +296,50 @@ For an elegant, structural framework: Architrave
 For a modern, developer-friendly dynamic runtime: Meridian
 
 If you want a short, single-syllable replacement for "Ring": Mesh or Lintel
+
+
+Flow and continuity (the zero-downtime idea)
+
+Thalweg: the line of fastest flow along a river valley, the path the water actually takes. It is also a French word (talweg), so it reads naturally for you.
+Legato: notes joined smoothly with no gaps, in the same musical vein as Cadence.
+Weir: a low dam that regulates flow, a good fit for the connection pool. Only four letters, like Ring.
+
+Joints and connective tissue (driver plus schema)
+
+Sinew: the tissue that connects muscle to bone. It is anatomical like Velum and Fascia, short, and easy to say.
+Tenon: the tongue of a woodwork joint that fits exactly into its mortise, like a driver fitting the Postgres protocol.
+Ferrule: a ring-shaped fitting that joins and reinforces two parts, so it keeps a link to “Ring”.
+
+Threshold and “closest to the metal”
+
+Limen: the threshold between two states, here between application and database. Five letters, close to Ring in length.
+BareWire: in the DataWire spirit, since you speak the PostgreSQL wire protocol directly with no ADO.NET layer.
+
+My top three
+
+Sinew: it works best as a prefix for your sub-assemblies (Sinew.Schema, Sinew.PostgreSQL, Sinew.Data) and is easy to pronounce in French and English.
+Thalweg: the most distinctive of the lot and the least likely to collide with anything, though it is harder to spell for non-French speakers.
+Limen: the shortest and closest to Ring’s feel, with a clear meaning.
+
+Structure and framework (the “schema is a structural framework” vein)
+
+Armature: the hidden skeleton a sculptor builds so soft material can take a shape. Your metadata model plays that role for tables and endpoints.
+Corbel: a stone bracket that carries load from above. The API layer sits on top of the database and is carried by it.
+
+Translation between layers
+
+Dragoman: the historical interpreter between languages (drogman in French). It translates physical DB ↔ logical model ↔ HTTP.
+
+Stability under change (zero downtime)
+
+Gimbal: a pivoted mount that keeps what it carries level while the base moves. Endpoints stay stable while the schema evolves.
+
+Generating and fusing
+
+Meristem: the plant tissue that keeps producing new organs. It is a more precise cousin of Cambium, which was on your list.
+Sinter: fusing grains into one solid mass without melting them. It is the same idea as Amalgam, but shorter and less used.
+
+Joins and navigation
+
+Tenon: the tongue that locks into a mortise, a picture for a relation between two tables.
+Rhumb: a line of constant bearing across every meridian, from the same family as Meridian. It is one syllable but may be hard to spell and pronounce.
