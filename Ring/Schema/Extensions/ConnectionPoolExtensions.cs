@@ -14,21 +14,16 @@ internal static class ConnectionPoolExtensions
 	private const int SqlSendBufferSize = 1024;
 	private static int _connectionPoolId;
 
-	internal static int GetId(this ConnectionPool? _) => Interlocked.Increment(ref _connectionPoolId); // Code size: 11 (0xb) - first ConnectionPool id is equal to 1
+	internal static int GetId(this ConnectionPool? _) => Interlocked.Increment(ref _connectionPoolId);
 
-	internal static async ValueTask InitAsync(this ConnectionPool connectionPool, IConnection initialConnection, CancellationToken cancellationToken=default)
+	internal static async ValueTask InitAsync(this ConnectionPool connectionPool, IConnection initialConnection, CancellationToken cancellationToken = default)
 	{
-		// Code size: 71 (0x47)
-		// InitAsync() builds a Task[] with potentially null entries
 		Initialize(connectionPool, initialConnection);
 
 		int minPoolSize = connectionPool.MinConnection;
 		if (minPoolSize == 0) return;
 		var connections = connectionPool.Connections;
 
-		// Runs OpenAsync concurrently for all connections up to minPoolSize without requiring a Task[] array
-		// Explicitly specifying the type argument <IConnection> resolves the CS0411 inference error
-		// .OfType<IConnection>() filters out nulls and provides a non-nullable IEnumerable<IConnection> to satisfy CS8620
 		await Parallel.ForEachAsync(connections.Take(minPoolSize).OfType<IConnection>(), cancellationToken, async (conn, ct) =>
 		{
 			await conn.OpenAsync(ct).ConfigureAwait(false);
@@ -51,14 +46,10 @@ internal static class ConnectionPoolExtensions
 		}
 	}
 
-	/// <summary>
-	/// 	Retrieves an item from the pool.
-	/// </summary>
-	/// <returns>The item retrieved from the pool.</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static IConnection Get(this ConnectionPool connectionPool)
 	{
-		// Code size: 75 (0x4b) - no virtual calls
+		// Code size: 75 (0x4b)
 		IConnection? result = null;
 		SpinEnter(ref connectionPool.SpinLock);
 		int cursor = connectionPool.Cursor;
@@ -72,16 +63,13 @@ internal static class ConnectionPoolExtensions
 		return result ?? CreateConnection(connectionPool);
 	}
 
-	/// <summary>
-	/// 	Places an item in the pool. semi async destroy is computed async
-	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static void Put(this ConnectionPool connectionPool, IConnection connection)
 	{
-		// Code size: 137 (0x89) - no virtual calls
+		// Code size: 137 (0x89)
 		SpinEnter(ref connectionPool.SpinLock);
-
 		int cursor = connectionPool.Cursor;
+
 		if (cursor < connectionPool.LastIndex)
 		{
 			ushort putCount = (ushort)(connectionPool.PutRequestCount + 1);
@@ -108,15 +96,9 @@ internal static class ConnectionPoolExtensions
 		DestroyConnectionAsync(connectionPool, connection);
 	}
 
-	/// <summary>
-	///     Places an item in the pool. If the pool is full, the connection is
-	///     destroyed asynchronously. Returns a completed ValueTask on the hot path
-	///     (pool has space) — no allocation in that case.
-	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static ValueTask PutAsync(this ConnectionPool connectionPool, IConnection connection, CancellationToken cancellationToken = default)
 	{
-		// Code size: 143 (0x8f) - no virtual calls
 		SpinEnter(ref connectionPool.SpinLock);
 		int cursor = connectionPool.Cursor;
 		if (cursor < connectionPool.LastIndex)
@@ -144,11 +126,10 @@ internal static class ConnectionPoolExtensions
 		return DestroyConnectionAsync(connectionPool, connection, cancellationToken);
 	}
 
-	internal static bool Unloaded(this ConnectionPool connectionPool) => connectionPool.Cursor == int.MinValue || connectionPool.LastIndex == int.MinValue; // Code size: 29 (0x1d)
+	internal static bool Unloaded(this ConnectionPool connectionPool) => connectionPool.Cursor == int.MinValue || connectionPool.LastIndex == int.MinValue;
 
 	internal static void Unload(this ConnectionPool connectionPool)
 	{
-		// Code size: 129 (0x81)
 		SpinEnter(ref connectionPool.SpinLock);
 		int currentCursor = connectionPool.Cursor;
 		connectionPool.Cursor = int.MinValue;
@@ -173,14 +154,13 @@ internal static class ConnectionPoolExtensions
 
 	internal static void CheckHealth(this ConnectionPool connectionPool)
 	{
-		// verify connection & creation time
-
+		// Verify connection liveness and creation time if needed
 	}
 
 	internal static ConnectionPool Resize(this ConnectionPool connectionPool, int minPoolSize, int maxPoolSize)
 	{
-		// Code size: 357 (0x165)
-		if (minPoolSize == connectionPool.MinConnection && maxPoolSize == connectionPool.MaxConnection)	return connectionPool;
+		if (minPoolSize == connectionPool.MinConnection && maxPoolSize == connectionPool.MaxConnection) return connectionPool;
+
 		SpinEnter(ref connectionPool.SpinLock);
 		int currentCursor = connectionPool.Cursor;
 		connectionPool.Cursor = int.MinValue;
@@ -218,11 +198,15 @@ internal static class ConnectionPoolExtensions
 			Unsafe.Add(ref newBase, i) = conn;
 		}
 
-		// Close surplus connections if shrunk
+		// Close surplus connections safely if shrunk
 		for (i = preserveCount + 1; i <= currentCursor; ++i)
 		{
 			var conn = Unsafe.Add(ref oldBase, i);
-			conn?.Close();
+			if (conn is not null)
+			{
+				if (conn.State != ConnectionState.Closed) conn.Close();
+				conn.Dispose();
+			}
 		}
 
 		if (preserveCount > newPool.Cursor)
@@ -236,12 +220,12 @@ internal static class ConnectionPoolExtensions
 
 	private static void DestroyConnectionAsync(this ConnectionPool connectionPool, IConnection connection)
 	{
-		// Code size: 82 (0x52)
+		// Code size: 81 (0x51)
 		if (connection.State != ConnectionState.Closed)
 		{
 			ThreadPool.QueueUserWorkItem(static state =>
 			{
-				var conn = state!;
+				var conn = (IConnection)state!;
 				conn.Close();
 				conn.Dispose();
 			}, connection, preferLocal: false);
@@ -257,7 +241,6 @@ internal static class ConnectionPoolExtensions
 
 	private static IConnection CreateConnection(this ConnectionPool connectionPool)
 	{
-		// Code size: 82 (0x52)
 		var id = Interlocked.Increment(ref connectionPool.ConnectionCount);
 		Interlocked.Increment(ref connectionPool.CreationCount);
 		var connections = connectionPool.Connections;
@@ -269,13 +252,11 @@ internal static class ConnectionPoolExtensions
 			newConnection.Open();
 			return newConnection;
 		}
-		// --> Initial base connection in pool is null.
 		throw new NotSupportedException(ResourceHelper.GetMessage(ResourceType.InitConnectionInPoolIsNull));
 	}
 
 	private static void Initialize(this ConnectionPool connectionPool, IConnection initialConnection)
 	{
-		// Code size: 119 (0x77)
 		connectionPool.ConnectionCount = 0;
 
 		if (initialConnection.State == ConnectionState.Open) initialConnection.Close();
@@ -306,7 +287,6 @@ internal static class ConnectionPoolExtensions
 
 	private static void ClearConnections(this ConnectionPool connectionPool)
 	{
-		// Code size: 18 (0x12)
 		var connections = connectionPool.Connections;
 		Array.Clear(connections, 0, connections.Length);
 	}
@@ -314,16 +294,18 @@ internal static class ConnectionPoolExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static void SpinEnter(ref int spinLock)
 	{
-		// Code size: 19 (0x13)
-		while (Interlocked.CompareExchange(ref spinLock, 1, 0) != 0) Thread.SpinWait(1);
+		var spinWait = new SpinWait();
+		while (Interlocked.CompareExchange(ref spinLock, 1, 0) != 0)
+		{
+			spinWait.SpinOnce();
+		}
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private static void SpinExit(ref int spinLock) => Volatile.Write(ref spinLock, 0); // Code size: 8 (0x8)
+	private static void SpinExit(ref int spinLock) => Volatile.Write(ref spinLock, 0);
 
 	private static async ValueTask DestroyConnectionAsync(this ConnectionPool connectionPool, IConnection connection, CancellationToken cancellationToken)
 	{
-		// Code size: 71 (0x47)
 		if (connection.State != ConnectionState.Closed) await connection.CloseAsync(cancellationToken).ConfigureAwait(false);
 		connection.Dispose();
 		Interlocked.Decrement(ref connectionPool.ConnectionCount);
@@ -331,5 +313,4 @@ internal static class ConnectionPoolExtensions
 	}
 
 	#endregion
-
 }
