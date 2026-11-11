@@ -1,5 +1,6 @@
 ﻿using System.Buffers;
 using System.Buffers.Binary;
+using System.Diagnostics.CodeAnalysis;
 using System.IO.Pipelines;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
@@ -12,12 +13,17 @@ namespace Ring.PostgreSQL.Extensions;
 
 internal static class PipeWriterExtensions
 {
-	// Query: 1 code + 4 length + sql + 1 terminator, so the sql can be at most MaxMessageBody - 5 bytes... kept conservative.
-	//private const int MaxSqlLength = 0x3FFFFFFF - 16; // 1073741801
+	/// <summary>
+	/// Hard protocol ceiling for the SQL text: PostgreSQL rejects any message above 1 GB - 1 (the length field counts its own 4 bytes),
+	/// and the Query/Parse message adds a code byte, the length and a terminator. Kept conservative. Single source of truth:
+	/// <see cref="Connection"/> derives its (lower) driver limit from it.
+	/// </summary>
+	internal const int MaxSqlLength = 0x3FFFFFFF - 16; // 1,073,741,807
 	private const int StackallocThreshold = 128;
 
 	internal static ValueTask<FlushResult> SendQueryAsync(this PipeWriter writer, ReadOnlyMemory<byte> sql, CancellationToken cancellationToken = default)
 	{
+		EnsureSqlLength(sql.Length);
 		var msgLength = 6 + sql.Length;
 		var span = writer.GetSpan(msgLength);
 
@@ -33,7 +39,7 @@ internal static class PipeWriterExtensions
 	/// <summary>Writes a Query message and flushes (blocking).</summary>
 	internal static void SendQuery(this PipeWriter writer, ReadOnlySpan<byte> sql)
 	{
-		// Code size: 87 (0x57)
+		EnsureSqlLength(sql.Length);
 		var msgLength = 6 + sql.Length;
 		var span = writer.GetSpan(msgLength);
 
@@ -52,10 +58,10 @@ internal static class PipeWriterExtensions
 	/// </summary>
 	internal static void SendExtendedQuery(this PipeWriter writer, ReadOnlySpan<byte> sql, in SaveQuery query, Encoding encoding)
 	{
-		// Code size: 169 (0xa9)
+		EnsureSqlLength(sql.Length);
 		var parseMsgLength = 9 + sql.Length;
 		var variablesPayloadSize = query.GetVariablesPayloadSize(encoding);
-		var totalMsgLength = parseMsgLength + variablesPayloadSize;
+		var totalMsgLength = EnsureMessageLength((long)parseMsgLength + variablesPayloadSize);
 
 		var span = writer.GetSpan(totalMsgLength);
 
@@ -151,16 +157,15 @@ internal static class PipeWriterExtensions
 	}
 
 	/// <summary>
-	/// Sends a PasswordMessage (cleartext password or the "md5..." hash) and zeroes the bytes
-	/// in the pipe buffer once the flush has completed (or failed).
+	/// Sends a PasswordMessage (cleartext password or the "md5..." hash). The pipe buffer is never touched after <c>Advance</c>
+	/// (the writer owns it); it is scrubbed by <see cref="ScrubbingMemoryPool"/> when the writer releases it.
 	/// </summary>
 	internal static ValueTask SendPasswordMessageAsync(this PipeWriter writer, string password, CancellationToken cancellationToken = default)
 	{
 		var length = 4 + Encoding.UTF8.GetByteCount(password) + 1;
 		var total = 1 + length;
 
-		var memory = writer.GetMemory(total).Slice(0, total);
-		var span = memory.Span;
+		var span = writer.GetSpan(total);
 
 		span[0] = (byte)FrontendMessageCode.Password;
 		BinaryPrimitives.WriteInt32BigEndian(span[1..], length);
@@ -168,13 +173,13 @@ internal static class PipeWriterExtensions
 		span[5 + written] = 0;
 
 		writer.Advance(total);
-		return FlushAndScrubAsync(writer, memory, cancellationToken);
+		return FlushDiscardResultAsync(writer, cancellationToken);
 	}
 
 	/// <summary>
 	/// Sends the MD5 PasswordMessage: "md5" + hex(md5(hex(md5(password + user)) + salt)).
-	/// Built directly in the pipe buffer (no string allocation); the message and the intermediate hashes are zeroed afterwards,
-	/// including when an exception is thrown half way.
+	/// Built directly in the pipe buffer (no string allocation); the intermediate hashes on the stack are zeroed afterwards,
+	/// including when an exception is thrown half way. The copy in the pipe buffer is scrubbed by <see cref="ScrubbingMemoryPool"/>.
 	/// </summary>
 	internal static ValueTask SendMd5PasswordAsync(this PipeWriter writer, string username, string password, ReadOnlySpan<byte> salt, CancellationToken cancellationToken = default)
 	{
@@ -196,8 +201,7 @@ internal static class PipeWriterExtensions
 			const int length = 4 + 3 + 32 + 1;
 			const int total = 1 + length;
 
-			var memory = writer.GetMemory(total).Slice(0, total);
-			var span = memory.Span;
+			var span = writer.GetSpan(total);
 
 			span[0] = (byte)FrontendMessageCode.Password;
 			BinaryPrimitives.WriteInt32BigEndian(span[1..], length);
@@ -209,7 +213,7 @@ internal static class PipeWriterExtensions
 
 			writer.Advance(total);
 
-			return FlushAndScrubAsync(writer, memory, cancellationToken);
+			return FlushDiscardResultAsync(writer, cancellationToken);
 		}
 		finally
 		{
@@ -240,38 +244,55 @@ internal static class PipeWriterExtensions
 		return writer.FlushAsync(cancellationToken);
 	}
 
-	/// <summary>Sends the SCRAM client-final message (carries the client proof) and zeroes it in the pipe buffer afterwards.</summary>
+	/// <summary>Sends the SCRAM client-final message (carries the client proof); the pipe buffer is scrubbed by <see cref="ScrubbingMemoryPool"/> (the caller should zero its own <paramref name="data"/> array).</summary>
 	internal static ValueTask SendSASLResponseAsync(this PipeWriter writer, byte[] data, CancellationToken cancellationToken = default)
 	{
 		var length = 4 + data.Length;
 		var total = 1 + length;
 
-		var memory = writer.GetMemory(total).Slice(0, total);
-		var span = memory.Span;
+		var span = writer.GetSpan(total);
 
 		span[0] = (byte)FrontendMessageCode.Password;
 		BinaryPrimitives.WriteInt32BigEndian(span[1..], length);
 		data.CopyTo(span[5..]);
 
 		writer.Advance(total);
-		return FlushAndScrubAsync(writer, memory, cancellationToken);
+		return FlushDiscardResultAsync(writer, cancellationToken);
 	}
 
 	#region private helpers
 
-	// Assumes a stream-backed writer (PipeWriter.Create(stream)): when FlushAsync completes, the bytes have
-	// been handed to the stream and the writer no longer reads this region, so it can be zeroed safely.
-	// Do NOT use with a Pipe-backed writer, where a reader may still be consuming the memory.
-	private static async ValueTask FlushAndScrubAsync(PipeWriter writer, Memory<byte> written, CancellationToken cancellationToken)
+	// Flush for callers that only need to know when the bytes are out. Nothing is zeroed here on purpose: after Advance the memory belongs
+	// to the writer (it may still be handed to the stream, kept as the tail segment, or returned to a pool), so scrubbing is the job of the
+	// pool the writer was created with (see ScrubbingMemoryPool), which zeroes a buffer exactly when it is released.
+	private static async ValueTask FlushDiscardResultAsync(PipeWriter writer, CancellationToken cancellationToken)
+		=> await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static void EnsureSqlLength(int length)
 	{
-		try
-		{
-			await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
-		}
-		finally
-		{
-			CryptographicOperations.ZeroMemory(written.Span);
-		}
+		if ((uint)length > MaxSqlLength) ThrowSqlTooLong(length);
+	}
+
+	// Guards the int arithmetic of the extended-query message (Parse + Bind/Execute/Sync) and the size of the single GetSpan request.
+	private static int EnsureMessageLength(long length)
+	{
+		if ((ulong)length > (ulong)Array.MaxLength) ThrowMessageTooLong(length);
+		return (int)length;
+	}
+
+	[MethodImpl(MethodImplOptions.NoInlining)]
+	[DoesNotReturn]
+	private static void ThrowSqlTooLong(int length)
+	{
+		throw new ArgumentOutOfRangeException("sql", length, $"The SQL text is {length} bytes; the PostgreSQL protocol allows at most {MaxSqlLength}.");
+	}
+
+	[MethodImpl(MethodImplOptions.NoInlining)]
+	[DoesNotReturn]
+	private static void ThrowMessageTooLong(long length)
+	{
+		throw new ArgumentOutOfRangeException("query", length, "The extended query message is too large to be built in a single buffer.");
 	}
 
 	private static void ComputeUserPasswordMd5Hex(string password, string username, Span<byte> destinationHex)

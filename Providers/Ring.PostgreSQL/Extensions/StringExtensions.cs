@@ -1,4 +1,5 @@
-﻿using Ring.Data.Models;
+﻿using Ring.Data.Enums;
+using Ring.Data.Models;
 using Ring.Schema.Enums;
 using Ring.Util.Extensions;
 
@@ -29,7 +30,7 @@ internal static class StringExtensions
 		dico.TryGetValue("DATABASE", out var databaseName);
 		//if (!string.IsNullOrEmpty(clientEncoding)) clientEncodingParam = clientEncoding;
 		var result = new ConnectionParameters(DatabaseProvider.PostgreSql, host ?? string.Empty, databaseName ?? string.Empty, 
-			port, userName ?? string.Empty, password ?? string.Empty, timeOut, applicationName, clientEncodingParam, sqlSendBufferSize);
+			port, userName ?? string.Empty, password ?? string.Empty, timeOut, applicationName, clientEncodingParam, sqlSendBufferSize, SslMode.Disable);
 		return result;
 	}
 	

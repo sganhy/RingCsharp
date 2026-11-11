@@ -1,4 +1,5 @@
-﻿using Ring.Data.Extensions;
+﻿using Ring.Data.Enums;
+using Ring.Data.Extensions;
 using Ring.Data.Models;
 using Ring.Schema.Enums;
 using System.Linq.Expressions;
@@ -22,10 +23,10 @@ public sealed class ConnectionParametersExtensionsTest : BaseTest
 
 		// DatabaseProvider databaseProvider, string host, string databaseName, int port, string userName, string password, int timeOut, string applicationName, string clientEncoding, int sqlSendBufferSize
 		var parameters1 = new ConnectionParameters(DatabaseProvider.SqlServer, host, databaseName1, port, userName, _faker.Random.String(), 
-			_faker.Random.Number(1, 65535), applicationName, _faker.Random.String(), _faker.Random.Number(1, 65535));
+			_faker.Random.Number(1, 65535), applicationName, _faker.Random.String(), _faker.Random.Number(1, 65535), SslMode.Disable);
 		var parameters2 = new ConnectionParameters(DatabaseProvider.Oracle, host, databaseName2, port, userName, _faker.Random.String(), 
-			_faker.Random.Number(1, 65535), applicationName, _faker.Random.String(), _faker.Random.Number(1, 65535));
-		
+			_faker.Random.Number(1, 65535), applicationName, _faker.Random.String(), _faker.Random.Number(1, 65535), SslMode.Disable);	
+
 		// act 
 		var hash1 = ConnectionParametersExtensions.Hash(parameters1);
 		var hash2 = ConnectionParametersExtensions.Hash(parameters2);
@@ -47,9 +48,9 @@ public sealed class ConnectionParametersExtensionsTest : BaseTest
 
 		// DatabaseProvider databaseProvider, string host, string databaseName, int port, string userName, string password, int timeOut, string applicationName, string clientEncoding, int sqlSendBufferSize
 		var parameters1 = new ConnectionParameters(DatabaseProvider.SqlServer, host, databaseName1, port, userName, _faker.Random.String(),
-			_faker.Random.Number(1, 65535), applicationName, _faker.Random.String(), _faker.Random.Number(1, 65535));
+			_faker.Random.Number(1, 65535), applicationName, _faker.Random.String(), _faker.Random.Number(1, 65535), SslMode.Disable);
 		var parameters2 = new ConnectionParameters(DatabaseProvider.Oracle, host, databaseName2, port, userName, _faker.Random.String(),
-			_faker.Random.Number(1, 65535), applicationName, _faker.Random.String(), _faker.Random.Number(1, 65535));
+			_faker.Random.Number(1, 65535), applicationName, _faker.Random.String(), _faker.Random.Number(1, 65535), SslMode.Disable);
 
 		// act 
 		var hash1 = parameters1.GetHashCode();

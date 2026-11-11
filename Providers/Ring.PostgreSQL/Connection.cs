@@ -28,7 +28,7 @@ public sealed class Connection : IConnection, IAsyncDisposable
 	private const int ReaderBufferSize = 64 * 1024;
 	private const int ReaderMinimumReadSize = 8 * 1024;
 	private const int WriterMinimumBufferSize = 16 * 1024;
-	private const int MaxSqlLength = 0x3FFFFFFF - 16; // PostgreSQL caps a message at 1 GB - 1 (the length field counts its own 4 bytes).
+	private const int MaxSqlLength = PipeWriterExtensions.MaxSqlLength; // PostgreSQL caps a message at 1 GB - 1 (the length field counts its own 4 bytes).
 	private const int MaxSqlDriverLength = MaxSqlLength / 4; // 256 MB is a more reasonable limit for a single SQL command!
 	private static readonly byte[] TerminateMessage = { (byte)FrontendMessageCode.Terminate, 0, 0, 0, 4 };
 	private readonly long _id;
@@ -43,6 +43,7 @@ public sealed class Connection : IConnection, IAsyncDisposable
 	private bool _hasDeclaredStmts;
 	private Socket? _socket;
 	private NetworkStream? _networkStream;
+	private Stream? _stream; // what the pipes sit on: the NetworkStream, or the SslStream wrapped around it when TLS was negotiated
 
 	// Never null: the shared "closed" instances stand in until the connection is opened (and again after it is closed).
 	private PipeWriter _writer = ClosedPipeWriter.Instance;
@@ -116,6 +117,7 @@ public sealed class Connection : IConnection, IAsyncDisposable
 		try
 		{
 			AttachSocket(SocketHelper.ConnectSocket(_host, _port, _timeout));
+			AttachPipeline(TlsHelper.Negotiate(_networkStream!, _socket!, _host, _parameters.SslMode)); // ASSUMPTION: ConnectionParameters.SslMode (see SslMode.cs)
 			_writer.SendStartup(_parameters);
 			var (pid, secret) = AuthenticationHelper.HandleAuthentication(_reader, _writer, _host, _parameters.UserName, _parameters.Password, string.Empty);
 			CompleteOpen(pid, secret);
@@ -132,6 +134,7 @@ public sealed class Connection : IConnection, IAsyncDisposable
 
 	public string?[] Execute(in RetrieveQuery query, ReadOnlySpan<byte> sql)
 	{
+		if (sql.Length > MaxSqlDriverLength) ThrowSqlCommandSizeTooLarge();
 		_state = ConnectionState.Open | ConnectionState.Executing;
 		var token = CancellationTokenExtensions.AcquireToken(default, out var linked, CommandTimeout, _commandCts);
 		try
@@ -171,6 +174,7 @@ public sealed class Connection : IConnection, IAsyncDisposable
 	public OperationalError? Execute(in AlterQuery query, ReadOnlySpan<byte> sql)
 	{
 		// Code size: 109 (0x6d) - no virtual calls!
+		if (sql.Length > MaxSqlDriverLength) return SqlCommandSizeTooLarge().Set(query);
 		_state = ConnectionState.Open | ConnectionState.Executing;
 		_writer.SendQuery(sql);
 		var error = _reader.DrainToReadyForQuery();
@@ -189,6 +193,7 @@ public sealed class Connection : IConnection, IAsyncDisposable
 	[AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
 	public async ValueTask<OperationalError?> ExecuteAsync(AlterQuery query, ReadOnlyMemory<byte> sql, CancellationToken cancellationToken = default)
 	{
+		if (sql.Length > MaxSqlDriverLength) return SqlCommandSizeTooLarge().Set(query);
 		_state = ConnectionState.Open | ConnectionState.Executing;
 		CancellationTokenSource? linked = null;
 		try
@@ -227,6 +232,7 @@ public sealed class Connection : IConnection, IAsyncDisposable
 	public OperationalError? Execute(in SaveQuery query, ReadOnlySpan<byte> sql)
 	{
 		// Code size: 123 (0x7b) - no virtual calls!
+		if (sql.Length > MaxSqlDriverLength) return SqlCommandSizeTooLarge().Set(query);
 		_state = ConnectionState.Open | ConnectionState.Executing;
 		_writer.SendExtendedQuery(sql, query, _encoding);
 		var error = _reader.DrainToReadyForQuery();
@@ -343,8 +349,15 @@ public sealed class Connection : IConnection, IAsyncDisposable
 		socket.ConfigureKeepAlive();
 
 		_networkStream = new NetworkStream(socket, ownsSocket: true);
-		_writer = PipeWriter.Create(_networkStream, new StreamPipeWriterOptions(minimumBufferSize: WriterMinimumBufferSize, leaveOpen: true));
-		_reader = PipeReader.Create(_networkStream, new StreamPipeReaderOptions(bufferSize: ReaderBufferSize, minimumReadSize: ReaderMinimumReadSize, leaveOpen: true, useZeroByteReads: true));
+	}
+
+	// The pipes are built only once the transport is final (plain or TLS). The writer uses a scrubbing pool: its buffers carry passwords
+	// and SCRAM proofs, and are zeroed when the writer releases them instead of poking at memory after Advance.
+	private void AttachPipeline(Stream stream)
+	{
+		_stream = stream;
+		_writer = PipeWriter.Create(stream, new StreamPipeWriterOptions(pool: ScrubbingMemoryPool.Instance, minimumBufferSize: WriterMinimumBufferSize, leaveOpen: true));
+		_reader = PipeReader.Create(stream, new StreamPipeReaderOptions(bufferSize: ReaderBufferSize, minimumReadSize: ReaderMinimumReadSize, leaveOpen: true, useZeroByteReads: true));
 	}
 
 	private void CompleteOpen(int? pid, int? secret)
@@ -362,6 +375,7 @@ public sealed class Connection : IConnection, IAsyncDisposable
 		try
 		{
 			AttachSocket(await SocketHelper.ConnectSocketAsync(_host, _port, _timeout, cancellationToken).ConfigureAwait(false));
+			AttachPipeline(await TlsHelper.NegotiateAsync(_networkStream!, _socket!, _host, _parameters.SslMode, cancellationToken).ConfigureAwait(false));
 			await _writer.SendStartupAsync(_parameters, cancellationToken).ConfigureAwait(false);
 			var (pid, secret) = await AuthenticationHelper.HandleAuthenticationAsync(_reader, _writer, _host, _parameters.UserName, _parameters.Password, string.Empty, cancellationToken).ConfigureAwait(false);
 			CompleteOpen(pid, secret);
@@ -405,11 +419,13 @@ public sealed class Connection : IConnection, IAsyncDisposable
 		// Code size: 134 (0x86)
 		var writer = _writer;
 		var reader = _reader;
+		var tlsStream = _stream;
 		var stream = _networkStream;
 		var socket = _socket;
 
 		_writer = ClosedPipeWriter.Instance;
 		_reader = ClosedPipeReader.Instance;
+		_stream = null;
 		_networkStream = null;
 		_socket = null;
 		_backendPid = 0;
@@ -418,6 +434,7 @@ public sealed class Connection : IConnection, IAsyncDisposable
 #pragma warning disable CA1031 // Do not catch general exception types
 		try { writer.Complete(); } catch { }
 		try { reader.Complete(); } catch { }
+		try { tlsStream?.Dispose(); } catch { } // SslStream first (leaveInnerStreamOpen: the NetworkStream is disposed right after)
 		try { stream?.Dispose(); } catch { }
 		try { socket?.Dispose(); } catch { }
 #pragma warning restore CA1031
@@ -444,6 +461,10 @@ public sealed class Connection : IConnection, IAsyncDisposable
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	private static OperationalError SqlCommandSizeTooLarge() => OperationalErrorExtensions.InvalidQuery(null, ResourceHelper.GetMessage(ResourceType.SqlCommandTextTooLarge));
+
+	[MethodImpl(MethodImplOptions.NoInlining)]
+	[DoesNotReturn]
+	private static void ThrowSqlCommandSizeTooLarge() => throw new ArgumentOutOfRangeException("sql", ResourceHelper.GetMessage(ResourceType.SqlCommandTextTooLarge));
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]

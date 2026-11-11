@@ -1,4 +1,5 @@
-﻿using Ring.Data.Extensions;
+﻿using Ring.Data.Enums;
+using Ring.Data.Extensions;
 using Ring.Schema.Enums;
 
 namespace Ring.Data.Models;
@@ -15,9 +16,10 @@ internal sealed class ConnectionParameters
 	internal readonly string ClientEncoding;
 	internal readonly int TimeOut;
 	internal readonly int SqlSendBufferSize;
+	internal readonly SslMode SslMode;
 
 	internal ConnectionParameters(DatabaseProvider databaseProvider, string host, string databaseName, int port, string userName, string password, int timeOut, string applicationName, string clientEncoding, 
-		int sqlSendBufferSize)
+		int sqlSendBufferSize, SslMode sslMode)
 	{
 		Host = host;
 		Port = port;
@@ -29,6 +31,7 @@ internal sealed class ConnectionParameters
 		ClientEncoding = clientEncoding;
 		TimeOut = timeOut;
 		SqlSendBufferSize = sqlSendBufferSize;
+		SslMode = sslMode;
 	}
 
 	public override int GetHashCode() => this.Hash();

@@ -35,7 +35,7 @@ internal static class ConnectionParametersExtensions
 			parameter.TimeOut,
 			$"{parameter.ApplicationName} ({id})",
 			parameter.ClientEncoding,
-			sqlSendBufferSize
+			sqlSendBufferSize, parameter.SslMode
 		);
 		return newParameter;
 	}
