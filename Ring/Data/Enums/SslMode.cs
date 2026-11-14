@@ -1,7 +1,7 @@
 ﻿namespace Ring.Data.Enums;
 
 /// <summary>Same meaning as libpq's <c>sslmode</c> (the "allow" mode is deliberately not offered).</summary>
-internal enum SslMode
+internal enum SslMode : byte
 {
 	/// <summary>Never use TLS. The password and all data travel in clear text.</summary>
 	Disable = 0,

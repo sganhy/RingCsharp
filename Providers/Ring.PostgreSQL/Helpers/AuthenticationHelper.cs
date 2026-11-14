@@ -15,6 +15,15 @@ namespace Ring.PostgreSQL.Helpers;
 
 internal static class AuthenticationHelper
 {
+	/// <summary>
+	/// Largest backend message accepted during the handshake (value of the length field, which counts itself).
+	/// The server is not authenticated yet, so its length field must never decide how much memory we buffer.
+	/// Real handshake messages are tiny; the largest legitimate ones (a Kerberos token, an ErrorResponse) stay far below this.
+	/// </summary>
+	internal const int MaxAuthMessageLength = 1024 * 1024;
+
+	// A server that keeps sending harmless messages (NoticeResponse, ParameterStatus...) and never ReadyForQuery must not keep us here forever.
+	private const int MaxHandshakeMessages = 1024;
 
 	internal static async ValueTask<(int? BackendPid, int? BackendSecret)> HandleAuthenticationAsync(PipeReader reader, PipeWriter writer, string host, string username, string password,
 		string kerberosServiceName, CancellationToken cancellationToken = default)
@@ -23,6 +32,7 @@ internal static class AuthenticationHelper
 		int? backendSecret = null;
 
 		using var session = new AuthSession(writer, host, username, password, kerberosServiceName);
+		var messageCount = 0;
 
 		while (true)
 		{
@@ -43,6 +53,8 @@ internal static class AuthenticationHelper
 				continue;
 			}
 
+			if (++messageCount > MaxHandshakeMessages) ThrowTooManyMessages();
+
 			var (consumed, isComplete, pid, secret) = await ProcessAuthMessageDetailsAsync(buffer, messageLength, session, cancellationToken).ConfigureAwait(false);
 
 			if (pid.HasValue) backendPid = pid;
@@ -61,16 +73,18 @@ internal static class AuthenticationHelper
 	/// Synchronous counterpart of <see cref="HandleAuthenticationAsync"/>. The message handling (SCRAM, MD5, GSS...) is shared:
 	/// only the read loop is different, and the writes complete inline in practice (the socket send buffer has room).
 	/// </summary>
-	internal static (int? BackendPid, int? BackendSecret) HandleAuthentication(PipeReader reader, PipeWriter writer, string host, string username, string password, string kerberosServiceName)
+	internal static (int? BackendPid, int? BackendSecret) HandleAuthentication(PipeReader reader, PipeWriter writer, string host, string username, string password, string kerberosServiceName,
+		CancellationToken cancellationToken)
 	{
 		int? backendPid = null;
 		int? backendSecret = null;
 
 		using var session = new AuthSession(writer, host, username, password, kerberosServiceName);
+		var messageCount = 0;
 
 		while (true)
 		{
-			var result = ReadBlocking(reader);
+			var result = ReadBlocking(reader, cancellationToken);
 			var buffer = result.Buffer;
 
 			if (buffer.IsEmpty && result.IsCompleted)
@@ -87,7 +101,9 @@ internal static class AuthenticationHelper
 				continue;
 			}
 
-			var (consumed, isComplete, pid, secret) = Wait(ProcessAuthMessageDetailsAsync(buffer, messageLength, session, CancellationToken.None));
+			if (++messageCount > MaxHandshakeMessages) ThrowTooManyMessages();
+
+			var (consumed, isComplete, pid, secret) = Wait(ProcessAuthMessageDetailsAsync(buffer, messageLength, session, cancellationToken));
 
 			if (pid.HasValue) backendPid = pid;
 			if (secret.HasValue) backendSecret = secret;
@@ -102,11 +118,11 @@ internal static class AuthenticationHelper
 	}
 
 	// PipeReader has no blocking read: use the data already buffered when there is some, wait only when there is not.
-	private static ReadResult ReadBlocking(PipeReader reader)
+	private static ReadResult ReadBlocking(PipeReader reader, CancellationToken cancellationToken)
 	{
 		if (reader.TryRead(out var ready)) return ready;
 
-		var read = reader.ReadAsync();
+		var read = reader.ReadAsync(cancellationToken);
 		return read.IsCompleted ? read.GetAwaiter().GetResult() : read.AsTask().GetAwaiter().GetResult();
 	}
 
@@ -117,17 +133,19 @@ internal static class AuthenticationHelper
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static bool TryProcessAuthMessage(ReadOnlySequence<byte> buffer, out int messageLength)
 	{
-		if (buffer.Length < 5)
-		{
-			messageLength = 0;
-			return false;
-		}
+		messageLength = 0;
+		if (buffer.Length < 5) return false;
 
 		Span<byte> header = stackalloc byte[5];
 		buffer.Slice(0, 5).CopyTo(header);
 
 		messageLength = BinaryPrimitives.ReadInt32BigEndian(header.Slice(1, 4));
-		return buffer.Length >= messageLength + 1;
+
+		// Checked before anything is buffered, sliced or waited for: the length field is attacker-controlled here.
+		// Below 4 the payload size would be negative; above the cap we would buffer up to 2 GB; and `messageLength + 1` would overflow at int.MaxValue.
+		if (messageLength < 4 || messageLength > MaxAuthMessageLength) ThrowInvalidMessageLength(messageLength);
+
+		return buffer.Length >= (long)messageLength + 1;
 	}
 
 	private static async ValueTask<(SequencePosition Consumed, bool IsComplete, int? Pid, int? Secret)> ProcessAuthMessageDetailsAsync(
@@ -175,6 +193,8 @@ internal static class AuthenticationHelper
 
 	private static async ValueTask ProcessAuthenticationRequestAsync(ReadOnlySequence<byte> payload, AuthSession session, CancellationToken cancellationToken)
 	{
+		if (payload.Length < 4) throw MalformedMessage(nameof(BackendMessageCode.AuthenticationRequest));
+
 		Span<byte> authTypeBuffer = stackalloc byte[4];
 		payload.Slice(0, 4).CopyTo(authTypeBuffer);
 		var authType = (AuthenticationType)BinaryPrimitives.ReadInt32BigEndian(authTypeBuffer);
@@ -321,6 +341,8 @@ internal static class AuthenticationHelper
 	// Non-async on purpose: the stackalloc'd salt span must not live in a state machine.
 	private static ValueTask SendMd5Async(ReadOnlySequence<byte> payload, AuthSession session, CancellationToken cancellationToken)
 	{
+		if (payload.Length < 8) throw MalformedMessage(nameof(AuthenticationType.MD5Password));
+
 		Span<byte> salt = stackalloc byte[4];
 		payload.Slice(4, 4).CopyTo(salt);
 		return session.Writer.SendMd5PasswordAsync(session.Username, session.Password, salt, cancellationToken);
@@ -328,12 +350,25 @@ internal static class AuthenticationHelper
 
 	private static void ProcessBackendKeyData(ReadOnlySequence<byte> payload, out int? pid, out int? secret)
 	{
+		if (payload.Length < 8) throw MalformedMessage(nameof(BackendMessageCode.BackendKeyData));
+
 		Span<byte> data = stackalloc byte[8];
 		payload.Slice(0, 8).CopyTo(data);
 
 		pid = BinaryPrimitives.ReadInt32BigEndian(data[..4]);
 		secret = BinaryPrimitives.ReadInt32BigEndian(data.Slice(4, 4));
 	}
+
+	[DoesNotReturn]
+	private static void ThrowInvalidMessageLength(int length) =>
+		throw new InvalidOperationException($"Invalid backend message length {length} during authentication handshake (allowed: 4 to {MaxAuthMessageLength}).");
+
+	[DoesNotReturn]
+	private static void ThrowTooManyMessages() =>
+		throw new InvalidOperationException($"Server sent more than {MaxHandshakeMessages} messages without completing the authentication handshake.");
+
+	private static InvalidOperationException MalformedMessage(string messageName) =>
+		new($"Malformed {messageName} message during authentication handshake: payload too short.");
 
 	[DoesNotReturn]
 	private static void ThrowUnexpectedEof() =>

@@ -28,8 +28,6 @@ public sealed class Connection : IConnection, IAsyncDisposable
 	private const int ReaderBufferSize = 64 * 1024;
 	private const int ReaderMinimumReadSize = 8 * 1024;
 	private const int WriterMinimumBufferSize = 16 * 1024;
-	private const int MaxSqlLength = PipeWriterExtensions.MaxSqlLength; // PostgreSQL caps a message at 1 GB - 1 (the length field counts its own 4 bytes).
-	private const int MaxSqlDriverLength = MaxSqlLength / 4; // 256 MB is a more reasonable limit for a single SQL command!
 	private static readonly byte[] TerminateMessage = { (byte)FrontendMessageCode.Terminate, 0, 0, 0, 4 };
 	private readonly long _id;
 	private readonly DateTime _creationTime;
@@ -114,13 +112,33 @@ public sealed class Connection : IConnection, IAsyncDisposable
 		// Fully synchronous: no sync-over - async, no thread - pool hop, no risk of deadlock under a SynchronizationContext.
 		if ((_state & ConnectionState.Open) == ConnectionState.Open) ThrowConnectionAlreadyOpen();
 		_state = ConnectionState.Connecting;
+		CancellationTokenSource? deadline = null;
+		CancellationTokenRegistration watchdog = default;
 		try
 		{
 			AttachSocket(SocketHelper.ConnectSocket(_host, _port, _timeout));
+
+			// One budget for everything after the TCP connect (TLS, startup, authentication): a server that accepts the connection and then
+			// stays silent, or trickles bytes, must not hold the caller forever. Synchronous TLS and write calls cannot take a token,
+			// so when the deadline expires the socket is aborted, which unblocks whatever is pending.
+			deadline = new CancellationTokenSource(_timeout);
+			var token = deadline.Token;
+			watchdog = ArmWatchdog(token);
+
 			AttachPipeline(TlsHelper.Negotiate(_networkStream!, _socket!, _host, _parameters.SslMode)); // ASSUMPTION: ConnectionParameters.SslMode (see SslMode.cs)
 			_writer.SendStartup(_parameters);
-			var (pid, secret) = AuthenticationHelper.HandleAuthentication(_reader, _writer, _host, _parameters.UserName, _parameters.Password, string.Empty);
+			var (pid, secret) = AuthenticationHelper.HandleAuthentication(_reader, _writer, _host, _parameters.UserName, _parameters.Password, string.Empty, token);
+
+			// The deadline must never kill a connection that just opened: disarm first (waits for a running callback), then re-check.
+			watchdog.Dispose();
+			token.ThrowIfCancellationRequested();
 			CompleteOpen(pid, secret);
+		}
+		catch (Exception ex) when (deadline is { IsCancellationRequested: true })
+		{
+			DisposePipeline();
+			_state = ConnectionState.None;
+			throw HandshakeTimedOut(ex);
 		}
 		catch
 		{
@@ -128,13 +146,17 @@ public sealed class Connection : IConnection, IAsyncDisposable
 			_state = ConnectionState.None;
 			throw;
 		}
+		finally
+		{
+			watchdog.Dispose();
+			deadline?.Dispose();
+		}
 	}
 
 	public ValueTask OpenAsync(CancellationToken cancellationToken) => new(OpenAsyncImpl(cancellationToken));
 
 	public string?[] Execute(in RetrieveQuery query, ReadOnlySpan<byte> sql)
 	{
-		if (sql.Length > MaxSqlDriverLength) ThrowSqlCommandSizeTooLarge();
 		_state = ConnectionState.Open | ConnectionState.Executing;
 		var token = CancellationTokenExtensions.AcquireToken(default, out var linked, CommandTimeout, _commandCts);
 		try
@@ -163,7 +185,6 @@ public sealed class Connection : IConnection, IAsyncDisposable
 	public OperationalError? Execute(ReadOnlySpan<byte> sql)
 	{
 		// Code size: 94 (0x5e) - no virtual calls!
-		if (sql.Length > MaxSqlDriverLength) return SqlCommandSizeTooLarge();
 		_state = ConnectionState.Open | ConnectionState.Executing;
 		_writer.SendQuery(sql);
 		var error = _reader.DrainToReadyForQuery();
@@ -174,7 +195,6 @@ public sealed class Connection : IConnection, IAsyncDisposable
 	public OperationalError? Execute(in AlterQuery query, ReadOnlySpan<byte> sql)
 	{
 		// Code size: 109 (0x6d) - no virtual calls!
-		if (sql.Length > MaxSqlDriverLength) return SqlCommandSizeTooLarge().Set(query);
 		_state = ConnectionState.Open | ConnectionState.Executing;
 		_writer.SendQuery(sql);
 		var error = _reader.DrainToReadyForQuery();
@@ -193,7 +213,6 @@ public sealed class Connection : IConnection, IAsyncDisposable
 	[AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
 	public async ValueTask<OperationalError?> ExecuteAsync(AlterQuery query, ReadOnlyMemory<byte> sql, CancellationToken cancellationToken = default)
 	{
-		if (sql.Length > MaxSqlDriverLength) return SqlCommandSizeTooLarge().Set(query);
 		_state = ConnectionState.Open | ConnectionState.Executing;
 		CancellationTokenSource? linked = null;
 		try
@@ -232,11 +251,9 @@ public sealed class Connection : IConnection, IAsyncDisposable
 	public OperationalError? Execute(in SaveQuery query, ReadOnlySpan<byte> sql)
 	{
 		// Code size: 123 (0x7b) - no virtual calls!
-		if (sql.Length > MaxSqlDriverLength) return SqlCommandSizeTooLarge().Set(query);
 		_state = ConnectionState.Open | ConnectionState.Executing;
 		_writer.SendExtendedQuery(sql, query, _encoding);
 		var error = _reader.DrainToReadyForQuery();
-		_state = ConnectionState.Open;
 		if (error is not null)
 		{
 			error = error.Value.Set(query);
@@ -325,6 +342,19 @@ public sealed class Connection : IConnection, IAsyncDisposable
 		return awaiter.GetResult();
 	}
 
+	// Synchronous I/O cannot take a token. When the deadline of a synchronous operation expires, the transport is aborted instead:
+	// that unblocks whatever read or write is pending, and the connection is Broken (as documented for CommandTimeout).
+	private CancellationTokenRegistration ArmWatchdog(CancellationToken token)
+		=> token.CanBeCanceled ? token.Register(static state => ((Connection)state!).AbortTransport(), this) : default;
+
+	private void AbortTransport()
+	{
+		var socket = _socket;
+#pragma warning disable CA1031 // Do not catch general exception types
+		try { socket?.Dispose(); } catch { }
+#pragma warning restore CA1031
+	}
+
 	private void ReleaseToken(CancellationTokenSource? linked)
 	{
 		if (linked is not null)
@@ -372,19 +402,37 @@ public sealed class Connection : IConnection, IAsyncDisposable
 	{
 		if ((_state & ConnectionState.Open) == ConnectionState.Open) ThrowConnectionAlreadyOpen();
 		_state = ConnectionState.Connecting;
+		CancellationTokenSource? deadline = null;
 		try
 		{
 			AttachSocket(await SocketHelper.ConnectSocketAsync(_host, _port, _timeout, cancellationToken).ConfigureAwait(false));
-			AttachPipeline(await TlsHelper.NegotiateAsync(_networkStream!, _socket!, _host, _parameters.SslMode, cancellationToken).ConfigureAwait(false));
-			await _writer.SendStartupAsync(_parameters, cancellationToken).ConfigureAwait(false);
-			var (pid, secret) = await AuthenticationHelper.HandleAuthenticationAsync(_reader, _writer, _host, _parameters.UserName, _parameters.Password, string.Empty, cancellationToken).ConfigureAwait(false);
+
+			// One budget for everything after the TCP connect (TLS, startup, authentication), on top of the caller's token:
+			// a server that accepts the connection and then stays silent must not hold the caller forever.
+			deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+			deadline.CancelAfter(_timeout);
+			var token = deadline.Token;
+
+			AttachPipeline(await TlsHelper.NegotiateAsync(_networkStream!, _socket!, _host, _parameters.SslMode, token).ConfigureAwait(false));
+			await _writer.SendStartupAsync(_parameters, token).ConfigureAwait(false);
+			var (pid, secret) = await AuthenticationHelper.HandleAuthenticationAsync(_reader, _writer, _host, _parameters.UserName, _parameters.Password, string.Empty, token).ConfigureAwait(false);
 			CompleteOpen(pid, secret);
+		}
+		catch (Exception ex) when (deadline is { IsCancellationRequested: true } && !cancellationToken.IsCancellationRequested)
+		{
+			DisposePipeline();
+			_state = ConnectionState.None;
+			throw HandshakeTimedOut(ex);
 		}
 		catch
 		{
 			DisposePipeline();
 			_state = ConnectionState.None;
 			throw;
+		}
+		finally
+		{
+			deadline?.Dispose();
 		}
 	}
 
@@ -460,11 +508,8 @@ public sealed class Connection : IConnection, IAsyncDisposable
 	}
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
-	private static OperationalError SqlCommandSizeTooLarge() => OperationalErrorExtensions.InvalidQuery(null, ResourceHelper.GetMessage(ResourceType.SqlCommandTextTooLarge));
-
-	[MethodImpl(MethodImplOptions.NoInlining)]
-	[DoesNotReturn]
-	private static void ThrowSqlCommandSizeTooLarge() => throw new ArgumentOutOfRangeException("sql", ResourceHelper.GetMessage(ResourceType.SqlCommandTextTooLarge));
+	private TimeoutException HandshakeTimedOut(Exception inner)
+		=> new($"Timed out after {_timeout} ms while negotiating TLS and authenticating with the server.", inner);
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[DoesNotReturn]
